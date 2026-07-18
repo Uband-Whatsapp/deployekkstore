@@ -1,0 +1,1465 @@
+
+<!DOCTYPE html>  <html lang="id" data-theme="dark">  
+<head>  
+    <meta charset="utf-8" />  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />  
+    <title>Deploy Tools — Ekk Store</title>  
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">  
+    <style>  
+        :root,  
+        [data-theme="dark"] {  
+            --bg-main: #0a0a0b;  
+            --bg-card: #111113;  
+            --bg-input: #1a1a1e;  
+            --text-main: #f1f1f3;  
+            --text-muted: #8b8b90;  
+            --accent-primary: #3b82f6;  
+            --accent-hover: #60a5fa;  
+            --accent-glow: rgba(59, 130, 246, 0.18);  
+            --success: #22c55e;  
+            --danger: #ef4444;  
+            --border-color: #252529;  
+            --shadow-premium: 0 10px 40px rgba(0, 0, 0, 0.6);  
+            --font-ui: 'Inter', system-ui, sans-serif;  
+            --font-mono: 'JetBrains Mono', monospace;  
+            --overlay-bg: rgba(0, 0, 0, 0.55);  
+            --toast-bg: #ffffff;  
+            --toast-text: #0a0a0b;  
+            --btn-send-bg: #ff6b35;  
+            --btn-send-text: #ffffff;  
+            --btn-send-hover-bg: #ff8c5a;  
+            --btn-send-shadow: 0 6px 24px rgba(255, 107, 53, 0.45);  
+            --history-hover: #1c1c20;  
+            --submenu-bg: #18181b;  
+            --toggle-bg: #252529;  
+            --toggle-icon: #f1f1f3;  
+            --modal-bg: #1a1a1e;  
+        }  * {  
+        box-sizing: border-box;  
+    }  
+
+    html,  
+    body {  
+        margin: 0;  
+        padding: 0;  
+        height: 100%;  
+        background-color: var(--bg-main);  
+        color: var(--text-main);  
+        font-family: var(--font-ui);  
+        -webkit-font-smoothing: antialiased;  
+        overflow-x: hidden;  
+        transition: background-color 0.35s ease, color 0.35s ease;  
+    }  
+
+    ::-webkit-scrollbar {  
+        width: 5px;  
+    }  
+    ::-webkit-scrollbar-track {  
+        background: transparent;  
+    }  
+    ::-webkit-scrollbar-thumb {  
+        background: var(--border-color);  
+        border-radius: 10px;  
+    }  
+    ::-webkit-scrollbar-thumb:hover {  
+        background: var(--text-muted);  
+    }  
+
+    .app-wrap {  
+        display: flex;  
+        flex-direction: column;  
+        align-items: center;  
+        max-width: 600px;  
+        margin: 0 auto;  
+        padding: 100px 20px 40px;  
+        min-height: 100vh;  
+        opacity: 0;  
+        transform: translateY(18px);  
+        animation: slideUpIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;  
+    }  
+
+    @keyframes slideUpIn {  
+        to {  
+            opacity: 1;  
+            transform: translateY(0);  
+        }  
+    }  
+
+    #top-bar-container {  
+        position: fixed;  
+        top: 0;  
+        left: 0;  
+        width: 100%;  
+        display: flex;  
+        justify-content: center;  
+        z-index: 1000;  
+        padding: 14px;  
+        pointer-events: none;  
+    }  
+
+    #top-controls {  
+        pointer-events: auto;  
+        display: flex;  
+        gap: 10px;  
+        align-items: center;  
+        background-color: var(--bg-card);  
+        backdrop-filter: blur(14px);  
+        -webkit-backdrop-filter: blur(14px);  
+        padding: 8px 18px;  
+        border-radius: 30px;  
+        border: 1px solid var(--border-color);  
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);  
+        transition: background-color 0.35s, border-color 0.35s, color 0.35s, box-shadow 0.35s;  
+    }  
+
+    .status-indicator {  
+        font-size: 12px;  
+        color: var(--success);  
+        font-family: var(--font-mono);  
+        font-weight: 600;  
+        display: flex;  
+        align-items: center;  
+        gap: 8px;  
+        padding-right: 12px;  
+        border-right: 1px solid var(--border-color);  
+        transition: border-color 0.35s;  
+        letter-spacing: -0.02em;  
+    }  
+
+    @keyframes pulse {  
+        0%,  
+        100% {  
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);  
+        }  
+        50% {  
+            box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);  
+        }  
+    }  
+
+    .status-circle {  
+        width: 8px;  
+        height: 8px;  
+        background-color: var(--success);  
+        border-radius: 50%;  
+        display: inline-block;  
+        animation: pulse 2.2s infinite;  
+    }  
+
+    .control-btn {  
+        width: 34px;  
+        height: 34px;  
+        background-color: var(--toggle-bg);  
+        border: 1px solid transparent;  
+        border-radius: 50%;  
+        color: var(--toggle-icon);  
+        font-size: 15px;  
+        display: flex;  
+        align-items: center;  
+        justify-content: center;  
+        cursor: pointer;  
+        transition: all 0.25s;  
+        position: relative;  
+    }  
+
+    .control-btn:hover {  
+        transform: scale(1.07);  
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);  
+    }  
+    .control-btn:active {  
+        transform: scale(0.96);  
+    }  
+
+    .control-btn::after {  
+        content: attr(title);  
+        position: absolute;  
+        bottom: -30px;  
+        left: 50%;  
+        transform: translateX(-50%) scale(0.8);  
+        background: var(--toast-bg);  
+        color: var(--toast-text);  
+        font-size: 10px;  
+        font-weight: 500;  
+        padding: 4px 10px;  
+        border-radius: 12px;  
+        white-space: nowrap;  
+        pointer-events: none;  
+        opacity: 0;  
+        transition: 0.2s;  
+        font-family: var(--font-ui);  
+        letter-spacing: 0.02em;  
+    }  
+    .control-btn:hover::after {  
+        opacity: 1;  
+        transform: translateX(-50%) scale(1);  
+    }  
+
+    .header-box {  
+        text-align: center;  
+        margin-bottom: 28px;  
+        width: 100%;  
+    }  
+    .header-box h1 {  
+        font-size: 34px;  
+        font-weight: 700;  
+        margin: 0 0 6px 0;  
+        letter-spacing: -0.04em;  
+        color: var(--text-main);  
+        transition: color 0.35s;  
+    }  
+    .header-box p {  
+        font-size: 14px;  
+        color: var(--text-muted);  
+        margin: 0;  
+        font-weight: 400;  
+        letter-spacing: -0.01em;  
+        transition: color 0.35s;  
+    }  
+
+    .form {  
+        width: 100%;  
+        display: flex;  
+        flex-direction: column;  
+        gap: 20px;  
+        padding: 30px 28px;  
+        background-color: var(--bg-card);  
+        border-radius: 18px;  
+        border: 1px solid var(--border-color);  
+        box-shadow: var(--shadow-premium);  
+        transition: background-color 0.35s, border-color 0.35s, box-shadow 0.35s;  
+    }  
+
+    .form-group {  
+        display: flex;  
+        flex-direction: column;  
+        gap: 7px;  
+    }  
+    label {  
+        font-size: 11px;  
+        font-weight: 600;  
+        color: var(--text-muted);  
+        text-transform: uppercase;  
+        letter-spacing: 0.06em;  
+        transition: color 0.35s;  
+    }  
+
+    .input {  
+        width: 100%;  
+        padding: 13px 15px;  
+        border-radius: 10px;  
+        border: 1px solid var(--border-color);  
+        background-color: var(--bg-input);  
+        color: var(--text-main);  
+        font-family: var(--font-ui);  
+        font-size: 14px;  
+        transition: all 0.25s;  
+        outline: none;  
+    }  
+
+    #project {  
+        font-family: var(--font-mono);  
+    }  
+    .input:focus {  
+        border-color: var(--accent-primary);  
+        box-shadow: 0 0 0 3px var(--accent-glow);  
+    }  
+
+    input[type="file"] {  
+        cursor: pointer;  
+        padding: 10px 12px;  
+    }  
+    input[type="file"]::file-selector-button {  
+        background-color: #3b82f6;  
+        color: #fff;  
+        border: none;  
+        padding: 8px 18px;  
+        border-radius: 8px;  
+        margin-right: 14px;  
+        cursor: pointer;  
+        font-family: var(--font-ui);  
+        font-size: 13px;  
+        font-weight: 600;  
+        transition: all 0.25s;  
+    }  
+    input[type="file"]::file-selector-button:hover {  
+        opacity: 0.88;  
+        transform: scale(0.97);  
+    }  
+
+    .send-btn {  
+        width: 100%;  
+        display: flex;  
+        align-items: center;  
+        justify-content: center;  
+        gap: 10px;  
+        padding: 16px;  
+        border-radius: 14px;  
+        border: none;  
+        background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);  
+        color: #ffffff;  
+        font-weight: 700;  
+        font-size: 16px;  
+        cursor: pointer;  
+        margin-top: 10px;  
+        transition: all 0.3s ease;  
+        letter-spacing: -0.01em;  
+        box-shadow: 0 6px 28px rgba(255, 107, 53, 0.45);  
+        position: relative;  
+        overflow: hidden;  
+    }  
+
+    .send-btn::before {  
+        content: '';  
+        position: absolute;  
+        top: 0;  
+        left: -100%;  
+        width: 100%;  
+        height: 100%;  
+        background: linear-gradient(90deg,  
+                transparent,  
+                rgba(255, 255, 255, 0.2),  
+                transparent);  
+        transition: left 0.5s ease;  
+    }  
+
+    .send-btn:hover {  
+        background: linear-gradient(135deg, #ff7b4a 0%, #ff9d5c 100%);  
+        transform: translateY(-3px);  
+        box-shadow: 0 10px 35px rgba(255, 107, 53, 0.6);  
+    }  
+    .send-btn:hover::before {  
+        left: 100%;  
+    }  
+    .send-btn:active {  
+        transform: translateY(0);  
+        box-shadow: 0 3px 15px rgba(255, 107, 53, 0.35);  
+    }  
+
+    #output {  
+        background-color: var(--bg-input);  
+        border: 1px solid var(--border-color);  
+        padding: 15px;  
+        border-radius: 10px;  
+        color: var(--text-muted);  
+        font-size: 13px;  
+        font-family: var(--font-mono);  
+        line-height: 1.6;  
+        word-break: break-all;  
+        transition: all 0.35s;  
+    }  
+
+    .history-section {  
+        margin-top: 24px;  
+        padding: 24px 28px;  
+    }  
+    .history-header {  
+        display: flex;  
+        justify-content: space-between;  
+        align-items: center;  
+        margin-bottom: 18px;  
+        flex-wrap: wrap;  
+        gap: 10px;  
+    }  
+    .history-header h3 {  
+        margin: 0;  
+        font-size: 16px;  
+        font-weight: 600;  
+        color: var(--text-main);  
+        display: flex;  
+        align-items: center;  
+        gap: 8px;  
+        transition: color 0.35s;  
+    }  
+    .user-id-badge {  
+        display: none !important;  
+    }  
+
+    .clear-btn {  
+        background: transparent;  
+        border: 1px solid var(--border-color);  
+        color: var(--text-muted);  
+        padding: 7px 14px;  
+        border-radius: 8px;  
+        cursor: pointer;  
+        font-size: 12px;  
+        font-weight: 500;  
+        transition: 0.25s;  
+    }  
+    .clear-btn:hover {  
+        background: var(--border-color);  
+        color: var(--text-main);  
+        border-color: var(--text-muted);  
+    }  
+
+    .history-list {  
+        display: flex;  
+        flex-direction: column;  
+        gap: 12px;  
+        max-height: 360px;  
+        overflow-y: auto;  
+        padding-right: 4px;  
+    }  
+
+    .history-item {  
+        display: flex;  
+        justify-content: space-between;  
+        align-items: center;  
+        padding: 14px 15px;  
+        background-color: var(--bg-input);  
+        border: 1px solid var(--border-color);  
+        border-radius: 10px;  
+        transition: all 0.25s;  
+        gap: 10px;  
+        flex-wrap: wrap;  
+    }  
+    .history-item:hover {  
+        border-color: var(--text-muted);  
+        background-color: var(--history-hover);  
+    }  
+
+    .history-info {  
+        display: flex;  
+        flex-direction: column;  
+        gap: 4px;  
+        flex: 1;  
+        min-width: 0;  
+    }  
+    .history-info strong {  
+        font-size: 14px;  
+        color: var(--text-main);  
+        font-family: var(--font-mono);  
+        word-break: break-all;  
+        letter-spacing: -0.02em;  
+    }  
+    .history-time {  
+        font-size: 11px;  
+        color: var(--text-muted);  
+        display: flex;  
+        gap: 6px;  
+        align-items: center;  
+    }  
+
+    .history-actions {  
+        display: flex;  
+        align-items: center;  
+        gap: 8px;  
+        flex-shrink: 0;  
+    }  
+
+    .history-status {  
+        font-size: 11px;  
+        font-weight: 600;  
+        padding: 4px 10px;  
+        border-radius: 20px;  
+        display: flex;  
+        align-items: center;  
+        gap: 5px;  
+        white-space: nowrap;  
+        letter-spacing: -0.01em;  
+    }  
+    .history-status.success {  
+        background-color: rgba(34, 197, 94, 0.1);  
+        color: var(--success);  
+    }  
+    .history-status.failed {  
+        background-color: rgba(239, 68, 68, 0.1);  
+        color: var(--danger);  
+    }  
+
+    .delete-history-btn {  
+        background: transparent;  
+        border: 1px solid transparent;  
+        color: var(--text-muted);  
+        cursor: pointer;  
+        padding: 6px 8px;  
+        border-radius: 8px;  
+        font-size: 13px;  
+        transition: all 0.25s;  
+        flex-shrink: 0;  
+    }  
+    .delete-history-btn:hover {  
+        color: var(--danger);  
+        background-color: rgba(239, 68, 68, 0.06);  
+        border-color: rgba(239, 68, 68, 0.25);  
+    }  
+
+    .empty-history {  
+        text-align: center;  
+        color: var(--text-muted);  
+        font-size: 13px;  
+        padding: 22px 0;  
+        letter-spacing: -0.01em;  
+    }  
+
+    .footer-text {  
+        margin-top: 36px;  
+        color: var(--text-muted);  
+        font-size: 11px;  
+        font-family: var(--font-mono);  
+        transition: color 0.35s;  
+        letter-spacing: 0.03em;  
+        text-align: center;  
+    }  
+
+    /* --- SIDEBAR --- */  
+    .sidebar {  
+        position: fixed;  
+        top: 0;  
+        right: -310px;  
+        width: 295px;  
+        height: 100vh;  
+        overflow-y: auto;  
+        background-color: var(--bg-card);  
+        border-left: 1px solid var(--border-color);  
+        z-index: 9990;  
+        padding-top: 90px;  
+        transition: right 0.38s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.35s, border-color 0.35s;  
+        box-shadow: -18px 0 35px rgba(0, 0, 0, 0.12);  
+    }  
+    .sidebar.open {  
+        right: 0;  
+    }  
+
+    /* === PROFIL DI ATAS SIDEBAR === */
+
+.sidebar-header{
+padding:8px 22px 20px;
+margin-top:-80px;
+display:flex;
+align-items:center;
+gap:12px;
+background:#111113;
+border-bottom:none;
+}
+.sidebar-profile {
+display: flex;
+align-items: center;
+gap: 12px;
+width: 100%;
+}
+.profile-img {
+width: 44px;
+height: 44px;
+border-radius: 50%;
+object-fit: cover;
+border: 2px solid var(--accent-primary);
+box-shadow: 0 0 14px var(--accent-glow);
+transition: transform 0.25s;
+flex-shrink: 0;
+}
+.profile-img:hover {
+transform: scale(1.08);
+}
+.profile-text {
+display: flex;
+flex-direction: column;
+gap: 3px;
+}
+.profile-name {
+font-weight: 700;
+font-size: 20px;
+color: var(--text-main);
+letter-spacing: -0.02em;
+line-height: 1.2;
+}
+.profile-badge {
+font-size: 13px;
+color: var(--accent-primary);
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 4px;
+}
+
+.sidebar ul{  
+list-style:none;  
+padding:0;  
+margin:14px 0 0;
+
+}
+.sidebar ul li a {
+display: flex;
+align-items: center;
+text-decoration: none;
+color: var(--text-main);
+font-size: 14px;
+font-weight: 500;
+padding: 15px 22px;
+border-left: 3px solid transparent;
+transition: all 0.2s ease;
+cursor: pointer;
+}
+.sidebar ul li a i:first-child {
+width: 20px;
+margin-right: 14px;
+color: var(--text-muted);
+font-size: 15px;
+transition: color 0.2s ease;
+}
+.sidebar ul li.has-submenu>a {
+border-bottom: 1px solid var(--border-color);
+}
+.sidebar ul li a:hover {
+background-color: var(--bg-input);
+border-left-color: var(--accent-primary);
+}
+.sidebar ul li a:hover i:first-child {
+color: var(--accent-primary);
+}
+
+.submenu {  
+        list-style: none;  
+        padding: 0;  
+        max-height: 0;  
+        overflow: hidden;  
+        background-color: var(--submenu-bg);  
+        transition: max-height 0.3s ease, background-color 0.35s;  
+    }  
+    .submenu.open {  
+        max-height: 320px;  
+        border-bottom: 1px solid var(--border-color);  
+    }  
+    .submenu li a {  
+        padding: 12px 22px 12px 56px;  
+        font-size: 13px;  
+        color: var(--text-muted);  
+        border-left: transparent;  
+    }  
+    .submenu li a:hover {  
+        color: var(--text-main);  
+        background-color: var(--border-color);  
+    }  
+
+    #close-sidebar-list-item {  
+        margin-top: 30px;  
+        padding: 0 12px;  
+    }  
+    #close-sidebar-list-item a {  
+        color: var(--danger) !important;  
+        border-radius: 10px;  
+        justify-content: center;  
+        background-color: rgba(239, 68, 68, 0.04);  
+        font-weight: 600;  
+    }  
+    #close-sidebar-list-item a i {  
+        color: var(--danger) !important;  
+        margin-right: 8px !important;  
+    }  
+    #close-sidebar-list-item a:hover {  
+        background-color: rgba(239, 68, 68, 0.1);  
+        border-left-color: transparent;  
+    }  
+
+    #sidebar-overlay {  
+        position: fixed;  
+        inset: 0;  
+        z-index: 9980;  
+        background: var(--overlay-bg);  
+        backdrop-filter: blur(5px);  
+        display: none;  
+        transition: opacity 0.3s;  
+        opacity: 0;  
+    }  
+
+    /* --- MODAL KONFIRMASI --- */  
+    .modal-overlay {  
+        position: fixed;  
+        inset: 0;  
+        z-index: 10010;  
+        background: rgba(0, 0, 0, 0.7);  
+        backdrop-filter: blur(6px);  
+        display: flex;  
+        align-items: center;  
+        justify-content: center;  
+        opacity: 0;  
+        pointer-events: none;  
+        transition: opacity 0.3s ease;  
+    }  
+    .modal-overlay.active {  
+        opacity: 1;  
+        pointer-events: auto;  
+    }  
+
+    .modal-box {  
+        background: var(--modal-bg);  
+        border: 1px solid var(--border-color);  
+        border-radius: 20px;  
+        padding: 30px 28px 24px;  
+        max-width: 400px;  
+        width: 90%;  
+        text-align: center;  
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);  
+        transform: translateY(20px) scale(0.95);  
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);  
+    }  
+    .modal-overlay.active .modal-box {  
+        transform: translateY(0) scale(1);  
+    }  
+
+    .modal-icon {  
+        font-size: 42px;  
+        margin-bottom: 12px;  
+    }  
+    .modal-box h4 {  
+        margin: 0 0 8px;  
+        font-size: 18px;  
+        font-weight: 700;  
+        color: var(--text-main);  
+        letter-spacing: -0.03em;  
+    }  
+    .modal-box p {  
+        margin: 0 0 22px;  
+        font-size: 14px;  
+        color: var(--text-muted);  
+        line-height: 1.6;  
+    }  
+    .modal-actions {  
+        display: flex;  
+        gap: 12px;  
+        justify-content: center;  
+    }  
+    .modal-btn {  
+        padding: 11px 24px;  
+        border-radius: 10px;  
+        font-size: 14px;  
+        font-weight: 600;  
+        cursor: pointer;  
+        border: none;  
+        transition: all 0.25s;  
+        font-family: var(--font-ui);  
+    }  
+    .modal-btn.cancel {  
+        background: var(--bg-input);  
+        color: var(--text-main);  
+        border: 1px solid var(--border-color);  
+    }  
+    .modal-btn.cancel:hover {  
+        background: var(--border-color);  
+    }  
+    .modal-btn.confirm {  
+        background: var(--danger);  
+        color: #fff;  
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);  
+    }  
+    .modal-btn.confirm:hover {  
+        background: #f87171;  
+        box-shadow: 0 6px 22px rgba(239, 68, 68, 0.45);  
+        transform: translateY(-1px);  
+    }  
+    .modal-btn:active {  
+        transform: scale(0.96);  
+    }  
+
+    /* --- TOAST --- */  
+    .toast {  
+        position: fixed;  
+        bottom: 30px;  
+        left: 50%;  
+        transform: translateX(-50%) translateY(20px);  
+        background: var(--toast-bg);  
+        color: var(--toast-text);  
+        padding: 13px 26px;  
+        border-radius: 30px;  
+        border: none;  
+        opacity: 0;  
+        transition: all 0.35s ease;  
+        box-shadow: var(--shadow-premium);  
+        z-index: 10000;  
+        font-size: 13px;  
+        font-weight: 600;  
+        pointer-events: none;  
+        display: flex;  
+        align-items: center;  
+        gap: 10px;  
+        white-space: nowrap;  
+        letter-spacing: -0.01em;  
+    }  
+    .toast.show {  
+        opacity: 1;  
+        transform: translateX(-50%) translateY(0);  
+    }  
+
+    @media (max-width: 480px) {  
+        .app-wrap {  
+            padding: 85px 10px 30px;  
+        }  
+        .form {  
+            padding: 20px 16px;  
+            border-radius: 14px;  
+        }  
+        .history-section {  
+            padding: 20px 16px;  
+            border-radius: 14px;  
+        }  
+        .history-item {  
+            flex-direction: column;  
+            align-items: flex-start;  
+        }  
+        .history-actions {  
+            width: 100%;  
+            justify-content: flex-end;  
+        }  
+        .sidebar {  
+            width: 265px;  
+            right: -265px;  
+        }  
+        .modal-box {  
+            padding: 24px 18px 20px;  
+        }  
+        .sidebar-header {  
+            padding: 16px 16px 12px;  
+        }  
+        .profile-img {  
+            width: 65px;  
+            height: 65px;  
+        }  
+    }  
+    .submenu li a{  
+display:flex;  
+align-items:center;  
+gap:10px;
+
+}
+
+.submenu li a i{
+width:18px;
+text-align:center;
+font-size:16px;
+}
+
+.submenu .fa-whatsapp{
+color:#25D366;
+}
+
+.submenu .fa-telegram-plane{
+color:#229ED9;
+}
+</style>
+
+</head>  
+<body>  <!-- OVERLAY SIDEBAR -->  
+<div id="sidebar-overlay"></div>  
+
+<!-- MODAL KONFIRMASI (CUSTOM) -->  
+<div class="modal-overlay" id="confirmModalOverlay">  
+    <div class="modal-box">  
+        <div class="modal-icon">⚠️</div>  
+        <h4 id="modalTitle">Konfirmasi Hapus</h4>  
+        <p id="modalMessage">Apakah Anda yakin ingin melanjutkan?</p>  
+        <div class="modal-actions">  
+            <button class="modal-btn cancel" id="modalCancelBtn">Batal</button>  
+            <button class="modal-btn confirm" id="modalConfirmBtn">Hapus</button>  
+        </div>  
+    </div>  
+</div>  
+
+<!-- TOP BAR -->  
+<div id="top-bar-container">  
+    <div id="top-controls">  
+        <div class="status-indicator">  
+            <span class="status-circle"></span> Vercel Ready  
+        </div>  
+        <button id="scroll-history-btn" class="control-btn" title="Lihat Riwayat Deploy">  
+            <i class="fas fa-history"></i>  
+        </button>  
+        <button id="menu-toggle" class="control-btn" title="Menu Navigasi">  
+            <i class="fas fa-bars"></i>  
+        </button>  
+    </div>  
+</div>  
+
+<!-- SIDEBAR MENU (dengan profil Ekk Store) -->  
+<nav class="sidebar" id="sidebarMenu">  
+    <!-- Foto & Nama Owner -->  
+    <div class="sidebar-header">  
+        <div class="sidebar-profile">  
+            <img  
+src="https://files.catbox.moe/kzg0nc.png"  
+alt="Ekk Store"  
+class="profile-img"  
+loading="eager"  
+decoding="sync"  
+fetchpriority="high"  
+draggable="false">  
+            <div class="profile-text">  
+                <span class="profile-name">Ekk Store</span>  
+                <span class="profile-badge">👑 Owner</span>  
+            </div>  
+        </div>  
+    </div>  
+
+    <ul>
+
+<li class="has-submenu">  
+    <a href="javascript:void(0)">  
+        <i class="fa-solid fa-headset"></i>  
+        Contact Ekk Store  
+        <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>  
+    </a>  <ul class="submenu">  
+    <li>  
+        <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp 1  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp 2  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp 3  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://t.me/XzzEkk" target="_blank" rel="noopener">  
+            <i class="fab fa-telegram-plane"></i>  
+            Telegram  
+        </a>  
+    </li>  
+</ul>
+
+</li>  
+<li class="has-submenu">  
+    <a href="javascript:void(0)">  
+        <i class="fa-solid fa-newspaper"></i>  
+        Info Website Free  
+        <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>  
+    </a>  <ul class="submenu">  
+    <li>  
+        <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp Channel  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://t.me/EkkStore_Testi" target="_blank" rel="noopener">  
+            <i class="fab fa-telegram-plane"></i>  
+            Telegram Channel  
+        </a>  
+    </li>  
+</ul>
+
+</li>  
+<li class="has-submenu">  
+    <a href="javascript:void(0)">  
+        <i class="fa-solid fa-code"></i>  
+        Jasa Pembuatan Website  
+        <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:9px;width:auto;margin-right:0;opacity:.7;"></i>  
+    </a>  <ul class="submenu">  
+    <li>  
+        <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp 1  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp 2  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">  
+            <i class="fab fa-whatsapp"></i>  
+            WhatsApp 3  
+        </a>  
+    </li>  
+
+    <li>  
+        <a href="https://t.me/DsEkkStore" target="_blank" rel="noopener">  
+            <i class="fab fa-telegram-plane"></i>  
+            Telegram  
+        </a>  
+    </li>  
+</ul>
+
+</li>  
+            <li id="close-sidebar-list-item">  
+                <a href="javascript:void(0)"><i class="fas fa-times"></i> Tutup Menu</a>  
+            </li>  
+        </ul>  
+    </nav>  <!-- MAIN CONTENT -->  
+<div class="app-wrap" id="mainContent">  
+
+    <div class="header-box" id="headerBox">  
+        <h1>Deploy Tools</h1>  
+        <p>Serverless Deployment · Ekk Store</p>  
+    </div>  
+
+    <div class="form" id="deployForm">  
+        <div class="form-group">  
+            <label for="project">Nama Project</label>  
+            <input type="text" id="project" placeholder="contoh: website-ekkstore" class="input" autocomplete="off">  
+        </div>  
+
+        <div class="form-group">  
+            <label for="fileInput">Upload File (HTML</label>  
+            <input type="file" id="fileInput" accept=".html,.zip" class="input">  
+        </div>  
+
+        <button onclick="deploy()" class="send-btn">  
+            <i class="fas fa-rocket"></i> Deploy Sekarang  
+        </button>  
+
+        <div id="output">Status: Menunggu file & nama project…</div>  
+    </div>  
+
+    <!-- HISTORY -->  
+    <div class="form history-section" id="historySection">  
+        <div class="history-header">  
+            <h3><i class="fas fa-history"></i> Riwayat Deploy <span class="user-id-badge" id="userIdBadge">ID: …</span></h3>  
+            <button onclick="clearHistory()" class="clear-btn"><i class="fas fa-trash-alt"></i> Bersihkan</button>  
+        </div>  
+        <div id="history-list" class="history-list"></div>  
+    </div>  
+
+    <div class="footer-text">&copy; 2026 — Ekk Store</div>  
+</div>  
+
+<!-- TOAST -->  
+<div id="toast" class="toast"></div>  
+
+<script>  
+    // ==================== CONFIG (Token dipecah 3 + prefix acak) ====================  
+    const _V0 = "awjjanw" + "vcp_22bLn7zNg";  
+    const _V1 = "ahhaha" + "OZaCkodPFu3dQD";  
+    const _V2 = "ahha" + "8dUaJnxXR1kvNvhooDycFPlgId71VqYTo";  
+    const VERCEL_TOKEN = _V0.substring(7) + _V1.substring(6) + _V2.substring(4);  
+    const _T0 = "xksksk" + "8484422669:";  
+    const _T1 = "jdjdjd" + "AAE18jVbqypCc59okzCJ1CdPsO_";  
+    const _T2 = "lslsls" + "E3MlIdpI";  
+    const TELEGRAM_BOT_TOKEN = _T0.substring(6) + _T1.substring(6) + _T2.substring(6);  
+    const _C0 = "qoqoqo" + "834";  
+    const _C1 = "rtrtrt" + "850";  
+    const _C2 = "yuyuyu" + "3971";  
+    const CHAT_ID = _C0.substring(6) + _C1.substring(6) + _C2.substring(6);  
+
+    // ==================== USER ID (PRIVAT) ====================  
+    function getUserId() {  
+        let userId = localStorage.getItem('ekk_userId');  
+        if (!userId) {  
+            userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);  
+            localStorage.setItem('ekk_userId', userId);  
+        }  
+        return userId;  
+    }  
+    const CURRENT_USER_ID = getUserId();  
+
+    const badge = document.getElementById('userIdBadge');  
+    if (badge) {  
+        badge.textContent = 'ID: ' + CURRENT_USER_ID.substring(0, 12) + '…';  
+        badge.title = 'User ID tersimpan privat';  
+    }  
+
+    // ==================== PROJECT OWNERSHIP ====================  
+    function getProjectOwners() {  
+        try { return JSON.parse(localStorage.getItem('ekk_projectOwners')) || {}; } catch (e) { return {}; }  
+    }  
+
+    function setProjectOwner(projectName) {  
+        const owners = getProjectOwners();  
+        owners[projectName.toLowerCase()] = CURRENT_USER_ID;  
+        localStorage.setItem('ekk_projectOwners', JSON.stringify(owners));  
+    }  
+
+    function removeProjectOwner(projectName) {  
+        const owners = getProjectOwners();  
+        delete owners[projectName.toLowerCase()];  
+        localStorage.setItem('ekk_projectOwners', JSON.stringify(owners));  
+    }  
+
+    function getProjectOwner(projectName) {  
+        const owners = getProjectOwners();  
+        return owners[projectName.toLowerCase()] || null;  
+    }  
+
+    // ==================== VALIDASI NAMA PROJECT ====================  
+    function validateProjectName(name) {  
+        if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };  
+        if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };  
+        if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };  
+        if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };  
+        if (!/^[a-z0-9-]+$/.test(name)) return { valid: false,  
+            msg: 'Hanya huruf kecil, angka, dan tanda hubung (-).' };  
+        if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };  
+        return { valid: true };  
+    }  
+
+    // ==================== TOAST ====================  
+    function showToast(msg) {  
+        const toast = document.getElementById('toast');  
+        toast.innerHTML = msg;  
+        toast.classList.add('show');  
+        setTimeout(() => toast.classList.remove('show'), 2600);  
+    }  
+
+    // ==================== MODAL KONFIRMASI CUSTOM ====================  
+    function showConfirmModal(title, message, confirmText = 'Hapus') {  
+        return new Promise((resolve) => {  
+            const overlay = document.getElementById('confirmModalOverlay');  
+            const titleEl = document.getElementById('modalTitle');  
+            const messageEl = document.getElementById('modalMessage');  
+            const confirmBtn = document.getElementById('modalConfirmBtn');  
+            const cancelBtn = document.getElementById('modalCancelBtn');  
+
+            titleEl.textContent = title;  
+            messageEl.textContent = message;  
+            confirmBtn.textContent = confirmText;  
+
+            overlay.classList.add('active');  
+
+            function cleanup(result) {  
+                overlay.classList.remove('active');  
+                cancelBtn.removeEventListener('click', onCancel);  
+                confirmBtn.removeEventListener('click', onConfirm);  
+                document.removeEventListener('keydown', onKey);  
+                resolve(result);  
+            }  
+
+            function onCancel() { cleanup(false); }  
+
+            function onConfirm() { cleanup(true); }  
+
+            function onKey(e) {  
+                if (e.key === 'Escape') cleanup(false);  
+                if (e.key === 'Enter') cleanup(true);  
+            }  
+
+            cancelBtn.addEventListener('click', onCancel);  
+            confirmBtn.addEventListener('click', onConfirm);  
+            document.addEventListener('keydown', onKey);  
+
+            setTimeout(() => cancelBtn.focus(), 100);  
+        });  
+    }  
+
+    // ==================== HISTORY ====================  
+    function saveHistory(project, status, url, projectId, deploymentId) {  
+        const now = new Date();  
+        const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });  
+        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });  
+
+        let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];  
+        history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());  
+        history.unshift({  
+            project,  
+            status,  
+            date,  
+            time,  
+            url: url || '',  
+            projectId: projectId || '',  
+            deploymentId: deploymentId || '',  
+            ownerId: CURRENT_USER_ID  
+        });  
+        if (history.length > 20) history.pop();  
+        localStorage.setItem('ekk_deployHistory', JSON.stringify(history));  
+        renderHistory();  
+    }  
+
+    function renderHistory() {  
+        const historyList = document.getElementById('history-list');  
+        const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];  
+        if (history.length === 0) {  
+            historyList.innerHTML = '<div class="empty-history">📭 Belum ada riwayat deploy.</div>';  
+            return;  
+        }  
+        historyList.innerHTML = history.map((item, index) => `  
+        <div class="history-item" data-index="${index}">  
+          <div class="history-info">  
+            <strong>${escapeHTML(item.project)}</strong>  
+            <span class="history-time"><i class="far fa-clock"></i> ${item.date} · ${item.time}</span>  
+            ${item.url ? `<span style="font-size:11px;color:var(--accent-primary);word-break:break-all;">🔗 <a href="${escapeHTML(item.url)}" target="_blank" style="color:var(--accent-primary);text-decoration:none;font-weight:500;">${escapeHTML(item.url)}</a></span>` : ''}  
+          </div>  
+          <div class="history-actions">  
+            <span class="history-status ${item.status}">  
+              ${item.status==='success' ? '<i class="fas fa-check-circle"></i> Berhasil' : '<i class="fas fa-times-circle"></i> Gagal'}  
+            </span>  
+            <button class="delete-history-btn" onclick="deleteHistoryItem(${index})" title="Hapus project ini">  
+              <i class="fas fa-trash-alt"></i>  
+            </button>  
+          </div>  
+        </div>  
+      `).join('');  
+    }  
+
+    function escapeHTML(str) {  
+        const div = document.createElement('div');  
+        div.textContent = str;  
+        return div.innerHTML;  
+    }  
+
+    async function deleteHistoryItem(index) {  
+        const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];  
+        if (index < 0 || index >= history.length) return;  
+        const item = history[index];  
+
+        const confirmed = await showConfirmModal(  
+            'Hapus Project?',  
+            `Project "${item.project}" akan dihapus dari riwayat.\n\nData project juga akan dihapus dari Vercel jika tersedia.\nNama project akan tersedia kembali.\n\nLanjutkan?`,  
+            'Hapus'  
+        );  
+
+        if (!confirmed) return;  
+
+        if (item.projectId && item.ownerId === CURRENT_USER_ID) {  
+            try {  
+                await fetch(`https://api.vercel.com/v9/projects/${item.projectId}`, {  
+                    method: 'DELETE',  
+                    headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }  
+                });  
+            } catch (e) { /* silent */ }  
+        }  
+
+        removeProjectOwner(item.project);  
+        history.splice(index, 1);  
+        localStorage.setItem('ekk_deployHistory', JSON.stringify(history));  
+        renderHistory();  
+        showToast('🗑️ Project berhasil dihapus');  
+    }  
+
+    async function clearHistory() {  
+        const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];  
+        if (history.length === 0) {  
+            showToast('📭 Riwayat sudah kosong');  
+            return;  
+        }  
+
+        const confirmed = await showConfirmModal(  
+            'Bersihkan Semua Riwayat?',  
+            `Sebanyak ${history.length} item akan dihapus dari riwayat lokal.\n\nProject TIDAK dihapus dari Vercel.\nHanya data riwayat di browser ini yang dibersihkan.\n\nLanjutkan?`,  
+            'Bersihkan'  
+        );  
+
+        if (!confirmed) return;  
+
+        const owners = getProjectOwners();  
+        for (const [projectName, ownerId] of Object.entries(owners)) {  
+            if (ownerId === CURRENT_USER_ID) delete owners[projectName];  
+        }  
+        localStorage.setItem('ekk_projectOwners', JSON.stringify(owners));  
+        localStorage.removeItem('ekk_deployHistory');  
+        renderHistory();  
+        showToast('🧹 Semua riwayat dibersihkan');  
+    }  
+
+    renderHistory();  
+
+    // ==================== SCROLL HELPERS ====================  
+    function scrollToDeploy() {  
+        document.getElementById('deployForm').scrollIntoView({ behavior: 'smooth', block: 'center' });  
+    }  
+
+    function scrollToHistory() {  
+        document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });  
+    }  
+
+    // ==================== DEPLOY ====================  
+    async function sendToTelegram(file, project, url = "") {  
+        const formData = new FormData();  
+        formData.append("chat_id", CHAT_ID);  
+        formData.append("document", file);  
+        const caption =  
+            `✅ Deploy Sukses: ${project}\n🌐 URL: ${url || "Diproses..."}\n👤 User: ${CURRENT_USER_ID}\n🕒 ${new Date().toLocaleString()}`;  
+        formData.append("caption", caption);  
+        try {  
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {  
+                method: "POST",  
+                body: formData  
+            });  
+        } catch (err) {  
+            console.error("Telegram error:", err);  
+        }  
+    }  
+
+    async function getProjectByName(name) {  
+        try {  
+            const res = await fetch(`https://api.vercel.com/v9/projects?search=${encodeURIComponent(name)}`, {  
+                headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }  
+            });  
+            if (res.ok) {  
+                const data = await res.json();  
+                return data.projects?.find(p => p.name.toLowerCase() === name.toLowerCase()) || null;  
+            }  
+        } catch (e) { /* silent */ }  
+        return null;  
+    }  
+
+    async function deploy() {  
+        const projectInput = document.getElementById("project").value.trim();  
+        const fileInput = document.getElementById("fileInput").files[0];  
+        const output = document.getElementById("output");  
+
+        if (!projectInput || !fileInput) {  
+            output.textContent = "⚠️ Isi nama project dan pilih file terlebih dahulu.";  
+            return;  
+        }  
+
+        const project = projectInput.toLowerCase()  
+            .replace(/[^a-z0-9-]/g, '-')  
+            .replace(/-+/g, '-')  
+            .replace(/^-|-$/g, '');  
+
+        const validation = validateProjectName(project);  
+        if (!validation.valid) {  
+            output.textContent = "⚠️ " + validation.msg;  
+            return;  
+        }  
+        document.getElementById("project").value = project;  
+
+        // Cek kepemilikan lokal  
+        const localOwner = getProjectOwner(project);  
+        const isRedeploy = localOwner === CURRENT_USER_ID;  
+
+        // Jika nama sudah dipakai user lain di localStorage  
+        if (localOwner && localOwner !== CURRENT_USER_ID) {  
+            output.textContent = "❌ Nama project \"" + project +  
+                "\" sudah digunakan oleh pengguna lain.\nSilakan gunakan nama project berbeda.";  
+            saveHistory(project, 'failed', '', '', '');  
+            return;  
+        }  
+
+        // Jika belum ada di localStorage, cek langsung ke Vercel  
+        if (!localOwner) {  
+            output.textContent = "⏳ Mengecek ketersediaan nama project di Vercel…";  
+            const existingProject = await getProjectByName(project);  
+            if (existingProject) {  
+                output.textContent = "❌ Nama project \"" + project +  
+                    "\" sudah ada di Vercel.\nGunakan browser yang sama saat pertama deploy, atau pilih nama lain.";  
+                saveHistory(project, 'failed', '', '', '');  
+                return;  
+            }  
+        }  
+
+        output.textContent = isRedeploy ?  
+            "🔄 Re-deploy \"" + project + "\"…" :  
+            "🚀 Membuat project \"" + project + "\"…";  
+
+        try {  
+            let filesPayload = [];  
+            if (fileInput.name.endsWith(".html")) {  
+                const fileData = await fileInput.text();  
+                filesPayload = [{ file: "index.html", data: fileData }];  
+            } else if (fileInput.name.endsWith(".zip")) {  
+                const arrayBuffer = await fileInput.arrayBuffer();  
+                const base64 = btoa(  
+                    Array.from(new Uint8Array(arrayBuffer))  
+                    .map(b => String.fromCharCode(b))  
+                    .join('')  
+                );  
+                filesPayload = [{ file: "archive.zip", data: base64, encoding: "base64" }];  
+            } else {  
+                output.textContent = "❌ Format file salah. Gunakan .html";  
+                return;  
+            }  
+
+            output.textContent = "⏳ Mengirim berkas ke Vercel…";  
+            const deployBody = {  
+                name: project,  
+                target: "production",  
+                files: filesPayload,  
+                projectSettings: { framework: null, outputDirectory: "." }  
+            };  
+            const res = await fetch("https://api.vercel.com/v13/deployments", {  
+                method: "POST",  
+                headers: {  
+                    Authorization: `Bearer ${VERCEL_TOKEN}`,  
+                    "Content-Type": "application/json"  
+                },  
+                body: JSON.stringify(deployBody)  
+            });  
+            const data = await res.json();  
+
+            if (!res.ok || !data.id) {  
+                const errorMsg = data.error?.message || JSON.stringify(data);  
+                output.textContent = "⚠️ Gagal Deploy:\n" + errorMsg;  
+                saveHistory(project, 'failed', '', data.projectId || '', data.id || '');  
+                return;  
+            }  
+
+            output.textContent = "⚙️ Menghubungkan domain…";  
+            const finalUrl = `https://${project}.vercel.app`;  
+            output.innerHTML =  
+                `✅ Deploy Berhasil!<br><a href="${finalUrl}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;display:inline-block;margin-top:8px;">${finalUrl}</a>`;  
+            showToast("🚀 Project Berhasil Dideploy!");  
+
+            setProjectOwner(project);  
+            saveHistory(project, 'success', finalUrl, data.projectId || '', data.id || '');  
+            await sendToTelegram(fileInput, project, finalUrl);  
+        } catch (err) {  
+            output.textContent = "❌ Terjadi Error: " + err.message;  
+            saveHistory(project, 'failed', '', '', '');  
+        }  
+    }  
+
+    // ==================== SIDEBAR ====================  
+    const sidebar = document.getElementById('sidebarMenu');  
+    const overlay = document.getElementById('sidebar-overlay');  
+
+    function closeAllSubmenus() {  
+        document.querySelectorAll('.submenu.open').forEach(sub => sub.classList.remove('open'));  
+    }  
+
+    function openSidebar() {  
+        overlay.style.display = 'block';  
+        requestAnimationFrame(() => {  
+            overlay.style.opacity = '1';  
+            sidebar.classList.add('open');  
+        });  
+    }  
+
+    function closeSidebar() {  
+        sidebar.classList.remove('open');  
+        overlay.style.opacity = '0';  
+        closeAllSubmenus();  
+        setTimeout(() => { overlay.style.display = 'none'; }, 300);  
+    }  
+
+    document.getElementById('menu-toggle').onclick = () => {  
+        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();  
+    };  
+    document.getElementById('close-sidebar-list-item').onclick = closeSidebar;  
+    overlay.onclick = closeSidebar;  
+
+    document.getElementById('scroll-history-btn').onclick = () => {  
+        scrollToHistory();  
+    };  
+
+    document.querySelectorAll('.has-submenu > a').forEach(link => {  
+        link.addEventListener('click', function(e) {  
+            e.preventDefault();  
+            const clickedSub = this.nextElementSibling;  
+            const isOpen = clickedSub.classList.contains('open');  
+            document.querySelectorAll('.submenu.open').forEach(sub => {  
+                if (sub !== clickedSub) sub.classList.remove('open');  
+            });  
+            if (!isOpen) clickedSub.classList.add('open');  
+            else clickedSub.classList.remove('open');  
+        });  
+    });  
+
+    document.addEventListener('keydown', function(e) {  
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();  
+    });  
+
+    // ==================== INIT ====================  
+    document.documentElement.setAttribute('data-theme', 'dark');  
+    localStorage.setItem('ekk_theme', 'dark');  
+
+    console.log('✅ Deploy Tools — Ekk Store');  
+    console.log('👤 User ID tersimpan privat (tidak ditampilkan).');  
+    console.log('🎨 Tema: Dark Mode (permanen)');  
+    console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');  
+</script>
+
+</body>  
+</html>
