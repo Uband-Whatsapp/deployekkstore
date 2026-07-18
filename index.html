@@ -1061,27 +1061,28 @@ draggable="false">
         badge.title = 'User ID tersimpan privat';  
     }  
 
-    // ==================== PROJECT OWNERSHIP ====================  
-    function getProjectOwners() {  
-        try { return JSON.parse(localStorage.getItem('ekk_projectOwners')) || {}; } catch (e) { return {}; }  
-    }  
+    async function getProjectOwner(projectName) {
+    try {
+        const res = await fetch(`/api/owner?project=${encodeURIComponent(projectName)}`);
+        const data = await res.json();
+        return data.ownerId || null;
+    } catch (e) {
+        return null;
+    }
+}
 
-    function setProjectOwner(projectName) {  
-        const owners = getProjectOwners();  
-        owners[projectName.toLowerCase()] = CURRENT_USER_ID;  
-        localStorage.setItem('ekk_projectOwners', JSON.stringify(owners));  
-    }  
-
-    function removeProjectOwner(projectName) {  
-        const owners = getProjectOwners();  
-        delete owners[projectName.toLowerCase()];  
-        localStorage.setItem('ekk_projectOwners', JSON.stringify(owners));  
-    }  
-
-    function getProjectOwner(projectName) {  
-        const owners = getProjectOwners();  
-        return owners[projectName.toLowerCase()] || null;  
-    }  
+async function setProjectOwner(projectName) {
+    await fetch("/api/owner", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            project: projectName,
+            ownerId: CURRENT_USER_ID
+        })
+    });
+}
 
     // ==================== VALIDASI NAMA PROJECT ====================  
     function validateProjectName(name) {  
@@ -1317,7 +1318,7 @@ draggable="false">
         document.getElementById("project").value = project;  
 
         // Cek kepemilikan lokal  
-        const localOwner = getProjectOwner(project);  
+        const localOwner = await getProjectOwner(project);  
         const isRedeploy = localOwner === CURRENT_USER_ID;  
 
         // Jika nama sudah dipakai user lain di localStorage  
@@ -1392,7 +1393,7 @@ draggable="false">
                 `✅ Deploy Berhasil!<br><a href="${finalUrl}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;display:inline-block;margin-top:8px;">${finalUrl}</a>`;  
             showToast("🚀 Project Berhasil Dideploy!");  
 
-            setProjectOwner(project);  
+await setProjectOwner(project);
             saveHistory(project, 'success', finalUrl, data.projectId || '', data.id || '');  
             await sendToTelegram(fileInput, project, finalUrl);  
         } catch (err) {  
