@@ -1,10 +1,10 @@
 const admin = require("firebase-admin");
 
 if (!admin.apps.length) {
-  const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
   admin.initializeApp({
-    credential: admin.credential.cert(key)
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    )
   });
 }
 
@@ -13,14 +13,11 @@ const db = admin.firestore();
 module.exports = async (req, res) => {
   try {
 
-    // GET cek owner
     if (req.method === "GET") {
-      const project = req.query.project;
+      const { project } = req.query;
 
       if (!project) {
-        return res.status(400).json({
-          error: "project required"
-        });
+        return res.json({});
       }
 
       const doc = await db.collection("projects").doc(project).get();
@@ -32,20 +29,18 @@ module.exports = async (req, res) => {
       return res.json(doc.data());
     }
 
-
-    // POST simpan owner
     if (req.method === "POST") {
-      const { project, ownerId, url } = req.body;
+      const { project, ownerId, url = "" } = req.body;
 
       if (!project || !ownerId) {
         return res.status(400).json({
-          error: "missing data"
+          error: "Missing project or ownerId"
         });
       }
 
       await db.collection("projects").doc(project).set({
         ownerId,
-        url: url || ""
+        url
       });
 
       return res.json({
@@ -53,13 +48,30 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (req.method === "DELETE") {
+      const { project } = req.body;
 
-    res.status(405).json({
-      error: "method not allowed"
+      if (!project) {
+        return res.status(400).json({
+          error: "Missing project"
+        });
+      }
+
+      await db.collection("projects").doc(project).delete();
+
+      return res.json({
+        success: true
+      });
+    }
+
+    return res.status(405).json({
+      error: "Method Not Allowed"
     });
 
   } catch (err) {
-    res.status(500).json({
+    console.error(err);
+
+    return res.status(500).json({
       error: err.message
     });
   }
