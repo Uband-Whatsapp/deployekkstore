@@ -1083,7 +1083,19 @@ async function setProjectOwner(projectName) {
         })
     });
 }
+async function removeProjectOwner(projectName) {
 
+    await fetch("/api/owner", {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            project: projectName
+        })
+    });
+
+}
     // ==================== VALIDASI NAMA PROJECT ====================  
     function validateProjectName(name) {  
         if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };  
@@ -1243,11 +1255,7 @@ async function setProjectOwner(projectName) {
 
         if (!confirmed) return;  
 
-        const owners = getProjectOwners();  
-        for (const [projectName, ownerId] of Object.entries(owners)) {  
-            if (ownerId === CURRENT_USER_ID) delete owners[projectName];  
-        }  
-        localStorage.setItem('ekk_projectOwners', JSON.stringify(owners));  
+       
         localStorage.removeItem('ekk_deployHistory');  
         renderHistory();  
         showToast('🧹 Semua riwayat dibersihkan');  
