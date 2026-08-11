@@ -45,16 +45,16 @@
         }
 
         body {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    min-height: 100vh;
-    color: var(--text);
-    line-height: 1.5;
-    padding: 0;
-    overflow-x: hidden;
-}
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.5;
+            padding: 0;
+            overflow-x: hidden;
+        }
 
-        /* Background decor (dipertahankan, tapi warnanya disesuaikan) */
+        /* Background decor */
         .bg-decor {
             position: fixed;
             inset: 0;
@@ -92,10 +92,19 @@
             animation: orbFloat 20s ease-in-out infinite 5s;
         }
         @keyframes orbFloat {
-            0%, 100% { transform: translate(0,0) scale(1); }
-            25% { transform: translate(34px, -28px) scale(1.07); }
-            50% { transform: translate(-18px, 22px) scale(0.93); }
-            75% { transform: translate(-30px, -12px) scale(1.05); }
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(34px, -28px) scale(1.07);
+            }
+            50% {
+                transform: translate(-18px, 22px) scale(0.93);
+            }
+            75% {
+                transform: translate(-30px, -12px) scale(1.05);
+            }
         }
         .bg-dots {
             position: fixed;
@@ -113,7 +122,7 @@
             z-index: 1;
             width: 100%;
             max-width: 420px;
-            
+
         }
         .gate-card {
             background: var(--surface);
@@ -128,12 +137,18 @@
             transition: box-shadow var(--transition-slow), border-color var(--transition-slow);
         }
         .gate-card:hover {
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 6px 16px rgba(0,0,0,0.3);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.3);
             border-color: #3a3a3a;
         }
         @keyframes cardEntry {
-            from { opacity: 0; transform: translateY(30px) scale(0.965); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.965);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
         .gate-card::before {
             content: '';
@@ -220,8 +235,15 @@
             animation: ringPulse 2.6s ease-in-out infinite;
         }
         @keyframes ringPulse {
-            0%, 100% { transform: scale(1); opacity: 0.35; }
-            50% { transform: scale(1.28); opacity: 0; }
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.35;
+            }
+            50% {
+                transform: scale(1.28);
+                opacity: 0;
+            }
         }
         .logo-circle {
             width: 56px;
@@ -304,7 +326,7 @@
             background: #25d366;
             color: #fff;
             box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             font-weight: 600;
         }
         .btn-primary:hover:not(:disabled) {
@@ -363,8 +385,14 @@
             line-height: 1.4;
         }
         @keyframes msgIn {
-            from { opacity: 0; transform: translateY(7px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(7px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .verify-message.loading {
             background: #0f1a2e;
@@ -401,7 +429,9 @@
             flex-shrink: 0;
         }
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* ── Footer ── */
@@ -787,6 +817,56 @@
         .send-btn:active {
             transform: translateY(0);
             box-shadow: 0 3px 15px rgba(255, 107, 53, 0.35);
+        }
+
+        /* ── TOMBOL GRUB JB TERBUKA ── */
+        .btn-grub {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 0px;
+            transition: all 0.3s ease;
+            letter-spacing: -0.01em;
+            box-shadow: 0 6px 28px rgba(37, 211, 102, 0.4);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn-grub::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-grub:hover {
+            background: linear-gradient(135deg, #2dd466 0%, #1a9e7a 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(37, 211, 102, 0.55);
+        }
+        .btn-grub:hover::before {
+            left: 100%;
+        }
+        .btn-grub:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 15px rgba(37, 211, 102, 0.35);
+        }
+        .btn-grub i {
+            font-size: 18px;
         }
 
         #output {
@@ -1282,16 +1362,16 @@
         .submenu .fa-telegram-plane {
             color: #229ED9;
         }
-.follow-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-}
-#websiteContent {
-    transition: opacity 0.5s ease;
-}
+        .follow-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #websiteContent {
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 <body>
@@ -1305,238 +1385,240 @@
 
     <!-- Card Verifikasi Follow -->
     <div class="follow-page">
-    <div class="gate-wrapper" id="gateWrapper">
-        <div class="gate-card" id="gateCard">
-            <!-- Step Indicator -->
-            <div class="steps" id="stepIndicator">
-                <div class="step-dot active" id="stepDot1"></div>
-                <div class="step-line" id="stepLine1"></div>
-                <div class="step-dot" id="stepDot2"></div>
-                <div class="step-line" id="stepLine2"></div>
-                <div class="step-dot" id="stepDot3"></div>
-            </div>
-            <div class="step-label-row">
-                <span class="step-label active" id="stepLabel1">Follow</span>
-                <span class="step-label" id="stepLabel2">Konfirmasi</span>
-                <span class="step-label" id="stepLabel3">Selesai</span>
-            </div>
+        <div class="gate-wrapper" id="gateWrapper">
+            <div class="gate-card" id="gateCard">
+                <!-- Step Indicator -->
+                <div class="steps" id="stepIndicator">
+                    <div class="step-dot active" id="stepDot1"></div>
+                    <div class="step-line" id="stepLine1"></div>
+                    <div class="step-dot" id="stepDot2"></div>
+                    <div class="step-line" id="stepLine2"></div>
+                    <div class="step-dot" id="stepDot3"></div>
+                </div>
+                <div class="step-label-row">
+                    <span class="step-label active" id="stepLabel1">Follow</span>
+                    <span class="step-label" id="stepLabel2">Konfirmasi</span>
+                    <span class="step-label" id="stepLabel3">Selesai</span>
+                </div>
 
-            <!-- Logo -->
-            <div class="logo-wrap">
-                <div class="logo-ring" aria-hidden="true"></div>
-                <div class="logo-circle">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                <!-- Logo -->
+                <div class="logo-wrap">
+                    <div class="logo-ring" aria-hidden="true"></div>
+                    <div class="logo-circle">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Headline -->
+                <h2 class="gate-headline">Verifikasi Follow</h2>
+
+                <!-- Subtitle -->
+                <p class="gate-subtitle">
+                    Untuk melanjutkan ke website, silakan ikuti saluran WhatsApp terlebih dahulu. Klik <span class="highlight">Buka Saluran WhatsApp</span>, pilih <span class="highlight">Buka di WhatsApp</span>, lalu tekan <span class="highlight">Ikuti</span>. Setelah itu, kembali ke halaman ini. Sistem akan otomatis memverifikasi status mengikuti Anda. Jika verifikasi berhasil, akses ke website akan dibuka secara otomatis.
+                </p>
+
+                <!-- Tombol Follow -->
+                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="btnFollowWA" aria-label="Buka saluran WhatsApp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
                     </svg>
-                </div>
-            </div>
+                    Buka Saluran WhatsApp
+                </a>
 
-            <!-- Headline -->
-            <h2 class="gate-headline">Verifikasi Follow</h2>
-
-            <!-- Subtitle -->
-            <p class="gate-subtitle">
-                Untuk melanjutkan ke website, silakan ikuti saluran WhatsApp terlebih dahulu. Klik <span class="highlight">Buka Saluran WhatsApp</span>, pilih <span class="highlight">Buka di WhatsApp</span>, lalu tekan <span class="highlight">Ikuti</span>. Setelah itu, kembali ke halaman ini. Sistem akan otomatis memverifikasi status mengikuti Anda. Jika verifikasi berhasil, akses ke website akan dibuka secara otomatis.
-            </p>
-
-            <!-- Tombol Follow -->
-            <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="btnFollowWA" aria-label="Buka saluran WhatsApp">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-                </svg>
-                Buka Saluran WhatsApp
-            </a>
-
-            <!-- Tombol Konfirmasi -->
-            <button class="btn btn-confirm" id="btnConfirm" disabled>
-                Saya Sudah Follow
-            </button>
-
-            <!-- Area Pesan Verifikasi -->
-            <div class="verify-message" id="verifyMessageBox">
-                <span class="msg-icon" id="verifyIcon"></span>
-                <span id="verifyText"></span>
-            </div>
-
-            <!-- Footer -->
-            <div class="gate-footer">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                Verifikasi diperlukan untuk mengakses konten
-            </div>
-        </div>
-    </div>
-
-    <!-- KONTEN WEBSITE UTAMA (awalnya tersembunyi) -->
-    <div id="websiteContent" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
-        <!-- OVERLAY SIDEBAR -->
-        <div id="sidebar-overlay"></div>
-
-        <!-- MODAL KONFIRMASI (CUSTOM) -->
-        <div class="modal-overlay" id="confirmModalOverlay">
-            <div class="modal-box">
-                <div class="modal-icon">⚠️</div>
-                <h4 id="modalTitle">Konfirmasi Hapus</h4>
-                <p id="modalMessage">Apakah Anda yakin ingin melanjutkan?</p>
-                <div class="modal-actions">
-                    <button class="modal-btn cancel" id="modalCancelBtn">Batal</button>
-                    <button class="modal-btn confirm" id="modalConfirmBtn">Hapus</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TOP BAR -->
-        <div id="top-bar-container">
-            <div id="top-controls">
-                <div class="status-indicator">
-                    <span class="status-circle"></span> Vercel Ready
-                </div>
-                <button id="scroll-history-btn" class="control-btn" title="Lihat Riwayat Deploy">
-                    <i class="fas fa-history"></i>
+                <!-- Tombol Konfirmasi -->
+                <button class="btn btn-confirm" id="btnConfirm" disabled>
+                    Saya Sudah Follow
                 </button>
-                <button id="menu-toggle" class="control-btn" title="Menu Navigasi">
-                    <i class="fas fa-bars"></i>
-                </button>
+
+                <!-- Area Pesan Verifikasi -->
+                <div class="verify-message" id="verifyMessageBox">
+                    <span class="msg-icon" id="verifyIcon"></span>
+                    <span id="verifyText"></span>
+                </div>
+
+                <!-- Footer -->
+                <div class="gate-footer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Verifikasi diperlukan untuk mengakses konten
+                </div>
             </div>
         </div>
 
-        <!-- SIDEBAR MENU (dengan profil Ekk Store) -->
-        <nav class="sidebar" id="sidebarMenu">
-            <!-- Foto & Nama Owner -->
-            <div class="sidebar-header">
-                <div class="sidebar-profile">
-                    <img
-                        src="https://files.catbox.moe/kzg0nc.png"
-                        alt="Ekk Store"
-                        class="profile-img"
-                        loading="eager"
-                        decoding="sync"
-                        fetchpriority="high"
-                        draggable="false">
-                    <div class="profile-text">
-                        <span class="profile-name">Ekk Store</span>
-                        <span class="profile-badge">👑 Owner</span>
+        <!-- KONTEN WEBSITE UTAMA (awalnya tersembunyi) -->
+        <div id="websiteContent" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
+            <!-- OVERLAY SIDEBAR -->
+            <div id="sidebar-overlay"></div>
+
+            <!-- MODAL KONFIRMASI (CUSTOM) -->
+            <div class="modal-overlay" id="confirmModalOverlay">
+                <div class="modal-box">
+                    <div class="modal-icon">⚠️</div>
+                    <h4 id="modalTitle">Konfirmasi Hapus</h4>
+                    <p id="modalMessage">Apakah Anda yakin ingin melanjutkan?</p>
+                    <div class="modal-actions">
+                        <button class="modal-btn cancel" id="modalCancelBtn">Batal</button>
+                        <button class="modal-btn confirm" id="modalConfirmBtn">Hapus</button>
                     </div>
                 </div>
             </div>
 
-            <ul>
-                <li class="has-submenu">
-                    <a href="javascript:void(0)">
-                        <i class="fa-solid fa-headset"></i>
-                        Contact Ekk Store
-                        <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li>
-                            <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp 1
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp 2
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp 3
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://t.me/XzzEkk" target="_blank" rel="noopener">
-                                <i class="fab fa-telegram-plane"></i>
-                                Telegram
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="has-submenu">
-                    <a href="javascript:void(0)">
-                        <i class="fa-solid fa-newspaper"></i>
-                        Info Website Free
-                        <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li>
-                            <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp Channel
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://t.me/EkkStore_Testi" target="_blank" rel="noopener">
-                                <i class="fab fa-telegram-plane"></i>
-                                Telegram Channel
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="has-submenu">
-                    <a href="javascript:void(0)">
-                        <i class="fa-solid fa-code"></i>
-                        Jasa Pembuatan Website
-                        <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:9px;width:auto;margin-right:0;opacity:.7;"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li>
-                            <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp 1
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp 2
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">
-                                <i class="fab fa-whatsapp"></i>
-                                WhatsApp 3
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://t.me/DsEkkStore" target="_blank" rel="noopener">
-                                <i class="fab fa-telegram-plane"></i>
-                                Telegram
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li id="close-sidebar-list-item">
-                    <a href="javascript:void(0)"><i class="fas fa-times"></i> Tutup Menu</a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- MAIN CONTENT -->
-        <div class="app-wrap" id="mainContent">
-            <div class="header-box" id="headerBox">
-                <h1>Deploy Tools</h1>
-                <p>Serverless Deployment · Ekk Store</p>
+            <!-- TOP BAR -->
+            <div id="top-bar-container">
+                <div id="top-controls">
+                    <div class="status-indicator">
+                        <span class="status-circle"></span> Vercel Ready
+                    </div>
+                    <button id="scroll-history-btn" class="control-btn" title="Lihat Riwayat Deploy">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button id="menu-toggle" class="control-btn" title="Menu Navigasi">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="form" id="deployForm">
-                <div class="form-group">
-                    <label for="project">Nama Project</label>
-                    <input type="text" id="project" placeholder="contoh: website-ekkstore" class="input" autocomplete="off">
+            <!-- SIDEBAR MENU (dengan profil Ekk Store) -->
+            <nav class="sidebar" id="sidebarMenu">
+                <!-- Foto & Nama Owner -->
+                <div class="sidebar-header">
+                    <div class="sidebar-profile">
+                        <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
+                        <div class="profile-text">
+                            <span class="profile-name">Ekk Store</span>
+                            <span class="profile-badge">👑 Owner</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="fileInput">Upload File (HTML</label>
-                    <input type="file" id="fileInput" accept=".html,.zip" class="input">
+                <ul>
+                    <li class="has-submenu">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-headset"></i>
+                            Contact Ekk Store
+                            <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li>
+                                <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp 1
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp 2
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp 3
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://t.me/XzzEkk" target="_blank" rel="noopener">
+                                    <i class="fab fa-telegram-plane"></i>
+                                    Telegram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="has-submenu">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-newspaper"></i>
+                            Info Website Free
+                            <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li>
+                                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp Channel
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://t.me/EkkStore_Testi" target="_blank" rel="noopener">
+                                    <i class="fab fa-telegram-plane"></i>
+                                    Telegram Channel
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="has-submenu">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-code"></i>
+                            Jasa Pembuatan Website
+                            <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:9px;width:auto;margin-right:0;opacity:.7;"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li>
+                                <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp 1
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp 2
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp 3
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://t.me/DsEkkStore" target="_blank" rel="noopener">
+                                    <i class="fab fa-telegram-plane"></i>
+                                    Telegram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li id="close-sidebar-list-item">
+                        <a href="javascript:void(0)"><i class="fas fa-times"></i> Tutup Menu</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- MAIN CONTENT -->
+            <div class="app-wrap" id="mainContent">
+                <div class="header-box" id="headerBox">
+                    <h1>Deploy Tools</h1>
+                    <p>Serverless Deployment · Ekk Store</p>
                 </div>
 
-                <button onclick="deploy()" class="send-btn">
-                    <i class="fas fa-rocket"></i> Deploy Sekarang
-                </button>
+                <div class="form" id="deployForm">
+                    <div class="form-group">
+                        <label for="project">Nama Project</label>
+                        <input type="text" id="project" placeholder="contoh: website-ekkstore" class="input" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fileInput">Upload File (HTML</label>
+                        <input type="file" id="fileInput" accept=".html,.zip" class="input">
+                    </div>
+
+                    <button onclick="deploy()" class="send-btn">
+                        <i class="fas fa-rocket"></i> Deploy Sekarang
+                    </button>
+
+                    <!-- ─── TOMBOL GRUB JB TERBUKA ─── -->
+                    <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-grub"
+                    title="Gabung ke grup WhatsApp">
+                    <i class="fab fa-whatsapp"></i> Grub Jb Terbuka 24 Jam
+                </a>
 
                 <div id="output">Status: Menunggu file & nama project…</div>
             </div>
@@ -1611,34 +1693,34 @@
                 }));
             }
 
-          function showWebsite() {
-    // Sembunyikan elemen gate dan background decor
-    if (gateWrapper) gateWrapper.style.display = 'none';
-    if (bgDecor) bgDecor.style.display = 'none';
-    if (bgDots) bgDots.style.display = 'none';
+            function showWebsite() {
+                // Sembunyikan elemen gate dan background decor
+                if (gateWrapper) gateWrapper.style.display = 'none';
+                if (bgDecor) bgDecor.style.display = 'none';
+                if (bgDots) bgDots.style.display = 'none';
 
-    // Perbaiki parent .follow-page agar tidak mengganggu
-    const followPage = document.querySelector('.follow-page');
-    if (followPage) {
-        followPage.style.display = 'block';
-        followPage.style.minHeight = 'auto';
-        followPage.style.padding = '0';
-        followPage.style.alignItems = 'normal';
-        followPage.style.justifyContent = 'normal';
-    }
+                // Perbaiki parent .follow-page agar tidak mengganggu
+                const followPage = document.querySelector('.follow-page');
+                if (followPage) {
+                    followPage.style.display = 'block';
+                    followPage.style.minHeight = 'auto';
+                    followPage.style.padding = '0';
+                    followPage.style.alignItems = 'normal';
+                    followPage.style.justifyContent = 'normal';
+                }
 
-    // Kembalikan body ke normal
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.width = '';
+                // Kembalikan body ke normal
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
 
-    // Tampilkan konten website utama
-    websiteContent.style.display = 'block';   // pastikan block
-    websiteContent.style.visibility = 'visible';
-    // Trigger reflow agar transisi opacity berjalan
-    void websiteContent.offsetWidth;
-    websiteContent.style.opacity = '1';
-}
+                // Tampilkan konten website utama
+                websiteContent.style.display = 'block'; // pastikan block
+                websiteContent.style.visibility = 'visible';
+                // Trigger reflow agar transisi opacity berjalan
+                void websiteContent.offsetWidth;
+                websiteContent.style.opacity = '1';
+            }
 
             function removeGateUI() {
                 if (gateRemoved) return;
@@ -1739,20 +1821,20 @@
 
                 setTimeout(() => {
                     if (followClickCount >= 2) {
-    showVerificationMessage('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan ke halaman berikutnya...');
-    updateStepIndicator(3);
-    btnConfirm.style.display = 'none';
-    setPassed();
-    // 👇 Tampilkan website langsung
-    showWebsite();
-    // Sembunyikan gate dan background decor
-    if (gateWrapper) gateWrapper.style.display = 'none';
-    if (bgDecor) bgDecor.style.display = 'none';
-    if (bgDots) bgDots.style.display = 'none';
-    isVerifying = false;
-    // Hentikan eksekusi agar tidak lanjut ke bagian error
-    return;
-} else if (confirmAttempts === 1) {
+                        showVerificationMessage('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan ke halaman berikutnya...');
+                        updateStepIndicator(3);
+                        btnConfirm.style.display = 'none';
+                        setPassed();
+                        // 👇 Tampilkan website langsung
+                        showWebsite();
+                        // Sembunyikan gate dan background decor
+                        if (gateWrapper) gateWrapper.style.display = 'none';
+                        if (bgDecor) bgDecor.style.display = 'none';
+                        if (bgDots) bgDots.style.display = 'none';
+                        isVerifying = false;
+                        // Hentikan eksekusi agar tidak lanjut ke bagian error
+                        return;
+                    } else if (confirmAttempts === 1) {
                         showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Kami belum dapat mendeteksi bahwa kamu telah mengikuti saluran WhatsApp. Silakan buka kembali saluran melalui tombol <b>Buka Saluran WhatsApp</b>, pastikan kamu menekan tombol <b>Ikuti</b>, kemudian kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
                         btnConfirm.disabled = false;
                         btnConfirm.classList.add('active');
@@ -1772,12 +1854,12 @@
 
             let waitingForWhatsApp = false;
 
-            btnFollowWA.addEventListener('click', function () {
+            btnFollowWA.addEventListener('click', function() {
                 waitingForWhatsApp = true;
                 followClickCount++;
             });
 
-            document.addEventListener("visibilitychange", function () {
+            document.addEventListener("visibilitychange", function() {
                 if (document.hidden && waitingForWhatsApp) {
                     waitingForWhatsApp = false;
                     if (!hasClickedFollowOnce) {
@@ -1801,21 +1883,21 @@
             });
 
             function init() {
-    if (isAlreadyPassed()) {
-        showWebsite(); // langsung tampilkan website
-        return;
-    }
-    // Jika belum lolos, tampilkan gate
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    hideVerificationMessage();
-    resetConfirmButton();
-    updateStepIndicator(0);
-    stepDot1.classList.add('active');
-    stepLabel1.classList.add('active');
-}
-   init();
+                if (isAlreadyPassed()) {
+                    showWebsite(); // langsung tampilkan website
+                    return;
+                }
+                // Jika belum lolos, tampilkan gate
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                hideVerificationMessage();
+                resetConfirmButton();
+                updateStepIndicator(0);
+                stepDot1.classList.add('active');
+                stepLabel1.classList.add('active');
+            }
+            init();
         })();
     </script>
 
@@ -1914,7 +1996,9 @@
                 }
 
                 function onCancel() { cleanup(false); }
+
                 function onConfirm() { cleanup(true); }
+
                 function onKey(e) {
                     if (e.key === 'Escape') cleanup(false);
                     if (e.key === 'Enter') cleanup(true);
@@ -1926,14 +2010,15 @@
                 setTimeout(() => cancelBtn.focus(), 100);
             });
         }
-// ᴇᴋᴋ sᴛᴏʀᴇ - 2026 
+        // ᴇᴋᴋ sᴛᴏʀᴇ - 2026 
         function saveHistory(project, status, url, projectId, deploymentId) {
             const now = new Date();
             const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
             const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
             let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
             history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
-            history.unshift({ project, status, date, time, url: url || '', projectId: projectId || '', deploymentId: deploymentId || '', ownerId: CURRENT_USER_ID });
+            history.unshift({ project, status, date, time, url: url || '', projectId: projectId || '', deploymentId: deploymentId || '',
+                ownerId: CURRENT_USER_ID });
             if (history.length > 20) history.pop();
             localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
             renderHistory();
@@ -2163,7 +2248,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
         });
-// ᴇᴋᴋ sᴛᴏʀᴇ - 2026 20 ᴊᴜʟɪ 
+        // ᴇᴋᴋ sᴛᴏʀᴇ - 2026 20 ᴊᴜʟɪ 
         document.documentElement.setAttribute('data-theme', 'dark');
         localStorage.setItem('ekk_theme', 'dark');
         console.log('✅ Deploy Tools — Ekk Store');
@@ -2172,4 +2257,4 @@
         console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
     </script>
 </body>
-    </html>
+</html>
