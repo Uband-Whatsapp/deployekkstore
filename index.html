@@ -1611,21 +1611,34 @@
                 }));
             }
 
-            function showWebsite() {
-                // Sembunyikan elemen gate dan background decor
-                if (gateWrapper) gateWrapper.style.display = 'none';
-                if (bgDecor) bgDecor.style.display = 'none';
-                if (bgDots) bgDots.style.display = 'none';
-                // Kembalikan body agar bisa di-scroll
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.width = '';
-                // Tampilkan konten website utama dengan transisi opacity
-                websiteContent.style.display = '';
-                // Trigger reflow untuk transisi
-                void websiteContent.offsetWidth;
-                websiteContent.style.opacity = '1';
-            }
+          function showWebsite() {
+    // Sembunyikan elemen gate dan background decor
+    if (gateWrapper) gateWrapper.style.display = 'none';
+    if (bgDecor) bgDecor.style.display = 'none';
+    if (bgDots) bgDots.style.display = 'none';
+
+    // Perbaiki parent .follow-page agar tidak mengganggu
+    const followPage = document.querySelector('.follow-page');
+    if (followPage) {
+        followPage.style.display = 'block';
+        followPage.style.minHeight = 'auto';
+        followPage.style.padding = '0';
+        followPage.style.alignItems = 'normal';
+        followPage.style.justifyContent = 'normal';
+    }
+
+    // Kembalikan body ke normal
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+
+    // Tampilkan konten website utama
+    websiteContent.style.display = 'block';   // pastikan block
+    websiteContent.style.visibility = 'visible';
+    // Trigger reflow agar transisi opacity berjalan
+    void websiteContent.offsetWidth;
+    websiteContent.style.opacity = '1';
+}
 
             function removeGateUI() {
                 if (gateRemoved) return;
@@ -1783,29 +1796,21 @@
             });
 
             function init() {
-                if (isAlreadyPassed()) {
-                    // Langsung tampilkan website utama, lewati gate
-                    if (gateWrapper) gateWrapper.style.display = 'none';
-                    if (bgDecor) bgDecor.style.display = 'none';
-                    if (bgDots) bgDots.style.display = 'none';
-                    document.body.style.overflow = '';
-                    document.body.style.position = '';
-                    document.body.style.width = '';
-                    websiteContent.style.display = '';
-                    websiteContent.style.opacity = '1';
-                    return;
-                }
-                document.body.style.overflow = 'hidden';
-                document.body.style.position = 'fixed';
-                document.body.style.width = '100%';
-                hideVerificationMessage();
-                resetConfirmButton();
-                updateStepIndicator(0);
-                stepDot1.classList.add('active');
-                stepLabel1.classList.add('active');
-            }
-
-            init();
+    if (isAlreadyPassed()) {
+        showWebsite(); // langsung tampilkan website
+        return;
+    }
+    // Jika belum lolos, tampilkan gate
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    hideVerificationMessage();
+    resetConfirmButton();
+    updateStepIndicator(0);
+    stepDot1.classList.add('active');
+    stepLabel1.classList.add('active');
+}
+   init();
         })();
     </script>
 
