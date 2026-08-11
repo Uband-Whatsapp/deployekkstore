@@ -1739,15 +1739,20 @@
 
                 setTimeout(() => {
                     if (followClickCount >= 2) {
-                        showVerificationMessage('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan ke halaman berikutnya...');
-                        updateStepIndicator(3);
-                        btnConfirm.style.display = 'none';
-                        setPassed();
-                        setTimeout(() => {
-                            removeGateUI();
-                        }, 1000);
-                        isVerifying = false;
-                    } else if (confirmAttempts === 1) {
+    showVerificationMessage('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan ke halaman berikutnya...');
+    updateStepIndicator(3);
+    btnConfirm.style.display = 'none';
+    setPassed();
+    // 👇 Tampilkan website langsung
+    showWebsite();
+    // Sembunyikan gate dan background decor
+    if (gateWrapper) gateWrapper.style.display = 'none';
+    if (bgDecor) bgDecor.style.display = 'none';
+    if (bgDots) bgDots.style.display = 'none';
+    isVerifying = false;
+    // Hentikan eksekusi agar tidak lanjut ke bagian error
+    return;
+} else if (confirmAttempts === 1) {
                         showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Kami belum dapat mendeteksi bahwa kamu telah mengikuti saluran WhatsApp. Silakan buka kembali saluran melalui tombol <b>Buka Saluran WhatsApp</b>, pastikan kamu menekan tombol <b>Ikuti</b>, kemudian kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
                         btnConfirm.disabled = false;
                         btnConfirm.classList.add('active');
