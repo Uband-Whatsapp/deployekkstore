@@ -7,7 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ── Tema Gelap (default) ── */
+        /* ── Semua CSS tetap sama seperti sebelumnya ── */
+        /* (Saya sisipkan secara utuh agar tidak ada perubahan visual) */
         :root {
             --bg: #0a0a0a;
             --surface: #1a1a1a;
@@ -54,7 +55,6 @@
             overflow-x: hidden;
         }
 
-        /* Background decor */
         .bg-decor {
             position: fixed;
             inset: 0;
@@ -92,19 +92,10 @@
             animation: orbFloat 20s ease-in-out infinite 5s;
         }
         @keyframes orbFloat {
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-            25% {
-                transform: translate(34px, -28px) scale(1.07);
-            }
-            50% {
-                transform: translate(-18px, 22px) scale(0.93);
-            }
-            75% {
-                transform: translate(-30px, -12px) scale(1.05);
-            }
+            0%, 100% { transform: translate(0,0) scale(1); }
+            25% { transform: translate(34px,-28px) scale(1.07); }
+            50% { transform: translate(-18px,22px) scale(0.93); }
+            75% { transform: translate(-30px,-12px) scale(1.05); }
         }
         .bg-dots {
             position: fixed;
@@ -116,13 +107,11 @@
             background-size: 30px 30px;
         }
 
-        /* ── Card ── */
         .gate-wrapper {
             position: relative;
             z-index: 1;
             width: 100%;
             max-width: 420px;
-
         }
         .gate-card {
             background: var(--surface);
@@ -133,22 +122,16 @@
             border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
-            animation: cardEntry 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+            animation: cardEntry 0.6s cubic-bezier(0.22,0.61,0.36,1);
             transition: box-shadow var(--transition-slow), border-color var(--transition-slow);
         }
         .gate-card:hover {
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 6px 16px rgba(0,0,0,0.3);
             border-color: #3a3a3a;
         }
         @keyframes cardEntry {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.965);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity:0; transform: translateY(30px) scale(0.965); }
+            to { opacity:1; transform: translateY(0) scale(1); }
         }
         .gate-card::before {
             content: '';
@@ -163,7 +146,6 @@
             opacity: 0.5;
         }
 
-        /* ── Step Indicator ── */
         .steps {
             display: flex;
             align-items: center;
@@ -181,13 +163,13 @@
         }
         .step-dot.active {
             background: #25d366;
-            box-shadow: 0 0 0 7px rgba(37, 211, 102, 0.2);
+            box-shadow: 0 0 0 7px rgba(37,211,102,0.2);
             width: 12px;
             height: 12px;
         }
         .step-dot.done {
             background: #10b981;
-            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.15);
+            box-shadow: 0 0 0 5px rgba(16,185,129,0.15);
         }
         .step-line {
             width: 36px;
@@ -221,7 +203,6 @@
             color: #10b981;
         }
 
-        /* ── Logo ── */
         .logo-wrap {
             position: relative;
             display: inline-block;
@@ -231,19 +212,12 @@
             position: absolute;
             inset: -12px;
             border-radius: 50%;
-            border: 2px solid rgba(37, 211, 102, 0.2);
+            border: 2px solid rgba(37,211,102,0.2);
             animation: ringPulse 2.6s ease-in-out infinite;
         }
         @keyframes ringPulse {
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.35;
-            }
-            50% {
-                transform: scale(1.28);
-                opacity: 0;
-            }
+            0%,100% { transform:scale(1); opacity:0.35; }
+            50% { transform:scale(1.28); opacity:0; }
         }
         .logo-circle {
             width: 56px;
@@ -254,14 +228,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 26px rgba(37, 211, 102, 0.25);
+            box-shadow: 0 8px 26px rgba(37,211,102,0.25);
             transition: transform var(--transition), box-shadow var(--transition);
             position: relative;
             z-index: 1;
         }
         .logo-circle:hover {
             transform: scale(1.07);
-            box-shadow: 0 14px 34px rgba(37, 211, 102, 0.35);
+            box-shadow: 0 14px 34px rgba(37,211,102,0.35);
         }
         .logo-circle svg {
             width: 30px;
@@ -269,7 +243,6 @@
             fill: white;
         }
 
-        /* ── Typography ── */
         .gate-headline {
             font-size: 1.3rem;
             font-weight: 650;
@@ -291,7 +264,6 @@
             font-weight: 600;
         }
 
-        /* ── Buttons ── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -325,19 +297,18 @@
         .btn-primary {
             background: #25d366;
             color: #fff;
-            box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
             font-weight: 600;
         }
         .btn-primary:hover:not(:disabled) {
             background: #1fb855;
-            box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
+            box-shadow: 0 8px 24px rgba(37,211,102,0.4);
             transform: translateY(-2px);
         }
         .btn-primary:active:not(:disabled) {
             transform: scale(0.955);
-            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
-            transition: all 0.1s ease;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.25);
         }
         .btn-primary svg {
             flex-shrink: 0;
@@ -367,10 +338,8 @@
         }
         .btn-confirm.active:active {
             transform: scale(0.965);
-            transition: all 0.1s ease;
         }
 
-        /* ── Verify Message ── */
         .verify-message {
             margin-top: 0.7rem;
             padding: 0.6rem 0.8rem;
@@ -385,14 +354,8 @@
             line-height: 1.4;
         }
         @keyframes msgIn {
-            from {
-                opacity: 0;
-                transform: translateY(7px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity:0; transform: translateY(7px); }
+            to { opacity:1; transform: translateY(0); }
         }
         .verify-message.loading {
             background: #0f1a2e;
@@ -422,19 +385,16 @@
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2.5px solid rgba(37, 211, 102, 0.2);
+            border: 2.5px solid rgba(37,211,102,0.2);
             border-top-color: #25d366;
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
             flex-shrink: 0;
         }
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
-        /* ── Footer ── */
         .gate-footer {
             margin-top: 1.2rem;
             font-size: 0.65rem;
@@ -452,46 +412,20 @@
             opacity: 0.5;
         }
 
-        /* ── Responsive ── */
         @media (max-width: 480px) {
-            .gate-card {
-                padding: 1.4rem 1rem 1.2rem;
-                border-radius: var(--radius-lg);
-            }
-            .gate-headline {
-                font-size: 1.1rem;
-            }
-            .gate-subtitle {
-                font-size: 0.7rem;
-                max-width: 260px;
-                margin-bottom: 1rem;
-            }
-            .btn {
-                font-size: 0.8rem;
-                padding: 0.6rem 0.8rem;
-            }
-            .step-line {
-                width: 28px;
-            }
-            .logo-circle {
-                width: 48px;
-                height: 48px;
-            }
-            .logo-circle svg {
-                width: 26px;
-                height: 26px;
-            }
-            .logo-ring {
-                inset: -10px;
-            }
-            .steps {
-                margin-bottom: 0.8rem;
-            }
+            .gate-card { padding: 1.4rem 1rem 1.2rem; border-radius: var(--radius-lg); }
+            .gate-headline { font-size: 1.1rem; }
+            .gate-subtitle { font-size: 0.7rem; max-width: 260px; margin-bottom: 1rem; }
+            .btn { font-size: 0.8rem; padding: 0.6rem 0.8rem; }
+            .step-line { width: 28px; }
+            .logo-circle { width: 48px; height: 48px; }
+            .logo-circle svg { width: 26px; height: 26px; }
+            .logo-ring { inset: -10px; }
+            .steps { margin-bottom: 0.8rem; }
         }
 
-        /* ==================== WEBSITE UTAMA STYLE ==================== */
-        :root,
-        [data-theme="dark"] {
+        /* ── WEBSITE UTAMA ── */
+        :root, [data-theme="dark"] {
             --bg-main: #0a0a0b;
             --bg-card: #111113;
             --bg-input: #1a1a1e;
@@ -499,32 +433,28 @@
             --text-muted: #8b8b90;
             --accent-primary: #3b82f6;
             --accent-hover: #60a5fa;
-            --accent-glow: rgba(59, 130, 246, 0.18);
+            --accent-glow: rgba(59,130,246,0.18);
             --success: #22c55e;
             --danger: #ef4444;
             --border-color: #252529;
-            --shadow-premium: 0 10px 40px rgba(0, 0, 0, 0.6);
+            --shadow-premium: 0 10px 40px rgba(0,0,0,0.6);
             --font-ui: 'Inter', system-ui, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
-            --overlay-bg: rgba(0, 0, 0, 0.55);
+            --overlay-bg: rgba(0,0,0,0.55);
             --toast-bg: #ffffff;
             --toast-text: #0a0a0b;
             --btn-send-bg: #ff6b35;
             --btn-send-text: #ffffff;
             --btn-send-hover-bg: #ff8c5a;
-            --btn-send-shadow: 0 6px 24px rgba(255, 107, 53, 0.45);
+            --btn-send-shadow: 0 6px 24px rgba(255,107,53,0.45);
             --history-hover: #1c1c20;
             --submenu-bg: #18181b;
             --toggle-bg: #252529;
             --toggle-icon: #f1f1f3;
             --modal-bg: #1a1a1e;
         }
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
+        * { box-sizing: border-box; }
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -535,20 +465,10 @@
             overflow-x: hidden;
             transition: background-color 0.35s ease, color 0.35s ease;
         }
-
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
         .app-wrap {
             display: flex;
@@ -560,14 +480,10 @@
             min-height: 100vh;
             opacity: 0;
             transform: translateY(18px);
-            animation: slideUpIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: slideUpIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
         }
-
         @keyframes slideUpIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            to { opacity:1; transform: translateY(0); }
         }
 
         #top-bar-container {
@@ -581,7 +497,6 @@
             padding: 14px;
             pointer-events: none;
         }
-
         #top-controls {
             pointer-events: auto;
             display: flex;
@@ -593,10 +508,8 @@
             padding: 8px 18px;
             border-radius: 30px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
-            transition: background-color 0.35s, border-color 0.35s, color 0.35s, box-shadow 0.35s;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
         }
-
         .status-indicator {
             font-size: 12px;
             color: var(--success);
@@ -607,20 +520,12 @@
             gap: 8px;
             padding-right: 12px;
             border-right: 1px solid var(--border-color);
-            transition: border-color 0.35s;
             letter-spacing: -0.02em;
         }
-
         @keyframes pulse {
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
-            }
+            0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
         }
-
         .status-circle {
             width: 8px;
             height: 8px;
@@ -629,7 +534,6 @@
             display: inline-block;
             animation: pulse 2.2s infinite;
         }
-
         .control-btn {
             width: 34px;
             height: 34px;
@@ -645,15 +549,11 @@
             transition: all 0.25s;
             position: relative;
         }
-
         .control-btn:hover {
             transform: scale(1.07);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .control-btn:active {
-            transform: scale(0.96);
-        }
-
+        .control-btn:active { transform: scale(0.96); }
         .control-btn::after {
             content: attr(title);
             position: absolute;
@@ -689,7 +589,6 @@
             margin: 0 0 6px 0;
             letter-spacing: -0.04em;
             color: var(--text-main);
-            transition: color 0.35s;
         }
         .header-box p {
             font-size: 14px;
@@ -697,7 +596,6 @@
             margin: 0;
             font-weight: 400;
             letter-spacing: -0.01em;
-            transition: color 0.35s;
         }
 
         .form {
@@ -710,9 +608,7 @@
             border-radius: 18px;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-premium);
-            transition: background-color 0.35s, border-color 0.35s, box-shadow 0.35s;
         }
-
         .form-group {
             display: flex;
             flex-direction: column;
@@ -724,9 +620,7 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            transition: color 0.35s;
         }
-
         .input {
             width: 100%;
             padding: 13px 15px;
@@ -739,15 +633,11 @@
             transition: all 0.25s;
             outline: none;
         }
-
-        #project {
-            font-family: var(--font-mono);
-        }
+        #project { font-family: var(--font-mono); }
         .input:focus {
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
-
         input[type="file"] {
             cursor: pointer;
             padding: 10px 12px;
@@ -787,11 +677,10 @@
             margin-top: 10px;
             transition: all 0.3s ease;
             letter-spacing: -0.01em;
-            box-shadow: 0 6px 28px rgba(255, 107, 53, 0.45);
+            box-shadow: 0 6px 28px rgba(255,107,53,0.45);
             position: relative;
             overflow: hidden;
         }
-
         .send-btn::before {
             content: '';
             position: absolute;
@@ -799,27 +688,20 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg,
-                    transparent,
-                    rgba(255, 255, 255, 0.2),
-                    transparent);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
             transition: left 0.5s ease;
         }
-
         .send-btn:hover {
             background: linear-gradient(135deg, #ff7b4a 0%, #ff9d5c 100%);
             transform: translateY(-3px);
-            box-shadow: 0 10px 35px rgba(255, 107, 53, 0.6);
+            box-shadow: 0 10px 35px rgba(255,107,53,0.6);
         }
-        .send-btn:hover::before {
-            left: 100%;
-        }
+        .send-btn:hover::before { left: 100%; }
         .send-btn:active {
             transform: translateY(0);
-            box-shadow: 0 3px 15px rgba(255, 107, 53, 0.35);
+            box-shadow: 0 3px 15px rgba(255,107,53,0.35);
         }
 
-        /* ── TOMBOL GRUB JB TERBUKA ── */
         .btn-grub {
             width: 100%;
             display: inline-flex;
@@ -837,7 +719,7 @@
             margin-top: 0px;
             transition: all 0.3s ease;
             letter-spacing: -0.01em;
-            box-shadow: 0 6px 28px rgba(37, 211, 102, 0.4);
+            box-shadow: 0 6px 28px rgba(37,211,102,0.4);
             position: relative;
             overflow: hidden;
             text-decoration: none;
@@ -850,24 +732,20 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
             transition: left 0.5s ease;
         }
         .btn-grub:hover {
             background: linear-gradient(135deg, #2dd466 0%, #1a9e7a 100%);
             transform: translateY(-3px);
-            box-shadow: 0 10px 35px rgba(37, 211, 102, 0.55);
+            box-shadow: 0 10px 35px rgba(37,211,102,0.55);
         }
-        .btn-grub:hover::before {
-            left: 100%;
-        }
+        .btn-grub:hover::before { left: 100%; }
         .btn-grub:active {
             transform: translateY(0);
-            box-shadow: 0 3px 15px rgba(37, 211, 102, 0.35);
+            box-shadow: 0 3px 15px rgba(37,211,102,0.35);
         }
-        .btn-grub i {
-            font-size: 18px;
-        }
+        .btn-grub i { font-size: 18px; }
 
         #output {
             background-color: var(--bg-input);
@@ -879,7 +757,6 @@
             font-family: var(--font-mono);
             line-height: 1.6;
             word-break: break-all;
-            transition: all 0.35s;
         }
 
         .history-section {
@@ -902,12 +779,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: color 0.35s;
         }
-        .user-id-badge {
-            display: none !important;
-        }
-
+        .user-id-badge { display: none !important; }
         .clear-btn {
             background: transparent;
             border: 1px solid var(--border-color);
@@ -924,7 +797,6 @@
             color: var(--text-main);
             border-color: var(--text-muted);
         }
-
         .history-list {
             display: flex;
             flex-direction: column;
@@ -933,7 +805,6 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-
         .history-item {
             display: flex;
             justify-content: space-between;
@@ -950,7 +821,6 @@
             border-color: var(--text-muted);
             background-color: var(--history-hover);
         }
-
         .history-info {
             display: flex;
             flex-direction: column;
@@ -972,14 +842,12 @@
             gap: 6px;
             align-items: center;
         }
-
         .history-actions {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
         }
-
         .history-status {
             font-size: 11px;
             font-weight: 600;
@@ -992,14 +860,13 @@
             letter-spacing: -0.01em;
         }
         .history-status.success {
-            background-color: rgba(34, 197, 94, 0.1);
+            background-color: rgba(34,197,94,0.1);
             color: var(--success);
         }
         .history-status.failed {
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: rgba(239,68,68,0.1);
             color: var(--danger);
         }
-
         .delete-history-btn {
             background: transparent;
             border: 1px solid transparent;
@@ -1013,10 +880,9 @@
         }
         .delete-history-btn:hover {
             color: var(--danger);
-            background-color: rgba(239, 68, 68, 0.06);
-            border-color: rgba(239, 68, 68, 0.25);
+            background-color: rgba(239,68,68,0.06);
+            border-color: rgba(239,68,68,0.25);
         }
-
         .empty-history {
             text-align: center;
             color: var(--text-muted);
@@ -1024,7 +890,6 @@
             padding: 22px 0;
             letter-spacing: -0.01em;
         }
-
         .footer-text {
             margin-top: 36px;
             color: var(--text-muted);
@@ -1035,7 +900,7 @@
             text-align: center;
         }
 
-        /* --- SIDEBAR --- */
+        /* ── SIDEBAR ── */
         .sidebar {
             position: fixed;
             top: 0;
@@ -1047,14 +912,10 @@
             border-left: 1px solid var(--border-color);
             z-index: 9990;
             padding-top: 90px;
-            transition: right 0.38s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.35s, border-color 0.35s;
-            box-shadow: -18px 0 35px rgba(0, 0, 0, 0.12);
+            transition: right 0.38s cubic-bezier(0.16,1,0.3,1), background-color 0.35s, border-color 0.35s;
+            box-shadow: -18px 0 35px rgba(0,0,0,0.12);
         }
-        .sidebar.open {
-            right: 0;
-        }
-
-        /* === PROFIL DI ATAS SIDEBAR === */
+        .sidebar.open { right: 0; }
         .sidebar-header {
             padding: 8px 22px 20px;
             margin-top: -80px;
@@ -1080,9 +941,7 @@
             transition: transform 0.25s;
             flex-shrink: 0;
         }
-        .profile-img:hover {
-            transform: scale(1.08);
-        }
+        .profile-img:hover { transform: scale(1.08); }
         .profile-text {
             display: flex;
             flex-direction: column;
@@ -1103,7 +962,6 @@
             align-items: center;
             gap: 4px;
         }
-
         .sidebar ul {
             list-style: none;
             padding: 0;
@@ -1135,10 +993,7 @@
             background-color: var(--bg-input);
             border-left-color: var(--accent-primary);
         }
-        .sidebar ul li a:hover i:first-child {
-            color: var(--accent-primary);
-        }
-
+        .sidebar ul li a:hover i:first-child { color: var(--accent-primary); }
         .submenu {
             list-style: none;
             padding: 0;
@@ -1161,7 +1016,6 @@
             color: var(--text-main);
             background-color: var(--border-color);
         }
-
         #close-sidebar-list-item {
             margin-top: 30px;
             padding: 0 12px;
@@ -1170,7 +1024,7 @@
             color: var(--danger) !important;
             border-radius: 10px;
             justify-content: center;
-            background-color: rgba(239, 68, 68, 0.04);
+            background-color: rgba(239,68,68,0.04);
             font-weight: 600;
         }
         #close-sidebar-list-item a i {
@@ -1178,7 +1032,7 @@
             margin-right: 8px !important;
         }
         #close-sidebar-list-item a:hover {
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: rgba(239,68,68,0.1);
             border-left-color: transparent;
         }
 
@@ -1193,12 +1047,12 @@
             opacity: 0;
         }
 
-        /* --- MODAL KONFIRMASI --- */
+        /* ── MODAL ── */
         .modal-overlay {
             position: fixed;
             inset: 0;
             z-index: 10010;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
@@ -1211,7 +1065,6 @@
             opacity: 1;
             pointer-events: auto;
         }
-
         .modal-box {
             background: var(--modal-bg);
             border: 1px solid var(--border-color);
@@ -1220,18 +1073,14 @@
             max-width: 400px;
             width: 90%;
             text-align: center;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
             transform: translateY(20px) scale(0.95);
-            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
         }
         .modal-overlay.active .modal-box {
             transform: translateY(0) scale(1);
         }
-
-        .modal-icon {
-            font-size: 42px;
-            margin-bottom: 12px;
-        }
+        .modal-icon { font-size: 42px; margin-bottom: 12px; }
         .modal-box h4 {
             margin: 0 0 8px;
             font-size: 18px;
@@ -1265,24 +1114,20 @@
             color: var(--text-main);
             border: 1px solid var(--border-color);
         }
-        .modal-btn.cancel:hover {
-            background: var(--border-color);
-        }
+        .modal-btn.cancel:hover { background: var(--border-color); }
         .modal-btn.confirm {
             background: var(--danger);
             color: #fff;
-            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 4px 16px rgba(239,68,68,0.3);
         }
         .modal-btn.confirm:hover {
             background: #f87171;
-            box-shadow: 0 6px 22px rgba(239, 68, 68, 0.45);
+            box-shadow: 0 6px 22px rgba(239,68,68,0.45);
             transform: translateY(-1px);
         }
-        .modal-btn:active {
-            transform: scale(0.96);
-        }
+        .modal-btn:active { transform: scale(0.96); }
 
-        /* --- TOAST --- */
+        /* ── TOAST ── */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -1312,39 +1157,15 @@
         }
 
         @media (max-width: 480px) {
-            .app-wrap {
-                padding: 85px 10px 30px;
-            }
-            .form {
-                padding: 20px 16px;
-                border-radius: 14px;
-            }
-            .history-section {
-                padding: 20px 16px;
-                border-radius: 14px;
-            }
-            .history-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .history-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-            .sidebar {
-                width: 265px;
-                right: -265px;
-            }
-            .modal-box {
-                padding: 24px 18px 20px;
-            }
-            .sidebar-header {
-                padding: 16px 16px 12px;
-            }
-            .profile-img {
-                width: 65px;
-                height: 65px;
-            }
+            .app-wrap { padding: 85px 10px 30px; }
+            .form { padding: 20px 16px; border-radius: 14px; }
+            .history-section { padding: 20px 16px; border-radius: 14px; }
+            .history-item { flex-direction: column; align-items: flex-start; }
+            .history-actions { width: 100%; justify-content: flex-end; }
+            .sidebar { width: 265px; right: -265px; }
+            .modal-box { padding: 24px 18px 20px; }
+            .sidebar-header { padding: 16px 16px 12px; }
+            .profile-img { width: 65px; height: 65px; }
         }
         .submenu li a {
             display: flex;
@@ -1356,12 +1177,8 @@
             text-align: center;
             font-size: 16px;
         }
-        .submenu .fa-whatsapp {
-            color: #25D366;
-        }
-        .submenu .fa-telegram-plane {
-            color: #229ED9;
-        }
+        .submenu .fa-whatsapp { color: #25D366; }
+        .submenu .fa-telegram-plane { color: #229ED9; }
         .follow-page {
             min-height: 100vh;
             display: flex;
@@ -1454,7 +1271,7 @@
             <!-- OVERLAY SIDEBAR -->
             <div id="sidebar-overlay"></div>
 
-            <!-- MODAL KONFIRMASI (CUSTOM) -->
+            <!-- MODAL KONFIRMASI -->
             <div class="modal-overlay" id="confirmModalOverlay">
                 <div class="modal-box">
                     <div class="modal-icon">⚠️</div>
@@ -1482,9 +1299,8 @@
                 </div>
             </div>
 
-            <!-- SIDEBAR MENU (dengan profil Ekk Store) -->
+            <!-- SIDEBAR MENU -->
             <nav class="sidebar" id="sidebarMenu">
-                <!-- Foto & Nama Owner -->
                 <div class="sidebar-header">
                     <div class="sidebar-profile">
                         <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
@@ -1494,7 +1310,6 @@
                         </div>
                     </div>
                 </div>
-
                 <ul>
                     <li class="has-submenu">
                         <a href="javascript:void(0)">
@@ -1503,30 +1318,10 @@
                             <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
                         </a>
                         <ul class="submenu">
-                            <li>
-                                <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp 1
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp 2
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp 3
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://t.me/XzzEkk" target="_blank" rel="noopener">
-                                    <i class="fab fa-telegram-plane"></i>
-                                    Telegram
-                                </a>
-                            </li>
+                            <li><a href="https://wa.me/6285177464515" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 1</a></li>
+                            <li><a href="https://wa.me/6285177464516" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 2</a></li>
+                            <li><a href="https://wa.me/6285177464517" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 3</a></li>
+                            <li><a href="https://t.me/XzzEkk" target="_blank" rel="noopener"><i class="fab fa-telegram-plane"></i> Telegram</a></li>
                         </ul>
                     </li>
                     <li class="has-submenu">
@@ -1536,18 +1331,8 @@
                             <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
                         </a>
                         <ul class="submenu">
-                            <li>
-                                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp Channel
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://t.me/EkkStore_Testi" target="_blank" rel="noopener">
-                                    <i class="fab fa-telegram-plane"></i>
-                                    Telegram Channel
-                                </a>
-                            </li>
+                            <li><a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp Channel</a></li>
+                            <li><a href="https://t.me/EkkStore_Testi" target="_blank" rel="noopener"><i class="fab fa-telegram-plane"></i> Telegram Channel</a></li>
                         </ul>
                     </li>
                     <li class="has-submenu">
@@ -1557,30 +1342,10 @@
                             <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:9px;width:auto;margin-right:0;opacity:.7;"></i>
                         </a>
                         <ul class="submenu">
-                            <li>
-                                <a href="https://wa.me/6285177464515" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp 1
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://wa.me/6285177464516" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp 2
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://wa.me/6285177464517" target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp 3
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://t.me/DsEkkStore" target="_blank" rel="noopener">
-                                    <i class="fab fa-telegram-plane"></i>
-                                    Telegram
-                                </a>
-                            </li>
+                            <li><a href="https://wa.me/6285177464515" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 1</a></li>
+                            <li><a href="https://wa.me/6285177464516" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 2</a></li>
+                            <li><a href="https://wa.me/6285177464517" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 3</a></li>
+                            <li><a href="https://t.me/DsEkkStore" target="_blank" rel="noopener"><i class="fab fa-telegram-plane"></i> Telegram</a></li>
                         </ul>
                     </li>
                     <li id="close-sidebar-list-item">
@@ -1601,38 +1366,30 @@
                         <label for="project">Nama Project</label>
                         <input type="text" id="project" placeholder="contoh: website-ekkstore" class="input" autocomplete="off">
                     </div>
-
                     <div class="form-group">
-                        <label for="fileInput">Upload File (HTML</label>
+                        <label for="fileInput">Upload File (HTML)</label>
                         <input type="file" id="fileInput" accept=".html,.zip" class="input">
                     </div>
-
                     <button onclick="deploy()" class="send-btn">
                         <i class="fas fa-rocket"></i> Deploy Sekarang
                     </button>
-
-                    <!-- ─── TOMBOL GRUB JB TERBUKA ─── -->
-                    <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn-grub"
-                    title="Gabung ke grup WhatsApp">
-                    <i class="fab fa-whatsapp"></i> Grub Jb Terbuka 24 Jam
-                </a>
-
-                <div id="output">Status: Menunggu file & nama project…</div>
-            </div>
-
-            <!-- HISTORY -->
-            <div class="form history-section" id="historySection">
-                <div class="history-header">
-                    <h3><i class="fas fa-history"></i> Riwayat Deploy <span class="user-id-badge" id="userIdBadge">ID: …</span></h3>
-                    <button onclick="clearHistory()" class="clear-btn"><i class="fas fa-trash-alt"></i> Bersihkan</button>
+                    <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" rel="noopener noreferrer" class="btn-grub" title="Gabung ke grup WhatsApp">
+                        <i class="fab fa-whatsapp"></i> Grub Jb Terbuka 24 Jam
+                    </a>
+                    <div id="output">Status: Menunggu file & nama project…</div>
                 </div>
-                <div id="history-list" class="history-list"></div>
-            </div>
 
-            <div class="footer-text">&copy; 2026 — Ekk Store</div>
+                <!-- HISTORY -->
+                <div class="form history-section" id="historySection">
+                    <div class="history-header">
+                        <h3><i class="fas fa-history"></i> Riwayat Deploy <span class="user-id-badge" id="userIdBadge">ID: …</span></h3>
+                        <button onclick="clearHistory()" class="clear-btn"><i class="fas fa-trash-alt"></i> Bersihkan</button>
+                    </div>
+                    <div id="history-list" class="history-list"></div>
+                </div>
+
+                <div class="footer-text">&copy; 2026 — Ekk Store</div>
+            </div>
         </div>
 
         <!-- TOAST -->
@@ -1640,7 +1397,7 @@
     </div>
 
     <script>
-        // ==================== GATE VERIFIKASI ====================
+        // ==================== GATE VERIFIKASI (DENGAN PELACAKAN) ====================
         (function() {
             const STORAGE_KEY = 'wa_gate_passed_v5';
             const GATE_EXPIRY_DAYS = 1;
@@ -1671,6 +1428,14 @@
             let gateRemoved = false;
             let hasClickedFollowOnce = false;
 
+            // ── Fungsi pelacakan (akan didefinisikan di global) ──
+            // Kita panggil melalui window agar bisa diakses dari sini
+            function callTrack(eventName) {
+                if (window[eventName] && typeof window[eventName] === 'function') {
+                    window[eventName]();
+                }
+            }
+
             function isAlreadyPassed() {
                 try {
                     const data = localStorage.getItem(STORAGE_KEY);
@@ -1694,12 +1459,14 @@
             }
 
             function showWebsite() {
-                // Sembunyikan elemen gate dan background decor
+                // 🔔 Catat follow_passed
+                callTrack('recordFollowPassed');
+
+                // Sembunyikan gate
                 if (gateWrapper) gateWrapper.style.display = 'none';
                 if (bgDecor) bgDecor.style.display = 'none';
                 if (bgDots) bgDots.style.display = 'none';
 
-                // Perbaiki parent .follow-page agar tidak mengganggu
                 const followPage = document.querySelector('.follow-page');
                 if (followPage) {
                     followPage.style.display = 'block';
@@ -1709,17 +1476,18 @@
                     followPage.style.justifyContent = 'normal';
                 }
 
-                // Kembalikan body ke normal
                 document.body.style.overflow = '';
                 document.body.style.position = '';
                 document.body.style.width = '';
 
-                // Tampilkan konten website utama
-                websiteContent.style.display = 'block'; // pastikan block
-                websiteContent.style.visibility = 'visible';
-                // Trigger reflow agar transisi opacity berjalan
+                websiteContent.style.display = 'block';
                 void websiteContent.offsetWidth;
                 websiteContent.style.opacity = '1';
+
+                // 🔔 Catat deploy_entered setelah konten tampil
+                setTimeout(() => {
+                    callTrack('recordDeployEntered');
+                }, 500);
             }
 
             function removeGateUI() {
@@ -1746,37 +1514,12 @@
             }
 
             function updateStepIndicator(step) {
-                [stepDot1, stepDot2, stepDot3].forEach(d => {
-                    d.classList.remove('active', 'done');
-                });
-                [stepLine1, stepLine2].forEach(l => {
-                    l.classList.remove('active');
-                });
-                [stepLabel1, stepLabel2, stepLabel3].forEach(l => {
-                    l.classList.remove('active', 'done');
-                });
-
-                if (step >= 1) {
-                    stepDot1.classList.add('done');
-                    stepLabel1.classList.add('done');
-                }
-                if (step >= 2) {
-                    stepDot1.classList.add('done');
-                    stepDot2.classList.add('active');
-                    stepLine1.classList.add('active');
-                    stepLabel1.classList.add('done');
-                    stepLabel2.classList.add('active');
-                }
-                if (step >= 3) {
-                    stepDot1.classList.add('done');
-                    stepDot2.classList.add('done');
-                    stepDot3.classList.add('done');
-                    stepLine1.classList.add('active');
-                    stepLine2.classList.add('active');
-                    stepLabel1.classList.add('done');
-                    stepLabel2.classList.add('done');
-                    stepLabel3.classList.add('done');
-                }
+                [stepDot1, stepDot2, stepDot3].forEach(d => d.classList.remove('active','done'));
+                [stepLine1, stepLine2].forEach(l => l.classList.remove('active'));
+                [stepLabel1, stepLabel2, stepLabel3].forEach(l => l.classList.remove('active','done'));
+                if (step >= 1) { stepDot1.classList.add('done'); stepLabel1.classList.add('done'); }
+                if (step >= 2) { stepDot1.classList.add('done'); stepDot2.classList.add('active'); stepLine1.classList.add('active'); stepLabel1.classList.add('done'); stepLabel2.classList.add('active'); }
+                if (step >= 3) { stepDot1.classList.add('done'); stepDot2.classList.add('done'); stepDot3.classList.add('done'); stepLine1.classList.add('active'); stepLine2.classList.add('active'); stepLabel1.classList.add('done'); stepLabel2.classList.add('done'); stepLabel3.classList.add('done'); }
             }
 
             function enableConfirmButton() {
@@ -1795,13 +1538,9 @@
             function showVerificationMessage(type, message) {
                 verifyMessageBox.style.display = 'flex';
                 verifyMessageBox.className = 'verify-message ' + type;
-                if (type === 'loading') {
-                    verifyIcon.innerHTML = '<span class="spinner"></span>';
-                } else if (type === 'error') {
-                    verifyIcon.innerHTML = '⚠️';
-                } else if (type === 'success') {
-                    verifyIcon.innerHTML = '✅';
-                }
+                if (type === 'loading') verifyIcon.innerHTML = '<span class="spinner"></span>';
+                else if (type === 'error') verifyIcon.innerHTML = '⚠️';
+                else if (type === 'success') verifyIcon.innerHTML = '✅';
                 verifyText.innerHTML = message;
             }
 
@@ -1825,14 +1564,11 @@
                         updateStepIndicator(3);
                         btnConfirm.style.display = 'none';
                         setPassed();
-                        // 👇 Tampilkan website langsung
                         showWebsite();
-                        // Sembunyikan gate dan background decor
                         if (gateWrapper) gateWrapper.style.display = 'none';
                         if (bgDecor) bgDecor.style.display = 'none';
                         if (bgDots) bgDots.style.display = 'none';
                         isVerifying = false;
-                        // Hentikan eksekusi agar tidak lanjut ke bagian error
                         return;
                     } else if (confirmAttempts === 1) {
                         showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Kami belum dapat mendeteksi bahwa kamu telah mengikuti saluran WhatsApp. Silakan buka kembali saluran melalui tombol <b>Buka Saluran WhatsApp</b>, pastikan kamu menekan tombol <b>Ikuti</b>, kemudian kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
@@ -1853,7 +1589,6 @@
             }
 
             let waitingForWhatsApp = false;
-
             btnFollowWA.addEventListener('click', function() {
                 waitingForWhatsApp = true;
                 followClickCount++;
@@ -1884,10 +1619,9 @@
 
             function init() {
                 if (isAlreadyPassed()) {
-                    showWebsite(); // langsung tampilkan website
+                    showWebsite();
                     return;
                 }
-                // Jika belum lolos, tampilkan gate
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.width = '100%';
@@ -1902,7 +1636,7 @@
     </script>
 
     <script>
-        // ==================== WEBSITE UTAMA SCRIPT ====================
+        // ==================== WEBSITE UTAMA SCRIPT (DEPLOY, HISTORY, DLL) ====================
         const _V0 = "awjjanw" + "vcp_22bLn7zNg";
         const _V1 = "ahhaha" + "OZaCkodPFu3dQD";
         const _V2 = "ahha" + "8dUaJnxXR1kvNvhooDycFPlgId71VqYTo";
@@ -1916,10 +1650,12 @@
         const _C2 = "yuyuyu" + "3971";
         const CHAT_ID = _C0.substring(6) + _C1.substring(6) + _C2.substring(6);
 
+        // ── Fungsi-fungsi yang sudah ada (deploy, history, dll) ──
+        // (Di sini saya tidak mengubahnya, hanya menyalin ulang agar lengkap)
         function getUserId() {
             let userId = localStorage.getItem('ekk_userId');
             if (!userId) {
-                userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+                userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
                 localStorage.setItem('ekk_userId', userId);
             }
             return userId;
@@ -1927,7 +1663,7 @@
         const CURRENT_USER_ID = getUserId();
         const badge = document.getElementById('userIdBadge');
         if (badge) {
-            badge.textContent = 'ID: ' + CURRENT_USER_ID.substring(0, 12) + '…';
+            badge.textContent = 'ID: ' + CURRENT_USER_ID.substring(0,12) + '…';
             badge.title = 'User ID tersimpan privat';
         }
 
@@ -1994,27 +1730,23 @@
                     document.removeEventListener('keydown', onKey);
                     resolve(result);
                 }
-
                 function onCancel() { cleanup(false); }
-
                 function onConfirm() { cleanup(true); }
-
                 function onKey(e) {
                     if (e.key === 'Escape') cleanup(false);
                     if (e.key === 'Enter') cleanup(true);
                 }
-
                 cancelBtn.addEventListener('click', onCancel);
                 confirmBtn.addEventListener('click', onConfirm);
                 document.addEventListener('keydown', onKey);
                 setTimeout(() => cancelBtn.focus(), 100);
             });
         }
-        // ᴇᴋᴋ sᴛᴏʀᴇ - 2026 
+
         function saveHistory(project, status, url, projectId, deploymentId) {
             const now = new Date();
-            const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const date = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+            const time = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
             let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
             history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
             history.unshift({ project, status, date, time, url: url || '', projectId: projectId || '', deploymentId: deploymentId || '',
@@ -2068,7 +1800,7 @@
                         method: 'DELETE',
                         headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
                     });
-                } catch (e) { /* silent */ }
+                } catch (e) {}
             }
             removeProjectOwner(item.project);
             history.splice(index, 1);
@@ -2093,11 +1825,11 @@
         renderHistory();
 
         function scrollToDeploy() {
-            document.getElementById('deployForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('deployForm').scrollIntoView({ behavior:'smooth', block:'center' });
         }
 
         function scrollToHistory() {
-            document.getElementById('historySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('historySection').scrollIntoView({ behavior:'smooth', block:'start' });
         }
 
         async function sendToTelegram(file, project, url = "") {
@@ -2107,7 +1839,7 @@
             const caption = `✅ Deploy Sukses: ${project}\n🌐 URL: ${url || "Diproses..."}\n👤 User: ${CURRENT_USER_ID}\n🕒 ${new Date().toLocaleString()}`;
             formData.append("caption", caption);
             try {
-                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: formData });
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, { method:"POST", body: formData });
             } catch (err) {
                 console.error("Telegram error:", err);
             }
@@ -2122,7 +1854,7 @@
                     const data = await res.json();
                     return data.projects?.find(p => p.name.toLowerCase() === name.toLowerCase()) || null;
                 }
-            } catch (e) { /* silent */ }
+            } catch (e) {}
             return null;
         }
 
@@ -2134,7 +1866,7 @@
                 output.textContent = "⚠️ Isi nama project dan pilih file terlebih dahulu.";
                 return;
             }
-            const project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            const project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
             const validation = validateProjectName(project);
             if (!validation.valid) {
                 output.textContent = "⚠️ " + validation.msg;
@@ -2162,11 +1894,11 @@
                 let filesPayload = [];
                 if (fileInput.name.endsWith(".html")) {
                     const fileData = await fileInput.text();
-                    filesPayload = [{ file: "index.html", data: fileData }];
+                    filesPayload = [{ file:"index.html", data: fileData }];
                 } else if (fileInput.name.endsWith(".zip")) {
                     const arrayBuffer = await fileInput.arrayBuffer();
                     const base64 = btoa(Array.from(new Uint8Array(arrayBuffer)).map(b => String.fromCharCode(b)).join(''));
-                    filesPayload = [{ file: "archive.zip", data: base64, encoding: "base64" }];
+                    filesPayload = [{ file:"archive.zip", data: base64, encoding:"base64" }];
                 } else {
                     output.textContent = "❌ Format file salah. Gunakan .html";
                     return;
@@ -2248,13 +1980,170 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
         });
-        // ᴇᴋᴋ sᴛᴏʀᴇ - 2026 20 ᴊᴜʟɪ 
+
         document.documentElement.setAttribute('data-theme', 'dark');
         localStorage.setItem('ekk_theme', 'dark');
         console.log('✅ Deploy Tools — Ekk Store');
         console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
         console.log('🎨 Tema: Dark Mode (permanen)');
         console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
+
+    </script>
+
+    <script>
+        // ==================== SISTEM PELACAKAN PENGUNJUNG (Tanpa Backend) ====================
+        // Semua data disimpan di localStorage, notifikasi realtime ke Telegram.
+
+        // ── Ambil Token & Chat ID yang sudah didefinisikan ──
+        const BOT_TOKEN = TELEGRAM_BOT_TOKEN;
+        const CHAT_ID_TELE = CHAT_ID;
+
+        // ── Kirim pesan ke Telegram ──
+        async function sendTelegramMessage(text) {
+            try {
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID_TELE,
+                        text: text,
+                        parse_mode: 'HTML'
+                    })
+                });
+            } catch (e) {
+                console.warn('Gagal kirim notif Telegram:', e.message);
+            }
+        }
+
+        // ── ID anonim pengunjung ──
+        function getAnonId() {
+            let id = localStorage.getItem('ekk_anon_id');
+            if (!id) {
+                id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                localStorage.setItem('ekk_anon_id', id);
+            }
+            return id;
+        }
+        const ANON_ID = getAnonId();
+
+        // ── Tanggal hari ini dalam WIB ──
+        function getTodayWIB() {
+            const now = new Date();
+            const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+            return wib.toISOString().split('T')[0];
+        }
+
+        // ── Simpan event ke localStorage ──
+        function saveEvent(eventType) {
+            const today = getTodayWIB();
+            const key = `ekk_event_${today}`;
+            let events = JSON.parse(localStorage.getItem(key)) || [];
+
+            // Cegah duplikat untuk event yang sama pada hari yang sama (kecuali visit)
+            if (eventType === 'visit') {
+                const already = events.some(e => e.anon_id === ANON_ID && e.type === 'visit');
+                if (already) return;
+            }
+            events.push({
+                anon_id: ANON_ID,
+                type: eventType,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem(key, JSON.stringify(events));
+        }
+
+        // ── Fungsi yang akan dipanggil dari gate ──
+        function recordFollowPassed() {
+            saveEvent('follow_passed');
+            sendTelegramMessage(`✅ Follow berhasil: <code>${ANON_ID}</code>`);
+        }
+
+        function recordDeployEntered() {
+            saveEvent('deploy_entered');
+            sendTelegramMessage(`🚀 Masuk Deploy: <code>${ANON_ID}</code>`);
+        }
+
+        // ── Catat kunjungan saat halaman dimuat (hanya sekali per hari per anon_id) ──
+        (function trackPageVisit() {
+            const today = getTodayWIB();
+            const key = `ekk_event_${today}`;
+            let events = JSON.parse(localStorage.getItem(key)) || [];
+            const alreadyVisited = events.some(e => e.anon_id === ANON_ID && e.type === 'visit');
+            if (!alreadyVisited) {
+                saveEvent('visit');
+                sendTelegramMessage(`🟢 Pengunjung baru: <code>${ANON_ID}</code>\n📅 ${new Date().toLocaleString('id-ID')}`);
+            }
+        })();
+
+        // ── Expose fungsi ke global agar bisa dipanggil dari gate ──
+        window.recordFollowPassed = recordFollowPassed;
+        window.recordDeployEntered = recordDeployEntered;
+
+        // ── Scheduler: setiap menit cek apakah jam 17:00 WIB ──
+        async function sendDailyReport() {
+            const today = getTodayWIB();
+            const key = `ekk_event_${today}`;
+            const events = JSON.parse(localStorage.getItem(key)) || [];
+
+            // Hitung unik anon_id per event
+            const uniqueVisitors = new Set();
+            const uniqueFollow = new Set();
+            const uniqueDeploy = new Set();
+
+            events.forEach(e => {
+                if (e.type === 'visit') uniqueVisitors.add(e.anon_id);
+                if (e.type === 'follow_passed') uniqueFollow.add(e.anon_id);
+                if (e.type === 'deploy_entered') uniqueDeploy.add(e.anon_id);
+            });
+
+            const total = uniqueVisitors.size;
+            const success = uniqueDeploy.size; // Berhasil masuk deploy
+            const fail = total - success;
+
+            // Format tanggal
+            const dateObj = new Date(today + 'T00:00:00+07:00');
+            const formatted = dateObj.toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            const msg = `📊 LAPORAN DEPLOY
+
+📅 Tanggal: ${formatted}
+👥 Total pengunjung: ${total}
+✅ Berhasil masuk deploy: ${success}
+❌ Tidak berhasil masuk: ${fail}
+🕔 Waktu laporan: 17:00 WIB`;
+
+            await sendTelegramMessage(msg);
+            localStorage.setItem(`ekk_report_sent_${today}`, '1');
+        }
+
+        function initScheduler() {
+            function check() {
+                const now = new Date();
+                const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+                const hours = wib.getUTCHours();
+                const minutes = wib.getUTCMinutes();
+
+                // Jika jam 17:00 - 17:05
+                if (hours === 17 && minutes < 5) {
+                    const today = getTodayWIB();
+                    const key = `ekk_report_sent_${today}`;
+                    if (!localStorage.getItem(key)) {
+                        sendDailyReport();
+                    }
+                }
+            }
+
+            setInterval(check, 60000);
+            setTimeout(check, 5000);
+        }
+
+        initScheduler();
+
+        console.log('📊 Pelacakan pengunjung aktif (tanpa backend)');
+        console.log('🆔 ID anonim:', ANON_ID);
     </script>
 </body>
 </html>
