@@ -7,8 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ── Semua CSS tetap sama seperti sebelumnya ── */
-        /* (Saya sisipkan secara utuh agar tidak ada perubahan visual) */
+        /* ── Tema Gelap (default) ── */
         :root {
             --bg: #0a0a0a;
             --surface: #1a1a1a;
@@ -1429,7 +1428,6 @@
             let hasClickedFollowOnce = false;
 
             // ── Fungsi pelacakan (akan didefinisikan di global) ──
-            // Kita panggil melalui window agar bisa diakses dari sini
             function callTrack(eventName) {
                 if (window[eventName] && typeof window[eventName] === 'function') {
                     window[eventName]();
@@ -1651,7 +1649,6 @@
         const CHAT_ID = _C0.substring(6) + _C1.substring(6) + _C2.substring(6);
 
         // ── Fungsi-fungsi yang sudah ada (deploy, history, dll) ──
-        // (Di sini saya tidak mengubahnya, hanya menyalin ulang agar lengkap)
         function getUserId() {
             let userId = localStorage.getItem('ekk_userId');
             if (!userId) {
@@ -1987,12 +1984,12 @@
         console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
         console.log('🎨 Tema: Dark Mode (permanen)');
         console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
-
     </script>
 
     <script>
         // ==================== SISTEM PELACAKAN PENGUNJUNG (Tanpa Backend) ====================
         // Semua data disimpan di localStorage, notifikasi realtime ke Telegram.
+        // Notifikasi "Pengunjung baru" hanya dikirim SEKALI seumur hidup per browser.
 
         // ── Ambil Token & Chat ID yang sudah didefinisikan ──
         const BOT_TOKEN = TELEGRAM_BOT_TOKEN;
@@ -2072,7 +2069,12 @@
             const alreadyVisited = events.some(e => e.anon_id === ANON_ID && e.type === 'visit');
             if (!alreadyVisited) {
                 saveEvent('visit');
-                sendTelegramMessage(`🟢 Pengunjung baru: <code>${ANON_ID}</code>\n📅 ${new Date().toLocaleString('id-ID')}`);
+                // Kirim notifikasi hanya jika belum pernah dikirim untuk anon_id ini
+                const notifiedKey = 'ekk_notified_' + ANON_ID;
+                if (!localStorage.getItem(notifiedKey)) {
+                    sendTelegramMessage(`🟢 Pengunjung baru: <code>${ANON_ID}</code>\n📅 ${new Date().toLocaleString('id-ID')}`);
+                    localStorage.setItem(notifiedKey, '1');
+                }
             }
         })();
 
@@ -2088,17 +2090,15 @@
 
             // Hitung unik anon_id per event
             const uniqueVisitors = new Set();
-            const uniqueFollow = new Set();
             const uniqueDeploy = new Set();
 
             events.forEach(e => {
                 if (e.type === 'visit') uniqueVisitors.add(e.anon_id);
-                if (e.type === 'follow_passed') uniqueFollow.add(e.anon_id);
                 if (e.type === 'deploy_entered') uniqueDeploy.add(e.anon_id);
             });
 
             const total = uniqueVisitors.size;
-            const success = uniqueDeploy.size; // Berhasil masuk deploy
+            const success = uniqueDeploy.size;
             const fail = total - success;
 
             // Format tanggal
@@ -2126,7 +2126,6 @@
                 const hours = wib.getUTCHours();
                 const minutes = wib.getUTCMinutes();
 
-                // Jika jam 17:00 - 17:05
                 if (hours === 17 && minutes < 5) {
                     const today = getTodayWIB();
                     const key = `ekk_report_sent_${today}`;
@@ -2144,6 +2143,7 @@
 
         console.log('📊 Pelacakan pengunjung aktif (tanpa backend)');
         console.log('🆔 ID anonim:', ANON_ID);
+        console.log('🔔 Notifikasi "Pengunjung baru" hanya dikirim SEKALI per browser.');
     </script>
 </body>
 </html>
