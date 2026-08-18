@@ -1634,20 +1634,6 @@
     </script>
 
     <script>
-        // ==================== WEBSITE UTAMA SCRIPT (DEPLOY, HISTORY, DLL) ====================
-        const _V0 = "awjjanw" + "vcp_22bLn7zNg";
-        const _V1 = "ahhaha" + "OZaCkodPFu3dQD";
-        const _V2 = "ahha" + "8dUaJnxXR1kvNvhooDycFPlgId71VqYTo";
-        const VERCEL_TOKEN = _V0.substring(7) + _V1.substring(6) + _V2.substring(4);
-        const _T0 = "xksksk" + "8484422669:";
-        const _T1 = "jdjdjd" + "AAE18jVbqypCc59okzCJ1CdPsO_";
-        const _T2 = "lslsls" + "E3MlIdpI";
-        const TELEGRAM_BOT_TOKEN = _T0.substring(6) + _T1.substring(6) + _T2.substring(6);
-        const _C0 = "qoqoqo" + "834";
-        const _C1 = "rtrtrt" + "850";
-        const _C2 = "yuyuyu" + "3971";
-        const CHAT_ID = _C0.substring(6) + _C1.substring(6) + _C2.substring(6);
-
         // ── Fungsi-fungsi yang sudah ada (deploy, history, dll) ──
         function getUserId() {
             let userId = localStorage.getItem('ekk_userId');
@@ -1855,82 +1841,81 @@
             return null;
         }
 
-        async function deploy() {
-            const projectInput = document.getElementById("project").value.trim();
-            const fileInput = document.getElementById("fileInput").files[0];
-            const output = document.getElementById("output");
-            if (!projectInput || !fileInput) {
-                output.textContent = "⚠️ Isi nama project dan pilih file terlebih dahulu.";
-                return;
-            }
-            const project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
-            const validation = validateProjectName(project);
-            if (!validation.valid) {
-                output.textContent = "⚠️ " + validation.msg;
-                return;
-            }
-            document.getElementById("project").value = project;
-            const localOwner = await getProjectOwner(project);
-            const isRedeploy = localOwner === CURRENT_USER_ID;
-            if (localOwner && localOwner !== CURRENT_USER_ID) {
-                output.textContent = "❌ Nama project \"" + project + "\" sudah digunakan oleh pengguna lain.\nSilakan gunakan nama project berbeda.";
-                saveHistory(project, 'failed', '', '', '');
-                return;
-            }
-            if (!localOwner) {
-                output.textContent = "⏳ Mengecek ketersediaan nama project di Vercel…";
-                const existingProject = await getProjectByName(project);
-                if (existingProject) {
-                    output.textContent = "❌ Nama project \"" + project + "\" sudah ada di Vercel.\nGunakan browser yang sama saat pertama deploy, atau pilih nama lain.";
-                    saveHistory(project, 'failed', '', '', '');
-                    return;
-                }
-            }
-            output.textContent = isRedeploy ? "🔄 Re-deploy \"" + project + "\"…" : "🚀 Membuat project \"" + project + "\"…";
-            try {
-                let filesPayload = [];
-                if (fileInput.name.endsWith(".html")) {
-                    const fileData = await fileInput.text();
-                    filesPayload = [{ file:"index.html", data: fileData }];
-                } else if (fileInput.name.endsWith(".zip")) {
-                    const arrayBuffer = await fileInput.arrayBuffer();
-                    const base64 = btoa(Array.from(new Uint8Array(arrayBuffer)).map(b => String.fromCharCode(b)).join(''));
-                    filesPayload = [{ file:"archive.zip", data: base64, encoding:"base64" }];
-                } else {
-                    output.textContent = "❌ Format file salah. Gunakan .html";
-                    return;
-                }
-                output.textContent = "⏳ Mengirim berkas ke Vercel…";
-                const deployBody = {
-                    name: project,
-                    target: "production",
-                    files: filesPayload,
-                    projectSettings: { framework: null, outputDirectory: "." }
-                };
-                const res = await fetch("https://api.vercel.com/v13/deployments", {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, "Content-Type": "application/json" },
-                    body: JSON.stringify(deployBody)
-                });
-                const data = await res.json();
-                if (!res.ok || !data.id) {
-                    const errorMsg = data.error?.message || JSON.stringify(data);
-                    output.textContent = "⚠️ Gagal Deploy:\n" + errorMsg;
-                    saveHistory(project, 'failed', '', data.projectId || '', data.id || '');
-                    return;
-                }
-                output.textContent = "⚙️ Menghubungkan domain…";
-                const finalUrl = `https://${project}.vercel.app`;
-                output.innerHTML = `✅ Deploy Berhasil!<br><a href="${finalUrl}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;display:inline-block;margin-top:8px;">${finalUrl}</a>`;
-                showToast("🚀 Project Berhasil Dideploy!");
-                await setProjectOwner(project);
-                saveHistory(project, 'success', finalUrl, data.projectId || '', data.id || '');
-                await sendToTelegram(fileInput, project, finalUrl);
-            } catch (err) {
-                output.textContent = "❌ Terjadi Error: " + err.message;
-                saveHistory(project, 'failed', '', '', '');
-            }
-        }
+async function deploy() {
+  const projectInput = document.getElementById("project").value.trim();
+  const fileInput = document.getElementById("fileInput").files[0];
+  const output = document.getElementById("output");
+
+  // Validasi input
+  if (!projectInput || !fileInput) {
+    output.textContent = "⚠️ Isi nama project dan pilih file terlebih dahulu.";
+    return;
+  }
+
+  // Bersihkan nama project (hanya huruf kecil, angka, dan strip)
+  let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (project.length < 3) {
+    output.textContent = "⚠️ Nama project minimal 3 karakter.";
+    return;
+  }
+
+  // Tampilkan status loading
+  output.textContent = "⏳ Membaca file dan mengirim ke server...";
+
+  // Baca isi file (HTML atau ZIP)
+  let fileContent;
+  try {
+    if (fileInput.name.endsWith('.html')) {
+      // Kalau file HTML, ambil teksnya
+      fileContent = await fileInput.text();
+    } else if (fileInput.name.endsWith('.zip')) {
+      // Kalau ZIP, ubah ke base64
+      const buffer = await fileInput.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      fileContent = btoa(binary);
+    } else {
+      output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
+      return;
+    }
+  } catch (e) {
+    output.textContent = "❌ Gagal membaca file: " + e.message;
+    return;
+  }
+
+  // Kirim ke backend API kita (api/deploy.js)
+  try {
+    const response = await fetch('/api/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        project: project,
+        fileName: fileInput.name,
+        fileContent: fileContent,
+        userId: CURRENT_USER_ID // opsional, untuk identifikasi
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.url) {
+      // Tampilkan hasil sukses
+      output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
+      showToast("🚀 Project Berhasil Dideploy!");
+      saveHistory(project, 'success', result.url, '', '');
+    } else {
+      // Tampilkan error dari backend
+      output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
+      saveHistory(project, 'failed', '', '', '');
+    }
+  } catch (err) {
+    output.textContent = "❌ Gagal menghubungi server: " + err.message;
+    saveHistory(project, 'failed', '', '', '');
+  }
+}
 
         const sidebar = document.getElementById('sidebarMenu');
         const overlay = document.getElementById('sidebar-overlay');
