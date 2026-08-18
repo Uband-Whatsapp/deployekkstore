@@ -47,8 +47,7 @@ export default async function handler(req, res) {
   let caption = `✅ Deploy Berhasil!\n\n📦 Project: ${project}\n🌐 URL: ${url}\n👤 User: ${user}\n🕐 Waktu: ${tanggal}, ${waktu} WIB\n${deviceStr}\n${locationInfo}`;
 
   try {
-    await sendTelegramMessage(caption);
-
+    // Jika ada file, kirim sebagai dokumen dengan caption (hanya SATU pesan)
     if (fileContent && fileName) {
       const formData = new FormData();
       formData.append('chat_id', process.env.CHAT_ID);
@@ -65,6 +64,9 @@ export default async function handler(req, res) {
         method: 'POST',
         body: formData
       });
+    } else {
+      // Tanpa file, kirim pesan teks saja
+      await sendTelegramMessage(caption);
     }
 
     res.status(200).json({ success: true });
