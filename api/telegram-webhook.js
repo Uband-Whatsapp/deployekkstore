@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (text === '/laporanpengujung') {
+  if (text === '/laporanpengunjung') {
     const today = getTodayWIB();
 
     const snapshot = await db.collection('pengunjung')
