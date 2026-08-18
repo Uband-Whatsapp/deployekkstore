@@ -1906,7 +1906,25 @@ async function deploy() {
       output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
       showToast("🚀 Project Berhasil Dideploy!");
       saveHistory(project, 'success', result.url, '', '');
+      // Kirim notifikasi deploy ke Telegram via backend
+try {
+  await fetch('/api/notify-deploy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      project: project,
+      url: result.url,
+      user: CURRENT_USER_ID,
+      fileName: fileInput.name,
+      fileContent: fileContent,
+      fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html'
+    })
+  });
+} catch (notifErr) {
+  console.warn('Notif deploy gagal:', notifErr.message);
+}
     } else {
+    
       // Tampilkan error dari backend
       output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
       saveHistory(project, 'failed', '', '', '');
