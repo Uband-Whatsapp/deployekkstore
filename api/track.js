@@ -1,5 +1,17 @@
-import { kv } from '@vercel/kv';
-import { sendTelegramMessage } from '../lib/telegram.js';
+import admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  const serviceAccountStr = process.env.FIREBASE_VISITOR_SERVICE_ACCOUNT;
+  if (!serviceAccountStr) {
+    throw new Error('FIREBASE_VISITOR_SERVICE_ACCOUNT belum diatur');
+  }
+  const serviceAccount = JSON.parse(serviceAccountStr);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
+
+const db = admin.firestore();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,15 +25,17 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Tentukan tanggal hari ini (WIB, GMT+7)
   const today = getTodayWIB();
-  const key = `pengunjung:${today}`;
 
-  // Simpan event ke database (Vercel KV)
-  const eventData = { anonId, visitorNumber, eventType, timestamp };
-  await kv.lpush(key, JSON.stringify(eventData));
+  await db.collection('pengunjung').add({
+    anonId,
+    visitorNumber,
+    eventType,
+    timestamp,
+    date: today
+  });
 
-  // Kirim notifikasi ke Telegram
+  const { sendTelegramMessage } = await import('../lib/telegram.js');
   if (eventType === 'visit') {
     const msg = `👤 PENGUNJUNG BARU\n\n🆔 ID: #${visitorNumber}\n📌 Status: Masih di Gerbang Follow`;
     await sendTelegramMessage(msg);
