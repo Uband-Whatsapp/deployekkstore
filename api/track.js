@@ -38,11 +38,11 @@ export default async function handler(req, res) {
   const { sendTelegramMessage } = await import('../lib/telegram.js');
 
   if (eventType === 'visit') {
-    const waktu = formatTime(timestamp);
+    const waktu = formatTimeWIB(timestamp);
     const msg = `👤 PENGUNJUNG BARU\n\n🆔 ID: #${visitorNumber}\n📌 Status: Masih di Gerbang Follow\n🕐 Waktu: ${waktu}`;
     await sendTelegramMessage(msg);
   } else if (eventType === 'follow_passed') {
-    const waktu = formatTime(timestamp);
+    const waktu = formatTimeWIB(timestamp);
     const msg = `✅ BERHASIL MELEWATI FOLLOW\n\n🆔 ID: #${visitorNumber}\n📌 Status: Berhasil\n🕐 Waktu: ${waktu}`;
     await sendTelegramMessage(msg);
   }
@@ -50,14 +50,14 @@ export default async function handler(req, res) {
   res.status(200).json({ success: true });
 }
 
-function formatTime(timestamp) {
-  const d = new Date(timestamp);
-  return d.toLocaleTimeString('id-ID', {
+function formatTimeWIB(timestamp) {
+  return new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta',
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
-  }).replace(/\./g, ':');
+  }).format(new Date(timestamp)).replace(/\./g, ':');
 }
 
 function getTodayWIB() {
