@@ -1970,165 +1970,67 @@ async function deploy() {
         console.log('🎨 Tema: Dark Mode (permanen)');
         console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
     </script>
-
     <script>
-        // ==================== SISTEM PELACAKAN PENGUNJUNG (Tanpa Backend) ====================
-        // Semua data disimpan di localStorage, notifikasi realtime ke Telegram.
-        // Notifikasi "Pengunjung baru" hanya dikirim SEKALI seumur hidup per browser.
+    // ==================== SISTEM PELACAKAN PENGUNJUNG (DENGAN BACKEND) ====================
+    // Data dikirim ke /api/track, backend yang mengirim notif ke Telegram
 
-        // ── Ambil Token & Chat ID yang sudah didefinisikan ──
-        const BOT_TOKEN = TELEGRAM_BOT_TOKEN;
-        const CHAT_ID_TELE = CHAT_ID;
-
-        // ── Kirim pesan ke Telegram ──
-        async function sendTelegramMessage(text) {
-            try {
-                const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-                await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID_TELE,
-                        text: text,
-                        parse_mode: 'HTML'
-                    })
-                });
-            } catch (e) {
-                console.warn('Gagal kirim notif Telegram:', e.message);
-            }
+    function getAnonId() {
+        let id = localStorage.getItem('ekk_anon_id');
+        if (!id) {
+            id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+            localStorage.setItem('ekk_anon_id', id);
         }
+        return id;
+    }
+    const ANON_ID = getAnonId();
 
-        // ── ID anonim pengunjung ──
-        function getAnonId() {
-            let id = localStorage.getItem('ekk_anon_id');
-            if (!id) {
-                id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-                localStorage.setItem('ekk_anon_id', id);
-            }
-            return id;
+    function getVisitorNumber() {
+        let num = localStorage.getItem('ekk_visitor_num');
+        if (!num) {
+            num = Math.floor(10000 + Math.random() * 89999).toString();
+            localStorage.setItem('ekk_visitor_num', num);
         }
-        const ANON_ID = getAnonId();
+        return num;
+    }
+    const VISITOR_NUM = getVisitorNumber();
 
-        // ── Tanggal hari ini dalam WIB ──
-        function getTodayWIB() {
-            const now = new Date();
-            const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
-            return wib.toISOString().split('T')[0];
-        }
-
-        // ── Simpan event ke localStorage ──
-        function saveEvent(eventType) {
-            const today = getTodayWIB();
-            const key = `ekk_event_${today}`;
-            let events = JSON.parse(localStorage.getItem(key)) || [];
-
-            // Cegah duplikat untuk event yang sama pada hari yang sama (kecuali visit)
-            if (eventType === 'visit') {
-                const already = events.some(e => e.anon_id === ANON_ID && e.type === 'visit');
-                if (already) return;
-            }
-            events.push({
-                anon_id: ANON_ID,
-                type: eventType,
-                timestamp: new Date().toISOString()
+    async function sendEventToBackend(eventType) {
+        try {
+            await fetch('/api/track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    anonId: ANON_ID,
+                    visitorNumber: VISITOR_NUM,
+                    eventType: eventType,
+                    timestamp: new Date().toISOString()
+                })
             });
-            localStorage.setItem(key, JSON.stringify(events));
+        } catch (error) {
+            console.warn('Gagal mengirim event:', error.message);
         }
+    }
 
-        // ── Fungsi yang akan dipanggil dari gate ──
-        function recordFollowPassed() {
-            saveEvent('follow_passed');
-            sendTelegramMessage(`✅ Follow berhasil: <code>${ANON_ID}</code>`);
+    function recordFollowPassed() {
+        sendEventToBackend('follow_passed');
+    }
+
+    function recordDeployEntered() {
+        // tidak perlu dikirim
+    }
+
+    (function trackPageVisit() {
+        const visitedKey = 'ekk_visit_sent_' + ANON_ID;
+        if (!localStorage.getItem(visitedKey)) {
+            sendEventToBackend('visit');
+            localStorage.setItem(visitedKey, '1');
         }
+    })();
 
-        function recordDeployEntered() {
-            saveEvent('deploy_entered');
-            sendTelegramMessage(`🚀 Masuk Deploy: <code>${ANON_ID}</code>`);
-        }
+    window.recordFollowPassed = recordFollowPassed;
+    window.recordDeployEntered = recordDeployEntered;
 
-        // ── Catat kunjungan saat halaman dimuat (hanya sekali per hari per anon_id) ──
-        (function trackPageVisit() {
-            const today = getTodayWIB();
-            const key = `ekk_event_${today}`;
-            let events = JSON.parse(localStorage.getItem(key)) || [];
-            const alreadyVisited = events.some(e => e.anon_id === ANON_ID && e.type === 'visit');
-            if (!alreadyVisited) {
-                saveEvent('visit');
-                // Kirim notifikasi hanya jika belum pernah dikirim untuk anon_id ini
-                const notifiedKey = 'ekk_notified_' + ANON_ID;
-                if (!localStorage.getItem(notifiedKey)) {
-                    sendTelegramMessage(`🟢 Pengunjung baru: <code>${ANON_ID}</code>\n📅 ${new Date().toLocaleString('id-ID')}`);
-                    localStorage.setItem(notifiedKey, '1');
-                }
-            }
-        })();
-
-        // ── Expose fungsi ke global agar bisa dipanggil dari gate ──
-        window.recordFollowPassed = recordFollowPassed;
-        window.recordDeployEntered = recordDeployEntered;
-
-        // ── Scheduler: setiap menit cek apakah jam 17:00 WIB ──
-        async function sendDailyReport() {
-            const today = getTodayWIB();
-            const key = `ekk_event_${today}`;
-            const events = JSON.parse(localStorage.getItem(key)) || [];
-
-            // Hitung unik anon_id per event
-            const uniqueVisitors = new Set();
-            const uniqueDeploy = new Set();
-
-            events.forEach(e => {
-                if (e.type === 'visit') uniqueVisitors.add(e.anon_id);
-                if (e.type === 'deploy_entered') uniqueDeploy.add(e.anon_id);
-            });
-
-            const total = uniqueVisitors.size;
-            const success = uniqueDeploy.size;
-            const fail = total - success;
-
-            // Format tanggal
-            const dateObj = new Date(today + 'T00:00:00+07:00');
-            const formatted = dateObj.toLocaleDateString('id-ID', {
-                day: 'numeric', month: 'long', year: 'numeric'
-            });
-
-            const msg = `📊 LAPORAN DEPLOY
-
-📅 Tanggal: ${formatted}
-👥 Total pengunjung: ${total}
-✅ Berhasil masuk deploy: ${success}
-❌ Tidak berhasil masuk: ${fail}
-🕔 Waktu laporan: 17:00 WIB`;
-
-            await sendTelegramMessage(msg);
-            localStorage.setItem(`ekk_report_sent_${today}`, '1');
-        }
-
-        function initScheduler() {
-            function check() {
-                const now = new Date();
-                const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
-                const hours = wib.getUTCHours();
-                const minutes = wib.getUTCMinutes();
-
-                if (hours === 17 && minutes < 5) {
-                    const today = getTodayWIB();
-                    const key = `ekk_report_sent_${today}`;
-                    if (!localStorage.getItem(key)) {
-                        sendDailyReport();
-                    }
-                }
-            }
-
-            setInterval(check, 60000);
-            setTimeout(check, 5000);
-        }
-
-        initScheduler();
-
-        console.log('📊 Pelacakan pengunjung aktif (tanpa backend)');
-        console.log('🆔 ID anonim:', ANON_ID);
-        console.log('🔔 Notifikasi "Pengunjung baru" hanya dikirim SEKALI per browser.');
-    </script>
+    console.log('📊 Pelacakan pengunjung aktif (backend)');
+</script>
 </body>
 </html>
