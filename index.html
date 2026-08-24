@@ -53,6 +53,12 @@
             padding: 0;
             overflow-x: hidden;
         }
+        body.modal-open {
+            overflow: hidden !important;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
 
         .bg-decor {
             position: fixed;
@@ -1188,178 +1194,196 @@
         #websiteContent {
             transition: opacity 0.5s ease;
         }
-/* ── MODAL SYARAT DEPLOY ── */
-#deploy-modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    height: 100dvh;
-    z-index: 99999;
 
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(6px);
+        /* ── MODAL SYARAT DEPLOY ── */
+        #deploy-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            z-index: 99999;
 
-    justify-content: center;
-    align-items: center;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
 
-    padding: 16px;
-    box-sizing: border-box;
+            justify-content: center;
+            align-items: center;
 
-    /* Jangan biarkan background ikut scroll */
-    overflow: hidden;
+            padding: 16px;
+            box-sizing: border-box;
 
-    /* Hitung berdasarkan viewport HP */
-    overscroll-behavior: none;
-    touch-action: none;
-}
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+        #deploy-modal.show {
+            display: flex;
+        }
 
-#deploy-modal.show {
-    display: flex;
-}
+        #deploy-modal .modal-content {
+            position: relative;
+            background: var(--bg-card);
+            color: var(--text-main);
+            width: 100%;
+            max-width: 400px;
+            max-height: calc(100dvh - 32px);
+            box-sizing: border-box;
+            padding: 28px 24px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
 
-/* ── ISI MODAL ── */
-#deploy-modal .modal-content {
-    position: relative;
+        #deploy-modal .modal-content h2 {
+            margin: 0 0 6px 0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #deploy-modal .modal-content p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0 0 20px 0;
+        }
 
-    background: var(--bg-card);
-    color: var(--text-main);
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+        .requirement-item .icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .requirement-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .requirement-item .info .label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .requirement-item .info .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .requirement-item .action-btn {
+            background: #25d366;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .requirement-item .action-btn.blue {
+            background: #3b82f6;
+        }
+        .requirement-item .status {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 50px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .requirement-item .status.done {
+            color: #22c55e;
+            font-weight: 600;
+        }
+        .requirement-item.hidden {
+            display: none;
+        }
 
-    width: 100%;
-    max-width: 400px;
-
-    /* Tinggi mengikuti layar HP, bukan panjang website */
-    max-height: calc(100dvh - 32px);
-
-    box-sizing: border-box;
-
-    padding: 28px 24px;
-
-    border-radius: 24px;
-    border: 1px solid var(--border-color);
-
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-
-    /* Kalau isi kepanjangan, yang scroll hanya modal */
-    overflow-y: auto;
-    overflow-x: hidden;
-
-    overscroll-behavior: contain;
-    touch-action: pan-y;
-
-    -webkit-overflow-scrolling: touch;
-}
-
-/* ── JUDUL ── */
-#deploy-modal .modal-content h2 {
-    margin: 0 0 6px 0;
-    font-size: 20px;
-
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* ── DESKRIPSI ── */
-#deploy-modal .modal-content p {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin: 0 0 20px 0;
-}
-
-/* ── ITEM SYARAT ── */
-.requirement-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    margin-bottom: 14px;
-    padding: 10px 12px;
-
-    background: var(--bg-input);
-    border-radius: 12px;
-
-    box-sizing: border-box;
-}
-
-/* ── ICON ── */
-.requirement-item .icon {
-    font-size: 22px;
-    flex-shrink: 0;
-}
-
-/* ── INFO ── */
-.requirement-item .info {
-    flex: 1;
-    min-width: 0;
-}
-
-.requirement-item .info .label {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.requirement-item .info .desc {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-/* ── TOMBOL ── */
-.requirement-item .action-btn {
-    background: #25d366;
-    color: #fff;
-
-    padding: 4px 14px;
-    border-radius: 999px;
-
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 600;
-
-    border: none;
-    cursor: pointer;
-
-    flex-shrink: 0;
-}
-
-.requirement-item .action-btn.blue {
-    background: #3b82f6;
-}
-
-/* ── STATUS ── */
-.requirement-item .status {
-    font-size: 12px;
-    color: var(--text-muted);
-
-    min-width: 50px;
-    text-align: right;
-
-    flex-shrink: 0;
-}
-
-.requirement-item .status.done {
-    color: #22c55e;
-    font-weight: 600;
-}
-
-/* ── HIDDEN ── */
-.requirement-item.hidden {
-    display: none;
-}
-
-/* ── HP KECIL ── */
-@media (max-width: 480px) {
-    #deploy-modal {
-        padding: 12px;
-    }
-
-    #deploy-modal .modal-content {
-        max-height: calc(100dvh - 24px);
-        padding: 24px 18px;
-        border-radius: 20px;
-    }
-}
+        /* ── POPUP PERINGATAN COBA LAGI (follow channel) ── */
+        #retry-popup {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        #retry-popup.show {
+            display: flex;
+        }
+        #retry-popup .popup-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            max-width: 380px;
+            width: 100%;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        }
+        #retry-popup .popup-box .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        #retry-popup .popup-box h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #fbbf24;
+        }
+        #retry-popup .popup-box p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        #retry-popup .popup-box .btn-primary {
+            background: #25d366;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #retry-popup .popup-box .btn-primary:hover {
+            background: #1fb855;
+        }
+        #retry-popup .popup-box .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px 24px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+        #retry-popup .popup-box .btn-secondary:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+        @media (max-width: 480px) {
+            #deploy-modal .modal-content { padding: 24px 18px; border-radius: 20px; }
+            #retry-popup .popup-box { padding: 24px 18px; }
+        }
     </style>
 </head>
 <body>
@@ -1375,7 +1399,6 @@
     <div class="follow-page">
         <div class="gate-wrapper" id="gateWrapper">
             <div class="gate-card" id="gateCard">
-                <!-- Step Indicator -->
                 <div class="steps" id="stepIndicator">
                     <div class="step-dot active" id="stepDot1"></div>
                     <div class="step-line" id="stepLine1"></div>
@@ -1389,7 +1412,6 @@
                     <span class="step-label" id="stepLabel3">Selesai</span>
                 </div>
 
-                <!-- Logo -->
                 <div class="logo-wrap">
                     <div class="logo-ring" aria-hidden="true"></div>
                     <div class="logo-circle">
@@ -1399,15 +1421,11 @@
                     </div>
                 </div>
 
-                <!-- Headline -->
                 <h2 class="gate-headline">Verifikasi Follow</h2>
-
-                <!-- Subtitle -->
                 <p class="gate-subtitle">
                     Untuk melanjutkan ke website, silakan ikuti saluran WhatsApp terlebih dahulu. Klik <span class="highlight">Buka Saluran WhatsApp</span>, pilih <span class="highlight">Buka di WhatsApp</span>, lalu tekan <span class="highlight">Ikuti</span>. Setelah itu, kembali ke halaman ini. Sistem akan otomatis memverifikasi status mengikuti Anda. Jika verifikasi berhasil, akses ke website akan dibuka secara otomatis.
                 </p>
 
-                <!-- Tombol Follow -->
                 <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="btnFollowWA" aria-label="Buka saluran WhatsApp">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
@@ -1415,18 +1433,15 @@
                     Buka Saluran WhatsApp
                 </a>
 
-                <!-- Tombol Konfirmasi -->
                 <button class="btn btn-confirm" id="btnConfirm" disabled>
                     Saya Sudah Follow
                 </button>
 
-                <!-- Area Pesan Verifikasi -->
                 <div class="verify-message" id="verifyMessageBox">
                     <span class="msg-icon" id="verifyIcon"></span>
                     <span id="verifyText"></span>
                 </div>
 
-                <!-- Footer -->
                 <div class="gate-footer">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -1437,12 +1452,10 @@
             </div>
         </div>
 
-        <!-- KONTEN WEBSITE UTAMA (awalnya tersembunyi) -->
+        <!-- KONTEN WEBSITE UTAMA -->
         <div id="websiteContent" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
-            <!-- OVERLAY SIDEBAR -->
             <div id="sidebar-overlay"></div>
 
-            <!-- MODAL KONFIRMASI -->
             <div class="modal-overlay" id="confirmModalOverlay">
                 <div class="modal-box">
                     <div class="modal-icon">⚠️</div>
@@ -1455,7 +1468,6 @@
                 </div>
             </div>
 
-            <!-- TOP BAR -->
             <div id="top-bar-container">
                 <div id="top-controls">
                     <div class="status-indicator">
@@ -1470,7 +1482,6 @@
                 </div>
             </div>
 
-            <!-- SIDEBAR MENU -->
             <nav class="sidebar" id="sidebarMenu">
                 <div class="sidebar-header">
                     <div class="sidebar-profile">
@@ -1525,7 +1536,6 @@
                 </ul>
             </nav>
 
-            <!-- MAIN CONTENT -->
             <div class="app-wrap" id="mainContent">
                 <div class="header-box" id="headerBox">
                     <h1>Deploy Tools</h1>
@@ -1556,7 +1566,6 @@
                         <h2>⚠️ Syarat Deploy</h2>
                         <p>Lengkapi yang belum untuk bisa deploy.</p>
 
-                        <!-- 1. JOIN GRUP -->
                         <div class="requirement-item" id="req-grup">
                             <span class="icon" id="req-grup-icon">⬜</span>
                             <div class="info">
@@ -1567,7 +1576,6 @@
                             <span class="status" id="req-grup-status">Belum</span>
                         </div>
 
-                        <!-- 2. AKTIFKAN NOTIFIKASI -->
                         <div class="requirement-item" id="req-notif">
                             <span class="icon" id="req-notif-icon">⬜</span>
                             <div class="info">
@@ -1576,6 +1584,23 @@
                             </div>
                             <button id="btn-aktifkan-notif" class="action-btn blue">Aktifkan</button>
                             <span class="status" id="req-notif-status">Belum</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POPUP PERINGATAN COBA LAGI (follow channel) -->
+                <div id="retry-popup">
+                    <div class="popup-box">
+                        <div class="icon">📢</div>
+                        <h3>⚠️ Kamu masih belum mengikuti saluran?</h3>
+                        <p>
+                            Untuk melanjutkan, kamu perlu <strong>menekan tombol "Ikuti"</strong> di saluran WhatsApp.
+                            Klik tombol di bawah ini, lalu pilih <strong>"Buka di WhatsApp"</strong> dan tekan <strong>"Ikuti"</strong>.
+                            Setelah itu, kembali ke halaman ini dan verifikasi akan otomatis berhasil.
+                        </p>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" class="btn-primary">Buka Saluran WhatsApp</a>
+                            <button class="btn-secondary" onclick="document.getElementById('retry-popup').classList.remove('show')">Tutup</button>
                         </div>
                     </div>
                 </div>
@@ -1593,7 +1618,6 @@
             </div>
         </div>
 
-        <!-- TOAST -->
         <div id="toast" class="toast"></div>
     </div>
 
@@ -1765,20 +1789,19 @@
                         if (bgDots) bgDots.style.display = 'none';
                         isVerifying = false;
                         return;
-                    } else if (confirmAttempts === 1) {
-                        showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Kami belum dapat mendeteksi bahwa kamu telah mengikuti saluran WhatsApp. Silakan buka kembali saluran melalui tombol <b>Buka Saluran WhatsApp</b>, pastikan kamu menekan tombol <b>Ikuti</b>, kemudian kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
-                        btnConfirm.disabled = false;
-                        btnConfirm.classList.add('active');
-                        btnConfirm.textContent = 'Coba Lagi';
-                        updateStepIndicator(2);
-                        isVerifying = false;
                     } else {
-                        showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Sistem mendeteksi bahwa kamu <b>belum mengikuti saluran WhatsApp</b>. Silakan klik <b>Buka Saluran WhatsApp</b>, pilih <b>Lihat di WhatsApp</b> jika muncul, lalu tekan tombol <b>Ikuti</b> pada saluran. Setelah benar-benar mengikuti saluran, kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
+                        // GAGAL: tampilkan popup peringatan
+                        showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Sistem belum mendeteksi bahwa kamu telah mengikuti saluran WhatsApp.');
                         btnConfirm.disabled = false;
                         btnConfirm.classList.add('active');
                         btnConfirm.textContent = 'Coba Lagi';
                         updateStepIndicator(2);
                         isVerifying = false;
+
+                        // Tampilkan popup peringatan setelah 2 kali percobaan
+                        if (confirmAttempts >= 2) {
+                            document.getElementById('retry-popup').classList.add('show');
+                        }
                     }
                 }, VERIFY_DELAY_MS);
             }
@@ -2046,48 +2069,44 @@
             return Notification.permission === 'granted';
         }
 
-        // Update modal: tampilkan hanya item yang belum terpenuhi
+        // ===== UPDATE MODAL =====
         function updateModalStatus() {
-    const join = isJoinValid();
-    const notif = getNotifStatus();
+            const join = isJoinValid();
+            const notif = getNotifStatus();
 
-    // Grup
-    const grupItem = document.getElementById('req-grup');
-    const grupIcon = document.getElementById('req-grup-icon');
-    const grupStatus = document.getElementById('req-grup-status');
-    if (join) {
-        grupItem.style.display = 'none';
-    } else {
-        grupItem.style.display = 'flex';
-        grupIcon.textContent = '⬜';
-        grupStatus.textContent = 'Belum';
-        grupStatus.className = 'status';
-    }
+            const grupItem = document.getElementById('req-grup');
+            const grupIcon = document.getElementById('req-grup-icon');
+            const grupStatus = document.getElementById('req-grup-status');
+            if (join) {
+                grupItem.style.display = 'none';
+            } else {
+                grupItem.style.display = 'flex';
+                grupIcon.textContent = '⬜';
+                grupStatus.textContent = 'Belum';
+                grupStatus.className = 'status';
+            }
 
-    // Notifikasi
-    const notifItem = document.getElementById('req-notif');
-    const notifIcon = document.getElementById('req-notif-icon');
-    const notifStatus = document.getElementById('req-notif-status');
-    if (notif) {
-        notifItem.style.display = 'none';
-    } else {
-        notifItem.style.display = 'flex';
-        notifIcon.textContent = '⬜';
-        notifStatus.textContent = 'Belum';
-        notifStatus.className = 'status';
-    }
+            const notifItem = document.getElementById('req-notif');
+            const notifIcon = document.getElementById('req-notif-icon');
+            const notifStatus = document.getElementById('req-notif-status');
+            if (notif) {
+                notifItem.style.display = 'none';
+            } else {
+                notifItem.style.display = 'flex';
+                notifIcon.textContent = '⬜';
+                notifStatus.textContent = 'Belum';
+                notifStatus.className = 'status';
+            }
 
-    // Jika semua sudah, tutup modal dan deploy
-    if (join && notif) {
-        const modal = document.getElementById('deploy-modal');
-        modal.style.display = 'none';
-        document.body.classList.remove('modal-open');
-        // Jalankan deploy (jika belum berjalan)
-        originalDeployFunction();
-    }
-}
+            if (join && notif) {
+                const modal = document.getElementById('deploy-modal');
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                originalDeployFunction();
+            }
+        }
 
-        // Fungsi deploy asli (tidak berubah)
+        // ===== FUNGSI DEPLOY ASLI =====
         async function originalDeployFunction() {
             const projectInput = document.getElementById("project").value.trim();
             const fileInput = document.getElementById("fileInput").files[0];
@@ -2204,7 +2223,7 @@
             }
         }
 
-        // Fungsi deploy yang dipanggil dari tombol
+        // ===== DEPLOY (dipanggil dari tombol) =====
         async function deploy() {
             const projectInput = document.getElementById("project").value.trim();
             const fileInput = document.getElementById("fileInput").files[0];
@@ -2223,10 +2242,8 @@
             const notif = getNotifStatus();
 
             if (join && notif) {
-                // Semua syarat terpenuhi
                 await originalDeployFunction();
             } else {
-                // Tampilkan modal (hanya item yang belum)
                 const modal = document.getElementById('deploy-modal');
                 modal.style.display = 'flex';
                 document.body.classList.add('modal-open');
@@ -2234,18 +2251,23 @@
             }
         }
 
-        // Event listeners untuk tombol di modal
+        // ===== EVENT LISTENER JOIN GRUP =====
+        // Saat tombol join diklik, kita catat timestamp dan update status.
+        // TAPI jangan langsung tutup modal; user harus benar-benar membuka link.
+        // Kita biarkan modal tetap terbuka sampai user kembali ke halaman (visibilitychange).
         document.getElementById('btn-join-grup').addEventListener('click', function() {
             setJoinTimestamp();
+            // Update status agar icon berubah, tapi modal tetap terbuka
             updateModalStatus();
         });
 
+        // Event listener untuk tombol Aktifkan Notifikasi
         document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
             registerPushNotification();
-            setTimeout(updateModalStatus, 1500);
+            // updateModalStatus akan dipanggil dari registerPushNotification setelah izin
         });
 
-        // Update status saat user kembali ke halaman
+        // Update status saat user kembali ke halaman (misal setelah join grup)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 updateModalStatus();
@@ -2307,7 +2329,7 @@
         console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
     </script>
     <script>
-        // ==================== SISTEM PELACAKAN PENGUNJUNG ====================
+        // ==================== SISTEM PELACAKAN PENGUNJUNG & NOTIFIKASI ====================
         function getAnonId() {
             try {
                 let id = localStorage.getItem('ekk_anon_id');
@@ -2336,56 +2358,50 @@
         }
         const VISITOR_NUM = getVisitorNumber();
 
-        // ========== PUSH NOTIFICATION ==========
         const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
 
-       async function registerPushNotification() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Browser tidak mendukung notifikasi push.');
-        return;
-    }
+        async function registerPushNotification() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.log('Browser tidak mendukung notifikasi push.');
+                return;
+            }
 
-    let permission = Notification.permission;
-    if (permission === 'default') {
-        permission = await Notification.requestPermission();
-    }
+            let permission = Notification.permission;
+            if (permission === 'default') {
+                permission = await Notification.requestPermission();
+            }
 
-    // ===== LANGSUNG UPDATE MODAL SETELAH USER PILIH IZIN =====
-    updateModalStatus();
+            // Langsung update status modal
+            updateModalStatus();
 
-    if (permission !== 'granted') {
-        console.log('Izin notifikasi ditolak.');
-        return;
-    }
+            if (permission !== 'granted') {
+                console.log('Izin notifikasi ditolak.');
+                return;
+            }
 
-    // Proses service worker & subscribe JALAN DI BACKGROUND (tidak menunggu)
-    try {
-        const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        console.log('Service Worker terdaftar');
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                console.log('Service Worker terdaftar');
 
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: VAPID_PUBLIC_KEY
-        });
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: VAPID_PUBLIC_KEY
+                });
 
-        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-        await fetch('/api/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                anonId: anonId,
-                subscription: subscription
-            })
-        });
-        console.log('Subscription berhasil disimpan.');
-    } catch (err) {
-        console.error('Gagal daftar push:', err);
-    }
-}
-
-    // ===== SETELAH IZIN BERHASIL, LANGSUNG UPDATE MODAL =====
-    updateModalStatus();
-}
+                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: anonId,
+                        subscription: subscription
+                    })
+                });
+                console.log('Subscription berhasil disimpan.');
+            } catch (err) {
+                console.error('Gagal daftar push:', err);
+            }
+        }
 
         function getBrowser() {
             try {
