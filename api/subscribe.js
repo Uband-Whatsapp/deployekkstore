@@ -14,7 +14,12 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export default async function handler(req, res) {
+  console.log('📨 SUBSCRIBE: menerima request');
+  console.log('📨 Method:', req.method);
+  console.log('📨 Body:', req.body);
+
   if (req.method !== 'POST') {
+    console.log('❌ Method not allowed');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
