@@ -1378,6 +1378,51 @@
                     <div id="output">Status: Menunggu file & nama project…</div>
                 </div>
 
+                <!-- MODAL SYARAT DEPLOY -->
+                <div id="deploy-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); z-index:99999; justify-content:center; align-items:center; padding:20px;">
+                    <div style="background:var(--bg-card); border-radius:24px; max-width:400px; width:100%; padding:28px 24px; border:1px solid var(--border-color); color:var(--text-main); box-shadow:0 25px 60px rgba(0,0,0,0.6);">
+                        <h2 style="margin:0 0 6px 0; font-size:20px; display:flex; align-items:center; gap:8px;">⚠️ Syarat Deploy</h2>
+                        <p style="font-size:14px; color:var(--text-muted); margin:0 0 20px 0;">Lengkapi yang belum untuk bisa deploy.</p>
+
+                        <!-- 1. FOLLOW WA (OTOMATIS SUDAH) -->
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px; padding:10px 12px; background:var(--bg-input); border-radius:12px; opacity:0.7;">
+                            <span style="font-size:22px;">✅</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600; font-size:14px;">Follow WhatsApp Channel</div>
+                                <div style="font-size:12px; color:var(--text-muted);">Sudah diverifikasi</div>
+                            </div>
+                            <span style="font-size:12px; color:#22c55e; font-weight:600;">✔️ Sudah</span>
+                        </div>
+
+                        <!-- 2. JOIN GRUP -->
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px; padding:10px 12px; background:var(--bg-input); border-radius:12px;">
+                            <span id="req-grup-icon" style="font-size:22px;">⬜</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600; font-size:14px;">Join Grup WhatsApp</div>
+                                <div style="font-size:12px; color:var(--text-muted);">Gabung grup (berlaku 24 jam)</div>
+                            </div>
+                            <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" style="background:#25d366; color:#fff; padding:4px 14px; border-radius:999px; text-decoration:none; font-size:12px; font-weight:600;">Join</a>
+                            <span id="req-grup-status" style="font-size:12px; color:var(--text-muted); min-width:65px; text-align:right;">Belum</span>
+                        </div>
+
+                        <!-- 3. AKTIFKAN NOTIFIKASI -->
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; padding:10px 12px; background:var(--bg-input); border-radius:12px;">
+                            <span id="req-notif-icon" style="font-size:22px;">⬜</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600; font-size:14px;">Aktifkan Notifikasi</div>
+                                <div style="font-size:12px; color:var(--text-muted);">Izinkan notifikasi browser</div>
+                            </div>
+                            <button id="btn-aktifkan-notif" style="background:#3b82f6; color:#fff; padding:4px 14px; border-radius:999px; border:none; font-size:12px; font-weight:600; cursor:pointer;">Aktifkan</button>
+                            <span id="req-notif-status" style="font-size:12px; color:var(--text-muted); min-width:65px; text-align:right;">Belum</span>
+                        </div>
+
+                        <div style="display:flex; gap:10px; justify-content:flex-end;">
+                            <button id="modal-deploy-btn" style="background:linear-gradient(135deg, #ff6b35, #ff8c42); color:#fff; border:none; padding:10px 24px; border-radius:999px; font-weight:700; font-size:14px; cursor:pointer; opacity:0.5; transition:0.3s;" disabled>Deploy</button>
+                            <button id="modal-close-btn" style="background:var(--border-color); color:var(--text-main); border:none; padding:10px 20px; border-radius:999px; cursor:pointer; font-size:14px;">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- HISTORY -->
                 <div class="form history-section" id="historySection">
                     <div class="history-header">
@@ -1395,6 +1440,9 @@
         <div id="toast" class="toast"></div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- SCRIPT 1: GATE VERIFIKASI + MODAL SYARAT DEPLOY             -->
+    <!-- ============================================================ -->
     <script>
         // ==================== GATE VERIFIKASI (DENGAN PELACAKAN) ====================
         (function() {
@@ -1427,7 +1475,6 @@
             let gateRemoved = false;
             let hasClickedFollowOnce = false;
 
-            // ── Fungsi pelacakan (akan didefinisikan di global) ──
             function callTrack(eventName) {
                 if (window[eventName] && typeof window[eventName] === 'function') {
                     window[eventName]();
@@ -1457,10 +1504,7 @@
             }
 
             function showWebsite() {
-                // 🔔 Catat follow_passed
                 callTrack('recordFollowPassed');
-
-                // Sembunyikan gate
                 if (gateWrapper) gateWrapper.style.display = 'none';
                 if (bgDecor) bgDecor.style.display = 'none';
                 if (bgDots) bgDots.style.display = 'none';
@@ -1482,7 +1526,6 @@
                 void websiteContent.offsetWidth;
                 websiteContent.style.opacity = '1';
 
-                // 🔔 Catat deploy_entered setelah konten tampil
                 setTimeout(() => {
                     callTrack('recordDeployEntered');
                 }, 500);
@@ -1631,8 +1674,84 @@
             }
             init();
         })();
+
+        // ===== CEK STATUS UNTUK MODAL SYARAT DEPLOY =====
+        function getJoinTimestamp() {
+            return localStorage.getItem('grup_join_timestamp');
+        }
+
+        function setJoinTimestamp() {
+            localStorage.setItem('grup_join_timestamp', Date.now().toString());
+        }
+
+        function isJoinValid() {
+            const ts = getJoinTimestamp();
+            if (!ts) return false;
+            const now = Date.now();
+            const diff = now - parseInt(ts);
+            const hours = diff / (1000 * 60 * 60);
+            return hours <= 24;
+        }
+
+        function getNotifStatus() {
+            return Notification.permission === 'granted';
+        }
+
+        function updateModalStatus() {
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+
+            document.getElementById('req-grup-icon').textContent = join ? '✅' : '⬜';
+            document.getElementById('req-grup-status').textContent = join ? 'Aktif (24h)' : 'Belum/Expired';
+
+            document.getElementById('req-notif-icon').textContent = notif ? '✅' : '⬜';
+            document.getElementById('req-notif-status').textContent = notif ? 'Aktif' : 'Belum';
+
+            const allDone = join && notif;
+            const deployBtn = document.getElementById('modal-deploy-btn');
+            deployBtn.disabled = !allDone;
+            deployBtn.style.opacity = allDone ? '1' : '0.5';
+        }
+
+        // Event listener tombol Join Grup
+        document.getElementById('btn-join-grup').addEventListener('click', function() {
+            setJoinTimestamp();
+            updateModalStatus();
+        });
+
+        // Event listener tombol Aktifkan Notifikasi
+        document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
+            registerPushNotification();
+            setTimeout(updateModalStatus, 1500);
+        });
+
+        // Update status saat user kembali ke halaman
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateModalStatus();
+            }
+        });
+
+        // Tombol Deploy di modal
+        document.getElementById('modal-deploy-btn').addEventListener('click', function() {
+            document.getElementById('deploy-modal').style.display = 'none';
+            deploy();
+        });
+
+        // Tombol Tutup modal
+        document.getElementById('modal-close-btn').addEventListener('click', function() {
+            document.getElementById('deploy-modal').style.display = 'none';
+        });
+
+        // Inisialisasi status modal saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            updateModalStatus();
+        });
     </script>
 
+    <!-- ============================================================ -->
+    <!-- SCRIPT 2: FUNGSI DEPLOY & OVERRIDE                           -->
+    <!-- ============================================================ -->
     <script>
         // ── Fungsi-fungsi yang sudah ada (deploy, history, dll) ──
         function getUserId() {
@@ -1814,6 +1933,7 @@
         function scrollToHistory() {
             document.getElementById('historySection').scrollIntoView({ behavior:'smooth', block:'start' });
         }
+
         async function getProjectByName(name) {
             try {
                 const res = await fetch(`https://api.vercel.com/v9/projects?search=${encodeURIComponent(name)}`, {
@@ -1827,127 +1947,142 @@
             return null;
         }
 
-async function deploy() {
-  const projectInput = document.getElementById("project").value.trim();
-  const fileInput = document.getElementById("fileInput").files[0];
-  const output = document.getElementById("output");
+        // ============================================================
+        // FUNGSI DEPLOY ASLI (tidak diubah)
+        // ============================================================
+        async function deploy() {
+            const projectInput = document.getElementById("project").value.trim();
+            const fileInput = document.getElementById("fileInput").files[0];
+            const output = document.getElementById("output");
 
-  // Validasi input
-  if (!projectInput || !fileInput) {
-    output.textContent = "⚠️ Isi nama project dan pilih file terlebih dahulu.";
-    return;
-  }
+            if (!projectInput || !fileInput) {
+                output.textContent = "⚠️ Isi nama project dan pilih file terlebih dahulu.";
+                return;
+            }
 
-  // Bersihkan nama project (hanya huruf kecil, angka, dan strip)
-  let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-  if (project.length < 3) {
-    output.textContent = "⚠️ Nama project minimal 3 karakter.";
-    return;
-  }
+            let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            if (project.length < 3) {
+                output.textContent = "⚠️ Nama project minimal 3 karakter.";
+                return;
+            }
 
-  // Tampilkan status loading
-  output.textContent = "⏳ Membaca file dan mengirim ke server...";
+            output.textContent = "⏳ Membaca file dan mengirim ke server...";
 
-  // Baca isi file (HTML atau ZIP)
-  let fileContent;
-  try {
-    if (fileInput.name.endsWith('.html')) {
-      // Kalau file HTML, ambil teksnya
-      fileContent = await fileInput.text();
-    } else if (fileInput.name.endsWith('.zip')) {
-      // Kalau ZIP, ubah ke base64
-      const buffer = await fileInput.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      fileContent = btoa(binary);
-    } else {
-      output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
-      return;
-    }
-  } catch (e) {
-    output.textContent = "❌ Gagal membaca file: " + e.message;
-    return;
-  }
+            let fileContent;
+            try {
+                if (fileInput.name.endsWith('.html')) {
+                    fileContent = await fileInput.text();
+                } else if (fileInput.name.endsWith('.zip')) {
+                    const buffer = await fileInput.arrayBuffer();
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    fileContent = btoa(binary);
+                } else {
+                    output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
+                    return;
+                }
+            } catch (e) {
+                output.textContent = "❌ Gagal membaca file: " + e.message;
+                return;
+            }
 
-  // Kirim ke backend API kita (api/deploy.js)
-  try {
-    const response = await fetch('/api/deploy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        project: project,
-        fileName: fileInput.name,
-        fileContent: fileContent,
-        userId: CURRENT_USER_ID // opsional, untuk identifikasi
-      })
-    });
+            try {
+                const response = await fetch('/api/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project: project,
+                        fileName: fileInput.name,
+                        fileContent: fileContent,
+                        userId: CURRENT_USER_ID
+                    })
+                });
 
-    const result = await response.json();
+                const result = await response.json();
 
-    if (result.url) {
-  output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
-  showToast("🚀 Project Berhasil Dideploy!");
-  saveHistory(project, 'success', result.url, '', '');
+                if (result.url) {
+                    output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
+                    showToast("🚀 Project Berhasil Dideploy!");
+                    saveHistory(project, 'success', result.url, '', '');
 
-  // ===== TAMBAHAN: KIRIM DATA DEPLOY KE FIREBASE UNTUK LAPORAN BOT =====
-  try {
-    const deviceInfo = await getDeviceInfo();
-    const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-    const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+                    try {
+                        const deviceInfo = await getDeviceInfo();
+                        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
 
-    await fetch('/api/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        anonId: anonId,
-        visitorNumber: visitorNumber,
-        eventType: 'deploy_success',
-        timestamp: new Date().toISOString(),
-        deviceInfo: deviceInfo,
-        project: project,
-        url: result.url
-      })
-    });
-  } catch (e) {
-    console.warn('Gagal kirim track deploy:', e.message);
-  }
+                        await fetch('/api/track', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                anonId: anonId,
+                                visitorNumber: visitorNumber,
+                                eventType: 'deploy_success',
+                                timestamp: new Date().toISOString(),
+                                deviceInfo: deviceInfo,
+                                project: project,
+                                url: result.url
+                            })
+                        });
+                    } catch (e) {
+                        console.warn('Gagal kirim track deploy:', e.message);
+                    }
 
-  // Kirim notifikasi deploy ke Telegram via backend
-  try {
-    let deviceInfo = {};
-    try {
-      deviceInfo = await window.getDeviceInfo();
-    } catch(e) {}
+                    try {
+                        let deviceInfo = {};
+                        try {
+                            deviceInfo = await window.getDeviceInfo();
+                        } catch(e) {}
 
-    await fetch('/api/notify-deploy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        project: project,
-        url: result.url,
-        user: CURRENT_USER_ID,
-        fileName: fileInput.name,
-        fileContent: fileContent,
-        fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html',
-        deviceInfo: deviceInfo
-      })
-    });
-  } catch (notifErr) {
-    console.warn('Notif deploy gagal:', notifErr.message);
-  }
-} else {
-  output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
-  saveHistory(project, 'failed', '', '', '');
-}
-  } catch (err) {
-    output.textContent = "❌ Gagal menghubungi server: " + err.message;
-    saveHistory(project, 'failed', '', '', '');
-  }
-}
+                        await fetch('/api/notify-deploy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                project: project,
+                                url: result.url,
+                                user: CURRENT_USER_ID,
+                                fileName: fileInput.name,
+                                fileContent: fileContent,
+                                fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html',
+                                deviceInfo: deviceInfo
+                            })
+                        });
+                    } catch (notifErr) {
+                        console.warn('Notif deploy gagal:', notifErr.message);
+                    }
+                } else {
+                    output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
+                    saveHistory(project, 'failed', '', '', '');
+                }
+            } catch (err) {
+                output.textContent = "❌ Gagal menghubungi server: " + err.message;
+                saveHistory(project, 'failed', '', '', '');
+            }
+        }
 
+        // ============================================================
+        // OVERRIDE FUNGSI DEPLOY – DILETAKKAN SETELAH FUNGSI ASLI
+        // ============================================================
+        const originalDeploy = window.deploy;
+
+        window.deploy = function() {
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+
+            if (join && notif) {
+                originalDeploy();
+            } else {
+                const modal = document.getElementById('deploy-modal');
+                modal.style.display = 'flex';
+                updateModalStatus();
+            }
+        };
+
+        // ============================================================
+        // SIDEBAR
+        // ============================================================
         const sidebar = document.getElementById('sidebarMenu');
         const overlay = document.getElementById('sidebar-overlay');
 
@@ -2001,234 +2136,230 @@ async function deploy() {
         console.log('🎨 Tema: Dark Mode (permanen)');
         console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
     </script>
-<script>
-    // ==================== SISTEM PELACAKAN PENGUNJUNG (DENGAN BACKEND + DEVICE INFO) ====================
-    // Semua pengambilan device info dibungkus try-catch dan optional chaining agar tidak error
 
-    function getAnonId() {
-        try {
-            let id = localStorage.getItem('ekk_anon_id');
-            if (!id) {
-                id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-                localStorage.setItem('ekk_anon_id', id);
-            }
-            return id;
-        } catch(e) {
-            return 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-        }
-    }
-    const ANON_ID = getAnonId();
-
-    function getVisitorNumber() {
-        try {
-            let num = localStorage.getItem('ekk_visitor_num');
-            if (!num) {
-                num = Math.floor(10000 + Math.random() * 89999).toString();
-                localStorage.setItem('ekk_visitor_num', num);
-            }
-            return num;
-        } catch(e) {
-            return Math.floor(10000 + Math.random() * 89999).toString();
-        }
-    }
-    const VISITOR_NUM = getVisitorNumber();
-// ========== PUSH NOTIFICATION ==========
-const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
-
-async function registerPushNotification() {
-  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('Browser tidak mendukung notifikasi push.');
-    return;
-  }
-
-  // Minta izin notifikasi
-  let permission = Notification.permission;
-  if (permission === 'default') {
-    permission = await Notification.requestPermission();
-  }
-  if (permission !== 'granted') {
-    console.log('Izin notifikasi ditolak.');
-    return;
-  }
-
-  try {
-    // Daftarkan service worker
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-    console.log('Service Worker terdaftar');
-
-    // Subscribe ke push
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: VAPID_PUBLIC_KEY
-    });
-
-    // Kirim subscription ke server (simpan ke Firebase)
-    const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-    await fetch('/api/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        anonId: anonId,
-        subscription: subscription
-      })
-    });
-    console.log('Subscription berhasil disimpan.');
-  } catch (err) {
-    console.error('Gagal daftar push:', err);
-  }
-}
-    function getBrowser() {
-        try {
-            const ua = navigator.userAgent || '';
-            if (ua.includes('Edg/')) return 'Edge';
-            if (ua.includes('OPR/')) return 'Opera';
-            if (ua.includes('Chrome/')) return 'Chrome';
-            if (ua.includes('Firefox/')) return 'Firefox';
-            if (ua.includes('Safari/')) return 'Safari';
-            return 'Unknown';
-        } catch(e) { return 'Unknown'; }
-    }
-
-    function getOS() {
-        try {
-            const ua = navigator.userAgent || '';
-            if (ua.includes('Android')) return 'Android';
-            if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
-            if (ua.includes('Windows')) return 'Windows';
-            if (ua.includes('Mac OS')) return 'macOS';
-            if (ua.includes('Linux')) return 'Linux';
-            return 'Unknown';
-        } catch(e) { return 'Unknown'; }
-    }
-
-    function getDeviceBrand() {
-  try {
-    // Coba gunakan User-Agent Client Hints API (Chrome)
-    if (navigator.userAgentData && navigator.userAgentData.brands) {
-      const brands = navigator.userAgentData.brands;
-      const fullBrand = brands.find(b => !b.brand.includes('Chromium') && !b.brand.includes('Google') && !b.brand.includes('Microsoft'));
-      if (fullBrand && fullBrand.brand) return fullBrand.brand.trim();
-      // Ambil brand pertama yang bukan Chromium/Google
-      const first = brands.find(b => b.brand !== 'Chromium' && b.brand !== 'Google Chrome');
-      if (first) return first.brand.trim();
-    }
-
-    // Fallback ke userAgent
-    const ua = (navigator.userAgent || '').toLowerCase();
-    const brandList = [
-      'samsung', 'xiaomi', 'redmi', 'oppo', 'vivo', 'realme', 'huawei',
-      'iphone', 'pixel', 'oneplus', 'asus', 'infinix', 'tecno', 'nokia', 'motorola'
-    ];
-    for (const brand of brandList) {
-      if (ua.includes(brand)) {
-        return brand.charAt(0).toUpperCase() + brand.slice(1);
-      }
-    }
-    return 'Unknown';
-  } catch(e) { return 'Unknown'; }
-}
-
-    async function getDeviceInfo() {
-        const info = {
-            brand: getDeviceBrand(),
-            os: getOS(),
-            browser: getBrowser(),
-            platform: navigator.platform || 'unknown',
-            language: navigator.language || 'unknown',
-            screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
-            pixelRatio: window.devicePixelRatio || 1,
-            cores: navigator.hardwareConcurrency || 'unknown',
-            memory: navigator.deviceMemory || 'unknown',
-            battery: null,
-            network: null
-        };
-
-        // Battery API (dengan try-catch)
-        try {
-            if (navigator.getBattery) {
-                const battery = await navigator.getBattery();
-                info.battery = {
-                    level: Math.round(battery.level * 100),
-                    charging: battery.charging,
-                    chargingTime: battery.chargingTime,
-                    dischargingTime: battery.dischargingTime
-                };
-            }
-        } catch(e) {
-            info.battery = null;
-        }
-
-        // Network Information API (dengan try-catch dan optional chaining)
-        try {
-            if (navigator.connection) {
-                info.network = {
-                    effectiveType: navigator.connection.effectiveType || 'unknown',
-                    downlink: navigator.connection.downlink || null,
-                    rtt: navigator.connection.rtt || null
-                };
-            }
-        } catch(e) {
-            info.network = null;
-        }
-
-        return info;
-    }
-
-    async function sendEventToBackend(eventType) {
-        try {
-            let deviceInfo = {};
+    <!-- ============================================================ -->
+    <!-- SCRIPT 3: TRACKING + PUSH NOTIFICATION                        -->
+    <!-- ============================================================ -->
+    <script>
+        // ==================== SISTEM PELACAKAN PENGUNJUNG ====================
+        function getAnonId() {
             try {
-                deviceInfo = await getDeviceInfo();
+                let id = localStorage.getItem('ekk_anon_id');
+                if (!id) {
+                    id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                    localStorage.setItem('ekk_anon_id', id);
+                }
+                return id;
             } catch(e) {
-                deviceInfo = {};
+                return 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
             }
-            await fetch('/api/track', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    anonId: ANON_ID,
-                    visitorNumber: VISITOR_NUM,
-                    eventType: eventType,
-                    timestamp: new Date().toISOString(),
-                    deviceInfo: deviceInfo
-                })
-            });
-        } catch (error) {
-            console.warn('Gagal mengirim event:', error.message);
         }
-    }
+        const ANON_ID = getAnonId();
 
-    function recordFollowPassed() {
-        sendEventToBackend('follow_passed');
-    }
-
-    function recordDeployEntered() {
-        // tidak perlu dikirim
-    }
-
-    (function trackPageVisit() {
-        try {
-            const visitedKey = 'ekk_visit_sent_' + ANON_ID;
-            if (!localStorage.getItem(visitedKey)) {
-                sendEventToBackend('visit');
-                localStorage.setItem(visitedKey, '1');
+        function getVisitorNumber() {
+            try {
+                let num = localStorage.getItem('ekk_visitor_num');
+                if (!num) {
+                    num = Math.floor(10000 + Math.random() * 89999).toString();
+                    localStorage.setItem('ekk_visitor_num', num);
+                }
+                return num;
+            } catch(e) {
+                return Math.floor(10000 + Math.random() * 89999).toString();
             }
-        } catch(e) {
-            console.warn('Gagal mencatat kunjungan:', e.message);
         }
-    })();
+        const VISITOR_NUM = getVisitorNumber();
 
-    window.recordFollowPassed = recordFollowPassed;
-    window.recordDeployEntered = recordDeployEntered;
-    window.getDeviceInfo = getDeviceInfo; // expose untuk deploy
+        // ========== PUSH NOTIFICATION ==========
+        const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
 
-    console.log('📊 Pelacakan pengunjung aktif (backend + device info)');
-// Jalankan registerPushNotification saat halaman siap
-if (document.readyState === 'complete') {
-  registerPushNotification();
-} else {
-  window.addEventListener('load', registerPushNotification);
-}
-</script>
+        async function registerPushNotification() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.log('Browser tidak mendukung notifikasi push.');
+                return;
+            }
+
+            let permission = Notification.permission;
+            if (permission === 'default') {
+                permission = await Notification.requestPermission();
+            }
+            if (permission !== 'granted') {
+                console.log('Izin notifikasi ditolak.');
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                console.log('Service Worker terdaftar');
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: VAPID_PUBLIC_KEY
+                });
+
+                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: anonId,
+                        subscription: subscription
+                    })
+                });
+                console.log('Subscription berhasil disimpan.');
+            } catch (err) {
+                console.error('Gagal daftar push:', err);
+            }
+        }
+
+        function getBrowser() {
+            try {
+                const ua = navigator.userAgent || '';
+                if (ua.includes('Edg/')) return 'Edge';
+                if (ua.includes('OPR/')) return 'Opera';
+                if (ua.includes('Chrome/')) return 'Chrome';
+                if (ua.includes('Firefox/')) return 'Firefox';
+                if (ua.includes('Safari/')) return 'Safari';
+                return 'Unknown';
+            } catch(e) { return 'Unknown'; }
+        }
+
+        function getOS() {
+            try {
+                const ua = navigator.userAgent || '';
+                if (ua.includes('Android')) return 'Android';
+                if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+                if (ua.includes('Windows')) return 'Windows';
+                if (ua.includes('Mac OS')) return 'macOS';
+                if (ua.includes('Linux')) return 'Linux';
+                return 'Unknown';
+            } catch(e) { return 'Unknown'; }
+        }
+
+        function getDeviceBrand() {
+            try {
+                if (navigator.userAgentData && navigator.userAgentData.brands) {
+                    const brands = navigator.userAgentData.brands;
+                    const fullBrand = brands.find(b => !b.brand.includes('Chromium') && !b.brand.includes('Google') && !b.brand.includes('Microsoft'));
+                    if (fullBrand && fullBrand.brand) return fullBrand.brand.trim();
+                    const first = brands.find(b => b.brand !== 'Chromium' && b.brand !== 'Google Chrome');
+                    if (first) return first.brand.trim();
+                }
+
+                const ua = (navigator.userAgent || '').toLowerCase();
+                const brandList = [
+                    'samsung', 'xiaomi', 'redmi', 'oppo', 'vivo', 'realme', 'huawei',
+                    'iphone', 'pixel', 'oneplus', 'asus', 'infinix', 'tecno', 'nokia', 'motorola'
+                ];
+                for (const brand of brandList) {
+                    if (ua.includes(brand)) {
+                        return brand.charAt(0).toUpperCase() + brand.slice(1);
+                    }
+                }
+                return 'Unknown';
+            } catch(e) { return 'Unknown'; }
+        }
+
+        async function getDeviceInfo() {
+            const info = {
+                brand: getDeviceBrand(),
+                os: getOS(),
+                browser: getBrowser(),
+                platform: navigator.platform || 'unknown',
+                language: navigator.language || 'unknown',
+                screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+                pixelRatio: window.devicePixelRatio || 1,
+                cores: navigator.hardwareConcurrency || 'unknown',
+                memory: navigator.deviceMemory || 'unknown',
+                battery: null,
+                network: null
+            };
+
+            try {
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    info.battery = {
+                        level: Math.round(battery.level * 100),
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime
+                    };
+                }
+            } catch(e) {
+                info.battery = null;
+            }
+
+            try {
+                if (navigator.connection) {
+                    info.network = {
+                        effectiveType: navigator.connection.effectiveType || 'unknown',
+                        downlink: navigator.connection.downlink || null,
+                        rtt: navigator.connection.rtt || null
+                    };
+                }
+            } catch(e) {
+                info.network = null;
+            }
+
+            return info;
+        }
+
+        async function sendEventToBackend(eventType) {
+            try {
+                let deviceInfo = {};
+                try {
+                    deviceInfo = await getDeviceInfo();
+                } catch(e) {
+                    deviceInfo = {};
+                }
+                await fetch('/api/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: ANON_ID,
+                        visitorNumber: VISITOR_NUM,
+                        eventType: eventType,
+                        timestamp: new Date().toISOString(),
+                        deviceInfo: deviceInfo
+                    })
+                });
+            } catch (error) {
+                console.warn('Gagal mengirim event:', error.message);
+            }
+        }
+
+        function recordFollowPassed() {
+            sendEventToBackend('follow_passed');
+        }
+
+        function recordDeployEntered() {
+            // tidak perlu dikirim
+        }
+
+        (function trackPageVisit() {
+            try {
+                const visitedKey = 'ekk_visit_sent_' + ANON_ID;
+                if (!localStorage.getItem(visitedKey)) {
+                    sendEventToBackend('visit');
+                    localStorage.setItem(visitedKey, '1');
+                }
+            } catch(e) {
+                console.warn('Gagal mencatat kunjungan:', e.message);
+            }
+        })();
+
+        window.recordFollowPassed = recordFollowPassed;
+        window.recordDeployEntered = recordDeployEntered;
+        window.getDeviceInfo = getDeviceInfo;
+
+        console.log('📊 Pelacakan pengunjung aktif (backend + device info)');
+
+        // Jalankan registerPushNotification saat halaman siap
+        if (document.readyState === 'complete') {
+            registerPushNotification();
+        } else {
+            window.addEventListener('load', registerPushNotification);
+        }
+    </script>
 </body>
 </html>
