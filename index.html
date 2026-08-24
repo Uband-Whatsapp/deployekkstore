@@ -1561,10 +1561,15 @@
                 </div>
 
                 <!-- MODAL SYARAT DEPLOY -->
-                <div id="deploy-modal">
-                    <div class="modal-content">
-                        <h2>⚠️ Syarat Deploy</h2>
-                        <p>Lengkapi yang belum untuk bisa deploy.</p>
+<div id="deploy-modal">
+    <div class="modal-content">
+        <h2 style="display: block !important; width: 100% !important; text-align: center !important; margin-left: 0 !important; margin-right: 0 !important;">
+            ⚠️ Syarat Deploy ⚠️
+        </h2>
+
+        <p style="text-align: center;">
+            Lengkapi semua persyaratan berikut sebelum melakukan deploy.
+        </p>
 
                         <div class="requirement-item" id="req-grup">
                             <span class="icon" id="req-grup-icon">⬜</span>
@@ -1572,7 +1577,7 @@
                                 <div class="label">Join Grup WhatsApp</div>
                                 <div class="desc">Gabung grup WhatsApp</div>
                             </div>
-                            <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="action-btn">Join</a>
+                            <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="action-btn">Join Grub</a>
                             <span class="status" id="req-grup-status">Belum</span>
                         </div>
 
@@ -1791,7 +1796,10 @@
                         return;
                     } else {
                         // GAGAL: tampilkan popup peringatan
-                        showVerificationMessage('error', '<b>Verifikasi gagal.</b><br>Kami belum mendeteksi bahwa kamu telah mengikuti saluran WhatsApp. Silakan <b style="color:#25D366;">Buka Saluran WhatsApp</b> sekali lagi, lalu coba verifikasi kembali.');
+                        showVerificationMessage(
+  'error',
+  '<b>Verifikasi gagal.</b><br>Kami belum mendeteksi bahwa kamu sudah mengikuti saluran WhatsApp. Silakan klik <b style="color:#f5f5f5; font-weight:800;">Buka Saluran WhatsApp</b> sekali lagi, pastikan kamu sudah menekan <b style="color:#f5f5f5; font-weight:800;">Ikuti</b>, lalu tekan <b style="color:#f5f5f5; font-weight:800;">Coba Lagi</b>.'
+);
                         btnConfirm.disabled = false;
                         btnConfirm.classList.add('active');
                         btnConfirm.textContent = 'Coba Lagi';
