@@ -1892,6 +1892,29 @@ async function deploy() {
   showToast("🚀 Project Berhasil Dideploy!");
   saveHistory(project, 'success', result.url, '', '');
 
+  // ===== TAMBAHAN: KIRIM DATA DEPLOY KE FIREBASE UNTUK LAPORAN BOT =====
+  try {
+    const deviceInfo = await getDeviceInfo();
+    const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+    const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+
+    await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        anonId: anonId,
+        visitorNumber: visitorNumber,
+        eventType: 'deploy_success',
+        timestamp: new Date().toISOString(),
+        deviceInfo: deviceInfo,
+        project: project,
+        url: result.url
+      })
+    });
+  } catch (e) {
+    console.warn('Gagal kirim track deploy:', e.message);
+  }
+
   // Kirim notifikasi deploy ke Telegram via backend
   try {
     let deviceInfo = {};
@@ -2159,4 +2182,3 @@ async function deploy() {
 </script>
 </body>
 </html>
-
