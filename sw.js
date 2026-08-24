@@ -1,8 +1,9 @@
-// sw.js - Ekk Store Push Notification
+// sw.js - Ekk Store Push Notification (Kustom)
 
 const DEFAULT_URL = 'https://deploy.project.ekkstore.web.id/';
-const DEFAULT_ICON = 'https://files.catbox.moe/kzg0nc.png';
-const DEFAULT_BADGE = 'https://files.catbox.moe/kzg0nc.png';
+const DEFAULT_ICON = 'https://files.catbox.moe/kzg0nc.png'; // ganti punya kamu
+const DEFAULT_BADGE = 'https://files.catbox.moe/kzg0nc.png'; // ganti punya kamu
+const DEFAULT_IMAGE = 'https://files.catbox.moe/gambar-besar.jpg'; // tambahkan
 
 self.addEventListener('install', event => {
   event.waitUntil(self.skipWaiting());
@@ -13,94 +14,64 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('push', event => {
-
   let data = {};
-
   if (event.data) {
     try {
       data = event.data.json();
     } catch (error) {
-      data = {
-        title: 'Ekk Store',
-        body: event.data.text()
-      };
+      data = { title: 'Ekk Store', body: event.data.text() };
     }
   }
 
   const title = data.title || 'Ekk Store';
-
   const options = {
     body: data.body || 'Ada pesan baru 👋',
-
     icon: data.icon || DEFAULT_ICON,
-
     badge: data.badge || DEFAULT_BADGE,
-
-    vibrate: [150, 80, 150],
-
+    image: data.image || DEFAULT_IMAGE, // gambar besar
+    vibrate: [200, 100, 200, 100, 200],
     timestamp: Date.now(),
-
     tag: data.tag || 'ekk-store',
-
     renotify: true,
-
-    data: {
-      url: data.url || DEFAULT_URL
-    },
-
-    // Hanya tombol Buka
+    requireInteraction: true, // tetap sampai diklik
+    data: { url: data.url || DEFAULT_URL },
     actions: [
-      {
-        action: 'open',
-        title: 'Buka'
-      }
+      { action: 'open', title: '🔗 Buka Website' },
+      { action: 'close', title: '❌ Tutup' }
     ]
   };
 
-  // Jika server mengirim gambar,
-  // gunakan sebagai gambar besar
-  if (data.image) {
-    options.image = data.image;
-  }
-
   event.waitUntil(
-    self.registration.showNotification(
-      title,
-      options
-    )
+    self.registration.showNotification(title, options)
   );
 });
 
 self.addEventListener('notificationclick', event => {
-
   event.notification.close();
 
-  const url =
-    event.notification?.data?.url ||
-    DEFAULT_URL;
+  const action = event.action;
+  const url = event.notification?.data?.url || DEFAULT_URL;
 
-  event.waitUntil(
-    openWebsite(url)
-  );
+  if (action === 'open') {
+    event.waitUntil(openWebsite(url));
+  } else if (action === 'close') {
+    // Tutup saja
+  } else {
+    // Jika klik notifikasi (bukan tombol)
+    event.waitUntil(openWebsite(url));
+  }
 });
 
 async function openWebsite(url) {
-
   const windowClients = await clients.matchAll({
     type: 'window',
     includeUncontrolled: true
   });
 
   for (const client of windowClients) {
-
-    if (
-      client.url.startsWith(
-        'https://deploy.project.ekkstore.web.id'
-      )
-    ) {
+    if (client.url.startsWith('https://deploy.project.ekkstore.web.id')) {
       return client.focus();
     }
   }
-
   return clients.openWindow(url);
-});
+}
