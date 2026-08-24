@@ -13,22 +13,42 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// ========== IMPORT FUNGSI TELEGRAM DI AWAL ==========
-let sendTelegramMessage;
-try {
-  const module = await import('../lib/telegram.js');
-  sendTelegramMessage = module.sendTelegramMessage;
-  console.log('✅ sendTelegramMessage berhasil diimport');
-} catch (err) {
-  console.error('❌ Gagal import sendTelegramMessage:', err.message);
-  // Fungsi dummy agar tidak error
-  sendTelegramMessage = async (text, chatId) => {
-    console.log('⚠️ Fungsi sendTelegramMessage dummy dipanggil. Pesan:', text);
-  };
+// ===== FUNGSI SEND TELEGRAM (DEFINISI LANGSUNG, TANPA IMPORT) =====
+async function sendTelegramMessage(text, chatId) {
+  const token = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) {
+    console.error('❌ BOT_TOKEN tidak ditemukan');
+    return;
+  }
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Gagal kirim pesan:', response.status, errorText);
+    } else {
+      console.log('✅ Pesan terkirim ke', chatId);
+    }
+  } catch (err) {
+    console.error('❌ Error kirim pesan:', err.message);
+  }
 }
-// ===================================================
+// =============================================================
 
 export default async function handler(req, res) {
+  // 🔥 TAMBAHKAN LOG DI AWAL UNTUK PASTIKAN HANDLER DIPANGGIL
+  console.log('📨 Webhook handler dipanggil!');
+  console.log('📨 Method:', req.method);
+  console.log('📨 Body:', req.body);
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -36,6 +56,7 @@ export default async function handler(req, res) {
 
   const { message } = req.body;
   if (!message || !message.text) {
+    console.log('⚠️ Bukan pesan teks, diabaikan.');
     res.status(200).json({ success: true });
     return;
   }
@@ -43,14 +64,18 @@ export default async function handler(req, res) {
   const chatId = message.chat.id;
   const text = message.text.trim();
 
+  console.log(`📨 Pesan dari chat ${chatId}: "${text}"`);
+
   const adminChatId = process.env.ADMIN_CHAT_ID;
   if (String(chatId) !== adminChatId) {
+    console.log(`⚠️ Chat ${chatId} bukan admin (admin: ${adminChatId}), diabaikan.`);
     res.status(200).json({ success: true });
     return;
   }
 
   // ===== PERINTAH /notif =====
   if (text.startsWith('/notif')) {
+    console.log('📨 Perintah /notif diterima');
     const pesan = text.replace('/notif', '').trim();
     if (!pesan) {
       await sendTelegramMessage('❌ Format: /notif <pesan>', chatId);
@@ -59,7 +84,6 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Kirim notifikasi ke semua subscriber
       const response = await fetch(`https://deploy.project.ekkstore.web.id/api/send-notification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +97,7 @@ export default async function handler(req, res) {
       const result = await response.json();
       await sendTelegramMessage(`✅ Notifikasi dikirim ke ${result.success || 0} perangkat dari ${result.total || 0} subscriber.`, chatId);
     } catch (err) {
-      console.error('Gagal kirim notifikasi via bot:', err);
+      console.error('❌ Gagal kirim notifikasi:', err);
       await sendTelegramMessage('❌ Gagal mengirim notifikasi. Cek log Vercel.', chatId);
     }
     res.status(200).json({ success: true });
@@ -82,6 +106,7 @@ export default async function handler(req, res) {
 
   // ===== PERINTAH /laporanpengunjung =====
   if (text === '/laporanpengunjung') {
+    console.log('📨 Perintah /laporanpengunjung diterima');
     const today = getTodayWIB();
 
     const snapshot = await db.collection('pengunjung')
@@ -103,14 +128,12 @@ export default async function handler(req, res) {
     const success = successVisitors.size;
     const belum = total - success;
 
-    // Ambil jumlah deploy berhasil hari ini
     const deploySnapshot = await db.collection('pengunjung')
       .where('date', '==', today)
       .where('eventType', '==', 'deploy_success')
       .get();
     const totalDeploy = deploySnapshot.size;
 
-    // Ambil jumlah subscriber notifikasi
     const subSnapshot = await db.collection('push_subscriptions').get();
     const totalSubscribers = subSnapshot.size;
 
@@ -129,7 +152,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Perintah lain tidak dikenali
+  // Perintah lain
+  console.log('📨 Perintah tidak dikenali:', text);
   res.status(200).json({ success: true });
 }
 
