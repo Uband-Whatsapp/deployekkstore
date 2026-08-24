@@ -1561,7 +1561,7 @@
                 </div>
 
                 <!-- MODAL SYARAT DEPLOY -->
-<div id="deploy-modal">
+                <div id="deploy-modal">
     <div class="modal-content">
         <h2 style="display: block !important; width: 100% !important; text-align: center !important; margin-left: 0 !important; margin-right: 0 !important;">
             ⚠️ Syarat Deploy ⚠️
@@ -1577,7 +1577,7 @@
                                 <div class="label">Join Grup WhatsApp</div>
                                 <div class="desc">Gabung grup WhatsApp</div>
                             </div>
-                            <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="action-btn">Join Grub</a>
+                            <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="action-btn">Join</a>
                             <span class="status" id="req-grup-status">Belum</span>
                         </div>
 
@@ -1798,7 +1798,7 @@
                         // GAGAL: tampilkan popup peringatan
                         showVerificationMessage(
   'error',
-  '<b>Verifikasi gagal.</b><br>Kami belum mendeteksi bahwa kamu sudah mengikuti saluran WhatsApp. Silakan klik <b style="color:#f5f5f5; font-weight:800;">Buka Saluran WhatsApp</b> sekali lagi, pastikan kamu sudah menekan <b style="color:#f5f5f5; font-weight:800;">Ikuti</b>, lalu tekan <b style="color:#f5f5f5; font-weight:800;">Coba Lagi</b>.'
+  '<b>⚠️ Verifikasi gagal.</b><br>Kami belum mendeteksi bahwa kamu sudah mengikuti saluran WhatsApp. Silakan klik <b style="color:#f5f5f5; font-weight:800;">Buka Saluran WhatsApp</b> sekali lagi, pastikan kamu sudah menekan <b style="color:#f5f5f5; font-weight:800;">Ikuti</b>, lalu tekan <b style="color:#f5f5f5; font-weight:800;">Coba Lagi</b>.'
 );
                         btnConfirm.disabled = false;
                         btnConfirm.classList.add('active');
@@ -1861,256 +1861,280 @@
         })();
     </script>
 
-<script>
-    // ── Fungsi-fungsi yang sudah ada (deploy, history, dll) ──
-    function getUserId() {
-        let userId = localStorage.getItem('ekk_userId');
-        if (!userId) {
-            userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-            localStorage.setItem('ekk_userId', userId);
-        }
-        return userId;
-    }
-    const CURRENT_USER_ID = getUserId();
-    const badge = document.getElementById('userIdBadge');
-    if (badge) {
-        badge.textContent = 'ID: ' + CURRENT_USER_ID.substring(0,12) + '…';
-        badge.title = 'User ID tersimpan privat';
-    }
-
-    // ── Fungsi pemilik project ──
-    async function getProjectOwner(projectName) {
-        try {
-            const res = await fetch(`/api/owner?project=${encodeURIComponent(projectName)}`);
-            const data = await res.json();
-            return data.ownerId || null;
-        } catch (e) {
-            return null;
-        }
-    }
-
-    async function setProjectOwner(projectName) {
-        await fetch("/api/owner", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ project: projectName, ownerId: CURRENT_USER_ID })
-        });
-    }
-
-    async function removeProjectOwner(projectName) {
-        await fetch("/api/owner", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ project: projectName })
-        });
-    }
-
-    // ── Validasi nama ──
-    function validateProjectName(name) {
-        if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };
-        if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };
-        if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };
-        if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };
-        if (!/^[a-z0-9-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, dan tanda hubung (-).' };
-        if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };
-        return { valid: true };
-    }
-
-    function showToast(msg) {
-        const toast = document.getElementById('toast');
-        toast.innerHTML = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2600);
-    }
-
-    function showConfirmModal(title, message, confirmText = 'Hapus') {
-        return new Promise((resolve) => {
-            const overlay = document.getElementById('confirmModalOverlay');
-            const titleEl = document.getElementById('modalTitle');
-            const messageEl = document.getElementById('modalMessage');
-            const confirmBtn = document.getElementById('modalConfirmBtn');
-            const cancelBtn = document.getElementById('modalCancelBtn');
-
-            titleEl.textContent = title;
-            messageEl.textContent = message;
-            confirmBtn.textContent = confirmText;
-            overlay.classList.add('active');
-
-            function cleanup(result) {
-                overlay.classList.remove('active');
-                cancelBtn.removeEventListener('click', onCancel);
-                confirmBtn.removeEventListener('click', onConfirm);
-                document.removeEventListener('keydown', onKey);
-                resolve(result);
+    <script>
+        // ── Fungsi-fungsi yang sudah ada ──
+        function getUserId() {
+            let userId = localStorage.getItem('ekk_userId');
+            if (!userId) {
+                userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                localStorage.setItem('ekk_userId', userId);
             }
-            function onCancel() { cleanup(false); }
-            function onConfirm() { cleanup(true); }
-            function onKey(e) {
-                if (e.key === 'Escape') cleanup(false);
-                if (e.key === 'Enter') cleanup(true);
-            }
-            cancelBtn.addEventListener('click', onCancel);
-            confirmBtn.addEventListener('click', onConfirm);
-            document.addEventListener('keydown', onKey);
-            setTimeout(() => cancelBtn.focus(), 100);
-        });
-    }
-
-    // ── History ──
-    function saveHistory(project, status, url, projectId, deploymentId) {
-        const now = new Date();
-        const date = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
-        const time = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
-        let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-        history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
-        history.unshift({ project, status, date, time, url: url || '', projectId: projectId || '', deploymentId: deploymentId || '',
-            ownerId: CURRENT_USER_ID });
-        if (history.length > 20) history.pop();
-        localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
-        renderHistory();
-    }
-
-    function renderHistory() {
-        const historyList = document.getElementById('history-list');
-        const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-        if (history.length === 0) {
-            historyList.innerHTML = '<div class="empty-history">📭 Belum ada riwayat deploy.</div>';
-            return;
+            return userId;
         }
-        historyList.innerHTML = history.map((item, index) => `
-            <div class="history-item" data-index="${index}">
-                <div class="history-info">
-                    <strong>${escapeHTML(item.project)}</strong>
-                    <span class="history-time"><i class="far fa-clock"></i> ${item.date} · ${item.time}</span>
-                    ${item.url ? `<span style="font-size:11px;color:var(--accent-primary);word-break:break-all;">🔗 <a href="${escapeHTML(item.url)}" target="_blank" style="color:var(--accent-primary);text-decoration:none;font-weight:500;">${escapeHTML(item.url)}</a></span>` : ''}
-                </div>
-                <div class="history-actions">
-                    <span class="history-status ${item.status}">
-                        ${item.status==='success' ? '<i class="fas fa-check-circle"></i> Berhasil' : '<i class="fas fa-times-circle"></i> Gagal'}
-                    </span>
-                    <button class="delete-history-btn" onclick="deleteHistoryItem(${index})" title="Hapus project ini">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
+        const CURRENT_USER_ID = getUserId();
+        const badge = document.getElementById('userIdBadge');
+        if (badge) {
+            badge.textContent = 'ID: ' + CURRENT_USER_ID.substring(0,12) + '…';
+            badge.title = 'User ID tersimpan privat';
+        }
 
-    function escapeHTML(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    async function deleteHistoryItem(index) {
-        const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-        if (index < 0 || index >= history.length) return;
-        const item = history[index];
-        const confirmed = await showConfirmModal('Hapus Project?', `Project "${item.project}" akan dihapus dari riwayat.\n\nData project juga akan dihapus dari Vercel jika tersedia.\nNama project akan tersedia kembali.\n\nLanjutkan?`, 'Hapus');
-        if (!confirmed) return;
-        if (item.projectId && item.ownerId === CURRENT_USER_ID) {
+        async function getProjectOwner(projectName) {
             try {
-                await fetch(`https://api.vercel.com/v9/projects/${item.projectId}`, {
-                    method: 'DELETE',
+                const res = await fetch(`/api/owner?project=${encodeURIComponent(projectName)}`);
+                const data = await res.json();
+                return data.ownerId || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function setProjectOwner(projectName) {
+            await fetch("/api/owner", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ project: projectName, ownerId: CURRENT_USER_ID })
+            });
+        }
+
+        async function removeProjectOwner(projectName) {
+            await fetch("/api/owner", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ project: projectName })
+            });
+        }
+
+        function validateProjectName(name) {
+            if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };
+            if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };
+            if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };
+            if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };
+            if (!/^[a-z0-9-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, dan tanda hubung (-).' };
+            if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };
+            return { valid: true };
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2600);
+        }
+
+        function showConfirmModal(title, message, confirmText = 'Hapus') {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirmModalOverlay');
+                const titleEl = document.getElementById('modalTitle');
+                const messageEl = document.getElementById('modalMessage');
+                const confirmBtn = document.getElementById('modalConfirmBtn');
+                const cancelBtn = document.getElementById('modalCancelBtn');
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                confirmBtn.textContent = confirmText;
+                overlay.classList.add('active');
+
+                function cleanup(result) {
+                    overlay.classList.remove('active');
+                    cancelBtn.removeEventListener('click', onCancel);
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    document.removeEventListener('keydown', onKey);
+                    resolve(result);
+                }
+                function onCancel() { cleanup(false); }
+                function onConfirm() { cleanup(true); }
+                function onKey(e) {
+                    if (e.key === 'Escape') cleanup(false);
+                    if (e.key === 'Enter') cleanup(true);
+                }
+                cancelBtn.addEventListener('click', onCancel);
+                confirmBtn.addEventListener('click', onConfirm);
+                document.addEventListener('keydown', onKey);
+                setTimeout(() => cancelBtn.focus(), 100);
+            });
+        }
+
+        function saveHistory(project, status, url, projectId, deploymentId) {
+            const now = new Date();
+            const date = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+            const time = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+            let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
+            history.unshift({ project, status, date, time, url: url || '', projectId: projectId || '', deploymentId: deploymentId || '',
+                ownerId: CURRENT_USER_ID });
+            if (history.length > 20) history.pop();
+            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">📭 Belum ada riwayat deploy.</div>';
+                return;
+            }
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="history-item" data-index="${index}">
+                    <div class="history-info">
+                        <strong>${escapeHTML(item.project)}</strong>
+                        <span class="history-time"><i class="far fa-clock"></i> ${item.date} · ${item.time}</span>
+                        ${item.url ? `<span style="font-size:11px;color:var(--accent-primary);word-break:break-all;">🔗 <a href="${escapeHTML(item.url)}" target="_blank" style="color:var(--accent-primary);text-decoration:none;font-weight:500;">${escapeHTML(item.url)}</a></span>` : ''}
+                    </div>
+                    <div class="history-actions">
+                        <span class="history-status ${item.status}">
+                            ${item.status==='success' ? '<i class="fas fa-check-circle"></i> Berhasil' : '<i class="fas fa-times-circle"></i> Gagal'}
+                        </span>
+                        <button class="delete-history-btn" onclick="deleteHistoryItem(${index})" title="Hapus project ini">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        async function deleteHistoryItem(index) {
+            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            if (index < 0 || index >= history.length) return;
+            const item = history[index];
+            const confirmed = await showConfirmModal('Hapus Project?', `Project "${item.project}" akan dihapus dari riwayat.\n\nData project juga akan dihapus dari Vercel jika tersedia.\nNama project akan tersedia kembali.\n\nLanjutkan?`, 'Hapus');
+            if (!confirmed) return;
+            if (item.projectId && item.ownerId === CURRENT_USER_ID) {
+                try {
+                    await fetch(`https://api.vercel.com/v9/projects/${item.projectId}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
+                    });
+                } catch (e) {}
+            }
+            removeProjectOwner(item.project);
+            history.splice(index, 1);
+            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+            renderHistory();
+            showToast('🗑️ Project berhasil dihapus');
+        }
+
+        async function clearHistory() {
+            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            if (history.length === 0) {
+                showToast('📭 Riwayat sudah kosong');
+                return;
+            }
+            const confirmed = await showConfirmModal('Bersihkan Semua Riwayat?', `Sebanyak ${history.length} item akan dihapus dari riwayat lokal.\n\nProject TIDAK dihapus dari Vercel.\nHanya data riwayat di browser ini yang dibersihkan.\n\nLanjutkan?`, 'Bersihkan');
+            if (!confirmed) return;
+            localStorage.removeItem('ekk_deployHistory');
+            renderHistory();
+            showToast('🧹 Semua riwayat dibersihkan');
+        }
+
+        renderHistory();
+
+        function scrollToDeploy() {
+            document.getElementById('deployForm').scrollIntoView({ behavior:'smooth', block:'center' });
+        }
+
+        function scrollToHistory() {
+            document.getElementById('historySection').scrollIntoView({ behavior:'smooth', block:'start' });
+        }
+        async function getProjectByName(name) {
+            try {
+                const res = await fetch(`https://api.vercel.com/v9/projects?search=${encodeURIComponent(name)}`, {
                     headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
                 });
+                if (res.ok) {
+                    const data = await res.json();
+                    return data.projects?.find(p => p.name.toLowerCase() === name.toLowerCase()) || null;
+                }
             } catch (e) {}
+            return null;
         }
-        removeProjectOwner(item.project);
-        history.splice(index, 1);
-        localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
-        renderHistory();
-        showToast('🗑️ Project berhasil dihapus');
-    }
 
-    async function clearHistory() {
-        const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-        if (history.length === 0) {
-            showToast('📭 Riwayat sudah kosong');
-            return;
+        // ===== SYARAT DEPLOY =====
+        function getJoinTimestamp() {
+            return localStorage.getItem('grup_join_timestamp');
         }
-        const confirmed = await showConfirmModal('Bersihkan Semua Riwayat?', `Sebanyak ${history.length} item akan dihapus dari riwayat lokal.\n\nProject TIDAK dihapus dari Vercel.\nHanya data riwayat di browser ini yang dibersihkan.\n\nLanjutkan?`, 'Bersihkan');
-        if (!confirmed) return;
-        localStorage.removeItem('ekk_deployHistory');
-        renderHistory();
-        showToast('🧹 Semua riwayat dibersihkan');
-    }
 
-    renderHistory();
+        function setJoinTimestamp() {
+            localStorage.setItem('grup_join_timestamp', Date.now().toString());
+        }
 
-    function scrollToDeploy() {
-        document.getElementById('deployForm').scrollIntoView({ behavior:'smooth', block:'center' });
-    }
+        function isJoinValid() {
+            const ts = getJoinTimestamp();
+            if (!ts) return false;
+            const now = Date.now();
+            const diff = now - parseInt(ts);
+            const hours = diff / (1000 * 60 * 60);
+            return hours <= 24;
+        }
 
-    function scrollToHistory() {
-        document.getElementById('historySection').scrollIntoView({ behavior:'smooth', block:'start' });
-    }
+        function getNotifStatus() {
+            return Notification.permission === 'granted';
+        }
 
-    async function getProjectByName(name) {
-        try {
-            const res = await fetch(`https://api.vercel.com/v9/projects?search=${encodeURIComponent(name)}`, {
-                headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                return data.projects?.find(p => p.name.toLowerCase() === name.toLowerCase()) || null;
+        // ===== UPDATE MODAL =====
+        function updateModalStatus() {
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+
+            const grupItem = document.getElementById('req-grup');
+            const grupIcon = document.getElementById('req-grup-icon');
+            const grupStatus = document.getElementById('req-grup-status');
+            if (join) {
+                grupItem.style.display = 'none';
+            } else {
+                grupItem.style.display = 'flex';
+                grupIcon.textContent = '⬜';
+                grupStatus.textContent = 'Belum';
+                grupStatus.className = 'status';
             }
-        } catch (e) {}
-        return null;
-    }
 
-    // ── FLAG UNTUK MENCEGAH DOUBLE DEPLOY ──
-    let isDeploying = false;
+            const notifItem = document.getElementById('req-notif');
+            const notifIcon = document.getElementById('req-notif-icon');
+            const notifStatus = document.getElementById('req-notif-status');
+            if (notif) {
+                notifItem.style.display = 'none';
+            } else {
+                notifItem.style.display = 'flex';
+                notifIcon.textContent = '⬜';
+                notifStatus.textContent = 'Belum';
+                notifStatus.className = 'status';
+            }
 
-    // ============================================================
-    // FUNGSI DEPLOY ASLI (dengan pengecekan pemilik)
-    // ============================================================
-    async function originalDeployFunction() {
-        // Cegah double deploy
-        if (isDeploying) {
-            console.warn('⏳ Deploy sedang berjalan, tunggu...');
-            return;
+            if (join && notif) {
+                const modal = document.getElementById('deploy-modal');
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                originalDeployFunction();
+            }
         }
-        isDeploying = true;
 
-        try {
+        // ===== FUNGSI DEPLOY ASLI =====
+        async function originalDeployFunction() {
             const projectInput = document.getElementById("project").value.trim();
             const fileInput = document.getElementById("fileInput").files[0];
             const output = document.getElementById("output");
 
-            // Validasi input
             if (!projectInput) {
                 output.textContent = "⚠️ Nama project belum diisi.";
-                isDeploying = false;
                 return;
             }
             if (!fileInput) {
                 output.textContent = "⚠️ File belum dipilih.";
-                isDeploying = false;
                 return;
             }
 
             let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
             if (project.length < 3) {
                 output.textContent = "⚠️ Nama project minimal 3 karakter.";
-                isDeploying = false;
                 return;
             }
 
-            // ===== 🔥 CEK PEMILIK SEBELUM DEPLOY =====
-            try {
-                const ownerId = await getProjectOwner(project);
-                if (ownerId && ownerId !== CURRENT_USER_ID) {
-                    output.textContent = `⛔ Project "${project}" sudah dimiliki oleh user lain. Kamu tidak bisa menggunakan nama ini.`;
-                    isDeploying = false;
-                    return;
-                }
-            } catch (e) {
-                console.warn('Gagal cek pemilik:', e.message);
-                // Lanjutkan deploy (anggap tidak ada pemilik)
-            }
-
-            // Lanjut proses deploy
             output.textContent = "⏳ Membaca file dan mengirim ke server...";
 
             let fileContent;
@@ -2127,16 +2151,13 @@
                     fileContent = btoa(binary);
                 } else {
                     output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
-                    isDeploying = false;
                     return;
                 }
             } catch (e) {
                 output.textContent = "❌ Gagal membaca file: " + e.message;
-                isDeploying = false;
                 return;
             }
 
-            // Kirim ke backend
             try {
                 const response = await fetch('/api/deploy', {
                     method: 'POST',
@@ -2156,14 +2177,6 @@
                     showToast("🚀 Project Berhasil Dideploy!");
                     saveHistory(project, 'success', result.url, '', '');
 
-                    // ===== 🔥 SIMPAN PEMILIK SETELAH DEPLOY BERHASIL =====
-                    try {
-                        await setProjectOwner(project);
-                    } catch (e) {
-                        console.warn('Gagal simpan pemilik:', e.message);
-                    }
-
-                    // Kirim tracking deploy
                     try {
                         const deviceInfo = await getDeviceInfo();
                         const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
@@ -2186,7 +2199,6 @@
                         console.warn('Gagal kirim track deploy:', e.message);
                     }
 
-                    // Kirim notifikasi deploy ke Telegram
                     try {
                         let deviceInfo = {};
                         try {
@@ -2217,97 +2229,113 @@
                 output.textContent = "❌ Gagal menghubungi server: " + err.message;
                 saveHistory(project, 'failed', '', '', '');
             }
-        } finally {
-            isDeploying = false;
-        }
-    }
-
-    // ============================================================
-    // FUNGSI DEPLOY (dipanggil dari tombol) – override
-    // ============================================================
-    async function deploy() {
-        const projectInput = document.getElementById("project").value.trim();
-        const fileInput = document.getElementById("fileInput").files[0];
-        const output = document.getElementById("output");
-
-        if (!projectInput) {
-            output.textContent = "⚠️ Nama project belum diisi.";
-            return;
-        }
-        if (!fileInput) {
-            output.textContent = "⚠️ File belum dipilih.";
-            return;
         }
 
-        const join = isJoinValid();
-        const notif = getNotifStatus();
+        // ===== DEPLOY (dipanggil dari tombol) =====
+        async function deploy() {
+            const projectInput = document.getElementById("project").value.trim();
+            const fileInput = document.getElementById("fileInput").files[0];
+            const output = document.getElementById("output");
 
-        if (join && notif) {
-            await originalDeployFunction();
-        } else {
-            const modal = document.getElementById('deploy-modal');
-            modal.style.display = 'flex';
-            document.body.classList.add('modal-open');
+            if (!projectInput) {
+                output.textContent = "⚠️ Nama project belum diisi.";
+                return;
+            }
+            if (!fileInput) {
+                output.textContent = "⚠️ File belum dipilih.";
+                return;
+            }
+
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+
+            if (join && notif) {
+                await originalDeployFunction();
+            } else {
+                const modal = document.getElementById('deploy-modal');
+                modal.style.display = 'flex';
+                document.body.classList.add('modal-open');
+                updateModalStatus();
+            }
+        }
+
+        // ===== EVENT LISTENER JOIN GRUP =====
+        // Saat tombol join diklik, kita catat timestamp dan update status.
+        // TAPI jangan langsung tutup modal; user harus benar-benar membuka link.
+        // Kita biarkan modal tetap terbuka sampai user kembali ke halaman (visibilitychange).
+        document.getElementById('btn-join-grup').addEventListener('click', function() {
+            setJoinTimestamp();
+            // Update status agar icon berubah, tapi modal tetap terbuka
             updateModalStatus();
+        });
+
+        // Event listener untuk tombol Aktifkan Notifikasi
+        document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
+            registerPushNotification();
+            // updateModalStatus akan dipanggil dari registerPushNotification setelah izin
+        });
+
+        // Update status saat user kembali ke halaman (misal setelah join grup)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateModalStatus();
+            }
+        });
+
+        // ===== SIDEBAR =====
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function closeAllSubmenus() {
+            document.querySelectorAll('.submenu.open').forEach(sub => sub.classList.remove('open'));
         }
-    }
 
-    // ============================================================
-    // SIDEBAR & NAVIGASI
-    // ============================================================
-    const sidebar = document.getElementById('sidebarMenu');
-    const overlay = document.getElementById('sidebar-overlay');
-
-    function closeAllSubmenus() {
-        document.querySelectorAll('.submenu.open').forEach(sub => sub.classList.remove('open'));
-    }
-
-    function openSidebar() {
-        overlay.style.display = 'block';
-        requestAnimationFrame(() => {
-            overlay.style.opacity = '1';
-            sidebar.classList.add('open');
-        });
-    }
-
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        overlay.style.opacity = '0';
-        closeAllSubmenus();
-        setTimeout(() => { overlay.style.display = 'none'; }, 300);
-    }
-
-    document.getElementById('menu-toggle').onclick = () => {
-        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-    };
-    document.getElementById('close-sidebar-list-item').onclick = closeSidebar;
-    overlay.onclick = closeSidebar;
-    document.getElementById('scroll-history-btn').onclick = () => { scrollToHistory(); };
-
-    document.querySelectorAll('.has-submenu > a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const clickedSub = this.nextElementSibling;
-            const isOpen = clickedSub.classList.contains('open');
-            document.querySelectorAll('.submenu.open').forEach(sub => {
-                if (sub !== clickedSub) sub.classList.remove('open');
+        function openSidebar() {
+            overlay.style.display = 'block';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+                sidebar.classList.add('open');
             });
-            if (!isOpen) clickedSub.classList.add('open');
-            else clickedSub.classList.remove('open');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.style.opacity = '0';
+            closeAllSubmenus();
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        }
+
+        document.getElementById('menu-toggle').onclick = () => {
+            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        };
+        document.getElementById('close-sidebar-list-item').onclick = closeSidebar;
+        overlay.onclick = closeSidebar;
+        document.getElementById('scroll-history-btn').onclick = () => { scrollToHistory(); };
+
+        document.querySelectorAll('.has-submenu > a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const clickedSub = this.nextElementSibling;
+                const isOpen = clickedSub.classList.contains('open');
+                document.querySelectorAll('.submenu.open').forEach(sub => {
+                    if (sub !== clickedSub) sub.classList.remove('open');
+                });
+                if (!isOpen) clickedSub.classList.add('open');
+                else clickedSub.classList.remove('open');
+            });
         });
-    });
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
-    });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+        });
 
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('ekk_theme', 'dark');
-    console.log('✅ Deploy Tools — Ekk Store');
-    console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
-    console.log('🎨 Tema: Dark Mode (permanen)');
-    console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
-</script>
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('ekk_theme', 'dark');
+        console.log('✅ Deploy Tools — Ekk Store');
+        console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
+        console.log('🎨 Tema: Dark Mode (permanen)');
+        console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
+    </script>
     <script>
         // ==================== SISTEM PELACAKAN PENGUNJUNG & NOTIFIKASI ====================
         function getAnonId() {
