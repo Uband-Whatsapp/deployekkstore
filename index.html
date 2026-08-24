@@ -1,4 +1,2345 @@
-async function registerPushNotification() {
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
+    <title>Deploy Project - Ekk Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ── Tema Gelap (default) ── */
+        :root {
+            --bg: #0a0a0a;
+            --surface: #1a1a1a;
+            --border: #2c2c2c;
+            --border-light: #2a2a2a;
+            --text: #e8e8e8;
+            --text-secondary: #b0b0b0;
+            --text-muted: #7a7a7a;
+            --wa-green: #25d366;
+            --wa-green-hover: #1db954;
+            --wa-dark: #128c7e;
+            --accent: #10b981;
+            --accent-soft: #1a2e2a;
+            --danger: #ef4444;
+            --danger-soft: #2a1a1a;
+            --warning: #f59e0b;
+            --warning-soft: #2a261a;
+            --radius-sm: 10px;
+            --radius: 16px;
+            --radius-lg: 22px;
+            --radius-xl: 26px;
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6);
+            --shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+            --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.7);
+            --shadow-xl: 0 24px 52px rgba(0, 0, 0, 0.8);
+            --transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.5;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .bg-decor {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-decor .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(110px);
+            opacity: 0.08;
+        }
+        .bg-decor .orb-1 {
+            width: 520px;
+            height: 520px;
+            background: #25d366;
+            top: -18%;
+            left: -12%;
+            animation: orbFloat 18s ease-in-out infinite;
+        }
+        .bg-decor .orb-2 {
+            width: 420px;
+            height: 420px;
+            background: #075e54;
+            bottom: -14%;
+            right: -10%;
+            animation: orbFloat 22s ease-in-out infinite reverse;
+        }
+        .bg-decor .orb-3 {
+            width: 320px;
+            height: 320px;
+            background: #10b981;
+            top: 48%;
+            left: 58%;
+            animation: orbFloat 20s ease-in-out infinite 5s;
+        }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            25% { transform: translate(34px,-28px) scale(1.07); }
+            50% { transform: translate(-18px,22px) scale(0.93); }
+            75% { transform: translate(-30px,-12px) scale(1.05); }
+        }
+        .bg-dots {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.10;
+            background-image: radial-gradient(circle, #3a3a3a 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .gate-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+        }
+        .gate-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl), var(--shadow);
+            padding: 1.8rem 1.6rem 1.6rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            animation: cardEntry 0.6s cubic-bezier(0.22,0.61,0.36,1);
+            transition: box-shadow var(--transition-slow), border-color var(--transition-slow);
+        }
+        .gate-card:hover {
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 6px 16px rgba(0,0,0,0.3);
+            border-color: #3a3a3a;
+        }
+        @keyframes cardEntry {
+            from { opacity:0; transform: translateY(30px) scale(0.965); }
+            to { opacity:1; transform: translateY(0) scale(1); }
+        }
+        .gate-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #25d366, #10b981, #25d366, transparent);
+            border-radius: 0 0 2px 2px;
+            opacity: 0.5;
+        }
+
+        .steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 1.2rem;
+        }
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3a3a3a;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .step-dot.active {
+            background: #25d366;
+            box-shadow: 0 0 0 7px rgba(37,211,102,0.2);
+            width: 12px;
+            height: 12px;
+        }
+        .step-dot.done {
+            background: #10b981;
+            box-shadow: 0 0 0 5px rgba(16,185,129,0.15);
+        }
+        .step-line {
+            width: 36px;
+            height: 2px;
+            background: #2e2e2e;
+            border-radius: 2px;
+            flex-shrink: 0;
+            transition: background var(--transition);
+        }
+        .step-line.active {
+            background: linear-gradient(90deg, #25d366, #10b981);
+        }
+        .step-label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.3rem;
+            padding: 0 0.1rem;
+        }
+        .step-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #5a5a5a;
+            letter-spacing: 0.01em;
+            transition: color var(--transition);
+        }
+        .step-label.active {
+            color: #25d366;
+            font-weight: 600;
+        }
+        .step-label.done {
+            color: #10b981;
+        }
+
+        .logo-wrap {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto 1rem;
+        }
+        .logo-ring {
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2px solid rgba(37,211,102,0.2);
+            animation: ringPulse 2.6s ease-in-out infinite;
+        }
+        @keyframes ringPulse {
+            0%,100% { transform:scale(1); opacity:0.35; }
+            50% { transform:scale(1.28); opacity:0; }
+        }
+        .logo-circle {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 26px rgba(37,211,102,0.25);
+            transition: transform var(--transition), box-shadow var(--transition);
+            position: relative;
+            z-index: 1;
+        }
+        .logo-circle:hover {
+            transform: scale(1.07);
+            box-shadow: 0 14px 34px rgba(37,211,102,0.35);
+        }
+        .logo-circle svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+
+        .gate-headline {
+            font-size: 1.3rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 0.3rem;
+        }
+        .gate-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+            max-width: 320px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .gate-subtitle span.highlight {
+            color: #25d366;
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.7rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            border: none;
+            outline: none;
+            letter-spacing: -0.01em;
+            position: relative;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        .btn:focus-visible {
+            outline: 2.5px solid #25d366;
+            outline-offset: 3px;
+        }
+
+        .btn-primary {
+            background: #25d366;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-weight: 600;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #1fb855;
+            box-shadow: 0 8px 24px rgba(37,211,102,0.4);
+            transform: translateY(-2px);
+        }
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.955);
+            box-shadow: 0 2px 8px rgba(37,211,102,0.25);
+        }
+        .btn-primary svg {
+            flex-shrink: 0;
+        }
+
+        .btn-confirm {
+            background: #2a2a2a;
+            color: #888;
+            border: 1.5px solid #3a3a3a;
+            margin-top: 0.7rem;
+            transition: all var(--transition);
+            font-weight: 550;
+        }
+        .btn-confirm.active {
+            background: #1a2e2a;
+            color: #86efac;
+            border-color: #2d6a4f;
+            cursor: pointer;
+            opacity: 1;
+            box-shadow: var(--shadow-xs);
+        }
+        .btn-confirm.active:hover {
+            background: #1f3a2f;
+            border-color: #4ade80;
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+        .btn-confirm.active:active {
+            transform: scale(0.965);
+        }
+
+        .verify-message {
+            margin-top: 0.7rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: none;
+            align-items: flex-start;
+            gap: 0.4rem;
+            text-align: left;
+            animation: msgIn 0.3s ease;
+            line-height: 1.4;
+        }
+        @keyframes msgIn {
+            from { opacity:0; transform: translateY(7px); }
+            to { opacity:1; transform: translateY(0); }
+        }
+        .verify-message.loading {
+            background: #0f1a2e;
+            border: 1px solid #1a3a5a;
+            color: #8ab4f8;
+            display: flex;
+        }
+        .verify-message.error {
+            background: #2a1414;
+            border: 1px solid #5a1a1a;
+            color: #f8a0a0;
+            display: flex;
+        }
+        .verify-message.success {
+            background: #0f2a1a;
+            border: 1px solid #1a5a3a;
+            color: #86efac;
+            display: flex;
+        }
+        .verify-message .msg-icon {
+            flex-shrink: 0;
+            font-size: 1rem;
+            line-height: 1;
+            margin-top: 1px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid rgba(37,211,102,0.2);
+            border-top-color: #25d366;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .gate-footer {
+            margin-top: 1.2rem;
+            font-size: 0.65rem;
+            color: #5a5a5a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            letter-spacing: 0.01em;
+        }
+        .gate-footer svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 480px) {
+            .gate-card { padding: 1.4rem 1rem 1.2rem; border-radius: var(--radius-lg); }
+            .gate-headline { font-size: 1.1rem; }
+            .gate-subtitle { font-size: 0.7rem; max-width: 260px; margin-bottom: 1rem; }
+            .btn { font-size: 0.8rem; padding: 0.6rem 0.8rem; }
+            .step-line { width: 28px; }
+            .logo-circle { width: 48px; height: 48px; }
+            .logo-circle svg { width: 26px; height: 26px; }
+            .logo-ring { inset: -10px; }
+            .steps { margin-bottom: 0.8rem; }
+        }
+
+        /* ── WEBSITE UTAMA ── */
+        :root, [data-theme="dark"] {
+            --bg-main: #0a0a0b;
+            --bg-card: #111113;
+            --bg-input: #1a1a1e;
+            --text-main: #f1f1f3;
+            --text-muted: #8b8b90;
+            --accent-primary: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-glow: rgba(59,130,246,0.18);
+            --success: #22c55e;
+            --danger: #ef4444;
+            --border-color: #252529;
+            --shadow-premium: 0 10px 40px rgba(0,0,0,0.6);
+            --font-ui: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --overlay-bg: rgba(0,0,0,0.55);
+            --toast-bg: #ffffff;
+            --toast-text: #0a0a0b;
+            --btn-send-bg: #ff6b35;
+            --btn-send-text: #ffffff;
+            --btn-send-hover-bg: #ff8c5a;
+            --btn-send-shadow: 0 6px 24px rgba(255,107,53,0.45);
+            --history-hover: #1c1c20;
+            --submenu-bg: #18181b;
+            --toggle-bg: #252529;
+            --toggle-icon: #f1f1f3;
+            --modal-bg: #1a1a1e;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            transition: background-color 0.35s ease, color 0.35s ease;
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .app-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+            min-height: 100vh;
+            opacity: 0;
+            transform: translateY(18px);
+            animation: slideUpIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        @keyframes slideUpIn {
+            to { opacity:1; transform: translateY(0); }
+        }
+
+        #top-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+            padding: 14px;
+            pointer-events: none;
+        }
+        #top-controls {
+            pointer-events: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background-color: var(--bg-card);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+        }
+        .status-indicator {
+            font-size: 12px;
+            color: var(--success);
+            font-family: var(--font-mono);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-right: 12px;
+            border-right: 1px solid var(--border-color);
+            letter-spacing: -0.02em;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+        }
+        .status-circle {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2.2s infinite;
+        }
+        .control-btn {
+            width: 34px;
+            height: 34px;
+            background-color: var(--toggle-bg);
+            border: 1px solid transparent;
+            border-radius: 50%;
+            color: var(--toggle-icon);
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+        }
+        .control-btn:hover {
+            transform: scale(1.07);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .control-btn:active { transform: scale(0.96); }
+        .control-btn::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background: var(--toast-bg);
+            color: var(--toast-text);
+            font-size: 10px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: 0.2s;
+            font-family: var(--font-ui);
+            letter-spacing: 0.02em;
+        }
+        .control-btn:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        .header-box {
+            text-align: center;
+            margin-bottom: 28px;
+            width: 100%;
+        }
+        .header-box h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.04em;
+            color: var(--text-main);
+        }
+        .header-box p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+
+        .form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 30px 28px;
+            background-color: var(--bg-card);
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-premium);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .input {
+            width: 100%;
+            padding: 13px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            font-size: 14px;
+            transition: all 0.25s;
+            outline: none;
+        }
+        #project { font-family: var(--font-mono); }
+        .input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        input[type="file"] {
+            cursor: pointer;
+            padding: 10px 12px;
+        }
+        input[type="file"]::file-selector-button {
+            background-color: #3b82f6;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            margin-right: 14px;
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.25s;
+        }
+        input[type="file"]::file-selector-button:hover {
+            opacity: 0.88;
+            transform: scale(0.97);
+        }
+
+        .send-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            letter-spacing: -0.01em;
+            box-shadow: 0 6px 28px rgba(255,107,53,0.45);
+            position: relative;
+            overflow: hidden;
+        }
+        .send-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .send-btn:hover {
+            background: linear-gradient(135deg, #ff7b4a 0%, #ff9d5c 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(255,107,53,0.6);
+        }
+        .send-btn:hover::before { left: 100%; }
+        .send-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 15px rgba(255,107,53,0.35);
+        }
+
+        .btn-grub {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 0px;
+            transition: all 0.3s ease;
+            letter-spacing: -0.01em;
+            box-shadow: 0 6px 28px rgba(37,211,102,0.4);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn-grub::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-grub:hover {
+            background: linear-gradient(135deg, #2dd466 0%, #1a9e7a 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 35px rgba(37,211,102,0.55);
+        }
+        .btn-grub:hover::before { left: 100%; }
+        .btn-grub:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 15px rgba(37,211,102,0.35);
+        }
+        .btn-grub i { font-size: 18px; }
+
+        #output {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-family: var(--font-mono);
+            line-height: 1.6;
+            word-break: break-all;
+        }
+
+        .history-section {
+            margin-top: 24px;
+            padding: 24px 28px;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .history-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-id-badge { display: none !important; }
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: 0.25s;
+        }
+        .clear-btn:hover {
+            background: var(--border-color);
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 15px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.25s;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .history-item:hover {
+            border-color: var(--text-muted);
+            background-color: var(--history-hover);
+        }
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 0;
+        }
+        .history-info strong {
+            font-size: 14px;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            word-break: break-all;
+            letter-spacing: -0.02em;
+        }
+        .history-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .history-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .history-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+        .history-status.success {
+            background-color: rgba(34,197,94,0.1);
+            color: var(--success);
+        }
+        .history-status.failed {
+            background-color: rgba(239,68,68,0.1);
+            color: var(--danger);
+        }
+        .delete-history-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.25s;
+            flex-shrink: 0;
+        }
+        .delete-history-btn:hover {
+            color: var(--danger);
+            background-color: rgba(239,68,68,0.06);
+            border-color: rgba(239,68,68,0.25);
+        }
+        .empty-history {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 22px 0;
+            letter-spacing: -0.01em;
+        }
+        .footer-text {
+            margin-top: 36px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-family: var(--font-mono);
+            transition: color 0.35s;
+            letter-spacing: 0.03em;
+            text-align: center;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -310px;
+            width: 295px;
+            height: 100vh;
+            overflow-y: auto;
+            background-color: var(--bg-card);
+            border-left: 1px solid var(--border-color);
+            z-index: 9990;
+            padding-top: 90px;
+            transition: right 0.38s cubic-bezier(0.16,1,0.3,1), background-color 0.35s, border-color 0.35s;
+            box-shadow: -18px 0 35px rgba(0,0,0,0.12);
+        }
+        .sidebar.open { right: 0; }
+        .sidebar-header {
+            padding: 8px 22px 20px;
+            margin-top: -80px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #111113;
+            border-bottom: none;
+        }
+        .sidebar-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+        .profile-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-primary);
+            box-shadow: 0 0 14px var(--accent-glow);
+            transition: transform 0.25s;
+            flex-shrink: 0;
+        }
+        .profile-img:hover { transform: scale(1.08); }
+        .profile-text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .profile-name {
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .profile-badge {
+            font-size: 13px;
+            color: var(--accent-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 14px 0 0;
+        }
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 15px 22px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .sidebar ul li a i:first-child {
+            width: 20px;
+            margin-right: 14px;
+            color: var(--text-muted);
+            font-size: 15px;
+            transition: color 0.2s ease;
+        }
+        .sidebar ul li.has-submenu>a {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sidebar ul li a:hover {
+            background-color: var(--bg-input);
+            border-left-color: var(--accent-primary);
+        }
+        .sidebar ul li a:hover i:first-child { color: var(--accent-primary); }
+        .submenu {
+            list-style: none;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            background-color: var(--submenu-bg);
+            transition: max-height 0.3s ease, background-color 0.35s;
+        }
+        .submenu.open {
+            max-height: 320px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .submenu li a {
+            padding: 12px 22px 12px 56px;
+            font-size: 13px;
+            color: var(--text-muted);
+            border-left: transparent;
+        }
+        .submenu li a:hover {
+            color: var(--text-main);
+            background-color: var(--border-color);
+        }
+        #close-sidebar-list-item {
+            margin-top: 30px;
+            padding: 0 12px;
+        }
+        #close-sidebar-list-item a {
+            color: var(--danger) !important;
+            border-radius: 10px;
+            justify-content: center;
+            background-color: rgba(239,68,68,0.04);
+            font-weight: 600;
+        }
+        #close-sidebar-list-item a i {
+            color: var(--danger) !important;
+            margin-right: 8px !important;
+        }
+        #close-sidebar-list-item a:hover {
+            background-color: rgba(239,68,68,0.1);
+            border-left-color: transparent;
+        }
+
+        #sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9980;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(5px);
+            display: none;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10010;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px 28px 24px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+        }
+        .modal-overlay.active .modal-box {
+            transform: translateY(0) scale(1);
+        }
+        .modal-icon { font-size: 42px; margin-bottom: 12px; }
+        .modal-box h4 {
+            margin: 0 0 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+        }
+        .modal-box p {
+            margin: 0 0 22px;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .modal-btn {
+            padding: 11px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s;
+            font-family: var(--font-ui);
+        }
+        .modal-btn.cancel {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+        .modal-btn.cancel:hover { background: var(--border-color); }
+        .modal-btn.confirm {
+            background: var(--danger);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(239,68,68,0.3);
+        }
+        .modal-btn.confirm:hover {
+            background: #f87171;
+            box-shadow: 0 6px 22px rgba(239,68,68,0.45);
+            transform: translateY(-1px);
+        }
+        .modal-btn:active { transform: scale(0.96); }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--toast-bg);
+            color: var(--toast-text);
+            padding: 13px 26px;
+            border-radius: 30px;
+            border: none;
+            opacity: 0;
+            transition: all 0.35s ease;
+            box-shadow: var(--shadow-premium);
+            z-index: 10000;
+            font-size: 13px;
+            font-weight: 600;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .app-wrap { padding: 85px 10px 30px; }
+            .form { padding: 20px 16px; border-radius: 14px; }
+            .history-section { padding: 20px 16px; border-radius: 14px; }
+            .history-item { flex-direction: column; align-items: flex-start; }
+            .history-actions { width: 100%; justify-content: flex-end; }
+            .sidebar { width: 265px; right: -265px; }
+            .modal-box { padding: 24px 18px 20px; }
+            .sidebar-header { padding: 16px 16px 12px; }
+            .profile-img { width: 65px; height: 65px; }
+        }
+        .submenu li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .submenu li a i {
+            width: 18px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .submenu .fa-whatsapp { color: #25D366; }
+        .submenu .fa-telegram-plane { color: #229ED9; }
+        .follow-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #websiteContent {
+            transition: opacity 0.5s ease;
+        }
+/* ── MODAL SYARAT DEPLOY ── */
+#deploy-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    z-index: 99999;
+
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+
+    justify-content: center;
+    align-items: center;
+
+    padding: 16px;
+    box-sizing: border-box;
+
+    /* Jangan biarkan background ikut scroll */
+    overflow: hidden;
+
+    /* Hitung berdasarkan viewport HP */
+    overscroll-behavior: none;
+    touch-action: none;
+}
+
+#deploy-modal.show {
+    display: flex;
+}
+
+/* ── ISI MODAL ── */
+#deploy-modal .modal-content {
+    position: relative;
+
+    background: var(--bg-card);
+    color: var(--text-main);
+
+    width: 100%;
+    max-width: 400px;
+
+    /* Tinggi mengikuti layar HP, bukan panjang website */
+    max-height: calc(100dvh - 32px);
+
+    box-sizing: border-box;
+
+    padding: 28px 24px;
+
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+
+    /* Kalau isi kepanjangan, yang scroll hanya modal */
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ── JUDUL ── */
+#deploy-modal .modal-content h2 {
+    margin: 0 0 6px 0;
+    font-size: 20px;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── DESKRIPSI ── */
+#deploy-modal .modal-content p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0 0 20px 0;
+}
+
+/* ── ITEM SYARAT ── */
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 14px;
+    padding: 10px 12px;
+
+    background: var(--bg-input);
+    border-radius: 12px;
+
+    box-sizing: border-box;
+}
+
+/* ── ICON ── */
+.requirement-item .icon {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+/* ── INFO ── */
+.requirement-item .info {
+    flex: 1;
+    min-width: 0;
+}
+
+.requirement-item .info .label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.requirement-item .info .desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ── TOMBOL ── */
+.requirement-item .action-btn {
+    background: #25d366;
+    color: #fff;
+
+    padding: 4px 14px;
+    border-radius: 999px;
+
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+
+    border: none;
+    cursor: pointer;
+
+    flex-shrink: 0;
+}
+
+.requirement-item .action-btn.blue {
+    background: #3b82f6;
+}
+
+/* ── STATUS ── */
+.requirement-item .status {
+    font-size: 12px;
+    color: var(--text-muted);
+
+    min-width: 50px;
+    text-align: right;
+
+    flex-shrink: 0;
+}
+
+.requirement-item .status.done {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+/* ── HIDDEN ── */
+.requirement-item.hidden {
+    display: none;
+}
+
+/* ── HP KECIL ── */
+@media (max-width: 480px) {
+    #deploy-modal {
+        padding: 12px;
+    }
+
+    #deploy-modal .modal-content {
+        max-height: calc(100dvh - 24px);
+        padding: 24px 18px;
+        border-radius: 20px;
+    }
+}
+    </style>
+</head>
+<body>
+    <!-- Background decor -->
+    <div class="bg-decor" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="bg-dots" aria-hidden="true"></div>
+
+    <!-- Card Verifikasi Follow -->
+    <div class="follow-page">
+        <div class="gate-wrapper" id="gateWrapper">
+            <div class="gate-card" id="gateCard">
+                <!-- Step Indicator -->
+                <div class="steps" id="stepIndicator">
+                    <div class="step-dot active" id="stepDot1"></div>
+                    <div class="step-line" id="stepLine1"></div>
+                    <div class="step-dot" id="stepDot2"></div>
+                    <div class="step-line" id="stepLine2"></div>
+                    <div class="step-dot" id="stepDot3"></div>
+                </div>
+                <div class="step-label-row">
+                    <span class="step-label active" id="stepLabel1">Follow</span>
+                    <span class="step-label" id="stepLabel2">Konfirmasi</span>
+                    <span class="step-label" id="stepLabel3">Selesai</span>
+                </div>
+
+                <!-- Logo -->
+                <div class="logo-wrap">
+                    <div class="logo-ring" aria-hidden="true"></div>
+                    <div class="logo-circle">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Headline -->
+                <h2 class="gate-headline">Verifikasi Follow</h2>
+
+                <!-- Subtitle -->
+                <p class="gate-subtitle">
+                    Untuk melanjutkan ke website, silakan ikuti saluran WhatsApp terlebih dahulu. Klik <span class="highlight">Buka Saluran WhatsApp</span>, pilih <span class="highlight">Buka di WhatsApp</span>, lalu tekan <span class="highlight">Ikuti</span>. Setelah itu, kembali ke halaman ini. Sistem akan otomatis memverifikasi status mengikuti Anda. Jika verifikasi berhasil, akses ke website akan dibuka secara otomatis.
+                </p>
+
+                <!-- Tombol Follow -->
+                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="btnFollowWA" aria-label="Buka saluran WhatsApp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+                    </svg>
+                    Buka Saluran WhatsApp
+                </a>
+
+                <!-- Tombol Konfirmasi -->
+                <button class="btn btn-confirm" id="btnConfirm" disabled>
+                    Saya Sudah Follow
+                </button>
+
+                <!-- Area Pesan Verifikasi -->
+                <div class="verify-message" id="verifyMessageBox">
+                    <span class="msg-icon" id="verifyIcon"></span>
+                    <span id="verifyText"></span>
+                </div>
+
+                <!-- Footer -->
+                <div class="gate-footer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Verifikasi diperlukan untuk mengakses konten
+                </div>
+            </div>
+        </div>
+
+        <!-- KONTEN WEBSITE UTAMA (awalnya tersembunyi) -->
+        <div id="websiteContent" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
+            <!-- OVERLAY SIDEBAR -->
+            <div id="sidebar-overlay"></div>
+
+            <!-- MODAL KONFIRMASI -->
+            <div class="modal-overlay" id="confirmModalOverlay">
+                <div class="modal-box">
+                    <div class="modal-icon">⚠️</div>
+                    <h4 id="modalTitle">Konfirmasi Hapus</h4>
+                    <p id="modalMessage">Apakah Anda yakin ingin melanjutkan?</p>
+                    <div class="modal-actions">
+                        <button class="modal-btn cancel" id="modalCancelBtn">Batal</button>
+                        <button class="modal-btn confirm" id="modalConfirmBtn">Hapus</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP BAR -->
+            <div id="top-bar-container">
+                <div id="top-controls">
+                    <div class="status-indicator">
+                        <span class="status-circle"></span> Vercel Ready
+                    </div>
+                    <button id="scroll-history-btn" class="control-btn" title="Lihat Riwayat Deploy">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button id="menu-toggle" class="control-btn" title="Menu Navigasi">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SIDEBAR MENU -->
+            <nav class="sidebar" id="sidebarMenu">
+                <div class="sidebar-header">
+                    <div class="sidebar-profile">
+                        <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
+                        <div class="profile-text">
+                            <span class="profile-name">Ekk Store</span>
+                            <span class="profile-badge">👑 Owner</span>
+                        </div>
+                    </div>
+                </div>
+                <ul>
+                    <li class="has-submenu">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-headset"></i>
+                            Contact Ekk Store
+                            <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="https://wa.me/6285177464515" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 1</a></li>
+                            <li><a href="https://wa.me/6285177464516" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 2</a></li>
+                            <li><a href="https://wa.me/6285177464517" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 3</a></li>
+                            <li><a href="https://t.me/XzzEkk" target="_blank" rel="noopener"><i class="fab fa-telegram-plane"></i> Telegram</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-submenu">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-newspaper"></i>
+                            Info Website Free
+                            <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:11px;width:auto;margin-right:0;opacity:.7;"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp Channel</a></li>
+                            <li><a href="https://t.me/EkkStore_Testi" target="_blank" rel="noopener"><i class="fab fa-telegram-plane"></i> Telegram Channel</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-submenu">
+                        <a href="javascript:void(0)">
+                            <i class="fa-solid fa-code"></i>
+                            Jasa Pembuatan Website
+                            <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:9px;width:auto;margin-right:0;opacity:.7;"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="https://wa.me/6285177464515" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 1</a></li>
+                            <li><a href="https://wa.me/6285177464516" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 2</a></li>
+                            <li><a href="https://wa.me/6285177464517" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp 3</a></li>
+                            <li><a href="https://t.me/DsEkkStore" target="_blank" rel="noopener"><i class="fab fa-telegram-plane"></i> Telegram</a></li>
+                        </ul>
+                    </li>
+                    <li id="close-sidebar-list-item">
+                        <a href="javascript:void(0)"><i class="fas fa-times"></i> Tutup Menu</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- MAIN CONTENT -->
+            <div class="app-wrap" id="mainContent">
+                <div class="header-box" id="headerBox">
+                    <h1>Deploy Tools</h1>
+                    <p>Serverless Deployment · Ekk Store</p>
+                </div>
+
+                <div class="form" id="deployForm">
+                    <div class="form-group">
+                        <label for="project">Nama Project</label>
+                        <input type="text" id="project" placeholder="contoh: website-ekkstore" class="input" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="fileInput">Upload File (HTML)</label>
+                        <input type="file" id="fileInput" accept=".html,.zip" class="input">
+                    </div>
+                    <button onclick="deploy()" class="send-btn">
+                        <i class="fas fa-rocket"></i> Deploy Sekarang
+                    </button>
+                    <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" rel="noopener noreferrer" class="btn-grub" title="Gabung ke grup WhatsApp">
+                        <i class="fab fa-whatsapp"></i> Grub Jb Terbuka 24 Jam
+                    </a>
+                    <div id="output">Status: Menunggu file & nama project…</div>
+                </div>
+
+                <!-- MODAL SYARAT DEPLOY -->
+                <div id="deploy-modal">
+                    <div class="modal-content">
+                        <h2>⚠️ Syarat Deploy</h2>
+                        <p>Lengkapi yang belum untuk bisa deploy.</p>
+
+                        <!-- 1. JOIN GRUP -->
+                        <div class="requirement-item" id="req-grup">
+                            <span class="icon" id="req-grup-icon">⬜</span>
+                            <div class="info">
+                                <div class="label">Join Grup WhatsApp</div>
+                                <div class="desc">Gabung grup WhatsApp</div>
+                            </div>
+                            <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="action-btn">Join</a>
+                            <span class="status" id="req-grup-status">Belum</span>
+                        </div>
+
+                        <!-- 2. AKTIFKAN NOTIFIKASI -->
+                        <div class="requirement-item" id="req-notif">
+                            <span class="icon" id="req-notif-icon">⬜</span>
+                            <div class="info">
+                                <div class="label">Aktifkan Notifikasi</div>
+                                <div class="desc">Izinkan notifikasi browser</div>
+                            </div>
+                            <button id="btn-aktifkan-notif" class="action-btn blue">Aktifkan</button>
+                            <span class="status" id="req-notif-status">Belum</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HISTORY -->
+                <div class="form history-section" id="historySection">
+                    <div class="history-header">
+                        <h3><i class="fas fa-history"></i> Riwayat Deploy <span class="user-id-badge" id="userIdBadge">ID: …</span></h3>
+                        <button onclick="clearHistory()" class="clear-btn"><i class="fas fa-trash-alt"></i> Bersihkan</button>
+                    </div>
+                    <div id="history-list" class="history-list"></div>
+                </div>
+
+                <div class="footer-text">&copy; 2026 — Ekk Store</div>
+            </div>
+        </div>
+
+        <!-- TOAST -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script>
+        // ==================== GATE VERIFIKASI ====================
+        (function() {
+            const STORAGE_KEY = 'wa_gate_passed_v5';
+            const GATE_EXPIRY_DAYS = 1;
+            const VERIFY_DELAY_MS = 2200;
+
+            const gateWrapper = document.getElementById('gateWrapper');
+            const gateCard = document.getElementById('gateCard');
+            const btnFollowWA = document.getElementById('btnFollowWA');
+            const btnConfirm = document.getElementById('btnConfirm');
+            const verifyMessageBox = document.getElementById('verifyMessageBox');
+            const verifyIcon = document.getElementById('verifyIcon');
+            const verifyText = document.getElementById('verifyText');
+            const stepDot1 = document.getElementById('stepDot1');
+            const stepDot2 = document.getElementById('stepDot2');
+            const stepDot3 = document.getElementById('stepDot3');
+            const stepLine1 = document.getElementById('stepLine1');
+            const stepLine2 = document.getElementById('stepLine2');
+            const stepLabel1 = document.getElementById('stepLabel1');
+            const stepLabel2 = document.getElementById('stepLabel2');
+            const stepLabel3 = document.getElementById('stepLabel3');
+            const websiteContent = document.getElementById('websiteContent');
+            const bgDecor = document.querySelector('.bg-decor');
+            const bgDots = document.querySelector('.bg-dots');
+
+            let followClickCount = 0;
+            let confirmAttempts = 0;
+            let isVerifying = false;
+            let gateRemoved = false;
+            let hasClickedFollowOnce = false;
+
+            function callTrack(eventName) {
+                if (window[eventName] && typeof window[eventName] === 'function') {
+                    window[eventName]();
+                }
+            }
+
+            function isAlreadyPassed() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    if (!data) return false;
+                    const parsed = JSON.parse(data);
+                    if (parsed.expiresAt && Date.now() < parsed.expiresAt) return true;
+                    localStorage.removeItem(STORAGE_KEY);
+                    return false;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function setPassed() {
+                const expiresAt = Date.now() + (GATE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    passed: true,
+                    timestamp: Date.now(),
+                    expiresAt: expiresAt,
+                }));
+            }
+
+            function showWebsite() {
+                callTrack('recordFollowPassed');
+                if (gateWrapper) gateWrapper.style.display = 'none';
+                if (bgDecor) bgDecor.style.display = 'none';
+                if (bgDots) bgDots.style.display = 'none';
+
+                const followPage = document.querySelector('.follow-page');
+                if (followPage) {
+                    followPage.style.display = 'block';
+                    followPage.style.minHeight = 'auto';
+                    followPage.style.padding = '0';
+                    followPage.style.alignItems = 'normal';
+                    followPage.style.justifyContent = 'normal';
+                }
+
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+
+                websiteContent.style.display = 'block';
+                void websiteContent.offsetWidth;
+                websiteContent.style.opacity = '1';
+
+                setTimeout(() => {
+                    callTrack('recordDeployEntered');
+                }, 500);
+            }
+
+            function removeGateUI() {
+                if (gateRemoved) return;
+                gateRemoved = true;
+                gateCard.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                gateCard.style.opacity = '0';
+                gateCard.style.transform = 'scale(0.94)';
+                setTimeout(() => {
+                    if (gateCard.parentNode) {
+                        gateCard.parentNode.style.transition = 'opacity 0.3s ease';
+                        gateCard.parentNode.style.opacity = '0';
+                    }
+                    setTimeout(() => {
+                        if (gateCard.parentNode && gateCard.parentNode.parentNode) {
+                            gateCard.parentNode.parentNode.style.transition = 'opacity 0.25s ease';
+                            gateCard.parentNode.parentNode.style.opacity = '0';
+                        }
+                        setTimeout(() => {
+                            showWebsite();
+                        }, 300);
+                    }, 250);
+                }, 450);
+            }
+
+            function updateStepIndicator(step) {
+                [stepDot1, stepDot2, stepDot3].forEach(d => d.classList.remove('active','done'));
+                [stepLine1, stepLine2].forEach(l => l.classList.remove('active'));
+                [stepLabel1, stepLabel2, stepLabel3].forEach(l => l.classList.remove('active','done'));
+                if (step >= 1) { stepDot1.classList.add('done'); stepLabel1.classList.add('done'); }
+                if (step >= 2) { stepDot1.classList.add('done'); stepDot2.classList.add('active'); stepLine1.classList.add('active'); stepLabel1.classList.add('done'); stepLabel2.classList.add('active'); }
+                if (step >= 3) { stepDot1.classList.add('done'); stepDot2.classList.add('done'); stepDot3.classList.add('done'); stepLine1.classList.add('active'); stepLine2.classList.add('active'); stepLabel1.classList.add('done'); stepLabel2.classList.add('done'); stepLabel3.classList.add('done'); }
+            }
+
+            function enableConfirmButton() {
+                btnConfirm.disabled = false;
+                btnConfirm.classList.add('active');
+                btnConfirm.textContent = 'Saya Sudah Follow';
+                updateStepIndicator(2);
+            }
+
+            function resetConfirmButton() {
+                btnConfirm.disabled = true;
+                btnConfirm.classList.remove('active');
+                btnConfirm.textContent = 'Saya Sudah Follow';
+            }
+
+            function showVerificationMessage(type, message) {
+                verifyMessageBox.style.display = 'flex';
+                verifyMessageBox.className = 'verify-message ' + type;
+                if (type === 'loading') verifyIcon.innerHTML = '<span class="spinner"></span>';
+                else if (type === 'error') verifyIcon.innerHTML = '⚠️';
+                else if (type === 'success') verifyIcon.innerHTML = '✅';
+                verifyText.innerHTML = message;
+            }
+
+            function hideVerificationMessage() {
+                verifyMessageBox.style.display = 'none';
+                verifyMessageBox.className = 'verify-message';
+            }
+
+            function startVerification() {
+                if (isVerifying || gateRemoved) return;
+                isVerifying = true;
+                confirmAttempts++;
+                btnConfirm.disabled = true;
+                btnConfirm.classList.remove('active');
+                hideVerificationMessage();
+                showVerificationMessage('loading', 'Sistem sedang memverifikasi status follow kamu. Proses ini hanya memerlukan beberapa saat. Mohon jangan tutup atau tinggalkan halaman ini...');
+
+                setTimeout(() => {
+                    if (followClickCount >= 2) {
+                        showVerificationMessage('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan ke halaman berikutnya...');
+                        updateStepIndicator(3);
+                        btnConfirm.style.display = 'none';
+                        setPassed();
+                        showWebsite();
+                        if (gateWrapper) gateWrapper.style.display = 'none';
+                        if (bgDecor) bgDecor.style.display = 'none';
+                        if (bgDots) bgDots.style.display = 'none';
+                        isVerifying = false;
+                        return;
+                    } else if (confirmAttempts === 1) {
+                        showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Kami belum dapat mendeteksi bahwa kamu telah mengikuti saluran WhatsApp. Silakan buka kembali saluran melalui tombol <b>Buka Saluran WhatsApp</b>, pastikan kamu menekan tombol <b>Ikuti</b>, kemudian kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
+                        btnConfirm.disabled = false;
+                        btnConfirm.classList.add('active');
+                        btnConfirm.textContent = 'Coba Lagi';
+                        updateStepIndicator(2);
+                        isVerifying = false;
+                    } else {
+                        showVerificationMessage('error', ' <b>Verifikasi gagal.</b> Sistem mendeteksi bahwa kamu <b>belum mengikuti saluran WhatsApp</b>. Silakan klik <b>Buka Saluran WhatsApp</b>, pilih <b>Lihat di WhatsApp</b> jika muncul, lalu tekan tombol <b>Ikuti</b> pada saluran. Setelah benar-benar mengikuti saluran, kembali ke halaman ini dan klik <b>Coba Lagi</b>.');
+                        btnConfirm.disabled = false;
+                        btnConfirm.classList.add('active');
+                        btnConfirm.textContent = 'Coba Lagi';
+                        updateStepIndicator(2);
+                        isVerifying = false;
+                    }
+                }, VERIFY_DELAY_MS);
+            }
+
+            let waitingForWhatsApp = false;
+            btnFollowWA.addEventListener('click', function() {
+                waitingForWhatsApp = true;
+                followClickCount++;
+            });
+
+            document.addEventListener("visibilitychange", function() {
+                if (document.hidden && waitingForWhatsApp) {
+                    waitingForWhatsApp = false;
+                    if (!hasClickedFollowOnce) {
+                        hasClickedFollowOnce = true;
+                        enableConfirmButton();
+                    }
+                    if (followClickCount >= 2 && confirmAttempts >= 1 && !gateRemoved) {
+                        hideVerificationMessage();
+                        btnConfirm.textContent = "Coba Lagi";
+                        btnConfirm.disabled = false;
+                        btnConfirm.classList.add("active");
+                        updateStepIndicator(2);
+                    }
+                }
+            });
+
+            btnConfirm.addEventListener('click', function() {
+                if (btnConfirm.disabled || isVerifying || gateRemoved) return;
+                if (!hasClickedFollowOnce) return;
+                startVerification();
+            });
+
+            function init() {
+                if (isAlreadyPassed()) {
+                    showWebsite();
+                    return;
+                }
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                hideVerificationMessage();
+                resetConfirmButton();
+                updateStepIndicator(0);
+                stepDot1.classList.add('active');
+                stepLabel1.classList.add('active');
+            }
+            init();
+        })();
+    </script>
+
+    <script>
+        // ── Fungsi-fungsi yang sudah ada ──
+        function getUserId() {
+            let userId = localStorage.getItem('ekk_userId');
+            if (!userId) {
+                userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                localStorage.setItem('ekk_userId', userId);
+            }
+            return userId;
+        }
+        const CURRENT_USER_ID = getUserId();
+        const badge = document.getElementById('userIdBadge');
+        if (badge) {
+            badge.textContent = 'ID: ' + CURRENT_USER_ID.substring(0,12) + '…';
+            badge.title = 'User ID tersimpan privat';
+        }
+
+        async function getProjectOwner(projectName) {
+            try {
+                const res = await fetch(`/api/owner?project=${encodeURIComponent(projectName)}`);
+                const data = await res.json();
+                return data.ownerId || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function setProjectOwner(projectName) {
+            await fetch("/api/owner", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ project: projectName, ownerId: CURRENT_USER_ID })
+            });
+        }
+
+        async function removeProjectOwner(projectName) {
+            await fetch("/api/owner", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ project: projectName })
+            });
+        }
+
+        function validateProjectName(name) {
+            if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };
+            if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };
+            if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };
+            if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };
+            if (!/^[a-z0-9-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, dan tanda hubung (-).' };
+            if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };
+            return { valid: true };
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2600);
+        }
+
+        function showConfirmModal(title, message, confirmText = 'Hapus') {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirmModalOverlay');
+                const titleEl = document.getElementById('modalTitle');
+                const messageEl = document.getElementById('modalMessage');
+                const confirmBtn = document.getElementById('modalConfirmBtn');
+                const cancelBtn = document.getElementById('modalCancelBtn');
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                confirmBtn.textContent = confirmText;
+                overlay.classList.add('active');
+
+                function cleanup(result) {
+                    overlay.classList.remove('active');
+                    cancelBtn.removeEventListener('click', onCancel);
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    document.removeEventListener('keydown', onKey);
+                    resolve(result);
+                }
+                function onCancel() { cleanup(false); }
+                function onConfirm() { cleanup(true); }
+                function onKey(e) {
+                    if (e.key === 'Escape') cleanup(false);
+                    if (e.key === 'Enter') cleanup(true);
+                }
+                cancelBtn.addEventListener('click', onCancel);
+                confirmBtn.addEventListener('click', onConfirm);
+                document.addEventListener('keydown', onKey);
+                setTimeout(() => cancelBtn.focus(), 100);
+            });
+        }
+
+        function saveHistory(project, status, url, projectId, deploymentId) {
+            const now = new Date();
+            const date = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+            const time = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+            let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
+            history.unshift({ project, status, date, time, url: url || '', projectId: projectId || '', deploymentId: deploymentId || '',
+                ownerId: CURRENT_USER_ID });
+            if (history.length > 20) history.pop();
+            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">📭 Belum ada riwayat deploy.</div>';
+                return;
+            }
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="history-item" data-index="${index}">
+                    <div class="history-info">
+                        <strong>${escapeHTML(item.project)}</strong>
+                        <span class="history-time"><i class="far fa-clock"></i> ${item.date} · ${item.time}</span>
+                        ${item.url ? `<span style="font-size:11px;color:var(--accent-primary);word-break:break-all;">🔗 <a href="${escapeHTML(item.url)}" target="_blank" style="color:var(--accent-primary);text-decoration:none;font-weight:500;">${escapeHTML(item.url)}</a></span>` : ''}
+                    </div>
+                    <div class="history-actions">
+                        <span class="history-status ${item.status}">
+                            ${item.status==='success' ? '<i class="fas fa-check-circle"></i> Berhasil' : '<i class="fas fa-times-circle"></i> Gagal'}
+                        </span>
+                        <button class="delete-history-btn" onclick="deleteHistoryItem(${index})" title="Hapus project ini">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        async function deleteHistoryItem(index) {
+            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            if (index < 0 || index >= history.length) return;
+            const item = history[index];
+            const confirmed = await showConfirmModal('Hapus Project?', `Project "${item.project}" akan dihapus dari riwayat.\n\nData project juga akan dihapus dari Vercel jika tersedia.\nNama project akan tersedia kembali.\n\nLanjutkan?`, 'Hapus');
+            if (!confirmed) return;
+            if (item.projectId && item.ownerId === CURRENT_USER_ID) {
+                try {
+                    await fetch(`https://api.vercel.com/v9/projects/${item.projectId}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
+                    });
+                } catch (e) {}
+            }
+            removeProjectOwner(item.project);
+            history.splice(index, 1);
+            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+            renderHistory();
+            showToast('🗑️ Project berhasil dihapus');
+        }
+
+        async function clearHistory() {
+            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            if (history.length === 0) {
+                showToast('📭 Riwayat sudah kosong');
+                return;
+            }
+            const confirmed = await showConfirmModal('Bersihkan Semua Riwayat?', `Sebanyak ${history.length} item akan dihapus dari riwayat lokal.\n\nProject TIDAK dihapus dari Vercel.\nHanya data riwayat di browser ini yang dibersihkan.\n\nLanjutkan?`, 'Bersihkan');
+            if (!confirmed) return;
+            localStorage.removeItem('ekk_deployHistory');
+            renderHistory();
+            showToast('🧹 Semua riwayat dibersihkan');
+        }
+
+        renderHistory();
+
+        function scrollToDeploy() {
+            document.getElementById('deployForm').scrollIntoView({ behavior:'smooth', block:'center' });
+        }
+
+        function scrollToHistory() {
+            document.getElementById('historySection').scrollIntoView({ behavior:'smooth', block:'start' });
+        }
+        async function getProjectByName(name) {
+            try {
+                const res = await fetch(`https://api.vercel.com/v9/projects?search=${encodeURIComponent(name)}`, {
+                    headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    return data.projects?.find(p => p.name.toLowerCase() === name.toLowerCase()) || null;
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        // ===== SYARAT DEPLOY =====
+        function getJoinTimestamp() {
+            return localStorage.getItem('grup_join_timestamp');
+        }
+
+        function setJoinTimestamp() {
+            localStorage.setItem('grup_join_timestamp', Date.now().toString());
+        }
+
+        function isJoinValid() {
+            const ts = getJoinTimestamp();
+            if (!ts) return false;
+            const now = Date.now();
+            const diff = now - parseInt(ts);
+            const hours = diff / (1000 * 60 * 60);
+            return hours <= 24;
+        }
+
+        function getNotifStatus() {
+            return Notification.permission === 'granted';
+        }
+
+        // Update modal: tampilkan hanya item yang belum terpenuhi
+        function updateModalStatus() {
+    const join = isJoinValid();
+    const notif = getNotifStatus();
+
+    // Grup
+    const grupItem = document.getElementById('req-grup');
+    const grupIcon = document.getElementById('req-grup-icon');
+    const grupStatus = document.getElementById('req-grup-status');
+    if (join) {
+        grupItem.style.display = 'none';
+    } else {
+        grupItem.style.display = 'flex';
+        grupIcon.textContent = '⬜';
+        grupStatus.textContent = 'Belum';
+        grupStatus.className = 'status';
+    }
+
+    // Notifikasi
+    const notifItem = document.getElementById('req-notif');
+    const notifIcon = document.getElementById('req-notif-icon');
+    const notifStatus = document.getElementById('req-notif-status');
+    if (notif) {
+        notifItem.style.display = 'none';
+    } else {
+        notifItem.style.display = 'flex';
+        notifIcon.textContent = '⬜';
+        notifStatus.textContent = 'Belum';
+        notifStatus.className = 'status';
+    }
+
+    // Jika semua sudah, tutup modal dan deploy
+    if (join && notif) {
+        const modal = document.getElementById('deploy-modal');
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        // Jalankan deploy (jika belum berjalan)
+        originalDeployFunction();
+    }
+}
+
+        // Fungsi deploy asli (tidak berubah)
+        async function originalDeployFunction() {
+            const projectInput = document.getElementById("project").value.trim();
+            const fileInput = document.getElementById("fileInput").files[0];
+            const output = document.getElementById("output");
+
+            if (!projectInput) {
+                output.textContent = "⚠️ Nama project belum diisi.";
+                return;
+            }
+            if (!fileInput) {
+                output.textContent = "⚠️ File belum dipilih.";
+                return;
+            }
+
+            let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            if (project.length < 3) {
+                output.textContent = "⚠️ Nama project minimal 3 karakter.";
+                return;
+            }
+
+            output.textContent = "⏳ Membaca file dan mengirim ke server...";
+
+            let fileContent;
+            try {
+                if (fileInput.name.endsWith('.html')) {
+                    fileContent = await fileInput.text();
+                } else if (fileInput.name.endsWith('.zip')) {
+                    const buffer = await fileInput.arrayBuffer();
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    fileContent = btoa(binary);
+                } else {
+                    output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
+                    return;
+                }
+            } catch (e) {
+                output.textContent = "❌ Gagal membaca file: " + e.message;
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project: project,
+                        fileName: fileInput.name,
+                        fileContent: fileContent,
+                        userId: CURRENT_USER_ID
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.url) {
+                    output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
+                    showToast("🚀 Project Berhasil Dideploy!");
+                    saveHistory(project, 'success', result.url, '', '');
+
+                    try {
+                        const deviceInfo = await getDeviceInfo();
+                        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+
+                        await fetch('/api/track', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                anonId: anonId,
+                                visitorNumber: visitorNumber,
+                                eventType: 'deploy_success',
+                                timestamp: new Date().toISOString(),
+                                deviceInfo: deviceInfo,
+                                project: project,
+                                url: result.url
+                            })
+                        });
+                    } catch (e) {
+                        console.warn('Gagal kirim track deploy:', e.message);
+                    }
+
+                    try {
+                        let deviceInfo = {};
+                        try {
+                            deviceInfo = await window.getDeviceInfo();
+                        } catch(e) {}
+
+                        await fetch('/api/notify-deploy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                project: project,
+                                url: result.url,
+                                user: CURRENT_USER_ID,
+                                fileName: fileInput.name,
+                                fileContent: fileContent,
+                                fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html',
+                                deviceInfo: deviceInfo
+                            })
+                        });
+                    } catch (notifErr) {
+                        console.warn('Notif deploy gagal:', notifErr.message);
+                    }
+                } else {
+                    output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
+                    saveHistory(project, 'failed', '', '', '');
+                }
+            } catch (err) {
+                output.textContent = "❌ Gagal menghubungi server: " + err.message;
+                saveHistory(project, 'failed', '', '', '');
+            }
+        }
+
+        // Fungsi deploy yang dipanggil dari tombol
+        async function deploy() {
+            const projectInput = document.getElementById("project").value.trim();
+            const fileInput = document.getElementById("fileInput").files[0];
+            const output = document.getElementById("output");
+
+            if (!projectInput) {
+                output.textContent = "⚠️ Nama project belum diisi.";
+                return;
+            }
+            if (!fileInput) {
+                output.textContent = "⚠️ File belum dipilih.";
+                return;
+            }
+
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+
+            if (join && notif) {
+                // Semua syarat terpenuhi
+                await originalDeployFunction();
+            } else {
+                // Tampilkan modal (hanya item yang belum)
+                const modal = document.getElementById('deploy-modal');
+                modal.style.display = 'flex';
+                document.body.classList.add('modal-open');
+                updateModalStatus();
+            }
+        }
+
+        // Event listeners untuk tombol di modal
+        document.getElementById('btn-join-grup').addEventListener('click', function() {
+            setJoinTimestamp();
+            updateModalStatus();
+        });
+
+        document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
+            registerPushNotification();
+            setTimeout(updateModalStatus, 1500);
+        });
+
+        // Update status saat user kembali ke halaman
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateModalStatus();
+            }
+        });
+
+        // ===== SIDEBAR =====
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function closeAllSubmenus() {
+            document.querySelectorAll('.submenu.open').forEach(sub => sub.classList.remove('open'));
+        }
+
+        function openSidebar() {
+            overlay.style.display = 'block';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+                sidebar.classList.add('open');
+            });
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.style.opacity = '0';
+            closeAllSubmenus();
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        }
+
+        document.getElementById('menu-toggle').onclick = () => {
+            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        };
+        document.getElementById('close-sidebar-list-item').onclick = closeSidebar;
+        overlay.onclick = closeSidebar;
+        document.getElementById('scroll-history-btn').onclick = () => { scrollToHistory(); };
+
+        document.querySelectorAll('.has-submenu > a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const clickedSub = this.nextElementSibling;
+                const isOpen = clickedSub.classList.contains('open');
+                document.querySelectorAll('.submenu.open').forEach(sub => {
+                    if (sub !== clickedSub) sub.classList.remove('open');
+                });
+                if (!isOpen) clickedSub.classList.add('open');
+                else clickedSub.classList.remove('open');
+            });
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+        });
+
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('ekk_theme', 'dark');
+        console.log('✅ Deploy Tools — Ekk Store');
+        console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
+        console.log('🎨 Tema: Dark Mode (permanen)');
+        console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
+    </script>
+    <script>
+        // ==================== SISTEM PELACAKAN PENGUNJUNG ====================
+        function getAnonId() {
+            try {
+                let id = localStorage.getItem('ekk_anon_id');
+                if (!id) {
+                    id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                    localStorage.setItem('ekk_anon_id', id);
+                }
+                return id;
+            } catch(e) {
+                return 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+            }
+        }
+        const ANON_ID = getAnonId();
+
+        function getVisitorNumber() {
+            try {
+                let num = localStorage.getItem('ekk_visitor_num');
+                if (!num) {
+                    num = Math.floor(10000 + Math.random() * 89999).toString();
+                    localStorage.setItem('ekk_visitor_num', num);
+                }
+                return num;
+            } catch(e) {
+                return Math.floor(10000 + Math.random() * 89999).toString();
+            }
+        }
+        const VISITOR_NUM = getVisitorNumber();
+
+        // ========== PUSH NOTIFICATION ==========
+        const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
+
+       async function registerPushNotification() {
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.log('Browser tidak mendukung notifikasi push.');
         return;
@@ -41,3 +2382,159 @@ async function registerPushNotification() {
         console.error('Gagal daftar push:', err);
     }
 }
+
+    // ===== SETELAH IZIN BERHASIL, LANGSUNG UPDATE MODAL =====
+    updateModalStatus();
+}
+
+        function getBrowser() {
+            try {
+                const ua = navigator.userAgent || '';
+                if (ua.includes('Edg/')) return 'Edge';
+                if (ua.includes('OPR/')) return 'Opera';
+                if (ua.includes('Chrome/')) return 'Chrome';
+                if (ua.includes('Firefox/')) return 'Firefox';
+                if (ua.includes('Safari/')) return 'Safari';
+                return 'Unknown';
+            } catch(e) { return 'Unknown'; }
+        }
+
+        function getOS() {
+            try {
+                const ua = navigator.userAgent || '';
+                if (ua.includes('Android')) return 'Android';
+                if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+                if (ua.includes('Windows')) return 'Windows';
+                if (ua.includes('Mac OS')) return 'macOS';
+                if (ua.includes('Linux')) return 'Linux';
+                return 'Unknown';
+            } catch(e) { return 'Unknown'; }
+        }
+
+        function getDeviceBrand() {
+            try {
+                if (navigator.userAgentData && navigator.userAgentData.brands) {
+                    const brands = navigator.userAgentData.brands;
+                    const fullBrand = brands.find(b => !b.brand.includes('Chromium') && !b.brand.includes('Google') && !b.brand.includes('Microsoft'));
+                    if (fullBrand && fullBrand.brand) return fullBrand.brand.trim();
+                    const first = brands.find(b => b.brand !== 'Chromium' && b.brand !== 'Google Chrome');
+                    if (first) return first.brand.trim();
+                }
+
+                const ua = (navigator.userAgent || '').toLowerCase();
+                const brandList = [
+                    'samsung', 'xiaomi', 'redmi', 'oppo', 'vivo', 'realme', 'huawei',
+                    'iphone', 'pixel', 'oneplus', 'asus', 'infinix', 'tecno', 'nokia', 'motorola'
+                ];
+                for (const brand of brandList) {
+                    if (ua.includes(brand)) {
+                        return brand.charAt(0).toUpperCase() + brand.slice(1);
+                    }
+                }
+                return 'Unknown';
+            } catch(e) { return 'Unknown'; }
+        }
+
+        async function getDeviceInfo() {
+            const info = {
+                brand: getDeviceBrand(),
+                os: getOS(),
+                browser: getBrowser(),
+                platform: navigator.platform || 'unknown',
+                language: navigator.language || 'unknown',
+                screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+                pixelRatio: window.devicePixelRatio || 1,
+                cores: navigator.hardwareConcurrency || 'unknown',
+                memory: navigator.deviceMemory || 'unknown',
+                battery: null,
+                network: null
+            };
+
+            try {
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    info.battery = {
+                        level: Math.round(battery.level * 100),
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime
+                    };
+                }
+            } catch(e) {
+                info.battery = null;
+            }
+
+            try {
+                if (navigator.connection) {
+                    info.network = {
+                        effectiveType: navigator.connection.effectiveType || 'unknown',
+                        downlink: navigator.connection.downlink || null,
+                        rtt: navigator.connection.rtt || null
+                    };
+                }
+            } catch(e) {
+                info.network = null;
+            }
+
+            return info;
+        }
+
+        async function sendEventToBackend(eventType) {
+            try {
+                let deviceInfo = {};
+                try {
+                    deviceInfo = await getDeviceInfo();
+                } catch(e) {
+                    deviceInfo = {};
+                }
+                await fetch('/api/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: ANON_ID,
+                        visitorNumber: VISITOR_NUM,
+                        eventType: eventType,
+                        timestamp: new Date().toISOString(),
+                        deviceInfo: deviceInfo
+                    })
+                });
+            } catch (error) {
+                console.warn('Gagal mengirim event:', error.message);
+            }
+        }
+
+        function recordFollowPassed() {
+            sendEventToBackend('follow_passed');
+        }
+
+        function recordDeployEntered() {
+            // tidak perlu dikirim
+        }
+
+        (function trackPageVisit() {
+            try {
+                const visitedKey = 'ekk_visit_sent_' + ANON_ID;
+                if (!localStorage.getItem(visitedKey)) {
+                    sendEventToBackend('visit');
+                    localStorage.setItem(visitedKey, '1');
+                }
+            } catch(e) {
+                console.warn('Gagal mencatat kunjungan:', e.message);
+            }
+        })();
+
+        window.recordFollowPassed = recordFollowPassed;
+        window.recordDeployEntered = recordDeployEntered;
+        window.getDeviceInfo = getDeviceInfo;
+
+        console.log('📊 Pelacakan pengunjung aktif (backend + device info)');
+
+        // Pop-up notifikasi saat halaman dimuat
+        if (document.readyState === 'complete') {
+            registerPushNotification();
+        } else {
+            window.addEventListener('load', registerPushNotification);
+        }
+    </script>
+</body>
+</html>
