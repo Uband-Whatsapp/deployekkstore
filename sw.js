@@ -36,8 +36,8 @@ self.addEventListener('push', event => {
     requireInteraction: true, // tetap sampai diklik
     data: { url: data.url || DEFAULT_URL },
     actions: [
-      { action: 'open', title: '🔗 Buka Website' },
-      { action: 'close', title: '❌ Tutup' }
+      { action: 'open', title: 'Open' },
+      { action: 'close', title: 'Close' }
     ]
   };
 
