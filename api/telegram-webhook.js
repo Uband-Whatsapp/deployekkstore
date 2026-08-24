@@ -91,14 +91,17 @@ if (text.startsWith('/notif')) {
     .get();
 
   const totalDeploy = deploySnapshot.size;
+  const subSnapshot = await db.collection('push_subscriptions').get();
+const totalSubscribers = subSnapshot.size; 
   // ===== AKHIR TAMBAHAN =====
 
-  const laporan = `📊 LAPORAN PENGUNJUNG
+    const laporan = `📊 LAPORAN PENGUNJUNG
 
 👥 Total Pengunjung: ${total}
 ✅ Berhasil Melewati Follow: ${success}
 ⏳ Belum Melewati Follow: ${belum}
 🚀 Total Deploy Berhasil: ${totalDeploy}
+📢 Total Subscriber Notifikasi: ${totalSubscribers}
 
 🕐 Periode: 00:00 - sekarang`;
 
