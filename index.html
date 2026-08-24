@@ -2062,14 +2062,19 @@
 // SIMPAN & MUAT DATA FORM (localStorage)
 // ============================================================
 function loadFormData() {
+    console.log('📂 Load form data dari localStorage...');
     const project = localStorage.getItem('ekk_deploy_project');
     if (project) {
         document.getElementById('project').value = project;
+        console.log('📂 Nama project dimuat:', project);
     }
+
     const fileName = localStorage.getItem('ekk_deploy_file_name');
     const fileData = localStorage.getItem('ekk_deploy_file_data');
     if (fileName && fileData) {
         window.storedFile = { name: fileName, data: fileData };
+        console.log('📂 File tersimpan:', fileName);
+
         let fileDisplay = document.getElementById('fileDisplay');
         if (!fileDisplay) {
             fileDisplay = document.createElement('span');
@@ -2081,6 +2086,10 @@ function loadFormData() {
             fileInput.parentNode.appendChild(fileDisplay);
         }
         fileDisplay.textContent = `📎 ${fileName}`;
+    } else {
+        console.warn('📂 Tidak ada file tersimpan di localStorage');
+        // Hapus storedFile jika tidak ada data
+        delete window.storedFile;
     }
 }
 
@@ -2328,11 +2337,17 @@ async function originalDeployFunction() {
 // ============================================================
 // FUNGSI DEPLOY (dipanggil dari tombol) – override
 // ============================================================
+// ============================================================
+// FUNGSI DEPLOY (dipanggil dari tombol)
+// ============================================================
 async function deploy() {
     const projectInput = document.getElementById('project').value.trim();
     const fileInputElem = document.getElementById('fileInput');
     const file = fileInputElem.files[0];
     const output = document.getElementById('output');
+
+    console.log('📂 File di input:', file);
+    console.log('📂 Stored file:', window.storedFile);
 
     // Validasi: nama project wajib diisi
     if (!projectInput) {
