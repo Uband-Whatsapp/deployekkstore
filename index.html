@@ -2325,16 +2325,23 @@ async function originalDeployFunction() {
 // ============================================================
 // FUNGSI DEPLOY (dipanggil dari tombol) – override
 // ============================================================
+// ============================================================
+// FUNGSI DEPLOY (dipanggil dari tombol) – override
+// ============================================================
 async function deploy() {
     const projectInput = document.getElementById('project').value.trim();
-    const fileInput = document.getElementById('fileInput').files[0];
+    const fileInputElem = document.getElementById('fileInput');
+    const file = fileInputElem.files[0];
     const output = document.getElementById('output');
 
+    // Validasi: nama project wajib diisi
     if (!projectInput) {
         output.textContent = '⚠️ Nama project belum diisi.';
         return;
     }
-    if (!fileInput) {
+
+    // Validasi: harus ada file (baik di input atau tersimpan di localStorage)
+    if (!file && !window.storedFile) {
         output.textContent = '⚠️ File belum dipilih.';
         return;
     }
