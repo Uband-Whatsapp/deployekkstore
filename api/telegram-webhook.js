@@ -33,7 +33,34 @@ export default async function handler(req, res) {
     res.status(200).json({ success: true });
     return;
   }
+if (text.startsWith('/notif')) {
+  // Ambil pesan setelah '/notif '
+  const message = text.replace('/notif', '').trim();
+  if (!message) {
+    await sendTelegramMessage('❌ Format: /notif <pesan>', chatId);
+    return;
+  }
 
+  // Kirim notifikasi ke semua subscriber
+  try {
+    const response = await fetch(`https://deploy.project.ekkstore.web.id/api/send-notification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Ekk Store',
+        body: message,
+        icon: 'https://files.catbox.moe/kzg0nc.png',
+        url: 'https://deploy.project.ekkstore.web.id/'
+      })
+    });
+    const result = await response.json();
+    await sendTelegramMessage(`✅ Notifikasi dikirim ke ${result.success || 0} perangkat dari ${result.total || 0} subscriber.`, chatId);
+  } catch (err) {
+    console.error('Gagal kirim notifikasi via bot:', err);
+    await sendTelegramMessage('❌ Gagal mengirim notifikasi. Cek log Vercel.', chatId);
+  }
+  return;
+}
   if (text === '/laporanpengunjung') {
   const today = getTodayWIB();
 
