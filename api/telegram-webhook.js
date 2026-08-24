@@ -13,7 +13,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// ===== FUNGSI SEND TELEGRAM (DEFINISI LANGSUNG, TANPA IMPORT) =====
+// ===== FUNGSI SEND TELEGRAM (TANPA PARSE_MODE HTML) =====
 async function sendTelegramMessage(text, chatId) {
   const token = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
@@ -27,8 +27,8 @@ async function sendTelegramMessage(text, chatId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: text,
-        parse_mode: 'HTML'
+        text: text
+        // HAPUS parse_mode agar tidak error dengan tag HTML
       })
     });
     if (!response.ok) {
@@ -41,13 +41,10 @@ async function sendTelegramMessage(text, chatId) {
     console.error('❌ Error kirim pesan:', err.message);
   }
 }
-// =============================================================
+// ======================================================
 
 export default async function handler(req, res) {
-  // 🔥 TAMBAHKAN LOG DI AWAL UNTUK PASTIKAN HANDLER DIPANGGIL
   console.log('📨 Webhook handler dipanggil!');
-  console.log('📨 Method:', req.method);
-  console.log('📨 Body:', req.body);
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -68,7 +65,7 @@ export default async function handler(req, res) {
 
   const adminChatId = process.env.ADMIN_CHAT_ID;
   if (String(chatId) !== adminChatId) {
-    console.log(`⚠️ Chat ${chatId} bukan admin (admin: ${adminChatId}), diabaikan.`);
+    console.log(`⚠️ Chat ${chatId} bukan admin, diabaikan.`);
     res.status(200).json({ success: true });
     return;
   }
@@ -78,7 +75,7 @@ export default async function handler(req, res) {
     console.log('📨 Perintah /notif diterima');
     const pesan = text.replace('/notif', '').trim();
     if (!pesan) {
-      await sendTelegramMessage('❌ Format: /notif <pesan>', chatId);
+      await sendTelegramMessage('❌ Format: /notif <pesan> (contoh: /notif Halo semua!)', chatId);
       res.status(200).json({ success: true });
       return;
     }
@@ -152,7 +149,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Perintah lain
   console.log('📨 Perintah tidak dikenali:', text);
   res.status(200).json({ success: true });
 }
