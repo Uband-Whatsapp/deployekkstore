@@ -45,6 +45,8 @@ export default async function handler(req, res) {
       }
     });
 
+    console.log(`📨 Total subscriber: ${subscriptions.length}`);
+
     if (subscriptions.length === 0) {
       return res.status(200).json({ message: 'Tidak ada subscriber', total: 0 });
     }
@@ -63,9 +65,16 @@ export default async function handler(req, res) {
       try {
         await webpush.sendNotification(sub, payload);
         results.push({ success: true });
+        console.log('✅ Notifikasi terkirim ke subscriber');
       } catch (err) {
-        console.error('Gagal kirim ke subscriber:', err.message);
+        console.error('❌ Gagal kirim ke subscriber:', err.statusCode, err.message);
+        console.error('📨 Detail error:', err);
         results.push({ success: false, error: err.message });
+        // Jika subscription expired (410), hapus dari DB
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          // Hapus subscription yang tidak valid (opsional)
+          // Tapi kita tidak tahu anonId-nya, jadi skip dulu
+        }
       }
     }
 
@@ -73,7 +82,7 @@ export default async function handler(req, res) {
     const successCount = results.filter(r => r.success).length;
     res.status(200).json({ total, success: successCount });
   } catch (err) {
-    console.error('Error send-notification:', err);
+    console.error('❌ Error send-notification:', err);
     res.status(500).json({ error: err.message });
   }
 }
