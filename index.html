@@ -2058,255 +2058,359 @@
         } catch (e) {}
         return null;
     }
+// ============================================================
+// SIMPAN & MUAT DATA FORM (localStorage)
+// ============================================================
+function loadFormData() {
+    const project = localStorage.getItem('ekk_deploy_project');
+    if (project) {
+        document.getElementById('project').value = project;
+    }
+    const fileName = localStorage.getItem('ekk_deploy_file_name');
+    const fileData = localStorage.getItem('ekk_deploy_file_data');
+    if (fileName && fileData) {
+        window.storedFile = { name: fileName, data: fileData };
+        let fileDisplay = document.getElementById('fileDisplay');
+        if (!fileDisplay) {
+            fileDisplay = document.createElement('span');
+            fileDisplay.id = 'fileDisplay';
+            fileDisplay.style.marginLeft = '10px';
+            fileDisplay.style.fontSize = '12px';
+            fileDisplay.style.color = 'var(--text-muted)';
+            const fileInput = document.getElementById('fileInput');
+            fileInput.parentNode.appendChild(fileDisplay);
+        }
+        fileDisplay.textContent = `📎 ${fileName}`;
+    }
+}
 
-    // ── FLAG UNTUK MENCEGAH DOUBLE DEPLOY ──
-    let isDeploying = false;
+function clearFormData() {
+    localStorage.removeItem('ekk_deploy_project');
+    localStorage.removeItem('ekk_deploy_file_name');
+    localStorage.removeItem('ekk_deploy_file_data');
+    delete window.storedFile;
+    document.getElementById('project').value = '';
+    document.getElementById('fileInput').value = '';
+    const fileDisplay = document.getElementById('fileDisplay');
+    if (fileDisplay) fileDisplay.textContent = '';
+}
 
-    // ============================================================
-    // FUNGSI DEPLOY ASLI (dengan pengecekan pemilik)
-    // ============================================================
-    async function originalDeployFunction() {
-        // Cegah double deploy
-        if (isDeploying) {
-            console.warn('⏳ Deploy sedang berjalan, tunggu...');
+// Event listener untuk menyimpan data saat user mengetik/memilih file
+document.getElementById('project').addEventListener('input', function() {
+    const val = this.value.trim();
+    if (val) {
+        localStorage.setItem('ekk_deploy_project', val);
+    } else {
+        localStorage.removeItem('ekk_deploy_project');
+    }
+});
+
+document.getElementById('fileInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result;
+            localStorage.setItem('ekk_deploy_file_name', file.name);
+            localStorage.setItem('ekk_deploy_file_data', base64);
+            window.storedFile = { name: file.name, data: base64 };
+            let fileDisplay = document.getElementById('fileDisplay');
+            if (!fileDisplay) {
+                fileDisplay = document.createElement('span');
+                fileDisplay.id = 'fileDisplay';
+                fileDisplay.style.marginLeft = '10px';
+                fileDisplay.style.fontSize = '12px';
+                fileDisplay.style.color = 'var(--text-muted)';
+                this.parentNode.appendChild(fileDisplay);
+            }
+            fileDisplay.textContent = `📎 ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        localStorage.removeItem('ekk_deploy_file_name');
+        localStorage.removeItem('ekk_deploy_file_data');
+        delete window.storedFile;
+        const fileDisplay = document.getElementById('fileDisplay');
+        if (fileDisplay) fileDisplay.textContent = '';
+    }
+});
+
+// Muat data saat halaman siap
+document.addEventListener('DOMContentLoaded', loadFormData);
+  // ── FLAG UNTUK MENCEGAH DOUBLE DEPLOY ──
+let isDeploying = false;
+
+// ============================================================
+// FUNGSI DEPLOY ASLI (dengan pengecekan pemilik)
+// ============================================================
+async function originalDeployFunction() {
+    const deployBtn = document.querySelector('.send-btn');
+    const output = document.getElementById('output'); // Deklarasi di awal
+
+    // 🔒 Nonaktifkan tombol
+    deployBtn.disabled = true;
+    deployBtn.style.opacity = '0.6';
+    deployBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    let isFinished = false;
+
+    try {
+        const projectInput = document.getElementById('project').value.trim();
+        const fileInputElem = document.getElementById('fileInput');
+        let file = fileInputElem.files[0];
+
+        // Jika tidak ada file di input tetapi ada storedFile, gunakan storedFile
+        if (!file && window.storedFile) {
+            const base64 = window.storedFile.data;
+            const fileName = window.storedFile.name;
+            const mimeType = fileName.endsWith('.html') ? 'text/html' : 'application/zip';
+            const byteCharacters = atob(base64.split(',')[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: mimeType });
+            file = new File([blob], fileName, { type: mimeType });
+        }
+
+        // Validasi input
+        if (!projectInput) {
+            output.textContent = '⚠️ Nama project belum diisi.';
             return;
         }
-        isDeploying = true;
+        if (!file) {
+            output.textContent = '⚠️ File belum dipilih.';
+            return;
+        }
 
+        let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        if (project.length < 3) {
+            output.textContent = '⚠️ Nama project minimal 3 karakter.';
+            return;
+        }
+
+        // 🔥 Cek pemilik sebelum deploy
         try {
-            const projectInput = document.getElementById("project").value.trim();
-            const fileInput = document.getElementById("fileInput").files[0];
-            const output = document.getElementById("output");
-
-            // Validasi input
-            if (!projectInput) {
-                output.textContent = "⚠️ Nama project belum diisi.";
-                isDeploying = false;
+            const ownerId = await getProjectOwner(project);
+            if (ownerId && ownerId !== CURRENT_USER_ID) {
+                output.textContent = `⛔ Project "${project}" sudah dimiliki oleh user lain. Kamu tidak bisa menggunakan nama ini.`;
                 return;
             }
-            if (!fileInput) {
-                output.textContent = "⚠️ File belum dipilih.";
-                isDeploying = false;
-                return;
-            }
+        } catch (e) {
+            console.warn('Gagal cek pemilik:', e.message);
+        }
 
-            let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-            if (project.length < 3) {
-                output.textContent = "⚠️ Nama project minimal 3 karakter.";
-                isDeploying = false;
-                return;
-            }
+        // Lanjut proses deploy
+        output.textContent = '⏳ Membaca file dan mengirim ke server...';
 
-            // ===== 🔥 CEK PEMILIK SEBELUM DEPLOY =====
-            try {
-                const ownerId = await getProjectOwner(project);
-                if (ownerId && ownerId !== CURRENT_USER_ID) {
-                    output.textContent = `⛔ Project "${project}" sudah dimiliki oleh user lain. Kamu tidak bisa menggunakan nama ini.`;
-                    isDeploying = false;
-                    return;
+        let fileContent;
+        try {
+            if (file.name.endsWith('.html')) {
+                fileContent = await file.text();
+            } else if (file.name.endsWith('.zip')) {
+                const buffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(buffer);
+                let binary = '';
+                for (let i = 0; i < bytes.length; i++) {
+                    binary += String.fromCharCode(bytes[i]);
                 }
-            } catch (e) {
-                console.warn('Gagal cek pemilik:', e.message);
-                // Lanjutkan deploy (anggap tidak ada pemilik)
-            }
-
-            // Lanjut proses deploy
-            output.textContent = "⏳ Membaca file dan mengirim ke server...";
-
-            let fileContent;
-            try {
-                if (fileInput.name.endsWith('.html')) {
-                    fileContent = await fileInput.text();
-                } else if (fileInput.name.endsWith('.zip')) {
-                    const buffer = await fileInput.arrayBuffer();
-                    const bytes = new Uint8Array(buffer);
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i++) {
-                        binary += String.fromCharCode(bytes[i]);
-                    }
-                    fileContent = btoa(binary);
-                } else {
-                    output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
-                    isDeploying = false;
-                    return;
-                }
-            } catch (e) {
-                output.textContent = "❌ Gagal membaca file: " + e.message;
-                isDeploying = false;
+                fileContent = btoa(binary);
+            } else {
+                output.textContent = '❌ Hanya file .html atau .zip yang didukung.';
                 return;
             }
+        } catch (e) {
+            output.textContent = '❌ Gagal membaca file: ' + e.message;
+            return;
+        }
 
-            // Kirim ke backend
-            try {
-                const response = await fetch('/api/deploy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        project: project,
-                        fileName: fileInput.name,
-                        fileContent: fileContent,
-                        userId: CURRENT_USER_ID
-                    })
-                });
+        // Kirim ke backend
+        try {
+            const response = await fetch('/api/deploy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project: project,
+                    fileName: file.name,
+                    fileContent: fileContent,
+                    userId: CURRENT_USER_ID
+                })
+            });
 
-                const result = await response.json();
+            const result = await response.json();
 
-                if (result.url) {
-                    output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
-                    showToast("🚀 Project Berhasil Dideploy!");
-                    saveHistory(project, 'success', result.url, '', '');
+            if (result.url) {
+                output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
+                showToast('🚀 Project Berhasil Dideploy!');
+                saveHistory(project, 'success', result.url, '', '');
 
-                    // ===== 🔥 SIMPAN PEMILIK SETELAH DEPLOY BERHASIL =====
-                    try {
-                        await setProjectOwner(project);
-                    } catch (e) {
-                        console.warn('Gagal simpan pemilik:', e.message);
-                    }
-
-                    // Kirim tracking deploy
-                    try {
-                        const deviceInfo = await getDeviceInfo();
-                        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-                        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
-
-                        await fetch('/api/track', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                anonId: anonId,
-                                visitorNumber: visitorNumber,
-                                eventType: 'deploy_success',
-                                timestamp: new Date().toISOString(),
-                                deviceInfo: deviceInfo,
-                                project: project,
-                                url: result.url
-                            })
-                        });
-                    } catch (e) {
-                        console.warn('Gagal kirim track deploy:', e.message);
-                    }
-
-                    // Kirim notifikasi deploy ke Telegram
-                    try {
-                        let deviceInfo = {};
-                        try {
-                            deviceInfo = await window.getDeviceInfo();
-                        } catch(e) {}
-
-                        await fetch('/api/notify-deploy', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                project: project,
-                                url: result.url,
-                                user: CURRENT_USER_ID,
-                                fileName: fileInput.name,
-                                fileContent: fileContent,
-                                fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html',
-                                deviceInfo: deviceInfo
-                            })
-                        });
-                    } catch (notifErr) {
-                        console.warn('Notif deploy gagal:', notifErr.message);
-                    }
-                } else {
-                    output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
-                    saveHistory(project, 'failed', '', '', '');
+                // 🔥 Simpan pemilik setelah deploy berhasil
+                try {
+                    await setProjectOwner(project);
+                } catch (e) {
+                    console.warn('Gagal simpan pemilik:', e.message);
                 }
-            } catch (err) {
-                output.textContent = "❌ Gagal menghubungi server: " + err.message;
+
+                // ===== 🔥 RESET FORM SETELAH DEPLOY BERHASIL =====
+                clearFormData();
+
+                // Kirim tracking deploy
+                try {
+                    const deviceInfo = await getDeviceInfo();
+                    const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                    const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+
+                    await fetch('/api/track', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            anonId: anonId,
+                            visitorNumber: visitorNumber,
+                            eventType: 'deploy_success',
+                            timestamp: new Date().toISOString(),
+                            deviceInfo: deviceInfo,
+                            project: project,
+                            url: result.url
+                        })
+                    });
+                } catch (e) {
+                    console.warn('Gagal kirim track deploy:', e.message);
+                }
+
+                // Kirim notifikasi deploy ke Telegram
+                try {
+                    let deviceInfo = {};
+                    try {
+                        deviceInfo = await window.getDeviceInfo();
+                    } catch (e) {}
+
+                    await fetch('/api/notify-deploy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            project: project,
+                            url: result.url,
+                            user: CURRENT_USER_ID,
+                            fileName: file.name,
+                            fileContent: fileContent,
+                            fileType: file.name.endsWith('.zip') ? 'zip' : 'html',
+                            deviceInfo: deviceInfo
+                        })
+                    });
+                } catch (notifErr) {
+                    console.warn('Notif deploy gagal:', notifErr.message);
+                }
+            } else {
+                output.textContent = '❌ Gagal deploy: ' + (result.error || 'Error tidak diketahui');
                 saveHistory(project, 'failed', '', '', '');
             }
-        } finally {
-            isDeploying = false;
+        } catch (err) {
+            output.textContent = '❌ Gagal menghubungi server: ' + err.message;
+            saveHistory(project, 'failed', '', '', '');
+        }
+    } finally {
+        // 🔓 Aktifkan kembali tombol setelah 3 detik
+        if (!isFinished) {
+            isFinished = true;
+            setTimeout(() => {
+                deployBtn.disabled = false;
+                deployBtn.style.opacity = '1';
+                deployBtn.innerHTML = '<i class="fas fa-rocket"></i> Deploy Sekarang';
+            }, 3000);
         }
     }
+}
 
-    // ============================================================
-    // FUNGSI DEPLOY (dipanggil dari tombol) – override
-    // ============================================================
-    async function deploy() {
-        const projectInput = document.getElementById("project").value.trim();
-        const fileInput = document.getElementById("fileInput").files[0];
-        const output = document.getElementById("output");
+// ============================================================
+// FUNGSI DEPLOY (dipanggil dari tombol) – override
+// ============================================================
+async function deploy() {
+    const projectInput = document.getElementById('project').value.trim();
+    const fileInput = document.getElementById('fileInput').files[0];
+    const output = document.getElementById('output');
 
-        if (!projectInput) {
-            output.textContent = "⚠️ Nama project belum diisi.";
-            return;
-        }
-        if (!fileInput) {
-            output.textContent = "⚠️ File belum dipilih.";
-            return;
-        }
-
-        const join = isJoinValid();
-        const notif = getNotifStatus();
-
-        if (join && notif) {
-            await originalDeployFunction();
-        } else {
-            const modal = document.getElementById('deploy-modal');
-            modal.style.display = 'flex';
-            document.body.classList.add('modal-open');
-            updateModalStatus();
-        }
+    if (!projectInput) {
+        output.textContent = '⚠️ Nama project belum diisi.';
+        return;
+    }
+    if (!fileInput) {
+        output.textContent = '⚠️ File belum dipilih.';
+        return;
     }
 
-    // ============================================================
-    // SIDEBAR & NAVIGASI
-    // ============================================================
-    const sidebar = document.getElementById('sidebarMenu');
-    const overlay = document.getElementById('sidebar-overlay');
+    const join = isJoinValid();
+    const notif = getNotifStatus();
 
-    function closeAllSubmenus() {
-        document.querySelectorAll('.submenu.open').forEach(sub => sub.classList.remove('open'));
+    if (join && notif) {
+        await originalDeployFunction();
+    } else {
+        const modal = document.getElementById('deploy-modal');
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        updateModalStatus();
     }
+}
 
-    function openSidebar() {
-        overlay.style.display = 'block';
-        requestAnimationFrame(() => {
-            overlay.style.opacity = '1';
-            sidebar.classList.add('open');
-        });
-    }
+// ============================================================
+// SIDEBAR & NAVIGASI
+// ============================================================
+const sidebar = document.getElementById('sidebarMenu');
+const overlay = document.getElementById('sidebar-overlay');
 
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        overlay.style.opacity = '0';
-        closeAllSubmenus();
-        setTimeout(() => { overlay.style.display = 'none'; }, 300);
-    }
+function closeAllSubmenus() {
+    document.querySelectorAll('.submenu.open').forEach(sub => sub.classList.remove('open'));
+}
 
-    document.getElementById('menu-toggle').onclick = () => {
-        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-    };
-    document.getElementById('close-sidebar-list-item').onclick = closeSidebar;
-    overlay.onclick = closeSidebar;
-    document.getElementById('scroll-history-btn').onclick = () => { scrollToHistory(); };
-
-    document.querySelectorAll('.has-submenu > a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const clickedSub = this.nextElementSibling;
-            const isOpen = clickedSub.classList.contains('open');
-            document.querySelectorAll('.submenu.open').forEach(sub => {
-                if (sub !== clickedSub) sub.classList.remove('open');
-            });
-            if (!isOpen) clickedSub.classList.add('open');
-            else clickedSub.classList.remove('open');
-        });
+function openSidebar() {
+    overlay.style.display = 'block';
+    requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        sidebar.classList.add('open');
     });
+}
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.style.opacity = '0';
+    closeAllSubmenus();
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 300);
+}
+
+document.getElementById('menu-toggle').onclick = () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+};
+document.getElementById('close-sidebar-list-item').onclick = closeSidebar;
+overlay.onclick = closeSidebar;
+document.getElementById('scroll-history-btn').onclick = () => {
+    scrollToHistory();
+};
+
+document.querySelectorAll('.has-submenu > a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const clickedSub = this.nextElementSibling;
+        const isOpen = clickedSub.classList.contains('open');
+        document.querySelectorAll('.submenu.open').forEach(sub => {
+            if (sub !== clickedSub) sub.classList.remove('open');
+        });
+        if (!isOpen) clickedSub.classList.add('open');
+        else clickedSub.classList.remove('open');
     });
+});
 
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('ekk_theme', 'dark');
-    console.log('✅ Deploy Tools — Ekk Store');
-    console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
-    console.log('🎨 Tema: Dark Mode (permanen)');
-    console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+});
+
+document.documentElement.setAttribute('data-theme', 'dark');
+localStorage.setItem('ekk_theme', 'dark');
+console.log('✅ Deploy Tools — Ekk Store');
+console.log('👤 User ID tersimpan privat (tidak ditampilkan).');
+console.log('🎨 Tema: Dark Mode (permanen)');
+console.log('🟠 Tombol Deploy: Warna mencolok oranye gradient');
 </script>
     <script>
         // ==================== SISTEM PELACAKAN PENGUNJUNG & NOTIFIKASI ====================
