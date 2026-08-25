@@ -2115,150 +2115,187 @@
         }
 
         // ===== FUNGSI DEPLOY ASLI =====
-        async function originalDeployFunction() {
-            const projectInput = document.getElementById("project").value.trim();
-            const fileInput = document.getElementById("fileInput").files[0];
-            const output = document.getElementById("output");
+        
+async function originalDeployFunction(projectName) {
+    const fileInput = document.getElementById("fileInput").files[0];
+    const output = document.getElementById("output");
 
-            if (!projectInput) {
-                output.textContent = "⚠️ Nama project belum diisi.";
-                return;
+    // 1. Tentukan nama project
+    let project = projectName;
+    if (!project) {
+        const projectInput = document.getElementById("project").value.trim();
+        if (!projectInput) {
+            output.textContent = "⚠️ Nama project belum diisi.";
+            return;
+        }
+        project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    }
+
+    // 2. Validasi panjang project
+    if (!project || project.length < 3) {
+        output.textContent = "⚠️ Nama project minimal 3 karakter.";
+        return;
+    }
+
+    // 3. Cek file
+    if (!fileInput) {
+        output.textContent = "⚠️ File belum dipilih.";
+        return;
+    }
+
+    output.textContent = "⏳ Membaca file dan mengirim ke server...";
+
+    let fileContent;
+    try {
+        if (fileInput.name.endsWith('.html')) {
+            fileContent = await fileInput.text();
+        } else if (fileInput.name.endsWith('.zip')) {
+            const buffer = await fileInput.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
             }
-            if (!fileInput) {
-                output.textContent = "⚠️ File belum dipilih.";
-                return;
-            }
+            fileContent = btoa(binary);
+        } else {
+            output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
+            return;
+        }
+    } catch (e) {
+        output.textContent = "❌ Gagal membaca file: " + e.message;
+        return;
+    }
 
-            let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-            if (project.length < 3) {
-                output.textContent = "⚠️ Nama project minimal 3 karakter.";
-                return;
-            }
+    try {
+        const response = await fetch('/api/deploy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project: project,
+                fileName: fileInput.name,
+                fileContent: fileContent,
+                userId: CURRENT_USER_ID
+            })
+        });
 
-            output.textContent = "⏳ Membaca file dan mengirim ke server...";
+        const result = await response.json();
 
-            let fileContent;
+        if (result.url) {
+            output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
+            showToast("🚀 Project Berhasil Dideploy!");
+
+            // Ambil projectId dan deploymentId dari respons backend
+            const projectId = result.projectId || result.id || '';
+            const deploymentId = result.deploymentId || '';
+
+            // Simpan riwayat dengan projectId yang benar
+            saveHistory(project, 'success', result.url, projectId, deploymentId);
+
+            // Simpan kepemilikan project
+            await setProjectOwner(project);
+
+            // Tracking deploy sukses
             try {
-                if (fileInput.name.endsWith('.html')) {
-                    fileContent = await fileInput.text();
-                } else if (fileInput.name.endsWith('.zip')) {
-                    const buffer = await fileInput.arrayBuffer();
-                    const bytes = new Uint8Array(buffer);
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i++) {
-                        binary += String.fromCharCode(bytes[i]);
-                    }
-                    fileContent = btoa(binary);
-                } else {
-                    output.textContent = "❌ Hanya file .html atau .zip yang didukung.";
-                    return;
-                }
+                const deviceInfo = await getDeviceInfo();
+                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
+                const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+
+                await fetch('/api/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: anonId,
+                        visitorNumber: visitorNumber,
+                        eventType: 'deploy_success',
+                        timestamp: new Date().toISOString(),
+                        deviceInfo: deviceInfo,
+                        project: project,
+                        url: result.url
+                    })
+                });
             } catch (e) {
-                output.textContent = "❌ Gagal membaca file: " + e.message;
-                return;
+                console.warn('Gagal kirim track deploy:', e.message);
             }
 
+            // Notifikasi deploy
             try {
-                const response = await fetch('/api/deploy', {
+                let deviceInfo = {};
+                try {
+                    deviceInfo = await window.getDeviceInfo();
+                } catch(e) {}
+
+                await fetch('/api/notify-deploy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         project: project,
+                        url: result.url,
+                        user: CURRENT_USER_ID,
                         fileName: fileInput.name,
                         fileContent: fileContent,
-                        userId: CURRENT_USER_ID
+                        fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html',
+                        deviceInfo: deviceInfo
                     })
                 });
-
-                const result = await response.json();
-
-                if (result.url) {
-                    output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
-                    showToast("🚀 Project Berhasil Dideploy!");
-                    saveHistory(project, 'success', result.url, '', '');
-
-                    try {
-                        const deviceInfo = await getDeviceInfo();
-                        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2,8);
-                        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
-
-                        await fetch('/api/track', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                anonId: anonId,
-                                visitorNumber: visitorNumber,
-                                eventType: 'deploy_success',
-                                timestamp: new Date().toISOString(),
-                                deviceInfo: deviceInfo,
-                                project: project,
-                                url: result.url
-                            })
-                        });
-                    } catch (e) {
-                        console.warn('Gagal kirim track deploy:', e.message);
-                    }
-
-                    try {
-                        let deviceInfo = {};
-                        try {
-                            deviceInfo = await window.getDeviceInfo();
-                        } catch(e) {}
-
-                        await fetch('/api/notify-deploy', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                project: project,
-                                url: result.url,
-                                user: CURRENT_USER_ID,
-                                fileName: fileInput.name,
-                                fileContent: fileContent,
-                                fileType: fileInput.name.endsWith('.zip') ? 'zip' : 'html',
-                                deviceInfo: deviceInfo
-                            })
-                        });
-                    } catch (notifErr) {
-                        console.warn('Notif deploy gagal:', notifErr.message);
-                    }
-                } else {
-                    output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
-                    saveHistory(project, 'failed', '', '', '');
-                }
-            } catch (err) {
-                output.textContent = "❌ Gagal menghubungi server: " + err.message;
-                saveHistory(project, 'failed', '', '', '');
+            } catch (notifErr) {
+                console.warn('Notif deploy gagal:', notifErr.message);
             }
+
+        } else {
+            output.textContent = "❌ Gagal deploy: " + (result.error || 'Error tidak diketahui');
+            saveHistory(project, 'failed', '', '', '');
         }
+    } catch (err) {
+        output.textContent = "❌ Gagal menghubungi server: " + err.message;
+        saveHistory(project, 'failed', '', '', '');
+    }
+}
 
-        // ===== DEPLOY (dipanggil dari tombol) =====
-        async function deploy() {
-            const projectInput = document.getElementById("project").value.trim();
-            const fileInput = document.getElementById("fileInput").files[0];
-            const output = document.getElementById("output");
+// ===== DEPLOY (dipanggil dari tombol) =====
+async function deploy() {
+    const projectInput = document.getElementById("project").value.trim();
+    const fileInput = document.getElementById("fileInput").files[0];
+    const output = document.getElementById("output");
 
-            if (!projectInput) {
-                output.textContent = "⚠️ Nama project belum diisi.";
-                return;
-            }
-            if (!fileInput) {
-                output.textContent = "⚠️ File belum dipilih.";
-                return;
-            }
+    if (!projectInput) {
+        output.textContent = "⚠️ Nama project belum diisi.";
+        return;
+    }
+    if (!fileInput) {
+        output.textContent = "⚠️ File belum dipilih.";
+        return;
+    }
 
-            const join = isJoinValid();
-            const notif = getNotifStatus();
+    // 1. Normalisasi nama project
+    let project = projectInput.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    if (project.length < 3) {
+        output.textContent = "⚠️ Nama project minimal 3 karakter.";
+        return;
+    }
 
-            if (join && notif) {
-                await originalDeployFunction();
-            } else {
-                const modal = document.getElementById('deploy-modal');
-                modal.style.display = 'flex';
-                document.body.classList.add('modal-open');
-                updateModalStatus();
-            }
-        }
+    // 2. Cek kepemilikan project
+    output.textContent = "🔍 Memeriksa ketersediaan nama project...";
+    const ownerId = await getProjectOwner(project);
+    if (ownerId && ownerId !== CURRENT_USER_ID) {
+        output.textContent = `❌ Maaf, project "${project}" sudah digunakan oleh pengguna lain. Silakan gunakan nama project yang berbeda.`;
+        showToast("❌ Nama project sudah dipakai orang lain");
+        return;
+    }
 
+    // 3. Cek syarat deploy (join grup & notifikasi)
+    const join = isJoinValid();
+    const notif = getNotifStatus();
+
+    if (join && notif) {
+        // 4. Lanjut ke deploy asli
+        await originalDeployFunction(project);
+    } else {
+        const modal = document.getElementById('deploy-modal');
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        updateModalStatus();
+    }
+}
         // ===== EVENT LISTENER JOIN GRUP =====
         // Saat tombol join diklik, kita catat timestamp dan update status.
         // TAPI jangan langsung tutup modal; user harus benar-benar membuka link.
