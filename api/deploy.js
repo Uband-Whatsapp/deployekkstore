@@ -13,14 +13,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Project dan file harus diisi' });
   }
 
-  // Ambil token dari Environment Variables (aman, tidak terlihat di frontend)
+  // Ambil token dari Environment Variables
   const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
   const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
   // Pastikan token ada
-  if (!VERCEL_TOKEN || !TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-    console.error('Token tidak lengkap di environment variables');
+  if (!VERCEL_TOKEN) {
+    console.error('VERCEL_TOKEN tidak ditemukan di environment variables');
     return res.status(500).json({ error: 'Konfigurasi server tidak lengkap' });
   }
 
@@ -59,7 +59,11 @@ export default async function handler(req, res) {
 
     const finalUrl = `https://${project}.vercel.app`;
 
-    // --- 2. KIRIM NOTIFIKASI KE TELEGRAM (pakai token rahasia) ---
+    // --- NOTIFIKASI TELEGRAM DINONAKTIFKAN DI SINI ---
+    // Notifikasi sudah dikirim oleh api/notify-deploy.js
+    // Jadi kita tidak kirim notifikasi lagi di sini.
+    // Kode di bawah ini DIKOMMENTAR (tidak aktif):
+    /*
     try {
       const pesan = `✅ Deploy Berhasil!\nNama: ${project}\nURL: ${finalUrl}\nUser: ${userId || 'Anonim'}\nWaktu: ${new Date().toLocaleString('id-ID')}`;
       await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -72,12 +76,17 @@ export default async function handler(req, res) {
         })
       });
     } catch (teleErr) {
-      // Notif gagal tidak menggagalkan deploy
       console.log('Notifikasi Telegram gagal, tapi deploy tetap sukses.');
     }
+    */
 
-    // Kirim hasil sukses ke frontend
-    return res.status(200).json({ success: true, url: finalUrl });
+    // Kirim hasil sukses ke frontend, termasuk projectId untuk history
+    return res.status(200).json({
+      success: true,
+      url: finalUrl,
+      projectId: data.projectId || data.id,
+      deploymentId: data.id
+    });
 
   } catch (err) {
     console.error(err);
