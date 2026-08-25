@@ -2002,25 +2002,62 @@ let deployCompleted = false;   // <-- Tambahkan di sini
         }
 
         async function deleteHistoryItem(index) {
-            const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-            if (index < 0 || index >= history.length) return;
-            const item = history[index];
-            const confirmed = await showConfirmModal('Hapus Project?', `Project "${item.project}" akan dihapus dari riwayat.\n\nData project juga akan dihapus dari Vercel jika tersedia.\nNama project akan tersedia kembali.\n\nLanjutkan?`, 'Hapus');
-            if (!confirmed) return;
-            if (item.projectId && item.ownerId === CURRENT_USER_ID) {
-                try {
-                    await fetch(`https://api.vercel.com/v9/projects/${item.projectId}`, {
-                        method: 'DELETE',
-                        headers: { Authorization: `Bearer ${VERCEL_TOKEN}` }
-                    });
-                } catch (e) {}
+    const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+    if (index < 0 || index >= history.length) return;
+
+    const item = history[index];
+    const confirmed = await showConfirmModal(
+        'Hapus Project?',
+        `Project "${item.project}" akan dihapus dari Vercel dan riwayat lokal.\nWebsite akan mati.\n\nLanjutkan?`,
+        'Hapus'
+    );
+    if (!confirmed) return;
+
+    // 1. Hapus dari Vercel via backend API
+    if (item.projectId && item.ownerId === CURRENT_USER_ID) {
+        try {
+            const response = await fetch('/api/delete-project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectId: item.projectId,
+                    ownerId: CURRENT_USER_ID,
+                }),
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                showToast(`⚠️ Gagal hapus dari Vercel: ${result.error || 'Error tidak diketahui'}`);
+                // Hentikan proses? Atau tetap lanjut hapus riwayat? 
+                // Tergantung kebutuhan. Saya sarankan tetap lanjut hapus riwayat lokal.
+                // Tetapi jika ingin memastikan, bisa return.
+                // Untuk sekarang, kita lanjutkan.
+            } else {
+                showToast('✅ Project berhasil dihapus dari Vercel');
             }
-            removeProjectOwner(item.project);
-            history.splice(index, 1);
-            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
-            renderHistory();
-            showToast('🗑️ Project berhasil dihapus');
+        } catch (err) {
+            console.error('Gagal hapus project dari Vercel:', err);
+            showToast('⚠️ Gagal menghubungi server, tapi riwayat lokal akan dihapus');
+            // Tetap lanjutkan hapus riwayat lokal
         }
+    } else {
+        // Jika tidak ada projectId, hanya hapus riwayat lokal
+        showToast('ℹ️ Project tidak terdaftar di Vercel, hapus riwayat saja.');
+    }
+
+    // 2. Hapus pemilik dari Firestore (via frontend)
+    try {
+        await removeProjectOwner(item.project);
+    } catch (e) {
+        console.warn('Gagal hapus pemilik dari Firestore:', e);
+    }
+
+    // 3. Hapus dari riwayat lokal
+    history.splice(index, 1);
+    localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+    renderHistory();
+    showToast('🗑️ Project berhasil dihapus dari riwayat');
+}
 
         async function clearHistory() {
             const history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
