@@ -1863,6 +1863,8 @@
 
     <script>
         // ── Fungsi-fungsi yang sudah ada ──
+        let isDeploying = false;
+let deployCompleted = false;   // <-- Tambahkan di sini
         function getUserId() {
             let userId = localStorage.getItem('ekk_userId');
             if (!userId) {
@@ -2106,12 +2108,12 @@
                 notifStatus.className = 'status';
             }
 
-            if (join && notif) {
-                const modal = document.getElementById('deploy-modal');
-                modal.style.display = 'none';
-                document.body.classList.remove('modal-open');
-                originalDeployFunction();
-            }
+            if (join && notif && !deployCompleted) {
+    const modal = document.getElementById('deploy-modal');
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    originalDeployFunction();
+}
         }
 
         // ===== FUNGSI DEPLOY ASLI =====
@@ -2180,20 +2182,22 @@ async function originalDeployFunction(projectName) {
 
         const result = await response.json();
 
-        if (result.url) {
-            output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
-            showToast("🚀 Project Berhasil Dideploy!");
+if (result.url) {
+    output.innerHTML = `✅ Deploy Berhasil!<br><a href="${result.url}" target="_blank" style="color:var(--success);font-weight:700;text-decoration:none;">${result.url}</a>`;
+    showToast("🚀 Project Berhasil Dideploy!");
 
-            // Ambil projectId dan deploymentId dari respons backend
-            const projectId = result.projectId || result.id || '';
-            const deploymentId = result.deploymentId || '';
+    // Ambil projectId dan deploymentId dari respons backend
+    const projectId = result.projectId || result.id || '';
+    const deploymentId = result.deploymentId || '';
 
-            // Simpan riwayat dengan projectId yang benar
-            saveHistory(project, 'success', result.url, projectId, deploymentId);
+    // Simpan riwayat dengan projectId yang benar
+    saveHistory(project, 'success', result.url, projectId, deploymentId);
 
-            // Simpan kepemilikan project
-            await setProjectOwner(project);
+    // Simpan kepemilikan project
+    await setProjectOwner(project);
 
+    // ===== 🔥 TANDAI DEPLOY SUDAH PERNAH BERHASIL =====
+    deployCompleted = true;
             // Tracking deploy sukses
             try {
                 const deviceInfo = await getDeviceInfo();
@@ -2253,6 +2257,7 @@ async function originalDeployFunction(projectName) {
 
 // ===== DEPLOY (dipanggil dari tombol) =====
 async function deploy() {
+    deployCompleted = false;   // <-- Reset flag agar bisa deploy lagi
     const projectInput = document.getElementById("project").value.trim();
     const fileInput = document.getElementById("fileInput").files[0];
     const output = document.getElementById("output");
