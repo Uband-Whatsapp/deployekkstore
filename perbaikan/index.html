@@ -2597,57 +2597,105 @@
             </div>
 
             <!-- ==================== PAGE: DEPLOY ==================== -->
-            <div class="page" id="page-deploy">
-                <div class="page-header">
-                    <h1>Deploy Project</h1>
-                    <p>Deploy website Anda dengan cepat dan mudah.</p>
-                </div>
+<div class="page" id="page-deploy">
+    <div class="page-header">
+        <h1>Deploy Project</h1>
+        <p>Deploy website Anda dengan cepat dan mudah.</p>
+    </div>
 
-                <div class="card">
-                    <div class="form-group">
-                        <label class="form-label" for="project">Nama Project</label>
-                        <input type="text" id="project" class="form-input" placeholder="contoh: website-ekkstore" autocomplete="off" autocapitalize="none" spellcheck="false">
-                        <span class="form-hint" id="project-hint">Gunakan huruf kecil, angka, dan tanda hubung (-)</span>
-                        <span class="form-error" id="project-error"></span>
-                    </div>
+    <div class="card">
 
-                    <div class="form-group">
-                        <label class="form-label">Upload File</label>
-                        <div class="upload-dropzone" id="upload-dropzone" role="button" tabindex="0" aria-label="Upload file HTML atau ZIP">
-                            <i class="fa-solid fa-file-arrow-up"></i>
-                            <p>Upload file HTML atau ZIP</p>
-                            <span>Drag & drop atau klik untuk memilih file</span>
-                        </div>
-                        <input type="file" id="fileInput" accept=".html,.zip" style="display:none;">
-                        <div class="file-info" id="file-info"></div>
-                    </div>
+        <div class="form-group">
+            <label class="form-label" for="project">Nama Project</label>
 
-                    <button class="btn btn-primary btn-lg" id="deploy-btn" style="width: 100%; margin-top: var(--space-2);">
-                        <i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>
-                    </button>
+            <input 
+                type="text" 
+                id="project" 
+                class="form-input" 
+                placeholder="contoh: website-ekkstore" 
+                autocomplete="off" 
+                autocapitalize="none" 
+                spellcheck="false"
+            >
 
-                    <div class="deploy-status-panel hidden" id="deploy-status-panel">
-                        <div class="status-step" id="step-upload">
-                            <span class="step-indicator">●</span>
-                            <span>Upload file</span>
-                        </div>
-                        <div class="status-step" id="step-validate">
-                            <span class="step-indicator">●</span>
-                            <span>Project validation</span>
-                        </div>
-                        <div class="status-step" id="step-deploying">
-                            <span class="step-indicator">●</span>
-                            <span>Deploying</span>
-                        </div>
-                        <div class="status-step" id="step-completed">
-                            <span class="step-indicator">●</span>
-                            <span>Completed</span>
-                        </div>
-                    </div>
+            <span class="form-hint" id="project-hint">
+                Gunakan huruf kecil, angka, dan tanda hubung (-)
+            </span>
 
-                    <div id="output">Status: Menunggu file & nama project...</div>
-                </div>
+            <span class="form-error" id="project-error"></span>
+        </div>
+
+
+        <div class="form-group">
+            <label class="form-label">Upload File</label>
+
+            <div 
+                class="upload-dropzone" 
+                id="upload-dropzone" 
+                role="button" 
+                tabindex="0" 
+                aria-label="Upload file HTML atau ZIP"
+            >
+                <i class="fa-solid fa-file-arrow-up"></i>
+                <p>Upload file HTML atau ZIP</p>
+                <span>Drag & drop atau klik untuk memilih file</span>
             </div>
+
+            <input 
+                type="file" 
+                id="fileInput" 
+                accept=".html,.zip" 
+                style="display:none;"
+            >
+
+            <div class="file-info" id="file-info"></div>
+        </div>
+
+
+        <!-- HASIL DEPLOY DITAMPILKAN DI SINI -->
+        <div id="output">
+            Status: Menunggu file & nama project...
+        </div>
+
+
+        <!-- TOMBOL DEPLOY -->
+        <button 
+            class="btn btn-primary btn-lg" 
+            id="deploy-btn" 
+            style="width: 100%; margin-top: var(--space-2);"
+        >
+            <i class="fa-solid fa-rocket"></i>
+            <span id="deploy-btn-text">Deploy Sekarang</span>
+        </button>
+
+
+        <!-- STATUS PROSES -->
+        <div class="deploy-status-panel hidden" id="deploy-status-panel">
+
+            <div class="status-step" id="step-upload">
+                <span class="step-indicator">●</span>
+                <span>Upload file</span>
+            </div>
+
+            <div class="status-step" id="step-validate">
+                <span class="step-indicator">●</span>
+                <span>Project validation</span>
+            </div>
+
+            <div class="status-step" id="step-deploying">
+                <span class="step-indicator">●</span>
+                <span>Deploying</span>
+            </div>
+
+            <div class="status-step" id="step-completed">
+                <span class="step-indicator">●</span>
+                <span>Completed</span>
+            </div>
+
+        </div>
+
+    </div>
+</div>
 
             <!-- ==================== PAGE: HISTORY ==================== -->
             <div class="page" id="page-history">
