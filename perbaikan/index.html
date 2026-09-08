@@ -1,0 +1,3744 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+    <title>Ekk Store — Deployment Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ============================================
+           EKK STORE 3.0 — PREMIUM DARK SAAS DESIGN SYSTEM
+           ============================================ */
+
+        :root {
+            /* Spacing Scale */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-10: 40px;
+
+            /* Colors */
+            --bg: #0a0a0b;
+            --bg-card: #111113;
+            --bg-input: #1a1a1e;
+            --bg-hover: #1c1c20;
+            --border: #252529;
+            --border-light: #2e2e34;
+            --text: #f1f1f3;
+            --text-secondary: #b0b0b5;
+            --text-muted: #7a7a80;
+
+            /* Accent */
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-glow: rgba(59, 130, 246, 0.18);
+            --accent-soft: #1a2332;
+
+            /* Status */
+            --success: #22c55e;
+            --success-soft: #0f2a1a;
+            --danger: #ef4444;
+            --danger-soft: #2a1414;
+            --warning: #f59e0b;
+            --warning-soft: #2a261a;
+            --info: #3b82f6;
+            --info-soft: #0f1a2e;
+            --proses: #8b5cf6;
+            --proses-soft: #1e1a2e;
+
+            /* Typography */
+            --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Effects */
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.6);
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Layout */
+            --header-h: 56px;
+            --bottom-nav-h: 64px;
+            --sidebar-w: 280px;
+            --max-width: 1280px;
+            --page-pad-x: 20px;
+        }
+
+        /* Reset */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            scroll-behavior: smooth;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.55;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        body.modal-open {
+            overflow: hidden !important;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: inherit;
+            font-size: inherit;
+        }
+        input {
+            font-family: inherit;
+            outline: none;
+            border: none;
+        }
+        ul {
+            list-style: none;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ============ GATE SCREEN ============ */
+        #gate-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-4);
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        #gate-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .gate-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-8) var(--space-6);
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            animation: gateIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        @keyframes gateIn {
+            from {
+                opacity: 0;
+                transform: translateY(28px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .gate-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto var(--space-4);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+        .gate-logo i {
+            font-size: 28px;
+            color: #fff;
+        }
+        .gate-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+        }
+        .gate-step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all var(--transition);
+        }
+        .gate-step-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 0 6px var(--accent-glow);
+            width: 12px;
+            height: 12px;
+        }
+        .gate-step-dot.done {
+            background: var(--success);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+        .gate-step-line {
+            width: 36px;
+            height: 2px;
+            background: var(--border);
+            transition: background var(--transition);
+        }
+        .gate-step-line.done {
+            background: var(--success);
+        }
+        .gate-step-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--space-1);
+            padding: 0 2px;
+        }
+        .gate-step-labels span {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+            transition: color var(--transition);
+        }
+        .gate-step-labels span.active {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .gate-step-labels span.done {
+            color: var(--success);
+        }
+        .gate-card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: var(--space-2);
+            letter-spacing: -0.03em;
+            color: var(--text);
+        }
+        .gate-card .gate-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-5);
+            line-height: 1.6;
+            max-width: 320px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .gate-card .gate-sub strong {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .gate-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            width: 100%;
+            padding: 12px var(--space-4);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            transition: all var(--transition);
+            letter-spacing: -0.01em;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+        }
+        .gate-btn:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+        .gate-btn:active {
+            transform: scale(0.97);
+        }
+        .gate-btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .gate-btn.secondary {
+            background: var(--bg-input);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            box-shadow: none;
+            margin-top: var(--space-3);
+        }
+        .gate-btn.secondary.active {
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-color: var(--accent);
+            cursor: pointer;
+        }
+        .gate-verify-msg {
+            margin-top: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            display: none;
+            align-items: flex-start;
+            gap: var(--space-2);
+            text-align: left;
+            line-height: 1.4;
+            animation: msgIn 0.3s ease;
+        }
+        @keyframes msgIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .gate-verify-msg.loading {
+            background: var(--info-soft);
+            border: 1px solid #1a3a5a;
+            color: #8ab4f8;
+            display: flex;
+        }
+        .gate-verify-msg.error {
+            background: var(--danger-soft);
+            border: 1px solid #5a1a1a;
+            color: #f8a0a0;
+            display: flex;
+        }
+        .gate-verify-msg.success {
+            background: var(--success-soft);
+            border: 1px solid #1a5a3a;
+            color: #86efac;
+            display: flex;
+        }
+        .gate-verify-msg i {
+            flex-shrink: 0;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+        .gate-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2.5px solid rgba(59, 130, 246, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .gate-footer-text {
+            margin-top: var(--space-5);
+            font-size: 10px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            letter-spacing: 0.03em;
+        }
+
+        /* ============ APP SHELL ============ */
+        #app-shell {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #app-shell.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Top Header — bersih, tanpa tombol */
+        #top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-h);
+            z-index: 1000;
+            background: rgba(17, 17, 19, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--page-pad-x);
+            gap: var(--space-3);
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 0;
+        }
+        .header-logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+        }
+        .header-logo i {
+            font-size: 16px;
+            color: #fff;
+        }
+        .header-title-group {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+            min-width: 0;
+        }
+        .header-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .header-subtitle {
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-shrink: 0;
+        }
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--success);
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--success-soft);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            white-space: nowrap;
+        }
+        .header-status .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse-dot 2.2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* Sidebar (Desktop only) */
+        #sidebar {
+            position: fixed;
+            top: var(--header-h);
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            z-index: 990;
+            overflow-y: auto;
+            padding: var(--space-4) var(--space-3);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            #sidebar {
+                display: block;
+                transform: translateX(0) !important;
+            }
+        }
+        .sidebar-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            margin-bottom: var(--space-4);
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-profile-img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+            flex-shrink: 0;
+        }
+        .sidebar-profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+        }
+        .sidebar-profile-name {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-profile-badge {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .sidebar-section {
+            margin-bottom: var(--space-4);
+        }
+        .sidebar-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            padding: 0 var(--space-3);
+            margin-bottom: var(--space-1);
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: 10px var(--space-3);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            position: relative;
+        }
+        .sidebar-item:hover {
+            background: var(--bg-input);
+            color: var(--text);
+        }
+        .sidebar-item.active {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+        .sidebar-item i {
+            width: 18px;
+            text-align: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .sidebar-item .chev {
+            margin-left: auto;
+            font-size: 10px;
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+        .sidebar-item.open .chev {
+            transform: rotate(180deg);
+        }
+        .sidebar-submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: var(--space-6);
+        }
+        .sidebar-submenu.open {
+            max-height: 300px;
+        }
+        .sidebar-submenu .sidebar-item {
+            padding: 8px var(--space-3);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .sidebar-submenu .sidebar-item:hover {
+            color: var(--text);
+        }
+
+        /* Main Content */
+        #main-content {
+            padding: calc(var(--header-h) + var(--space-5)) var(--page-pad-x) calc(var(--bottom-nav-h) + var(--space-8));
+            max-width: var(--max-width);
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        @media (min-width: 1024px) {
+            #main-content {
+                padding-left: calc(var(--sidebar-w) + var(--space-8));
+                padding-right: var(--space-8);
+                padding-bottom: var(--space-10);
+            }
+        }
+        @media (max-width: 480px) {
+            :root {
+                --page-pad-x: 16px;
+            }
+            #main-content {
+                padding-left: var(--page-pad-x);
+                padding-right: var(--page-pad-x);
+                padding-top: calc(var(--header-h) + var(--space-4));
+            }
+        }
+
+        /* Bottom Navigation — Premium */
+        #bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
+            background: rgba(17, 17, 19, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding-left: var(--space-2);
+            padding-right: var(--space-2);
+        }
+        @media (min-width: 1024px) {
+            #bottom-nav {
+                display: none;
+            }
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius);
+            min-width: 56px;
+            letter-spacing: 0.01em;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .bottom-nav-item i {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        .bottom-nav-item .nav-label {
+            font-size: 10px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .bottom-nav-item:hover {
+            color: var(--text);
+        }
+        .bottom-nav-item:hover i {
+            transform: translateY(-1px);
+        }
+        .bottom-nav-item.active {
+            color: var(--accent);
+        }
+        .bottom-nav-item.active i {
+            transform: scale(1.1);
+        }
+        .bottom-nav-item.active .nav-label {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .bottom-nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 3px;
+            border-radius: 99px;
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+        .bottom-nav-item.active::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent-soft);
+            border-radius: var(--radius);
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* ============ PAGES ============ */
+        .page {
+            display: none;
+            animation: pageIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes pageIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============ COMPONENTS ============ */
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            transition: all var(--transition);
+        }
+        .card:hover {
+            border-color: var(--border-light);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+            gap: var(--space-3);
+            flex-wrap: wrap;
+        }
+        .card-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .card-header h3 i {
+            font-size: 16px;
+            color: var(--accent);
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: var(--space-6);
+        }
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: var(--text);
+            margin-bottom: var(--space-1);
+            line-height: 1.2;
+        }
+        .page-header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Stats Grid — Icon di atas, angka besar */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--space-4);
+            }
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-4) var(--space-3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--transition);
+            text-align: center;
+        }
+        .stat-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-hover);
+            transform: translateY(-2px);
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+            margin-bottom: var(--space-1);
+        }
+        .stat-icon.blue {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+        .stat-icon.green {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+        .stat-icon.red {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+        .stat-icon.amber {
+            background: var(--warning-soft);
+            color: var(--warning);
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            line-height: 1.1;
+            font-family: var(--font-mono);
+        }
+        .stat-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        /* Quick Actions — 2x2 grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-3);
+            margin-bottom: 0;
+        }
+        @media (min-width: 768px) {
+            .quick-actions {
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--space-4);
+            }
+        }
+        .quick-action {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            cursor: pointer;
+            transition: all var(--transition);
+            text-align: center;
+            min-height: 80px;
+            justify-content: center;
+        }
+        .quick-action:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            transform: translateY(-2px);
+        }
+        .quick-action:active {
+            transform: scale(0.97);
+        }
+        .quick-action i {
+            font-size: 20px;
+            color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+        .quick-action:hover i {
+            transform: scale(1.15);
+        }
+        .quick-action span {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: -0.01em;
+        }
+        .quick-action.primary-action {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .quick-action.primary-action i {
+            color: #fff;
+        }
+        .quick-action.primary-action span {
+            color: #fff;
+            font-weight: 700;
+        }
+        .quick-action.primary-action:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: 10px var(--space-4);
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            min-height: 44px;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: var(--bg-input);
+            color: var(--text);
+            border-color: var(--border-light);
+        }
+        .btn-danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+            min-height: 32px;
+        }
+        .btn-lg {
+            padding: 14px var(--space-5);
+            font-size: 15px;
+            border-radius: var(--radius);
+            min-height: 52px;
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            transition: all var(--transition);
+        }
+        .btn-icon:hover {
+            background: var(--bg-input);
+            color: var(--text);
+            border-color: var(--border-light);
+        }
+        .btn-icon.danger:hover {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Forms */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+        .form-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text);
+            font-family: var(--font-ui);
+            font-size: 14px;
+            transition: all var(--transition);
+            min-height: 44px;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+        .form-input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+        .form-input.success {
+            border-color: var(--success);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+        }
+        .form-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .form-error {
+            font-size: 11px;
+            color: var(--danger);
+            font-weight: 500;
+            display: none;
+        }
+        .form-error.visible {
+            display: block;
+            animation: msgIn 0.3s ease;
+        }
+
+        /* Upload Dropzone */
+        .upload-dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-6) var(--space-4);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--bg-input);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .upload-dropzone:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .upload-dropzone.dragover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .upload-dropzone i {
+            font-size: 30px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-1);
+            display: block;
+            transition: color 0.3s ease;
+        }
+        .upload-dropzone:hover i {
+            color: var(--accent);
+        }
+        .upload-dropzone p {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .upload-dropzone span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .upload-dropzone.has-file {
+            border-color: var(--success);
+            background: var(--success-soft);
+        }
+        .upload-dropzone.has-file i {
+            color: var(--success);
+        }
+        .upload-dropzone.has-file p {
+            color: var(--success);
+            font-weight: 600;
+        }
+        .file-info {
+            display: none;
+            margin-top: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: var(--success-soft);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            color: var(--success);
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .file-info.visible {
+            display: flex;
+            animation: msgIn 0.3s ease;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .badge.success {
+            background: var(--success-soft);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        .badge.failed {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .badge.proses {
+            background: var(--proses-soft);
+            color: var(--proses);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+        .badge.info {
+            background: var(--info-soft);
+            color: var(--info);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        /* Deploy Status Panel */
+        .deploy-status-panel {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-4);
+            margin-top: var(--space-4);
+        }
+        .deploy-status-panel.hidden {
+            display: none;
+        }
+        .status-step {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-2) 0;
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: all var(--transition);
+        }
+        .status-step .step-indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+        .status-step.done {
+            color: var(--success);
+        }
+        .status-step.done .step-indicator {
+            border-color: var(--success);
+            background: var(--success-soft);
+            color: var(--success);
+        }
+        .status-step.active {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .status-step.active .step-indicator {
+            border-color: var(--accent);
+            border-top-color: transparent;
+            animation: spin 0.7s linear infinite;
+        }
+        .status-step.completed {
+            color: var(--text);
+        }
+        .status-step.completed .step-indicator {
+            border-color: var(--success);
+            background: var(--success);
+            color: #fff;
+        }
+        .status-step.failed-step {
+            color: var(--danger);
+        }
+        .status-step.failed-step .step-indicator {
+            border-color: var(--danger);
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* History Items */
+        .history-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            flex-wrap: wrap;
+        }
+        .history-item:hover {
+            border-color: var(--border-light);
+            background: var(--bg-hover);
+        }
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+        .history-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            font-family: var(--font-mono);
+            word-break: break-all;
+            letter-spacing: -0.02em;
+        }
+        .history-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .history-url {
+            font-size: 10px;
+            color: var(--accent);
+            word-break: break-all;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .history-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-shrink: 0;
+        }
+        .history-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+            min-height: 30px;
+        }
+        .history-action-btn:hover {
+            background: var(--bg-input);
+            color: var(--text);
+            border-color: var(--border-light);
+        }
+        .history-action-btn.danger:hover {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Filter Chips */
+        .filter-chips {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--bg-input);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+            letter-spacing: 0.01em;
+            min-height: 32px;
+        }
+        .filter-chip:hover {
+            color: var(--text);
+            border-color: var(--border-light);
+        }
+        .filter-chip.active {
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Search */
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 160px;
+        }
+        .search-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .search-wrapper input {
+            width: 100%;
+            padding: 10px 14px 10px 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 13px;
+            transition: all var(--transition);
+            min-height: 44px;
+        }
+        .search-wrapper input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* System Status */
+        .system-status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-3);
+        }
+        @media (min-width: 768px) {
+            .system-status-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        @media (max-width: 380px) {
+            .system-status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .system-status-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+        }
+        .system-status-item:hover {
+            border-color: var(--border-light);
+        }
+        .system-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .system-status-dot.online {
+            background: var(--success);
+            animation: pulse-dot 2.2s infinite;
+        }
+        .system-status-dot.offline {
+            background: var(--danger);
+        }
+        .system-status-dot.unknown {
+            background: var(--text-muted);
+        }
+        .system-status-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+            flex: 1;
+        }
+        .system-status-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .system-status-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .system-status-ms {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--success);
+            font-family: var(--font-mono);
+            flex-shrink: 0;
+        }
+
+        /* Announcement */
+        .announcement-card {
+            background: var(--accent-soft);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: var(--radius);
+            padding: var(--space-4) var(--space-4);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+        }
+        .announcement-icon {
+            font-size: 18px;
+            color: var(--accent);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .announcement-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .announcement-content h4 {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+            letter-spacing: -0.01em;
+        }
+        .announcement-content p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .announcement-link {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: var(--space-1);
+            transition: all var(--transition);
+        }
+        .announcement-link:hover {
+            color: var(--accent-hover);
+            gap: 6px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8) var(--space-4);
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 36px;
+            margin-bottom: var(--space-3);
+            opacity: 0.35;
+            display: block;
+        }
+        .empty-state p {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+            color: var(--text-secondary);
+        }
+        .empty-state .sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: 0.7;
+            display: block;
+            margin-bottom: var(--space-3);
+        }
+
+        /* Output */
+        #output {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            line-height: 1.6;
+            word-break: break-all;
+            min-height: 42px;
+            margin-top: var(--space-4);
+        }
+
+        /* Footer */
+        .footer-text {
+            margin-top: var(--space-8);
+            padding: var(--space-4) 0;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            letter-spacing: 0.04em;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: calc(var(--bottom-nav-h) + var(--space-4) + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #ffffff;
+            color: #0a0a0b;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            z-index: 99999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+            max-width: 90%;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        @media (min-width: 1024px) {
+            #toast {
+                bottom: var(--space-4);
+            }
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: var(--space-4);
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(16px) scale(0.96);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-overlay.active .modal-box {
+            transform: translateY(0) scale(1);
+        }
+        .modal-icon {
+            font-size: 32px;
+            margin-bottom: var(--space-3);
+        }
+        .modal-box h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: var(--space-2);
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .modal-box p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-5);
+            line-height: 1.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Requirement Items */
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .requirement-item .req-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+        .requirement-item .req-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .requirement-item .req-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .requirement-item .req-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .requirement-item .req-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--danger-soft);
+            color: var(--danger);
+            flex-shrink: 0;
+        }
+        .requirement-item .req-status.done {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+        .requirement-item .req-btn {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--success-soft);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            cursor: pointer;
+            transition: all var(--transition);
+            flex-shrink: 0;
+            min-height: 32px;
+        }
+        .requirement-item .req-btn:hover {
+            background: var(--success);
+            color: #fff;
+        }
+        .requirement-item .req-btn.blue {
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .requirement-item .req-btn.blue:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .requirement-item.hidden {
+            display: none;
+        }
+
+        /* Step Cards (Documentation) */
+        .step-cards {
+            display: grid;
+            gap: var(--space-3);
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 768px) {
+            .step-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .step-cards {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .step-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-4);
+            display: flex;
+            gap: var(--space-3);
+            transition: all var(--transition);
+        }
+        .step-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-hover);
+        }
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .step-card-info h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .step-card-info p {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Accordion */
+        .accordion-item {
+            border-bottom: 1px solid var(--border);
+            padding: var(--space-3) 0;
+        }
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            cursor: pointer;
+            padding: var(--space-1) 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            transition: color var(--transition);
+            width: 100%;
+            text-align: left;
+            min-height: 44px;
+        }
+        .accordion-header:hover {
+            color: var(--accent);
+        }
+        .accordion-header i:first-child {
+            width: 18px;
+            text-align: center;
+            color: var(--accent);
+        }
+        .accordion-header .chev {
+            margin-left: auto;
+            font-size: 10px;
+            transition: transform var(--transition);
+        }
+        .accordion-header.open .chev {
+            transform: rotate(180deg);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: var(--space-6);
+        }
+        .accordion-content.open {
+            max-height: 500px;
+        }
+        .accordion-content a,
+        .accordion-content p {
+            display: block;
+            padding: 6px 0;
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: color var(--transition);
+        }
+        .accordion-content a:hover {
+            color: var(--accent);
+        }
+
+        /* Responsive tweaks */
+        @media (max-width: 480px) {
+            .card {
+                padding: var(--space-4);
+            }
+            .page-header h1 {
+                font-size: 20px;
+            }
+            .stats-grid {
+                gap: var(--space-2);
+            }
+            .stat-card {
+                padding: var(--space-3) var(--space-2);
+            }
+            .stat-value {
+                font-size: 20px;
+            }
+            .quick-actions {
+                gap: var(--space-2);
+            }
+            .quick-action {
+                padding: var(--space-3);
+                min-height: 70px;
+            }
+            .modal-box {
+                padding: var(--space-4);
+            }
+            .btn-lg {
+                font-size: 14px;
+                padding: 12px var(--space-4);
+                min-height: 48px;
+            }
+            .history-item {
+                padding: var(--space-2) var(--space-3);
+            }
+            .history-url {
+                max-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== GATE SCREEN ==================== -->
+    <div id="gate-screen">
+        <div class="gate-card" id="gate-card">
+            <div class="gate-steps" id="gate-steps">
+                <div class="gate-step-dot active" id="g-dot1"></div>
+                <div class="gate-step-line" id="g-line1"></div>
+                <div class="gate-step-dot" id="g-dot2"></div>
+                <div class="gate-step-line" id="g-line2"></div>
+                <div class="gate-step-dot" id="g-dot3"></div>
+            </div>
+            <div class="gate-step-labels">
+                <span class="active" id="g-label1">Follow</span>
+                <span id="g-label2">Konfirmasi</span>
+                <span id="g-label3">Selesai</span>
+            </div>
+            <div class="gate-logo">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h2>Verifikasi Follow</h2>
+            <p class="gate-sub">
+                Untuk melanjutkan, ikuti saluran WhatsApp terlebih dahulu.
+                Klik <strong>Buka Saluran WhatsApp</strong>, pilih
+                <strong>Buka di WhatsApp</strong>, lalu tekan <strong>Ikuti</strong>.
+                Kembali ke halaman ini setelah selesai.
+            </p>
+            <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener noreferrer" class="gate-btn" id="btn-follow-wa">
+                <i class="fa-brands fa-whatsapp"></i> Buka Saluran WhatsApp
+            </a>
+            <button class="gate-btn secondary" id="btn-confirm" disabled>
+                Saya Sudah Follow
+            </button>
+            <div class="gate-verify-msg" id="verify-msg-box">
+                <i class="fa-solid fa-circle-info" id="verify-icon"></i>
+                <span id="verify-text"></span>
+            </div>
+            <div class="gate-footer-text">
+                <i class="fa-solid fa-lock" style="font-size:9px;"></i>
+                Verifikasi diperlukan untuk mengakses konten
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== APP SHELL ==================== -->
+    <div id="app-shell">
+        <!-- Header — bersih, tanpa tombol hamburger/riwayat -->
+        <header id="top-header">
+            <div class="header-left">
+                <div class="header-logo">
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
+                <div class="header-title-group">
+                    <span class="header-title">Ekk Store</span>
+                    <span class="header-subtitle">Deployment Platform</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-status">
+                    <span class="dot"></span> System Online
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar (Desktop only) -->
+        <nav id="sidebar" aria-label="Navigasi Desktop">
+            <div class="sidebar-profile">
+                <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="sidebar-profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
+                <div class="sidebar-profile-info">
+                    <span class="sidebar-profile-name">Ekk Store</span>
+                    <span class="sidebar-profile-badge"><i class="fa-solid fa-circle-check"></i> Owner</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Main</div>
+                <button class="sidebar-item active" data-page="home">
+                    <i class="fa-solid fa-house"></i> Beranda
+                </button>
+                <button class="sidebar-item" data-page="deploy">
+                    <i class="fa-solid fa-rocket"></i> Deploy
+                </button>
+                <button class="sidebar-item" data-page="history">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat
+                </button>
+                <button class="sidebar-item" data-page="group">
+                    <i class="fa-solid fa-users"></i> Grup
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Resources</div>
+                <button class="sidebar-item" data-page="docs">
+                    <i class="fa-solid fa-book"></i> Dokumentasi
+                </button>
+                <button class="sidebar-item" data-page="info">
+                    <i class="fa-solid fa-circle-info"></i> Info Website
+                </button>
+                <button class="sidebar-item" data-page="status">
+                    <i class="fa-solid fa-server"></i> System Status
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Services</div>
+                <button class="sidebar-item" data-page="services">
+                    <i class="fa-solid fa-code"></i> Jasa Website
+                </button>
+                <button class="sidebar-item accordion-trigger" data-accordion="contact-acc">
+                    <i class="fa-solid fa-headset"></i> Contact
+                    <i class="fa-solid fa-chevron-down chev"></i>
+                </button>
+                <div class="sidebar-submenu" id="contact-acc">
+                    <a class="sidebar-item" href="https://wa.me/6285177464515" target="_blank" rel="noopener">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp 1
+                    </a>
+                    <a class="sidebar-item" href="https://wa.me/6285177464516" target="_blank" rel="noopener">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp 2
+                    </a>
+                    <a class="sidebar-item" href="https://wa.me/6285177464517" target="_blank" rel="noopener">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp 3
+                    </a>
+                    <a class="sidebar-item" href="https://t.me/XzzEkk" target="_blank" rel="noopener">
+                        <i class="fa-brands fa-telegram"></i> Telegram
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <!-- ==================== PAGE: HOME ==================== -->
+            <div class="page active" id="page-home">
+                <div class="page-header">
+                    <h1>Selamat datang di Ekk Store</h1>
+                    <p>Kelola dan deploy project Anda dengan cepat.</p>
+                </div>
+
+                <!-- Stats — Icon di atas, Angka besar, Label -->
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fa-solid fa-diagram-project"></i></div>
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">Total Project</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                        <span class="stat-value" id="stat-success">0</span>
+                        <span class="stat-label">Deploy Berhasil</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                        <span class="stat-value" id="stat-failed">0</span>
+                        <span class="stat-label">Deploy Gagal</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon amber"><i class="fa-solid fa-clock"></i></div>
+                        <span class="stat-value" id="stat-last">-</span>
+                        <span class="stat-label">Deploy Terakhir</span>
+                    </div>
+                </div>
+
+                <!-- Quick Access — 2x2 grid, tanpa Info & Jasa -->
+                <div class="card" style="margin-bottom: var(--space-6);">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-bolt"></i> Akses Cepat</h3>
+                    </div>
+                    <div class="quick-actions">
+                        <div class="quick-action primary-action" data-page="deploy">
+                            <i class="fa-solid fa-rocket"></i>
+                            <span>Deploy</span>
+                        </div>
+                        <div class="quick-action" data-page="history">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span>Riwayat</span>
+                        </div>
+                        <div class="quick-action" data-page="docs">
+                            <i class="fa-solid fa-book"></i>
+                            <span>Dokumentasi</span>
+                        </div>
+                        <div class="quick-action" data-page="status">
+                            <i class="fa-solid fa-server"></i>
+                            <span>Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Deployments -->
+                <div class="card" style="margin-bottom: var(--space-6);">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> Deployment Terbaru</h3>
+                        <button class="btn btn-outline btn-sm" data-page="history">Lihat Semua</button>
+                    </div>
+                    <div id="recent-deployments">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>Belum ada deployment</p>
+                            <span class="sub">Project yang Anda deploy akan muncul di sini.</span>
+                            <button class="btn btn-primary btn-sm" data-page="deploy">
+                                <i class="fa-solid fa-rocket"></i> Deploy Project
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status Compact -->
+                <div class="card" style="margin-bottom: var(--space-6);">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-server"></i> System Status</h3>
+                    </div>
+                    <div class="system-status-grid" id="home-system-status">
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Deployment Service</span>
+                                <span class="system-status-desc">Online · 42ms</span>
+                            </div>
+                        </div>
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Database</span>
+                                <span class="system-status-desc">Online · 12ms</span>
+                            </div>
+                        </div>
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Storage</span>
+                                <span class="system-status-desc">Online · 28ms</span>
+                            </div>
+                        </div>
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Authentication</span>
+                                <span class="system-status-desc">Online · 15ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Announcement -->
+                <div class="announcement-card" style="margin-bottom: var(--space-6);">
+                    <div class="announcement-icon">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div class="announcement-content">
+                        <h4>Informasi Terbaru</h4>
+                        <p>Platform Ekk Store menyediakan layanan deployment gratis untuk file HTML dan ZIP. Pastikan Anda mengikuti saluran WhatsApp untuk update terbaru.</p>
+                        <span class="announcement-link" data-page="docs">
+                            Selengkapnya <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: DEPLOY ==================== -->
+            <div class="page" id="page-deploy">
+                <div class="page-header">
+                    <h1>Deploy Project</h1>
+                    <p>Deploy website Anda dengan cepat dan mudah.</p>
+                </div>
+
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label" for="project">Nama Project</label>
+                        <input type="text" id="project" class="form-input" placeholder="contoh: website-ekkstore" autocomplete="off" autocapitalize="none" spellcheck="false">
+                        <span class="form-hint" id="project-hint">Gunakan huruf kecil, angka, dan tanda hubung (-)</span>
+                        <span class="form-error" id="project-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Upload File</label>
+                        <div class="upload-dropzone" id="upload-dropzone" role="button" tabindex="0" aria-label="Upload file HTML atau ZIP">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                            <p>Upload file HTML atau ZIP</p>
+                            <span>Drag & drop atau klik untuk memilih file</span>
+                        </div>
+                        <input type="file" id="fileInput" accept=".html,.zip" style="display:none;">
+                        <div class="file-info" id="file-info"></div>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" id="deploy-btn" style="width: 100%; margin-top: var(--space-2);">
+                        <i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>
+                    </button>
+
+                    <!-- Deploy Status Panel -->
+                    <div class="deploy-status-panel hidden" id="deploy-status-panel">
+                        <div class="status-step" id="step-upload">
+                            <span class="step-indicator">●</span>
+                            <span>Upload file</span>
+                        </div>
+                        <div class="status-step" id="step-validate">
+                            <span class="step-indicator">●</span>
+                            <span>Project validation</span>
+                        </div>
+                        <div class="status-step" id="step-deploying">
+                            <span class="step-indicator">●</span>
+                            <span>Deploying</span>
+                        </div>
+                        <div class="status-step" id="step-completed">
+                            <span class="step-indicator">●</span>
+                            <span>Completed</span>
+                        </div>
+                    </div>
+
+                    <div id="output">Status: Menunggu file & nama project...</div>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: HISTORY ==================== -->
+            <div class="page" id="page-history">
+                <div class="page-header">
+                    <h1>Riwayat Deploy</h1>
+                    <p>Semua deployment Anda dalam satu tempat.</p>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; align-items: center;">
+                        <div class="search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="history-search" placeholder="Cari project..." autocomplete="off">
+                        </div>
+                        <div class="filter-chips" id="history-filter">
+                            <button class="filter-chip active" data-filter="all">Semua</button>
+                            <button class="filter-chip" data-filter="success">Berhasil</button>
+                            <button class="filter-chip" data-filter="failed">Gagal</button>
+                            <button class="filter-chip" data-filter="proses">Proses</button>
+                        </div>
+                        <button class="btn-icon danger" id="clear-history-btn" title="Bersihkan Riwayat" aria-label="Bersihkan Riwayat">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="history-list-container" id="history-list"></div>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: DOCS ==================== -->
+            <div class="page" id="page-docs">
+                <div class="page-header">
+                    <h1>Dokumentasi</h1>
+                    <p>Panduan lengkap penggunaan platform.</p>
+                </div>
+                <div class="step-cards" style="margin-bottom: var(--space-6);">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-card-info">
+                            <h4>Siapkan Project</h4>
+                            <p>Siapkan file HTML atau ZIP yang ingin Anda deploy.</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-card-info">
+                            <h4>Upload File</h4>
+                            <p>Masukkan nama project dan pilih file Anda.</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-card-info">
+                            <h4>Deploy</h4>
+                            <p>Klik tombol Deploy dan tunggu proses selesai.</p>
+                        </div>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <div class="step-card-info">
+                            <h4>Buka Hasil</h4>
+                            <p>Akses website Anda melalui URL yang diberikan.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-circle-question"></i> FAQ</h3>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq1">
+                            <i class="fa-solid fa-file"></i> File apa yang bisa digunakan?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq1">
+                            <p>File HTML (.html) atau ZIP (.zip) yang berisi file HTML.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq2">
+                            <i class="fa-solid fa-rocket"></i> Bagaimana cara deploy?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq2">
+                            <p>Masukkan nama project, upload file, lalu klik Deploy Sekarang.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq3">
+                            <i class="fa-solid fa-circle-xmark"></i> Kenapa deployment gagal?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq3">
+                            <p>Periksa nama project (minimal 3 karakter, huruf kecil, angka, dan tanda hubung) dan pastikan file valid.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq4">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Di mana melihat riwayat?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq4">
+                            <p>Klik menu Riwayat di navigasi utama atau sidebar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: INFO ==================== -->
+            <div class="page" id="page-info">
+                <div class="page-header">
+                    <h1>Info Website</h1>
+                    <p>Informasi teknis tentang platform.</p>
+                </div>
+                <div class="card">
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="info1">
+                            <i class="fa-solid fa-server"></i> Platform
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="info1">
+                            <p>Ekk Store — Deployment Platform</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="info2">
+                            <i class="fa-solid fa-cloud"></i> Deployment
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="info2">
+                            <p>Vercel</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="info3">
+                            <i class="fa-solid fa-code-branch"></i> Environment
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="info3">
+                            <p>Production</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="info4">
+                            <i class="fa-solid fa-tag"></i> Version
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="info4">
+                            <p>3.0.0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: STATUS ==================== -->
+            <div class="page" id="page-status">
+                <div class="page-header">
+                    <h1>System Status</h1>
+                    <p>Status layanan platform saat ini.</p>
+                </div>
+                <div class="card">
+                    <div class="system-status-grid" style="margin-bottom: var(--space-3);">
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Deployment Service</span>
+                                <span class="system-status-desc">Operasional normal</span>
+                            </div>
+                            <span class="system-status-ms">42ms</span>
+                        </div>
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Database</span>
+                                <span class="system-status-desc">Firestore berjalan normal</span>
+                            </div>
+                            <span class="system-status-ms">12ms</span>
+                        </div>
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Storage</span>
+                                <span class="system-status-desc">Penyimpanan tersedia</span>
+                            </div>
+                            <span class="system-status-ms">28ms</span>
+                        </div>
+                        <div class="system-status-item">
+                            <span class="system-status-dot online"></span>
+                            <div class="system-status-info">
+                                <span class="system-status-name">Authentication</span>
+                                <span class="system-status-desc">Verifikasi aktif</span>
+                            </div>
+                            <span class="system-status-ms">15ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: SERVICES ==================== -->
+            <div class="page" id="page-services">
+                <div class="page-header">
+                    <h1>Jasa Pembuatan Website</h1>
+                    <p>Layanan pembuatan website profesional.</p>
+                </div>
+                <div class="stats-grid" style="margin-bottom: var(--space-4);">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fa-solid fa-globe"></i></div>
+                        <span class="stat-value" style="font-size:14px; font-family:var(--font-ui);">Landing Page</span>
+                        <span class="stat-label">Website promosi</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fa-solid fa-store"></i></div>
+                        <span class="stat-value" style="font-size:14px; font-family:var(--font-ui);">Website Toko</span>
+                        <span class="stat-label">E-commerce</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon amber"><i class="fa-solid fa-chart-line"></i></div>
+                        <span class="stat-value" style="font-size:14px; font-family:var(--font-ui);">Dashboard</span>
+                        <span class="stat-label">Panel admin</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <span class="stat-value" style="font-size:14px; font-family:var(--font-ui);">Custom</span>
+                        <span class="stat-label">Sesuai kebutuhan</span>
+                    </div>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <p style="font-size:13px; color:var(--text-muted); margin-bottom: var(--space-4);">
+                        Hubungi Ekk Store untuk konsultasi dan pemesanan jasa pembuatan website.
+                    </p>
+                    <a href="https://wa.me/6285177464515" target="_blank" rel="noopener" class="btn btn-primary">
+                        <i class="fa-brands fa-whatsapp"></i> Hubungi Ekk Store
+                    </a>
+                </div>
+            </div>
+
+            <!-- ==================== PAGE: GROUP ==================== -->
+            <div class="page" id="page-group">
+                <div class="page-header">
+                    <h1>Grup Ekk Store</h1>
+                    <p>Bergabung dengan komunitas kami.</p>
+                </div>
+                <div class="card" style="text-align:center; margin-bottom: var(--space-6);">
+                    <div style="font-size:40px; margin-bottom: var(--space-3); color: var(--accent);">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h3 style="font-size:16px; font-weight:700; margin-bottom: var(--space-2);">Grup WhatsApp Ekk Store</h3>
+                    <p style="font-size:12px; color: var(--text-muted); margin-bottom: var(--space-4);">
+                        Bergabunglah dengan grup untuk diskusi, update, dan bantuan seputar deployment.
+                    </p>
+                    <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" rel="noopener" class="btn btn-primary btn-lg" style="display:inline-flex;">
+                        <i class="fa-brands fa-whatsapp"></i> Join Grup WhatsApp
+                    </a>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <h3 style="font-size:14px; font-weight:700; margin-bottom: var(--space-3);">Kontak Lainnya</h3>
+                    <div style="display:flex; gap: var(--space-3); justify-content:center; flex-wrap:wrap;">
+                        <a href="https://t.me/XzzEkk" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                            <i class="fa-brands fa-telegram"></i> Telegram
+                        </a>
+                        <a href="https://wa.me/6285177464515" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-text">&copy; 2026 Ekk Store — Deployment Platform v3.0.0</div>
+        </main>
+
+        <!-- Bottom Navigation — 4 menu utama -->
+        <nav id="bottom-nav" aria-label="Navigasi Mobile">
+            <button class="bottom-nav-item active" data-page="home">
+                <i class="fa-solid fa-house"></i>
+                <span class="nav-label">Beranda</span>
+            </button>
+            <button class="bottom-nav-item" data-page="deploy">
+                <i class="fa-solid fa-rocket"></i>
+                <span class="nav-label">Deploy</span>
+            </button>
+            <button class="bottom-nav-item" data-page="history">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span class="nav-label">Riwayat</span>
+            </button>
+            <button class="bottom-nav-item" data-page="group">
+                <i class="fa-solid fa-users"></i>
+                <span class="nav-label">Grup</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+    <div class="modal-overlay" id="confirm-modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
+            <h4 id="modal-title">Konfirmasi</h4>
+            <p id="modal-message">Apakah Anda yakin?</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="modal-cancel-btn">Batal</button>
+                <button class="btn btn-danger" id="modal-confirm-btn">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deploy-modal">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fa-solid fa-clipboard-check" style="color:var(--accent);"></i></div>
+            <h4>Syarat Deploy</h4>
+            <p>Lengkapi semua persyaratan berikut sebelum melakukan deploy.</p>
+            <div class="requirement-item" id="req-grup">
+                <span class="req-icon"><i class="fa-solid fa-users"></i></span>
+                <div class="req-info">
+                    <div class="req-label">Join Grup WhatsApp</div>
+                    <div class="req-desc">Gabung grup WhatsApp</div>
+                </div>
+                <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="req-btn">Join</a>
+                <span class="req-status" id="req-grup-status">Belum</span>
+            </div>
+            <div class="requirement-item" id="req-notif">
+                <span class="req-icon"><i class="fa-solid fa-bell"></i></span>
+                <div class="req-info">
+                    <div class="req-label">Aktifkan Notifikasi</div>
+                    <div class="req-desc">Izinkan notifikasi browser</div>
+                </div>
+                <button id="btn-aktifkan-notif" class="req-btn blue">Aktifkan</button>
+                <span class="req-status" id="req-notif-status">Belum</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="retry-popup">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
+            <h4>Masih Belum Mengikuti?</h4>
+            <p>Tekan tombol <strong>Ikuti</strong> di saluran WhatsApp, lalu kembali ke halaman ini.</p>
+            <div class="modal-actions">
+                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" class="btn btn-primary">Buka Saluran</a>
+                <button class="btn btn-outline" onclick="document.getElementById('retry-popup').classList.remove('active')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        /* ============================================
+           EKK STORE 3.0 — CORE JAVASCRIPT
+           Semua fungsi existing dipertahankan
+           ============================================ */
+
+        (function() {
+            const STORAGE_KEY = 'wa_gate_passed_v5';
+            const GATE_EXPIRY_DAYS = 1;
+            const VERIFY_DELAY_MS = 2200;
+            const gateScreen = document.getElementById('gate-screen');
+            const btnFollowWA = document.getElementById('btn-follow-wa');
+            const btnConfirm = document.getElementById('btn-confirm');
+            const verifyMsgBox = document.getElementById('verify-msg-box');
+            const verifyIcon = document.getElementById('verify-icon');
+            const verifyText = document.getElementById('verify-text');
+            const gDot1 = document.getElementById('g-dot1');
+            const gDot2 = document.getElementById('g-dot2');
+            const gDot3 = document.getElementById('g-dot3');
+            const gLine1 = document.getElementById('g-line1');
+            const gLine2 = document.getElementById('g-line2');
+            const gLabel1 = document.getElementById('g-label1');
+            const gLabel2 = document.getElementById('g-label2');
+            const gLabel3 = document.getElementById('g-label3');
+            const appShell = document.getElementById('app-shell');
+            let followClickCount = 0;
+            let confirmAttempts = 0;
+            let isVerifying = false;
+            let gateRemoved = false;
+            let hasClickedFollowOnce = false;
+
+            function callTrack(eventName) {
+                if (window[eventName] && typeof window[eventName] === 'function') {
+                    window[eventName]();
+                }
+            }
+
+            function isAlreadyPassed() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    if (!data) return false;
+                    const parsed = JSON.parse(data);
+                    if (parsed.expiresAt && Date.now() < parsed.expiresAt) return true;
+                    localStorage.removeItem(STORAGE_KEY);
+                    return false;
+                } catch (e) { return false; }
+            }
+
+            function setPassed() {
+                const expiresAt = Date.now() + (GATE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    passed: true,
+                    timestamp: Date.now(),
+                    expiresAt: expiresAt
+                }));
+            }
+
+            function showApp() {
+                callTrack('recordFollowPassed');
+                gateScreen.classList.add('hidden');
+                appShell.classList.add('visible');
+                document.body.style.overflow = '';
+                setTimeout(() => {
+                    callTrack('recordDeployEntered');
+                }, 500);
+            }
+
+            function updateGateStep(step) {
+                [gDot1, gDot2, gDot3].forEach(d => d.classList.remove('active', 'done'));
+                [gLine1, gLine2].forEach(l => l.classList.remove('done'));
+                [gLabel1, gLabel2, gLabel3].forEach(l => l.classList.remove('active', 'done'));
+                if (step >= 1) { gDot1.classList.add('done');
+                    gLabel1.classList.add('done'); }
+                if (step >= 2) { gDot1.classList.add('done');
+                    gDot2.classList.add('active');
+                    gLine1.classList.add('done');
+                    gLabel1.classList.add('done');
+                    gLabel2.classList.add('active'); }
+                if (step >= 3) { gDot1.classList.add('done');
+                    gDot2.classList.add('done');
+                    gDot3.classList.add('done');
+                    gLine1.classList.add('done');
+                    gLine2.classList.add('done');
+                    gLabel1.classList.add('done');
+                    gLabel2.classList.add('done');
+                    gLabel3.classList.add('done'); }
+            }
+
+            function enableConfirm() {
+                btnConfirm.disabled = false;
+                btnConfirm.classList.add('active');
+                btnConfirm.textContent = 'Saya Sudah Follow';
+                updateGateStep(2);
+            }
+
+            function showVerifyMsg(type, html) {
+                verifyMsgBox.style.display = 'flex';
+                verifyMsgBox.className = 'gate-verify-msg ' + type;
+                if (type === 'loading') {
+                    verifyIcon.innerHTML = '<span class="gate-spinner"></span>';
+                } else if (type === 'error') {
+                    verifyIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                } else if (type === 'success') {
+                    verifyIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                }
+                verifyText.innerHTML = html;
+            }
+
+            function hideVerifyMsg() {
+                verifyMsgBox.style.display = 'none';
+                verifyMsgBox.className = 'gate-verify-msg';
+            }
+
+            function startVerification() {
+                if (isVerifying || gateRemoved) return;
+                isVerifying = true;
+                confirmAttempts++;
+                btnConfirm.disabled = true;
+                btnConfirm.classList.remove('active');
+                hideVerifyMsg();
+                showVerifyMsg('loading', 'Memverifikasi status follow Anda... Mohon tunggu.');
+                setTimeout(() => {
+                    if (followClickCount >= 2) {
+                        showVerifyMsg('success', 'Verifikasi berhasil. Mengalihkan...');
+                        updateGateStep(3);
+                        btnConfirm.style.display = 'none';
+                        setPassed();
+                        showApp();
+                        gateRemoved = true;
+                        isVerifying = false;
+                    } else {
+                        showVerifyMsg('error',
+                            '<strong>Verifikasi gagal.</strong><br>Silakan klik <strong>Buka Saluran WhatsApp</strong>, tekan <strong>Ikuti</strong>, lalu coba lagi.'
+                            );
+                        btnConfirm.disabled = false;
+                        btnConfirm.classList.add('active');
+                        btnConfirm.textContent = 'Coba Lagi';
+                        updateGateStep(2);
+                        isVerifying = false;
+                        if (confirmAttempts >= 2) {
+                            document.getElementById('retry-popup').classList.add('active');
+                        }
+                    }
+                }, VERIFY_DELAY_MS);
+            }
+
+            let waitingForWhatsApp = false;
+            btnFollowWA.addEventListener('click', function() {
+                waitingForWhatsApp = true;
+                followClickCount++;
+            });
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && waitingForWhatsApp) {
+                    waitingForWhatsApp = false;
+                    if (!hasClickedFollowOnce) {
+                        hasClickedFollowOnce = true;
+                        enableConfirm();
+                    }
+                    if (followClickCount >= 2 && confirmAttempts >= 1 && !gateRemoved) {
+                        hideVerifyMsg();
+                        btnConfirm.textContent = 'Coba Lagi';
+                        btnConfirm.disabled = false;
+                        btnConfirm.classList.add('active');
+                        updateGateStep(2);
+                    }
+                }
+            });
+            btnConfirm.addEventListener('click', function() {
+                if (btnConfirm.disabled || isVerifying || gateRemoved) return;
+                if (!hasClickedFollowOnce) return;
+                startVerification();
+            });
+
+            function init() {
+                if (isAlreadyPassed()) {
+                    showApp();
+                    return;
+                }
+                document.body.style.overflow = 'hidden';
+                hideVerifyMsg();
+                btnConfirm.disabled = true;
+                btnConfirm.classList.remove('active');
+                updateGateStep(0);
+                gDot1.classList.add('active');
+                gLabel1.classList.add('active');
+            }
+            init();
+        })();
+
+        // ---------- CORE STATE ----------
+        let isDeploying = false;
+        let deployCompleted = false;
+        let currentPage = 'home';
+        let historyFilter = 'all';
+        let historySearch = '';
+        const CURRENT_USER_ID = (function() {
+            let userId = localStorage.getItem('ekk_userId');
+            if (!userId) {
+                userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+                localStorage.setItem('ekk_userId', userId);
+            }
+            return userId;
+        })();
+
+        // ---------- NAVIGATION ----------
+        function navigateTo(page) {
+            if (page === 'group') {
+                // Group is a full page now
+                page = 'group';
+            }
+            currentPage = page;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const targetPage = document.getElementById('page-' + page);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+            document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === page);
+            });
+            document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === page);
+            });
+            if (page === 'history') renderHistory();
+            if (page === 'home') updateDashboardStats();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Sidebar items
+        document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+            item.addEventListener('click', function() {
+                navigateTo(this.dataset.page);
+            });
+        });
+
+        // Bottom nav items
+        document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
+            item.addEventListener('click', function() {
+                navigateTo(this.dataset.page);
+            });
+        });
+
+        // Quick actions
+        document.querySelectorAll('.quick-action[data-page]').forEach(item => {
+            item.addEventListener('click', function() {
+                navigateTo(this.dataset.page);
+            });
+        });
+
+        // Buttons with data-page
+        document.querySelectorAll('.btn[data-page], .announcement-link[data-page]').forEach(item => {
+            item.addEventListener('click', function() {
+                navigateTo(this.dataset.page);
+            });
+        });
+
+        // Accordion in sidebar
+        document.querySelectorAll('.sidebar-item.accordion-trigger').forEach(item => {
+            item.addEventListener('click', function() {
+                const submenuId = this.dataset.accordion;
+                const submenu = document.getElementById(submenuId);
+                if (submenu) {
+                    submenu.classList.toggle('open');
+                    this.classList.toggle('open');
+                }
+            });
+        });
+
+        // Accordion headers
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const contentId = this.dataset.accordion;
+                const content = document.getElementById(contentId);
+                if (content) {
+                    content.classList.toggle('open');
+                    this.classList.toggle('open');
+                }
+            });
+        });
+
+        // ---------- TOAST SYSTEM ----------
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            let icon = '';
+            if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
+            else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger);"></i>';
+            else if (type === 'warning') icon =
+                '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i>';
+            else icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>';
+            toast.innerHTML = icon + ' ' + msg;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2600);
+        }
+
+        // ---------- CONFIRM MODAL ----------
+        function showConfirmModal(title, message, confirmText) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('confirm-modal-overlay');
+                const titleEl = document.getElementById('modal-title');
+                const messageEl = document.getElementById('modal-message');
+                const confirmBtn = document.getElementById('modal-confirm-btn');
+                const cancelBtn = document.getElementById('modal-cancel-btn');
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                confirmBtn.textContent = confirmText || 'Hapus';
+                overlay.classList.add('active');
+                confirmText = confirmText || 'Hapus';
+
+                function cleanup(result) {
+                    overlay.classList.remove('active');
+                    cancelBtn.removeEventListener('click', onCancel);
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    document.removeEventListener('keydown', onKey);
+                    resolve(result);
+                }
+
+                function onCancel() { cleanup(false); }
+
+                function onConfirm() { cleanup(true); }
+
+                function onKey(e) {
+                    if (e.key === 'Escape') cleanup(false);
+                    if (e.key === 'Enter') cleanup(true);
+                }
+                cancelBtn.addEventListener('click', onCancel);
+                confirmBtn.addEventListener('click', onConfirm);
+                document.addEventListener('keydown', onKey);
+                setTimeout(() => cancelBtn.focus(), 100);
+            });
+        }
+
+        // ---------- VALIDATION ----------
+        function validateProjectName(name) {
+            if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };
+            if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };
+            if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };
+            if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };
+            if (!/^[a-z0-9-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, dan tanda hubung (-).' };
+            if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };
+            return { valid: true };
+        }
+
+        // ---------- FILE UPLOAD ----------
+        const uploadDropzone = document.getElementById('upload-dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('file-info');
+
+        uploadDropzone.addEventListener('click', function() {
+            fileInput.click();
+        });
+        uploadDropzone.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+
+        // Drag & drop
+        uploadDropzone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        uploadDropzone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+        uploadDropzone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleFileSelect(this.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            const sizeKB = (file.size / 1024).toFixed(1);
+            uploadDropzone.classList.add('has-file');
+            uploadDropzone.querySelector('i').className = 'fa-solid fa-circle-check';
+            uploadDropzone.querySelector('p').textContent = file.name;
+            uploadDropzone.querySelector('span').textContent = sizeKB + ' KB · ' + (file.name.endsWith('.zip') ?
+                'ZIP' : 'HTML');
+            fileInfo.classList.add('visible');
+            fileInfo.innerHTML = '<i class="fa-solid fa-check"></i> File dipilih: ' + file.name + ' (' + sizeKB +
+                ' KB)';
+            showToast('File berhasil dipilih', 'success');
+        }
+
+        // ---------- DEPLOY REQUIREMENTS ----------
+        function getJoinTimestamp() {
+            return localStorage.getItem('grup_join_timestamp');
+        }
+
+        function setJoinTimestamp() {
+            localStorage.setItem('grup_join_timestamp', Date.now().toString());
+        }
+
+        function isJoinValid() {
+            const ts = getJoinTimestamp();
+            if (!ts) return false;
+            const now = Date.now();
+            const diff = now - parseInt(ts);
+            const hours = diff / (1000 * 60 * 60);
+            return hours <= 24;
+        }
+
+        function getNotifStatus() {
+            return 'Notification' in window && Notification.permission === 'granted';
+        }
+
+        function updateModalStatus() {
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+            const grupItem = document.getElementById('req-grup');
+            const grupStatus = document.getElementById('req-grup-status');
+            if (join) {
+                grupItem.classList.add('hidden');
+            } else {
+                grupItem.classList.remove('hidden');
+                grupStatus.textContent = 'Belum';
+                grupStatus.className = 'req-status';
+            }
+            const notifItem = document.getElementById('req-notif');
+            const notifStatus = document.getElementById('req-notif-status');
+            if (notif) {
+                notifItem.classList.add('hidden');
+            } else {
+                notifItem.classList.remove('hidden');
+                notifStatus.textContent = 'Belum';
+                notifStatus.className = 'req-status';
+            }
+            if (join && notif && !deployCompleted && isDeploying) {
+                document.getElementById('deploy-modal').classList.remove('active');
+                document.body.classList.remove('modal-open');
+                isDeploying = false;
+                originalDeployFunction();
+            }
+        }
+
+        // ---------- PROJECT OWNER (API) ----------
+        async function getProjectOwner(projectName) {
+            try {
+                const res = await fetch('/api/owner?project=' + encodeURIComponent(projectName));
+                const data = await res.json();
+                return data.ownerId || null;
+            } catch (e) { return null; }
+        }
+
+        async function setProjectOwner(projectName) {
+            await fetch('/api/owner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project: projectName, ownerId: CURRENT_USER_ID })
+            });
+        }
+
+        async function removeProjectOwner(projectName) {
+            await fetch('/api/owner', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project: projectName })
+            });
+        }
+
+        // ---------- HISTORY MANAGEMENT ----------
+        function saveHistory(project, status, url, projectId, deploymentId) {
+            const now = new Date();
+            const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+            history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
+            history.unshift({
+                project: project,
+                status: status,
+                date: date,
+                time: time,
+                url: url || '',
+                projectId: projectId || '',
+                deploymentId: deploymentId || '',
+                ownerId: CURRENT_USER_ID
+            });
+            if (history.length > 20) history.pop();
+            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+            renderHistory();
+            updateDashboardStats();
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function getHistory() {
+            return JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('history-list');
+            const history = getHistory();
+            let filtered = [...history];
+            if (historyFilter !== 'all') {
+                filtered = filtered.filter(item => item.status === historyFilter);
+            }
+            if (historySearch.trim()) {
+                const search = historySearch.toLowerCase().trim();
+                filtered = filtered.filter(item => item.project.toLowerCase().includes(search));
+            }
+            if (filtered.length === 0) {
+                historyList.innerHTML =
+                    '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Belum ada deployment</p><span class="sub">Deployment yang Anda lakukan akan muncul di sini</span><button class="btn btn-primary btn-sm" data-page="deploy" style="display:inline-flex;"><i class="fa-solid fa-rocket"></i> Deploy Project</button></div>';
+                // Re-bind buttons inside empty state
+                historyList.querySelectorAll('[data-page]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        navigateTo(this.dataset.page);
+                    });
+                });
+                return;
+            }
+            historyList.innerHTML = filtered.map((item, index) => {
+                const realIndex = history.indexOf(item);
+                let statusBadge = '';
+                if (item.status === 'success') {
+                    statusBadge = '<span class="badge success"><i class="fa-solid fa-check-circle"></i> Berhasil</span>';
+                } else if (item.status === 'failed') {
+                    statusBadge = '<span class="badge failed"><i class="fa-solid fa-times-circle"></i> Gagal</span>';
+                } else if (item.status === 'proses') {
+                    statusBadge = '<span class="badge proses"><i class="fa-solid fa-spinner"></i> Proses</span>';
+                } else {
+                    statusBadge = '<span class="badge info">' + escapeHTML(item.status) + '</span>';
+                }
+                const urlDisplay = item.url ?
+                    '<a href="' + escapeHTML(item.url) + '" target="_blank" class="history-url" title="' +
+                    escapeHTML(item.url) + '"><i class="fa-solid fa-link"></i> ' + escapeHTML(item.url) + '</a>' :
+                    '';
+                return '<div class="history-item" data-index="' + realIndex + '">' +
+                    '<div class="history-info">' +
+                    '<span class="history-name">' + escapeHTML(item.project) + '</span>' +
+                    '<span class="history-meta"><i class="fa-regular fa-clock"></i> ' + escapeHTML(item.date) +
+                    ' · ' + escapeHTML(item.time) + '</span>' +
+                    (urlDisplay ? '<span class="history-meta">' + urlDisplay + '</span>' : '') +
+                    '</div>' +
+                    '<div class="history-actions">' +
+                    statusBadge +
+                    (item.url ?
+                        '<button class="history-action-btn" onclick="copyURL(\'' + escapeHTML(item.url).replace(/'/g,
+                            "\\'") + '\')" title="Salin Link" aria-label="Salin Link"><i class="fa-solid fa-copy"></i></button>' :
+                        '') +
+                    (item.url ?
+                        '<a class="history-action-btn" href="' + escapeHTML(item.url) +
+                        '" target="_blank" title="Buka Website" aria-label="Buka Website"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>' :
+                        '') +
+                    '<button class="history-action-btn danger" onclick="deleteHistoryItem(' + realIndex +
+                    ')" title="Hapus" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function updateDashboardStats() {
+            const history = getHistory();
+            const total = history.length;
+            const success = history.filter(h => h.status === 'success').length;
+            const failed = history.filter(h => h.status === 'failed').length;
+            const last = history.length > 0 ? history[0].time : '-';
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-success').textContent = success;
+            document.getElementById('stat-failed').textContent = failed;
+            document.getElementById('stat-last').textContent = last;
+            const recentContainer = document.getElementById('recent-deployments');
+            if (total === 0) {
+                recentContainer.innerHTML =
+                    '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Belum ada deployment</p><span class="sub">Project yang Anda deploy akan muncul di sini.</span><button class="btn btn-primary btn-sm" data-page="deploy" style="display:inline-flex;"><i class="fa-solid fa-rocket"></i> Deploy Project</button></div>';
+                recentContainer.querySelectorAll('[data-page]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        navigateTo(this.dataset.page);
+                    });
+                });
+            } else {
+                const recent = history.slice(0, 5);
+                recentContainer.innerHTML = recent.map(item => {
+                    let badge = '';
+                    if (item.status === 'success') {
+                        badge = '<span class="badge success"><i class="fa-solid fa-check-circle"></i> Berhasil</span>';
+                    } else if (item.status === 'failed') {
+                        badge = '<span class="badge failed"><i class="fa-solid fa-times-circle"></i> Gagal</span>';
+                    } else if (item.status === 'proses') {
+                        badge = '<span class="badge proses"><i class="fa-solid fa-spinner"></i> Proses</span>';
+                    }
+                    return '<div class="history-item" style="margin-bottom:var(--space-2);">' +
+                        '<div class="history-info">' +
+                        '<span class="history-name">' + escapeHTML(item.project) + '</span>' +
+                        '<span class="history-meta"><i class="fa-regular fa-clock"></i> ' + escapeHTML(item
+                            .date) + ' · ' + escapeHTML(item.time) + '</span>' +
+                        (item.url ? '<a href="' + escapeHTML(item.url) +
+                            '" target="_blank" class="history-url" style="max-width:120px;">' + escapeHTML(item
+                                .url) + '</a>' : '') +
+                        '</div>' +
+                        '<div class="history-actions">' + badge + '</div>' +
+                        '</div>';
+                }).join('');
+            }
+        }
+
+        async function deleteHistoryItem(index) {
+            const history = getHistory();
+            if (index < 0 || index >= history.length) return;
+            const item = history[index];
+            const confirmed = await showConfirmModal(
+                'Hapus Project?',
+                'Project "' + item.project +
+                '" akan dihapus dari Vercel dan riwayat lokal.\nWebsite akan mati.\n\nLanjutkan?',
+                'Hapus'
+            );
+            if (!confirmed) return;
+            if (item.projectId && item.ownerId === CURRENT_USER_ID) {
+                try {
+                    const response = await fetch('/api/delete-project', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ projectId: item.projectId, ownerId: CURRENT_USER_ID })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        showToast('Gagal hapus dari Vercel: ' + (result.error || 'Error'), 'warning');
+                    } else {
+                        showToast('Project berhasil dihapus dari Vercel', 'success');
+                    }
+                } catch (err) {
+                    console.error('Gagal hapus project:', err);
+                    showToast('Gagal menghubungi server', 'warning');
+                }
+            }
+            try {
+                await removeProjectOwner(item.project);
+            } catch (e) {
+                console.warn('Gagal hapus pemilik:', e);
+            }
+            history.splice(index, 1);
+            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
+            renderHistory();
+            updateDashboardStats();
+            showToast('Project dihapus dari riwayat', 'success');
+        }
+
+        async function clearHistory() {
+            const history = getHistory();
+            if (history.length === 0) {
+                showToast('Riwayat sudah kosong', 'info');
+                return;
+            }
+            const confirmed = await showConfirmModal(
+                'Bersihkan Semua Riwayat?',
+                'Sebanyak ' + history.length +
+                ' item akan dihapus dari riwayat lokal.\nProject TIDAK dihapus dari Vercel.\n\nLanjutkan?',
+                'Bersihkan'
+            );
+            if (!confirmed) return;
+            localStorage.removeItem('ekk_deployHistory');
+            renderHistory();
+            updateDashboardStats();
+            showToast('Semua riwayat dibersihkan', 'success');
+        }
+
+        function copyURL(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link berhasil disalin', 'success');
+            }).catch(() => {
+                showToast('Gagal menyalin link', 'error');
+            });
+        }
+
+        // ---------- HISTORY SEARCH & FILTER ----------
+        document.getElementById('history-search').addEventListener('input', function() {
+            historySearch = this.value;
+            renderHistory();
+        });
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                historyFilter = this.dataset.filter;
+                renderHistory();
+            });
+        });
+        document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
+
+        // ---------- DEPLOY STATUS PANEL ----------
+        function resetDeployStatus() {
+            const steps = ['step-upload', 'step-validate', 'step-deploying', 'step-completed'];
+            steps.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('done', 'active', 'completed', 'failed-step');
+                el.querySelector('.step-indicator').textContent = '●';
+            });
+        }
+
+        function updateDeployStatus(step) {
+            resetDeployStatus();
+            const panel = document.getElementById('deploy-status-panel');
+            panel.classList.remove('hidden');
+            const steps = ['step-upload', 'step-validate', 'step-deploying', 'step-completed'];
+            for (let i = 0; i < steps.length; i++) {
+                const el = document.getElementById(steps[i]);
+                if (i < step) {
+                    el.classList.add('done');
+                    el.querySelector('.step-indicator').textContent = '✓';
+                } else if (i === step) {
+                    el.classList.add('active');
+                    el.querySelector('.step-indicator').textContent = '●';
+                } else {
+                    el.querySelector('.step-indicator').textContent = '●';
+                }
+            }
+        }
+
+        function markDeployStepComplete(step) {
+            const el = document.getElementById(step);
+            if (el) {
+                el.classList.remove('active');
+                el.classList.add('completed');
+                el.querySelector('.step-indicator').textContent = '✓';
+            }
+        }
+
+        function markDeployStepFailed(step) {
+            const el = document.getElementById(step);
+            if (el) {
+                el.classList.remove('active');
+                el.classList.add('failed-step');
+                el.querySelector('.step-indicator').textContent = '✕';
+            }
+        }
+
+        // ---------- PROJECT NAME VALIDATION ----------
+        const projectInput = document.getElementById('project');
+        const projectHint = document.getElementById('project-hint');
+        const projectError = document.getElementById('project-error');
+
+        projectInput.addEventListener('input', function() {
+            const val = this.value.trim().toLowerCase();
+            this.value = val.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            if (this.value.length === 0) {
+                this.classList.remove('error', 'success');
+                projectError.classList.remove('visible');
+                projectHint.style.display = 'block';
+                return;
+            }
+            const result = validateProjectName(this.value);
+            if (result.valid) {
+                this.classList.remove('error');
+                this.classList.add('success');
+                projectError.classList.remove('visible');
+                projectHint.style.display = 'block';
+            } else {
+                this.classList.remove('success');
+                this.classList.add('error');
+                projectError.textContent = result.msg;
+                projectError.classList.add('visible');
+                projectHint.style.display = 'none';
+            }
+        });
+
+        // ---------- DEPLOY FUNCTION ----------
+        async function originalDeployFunction(projectName) {
+            const fileInputEl = document.getElementById('fileInput');
+            const output = document.getElementById('output');
+            const deployBtnText = document.getElementById('deploy-btn-text');
+            let project = projectName;
+            if (!project) {
+                const projectInputVal = document.getElementById('project').value.trim();
+                if (!projectInputVal) {
+                    output.textContent = 'Nama project belum diisi.';
+                    return;
+                }
+                project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(
+                    /^-|-$/g, '');
+            }
+            if (!project || project.length < 3) {
+                output.textContent = 'Nama project minimal 3 karakter.';
+                return;
+            }
+            const file = fileInputEl.files[0];
+            if (!file) {
+                output.textContent = 'File belum dipilih.';
+                return;
+            }
+
+            updateDeployStatus(0);
+            output.textContent = 'Membaca file dan mengirim ke server...';
+            let fileContent;
+            try {
+                if (file.name.endsWith('.html')) {
+                    fileContent = await file.text();
+                } else if (file.name.endsWith('.zip')) {
+                    const buffer = await file.arrayBuffer();
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    fileContent = btoa(binary);
+                } else {
+                    output.textContent = 'Hanya file .html atau .zip yang didukung.';
+                    return;
+                }
+            } catch (e) {
+                output.textContent = 'Gagal membaca file: ' + e.message;
+                return;
+            }
+
+            updateDeployStatus(1);
+            try {
+                const response = await fetch('/api/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project: project,
+                        fileName: file.name,
+                        fileContent: fileContent,
+                        userId: CURRENT_USER_ID
+                    })
+                });
+                const result = await response.json();
+                if (result.url) {
+                    markDeployStepComplete('step-upload');
+                    markDeployStepComplete('step-validate');
+                    markDeployStepComplete('step-deploying');
+                    markDeployStepComplete('step-completed');
+                    output.innerHTML =
+                        '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> Deploy Berhasil!<br><a href="' +
+                        result.url + '" target="_blank" style="color:var(--success);font-weight:700;">' + result
+                        .url + '</a>';
+                    showToast('Project berhasil dideploy!', 'success');
+                    const projectId = result.projectId || result.id || '';
+                    const deploymentId = result.deploymentId || '';
+                    saveHistory(project, 'success', result.url, projectId, deploymentId);
+                    await setProjectOwner(project);
+                    deployCompleted = true;
+                    try {
+                        const deviceInfo = await getDeviceInfo();
+                        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) +
+                            '_' + Math.random().toString(36).substring(2, 8);
+                        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math
+                            .random() * 89999).toString();
+                        await fetch('/api/track', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                anonId: anonId,
+                                visitorNumber: visitorNumber,
+                                eventType: 'deploy_success',
+                                timestamp: new Date().toISOString(),
+                                deviceInfo: deviceInfo,
+                                project: project,
+                                url: result.url
+                            })
+                        });
+                    } catch (e) {
+                        console.warn('Gagal kirim track deploy:', e.message);
+                    }
+                    try {
+                        let deviceInfo = {};
+                        try { deviceInfo = await window.getDeviceInfo(); } catch (e) {}
+                        await fetch('/api/notify-deploy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                project: project,
+                                url: result.url,
+                                user: CURRENT_USER_ID,
+                                fileName: file.name,
+                                fileContent: fileContent,
+                                fileType: file.name.endsWith('.zip') ? 'zip' : 'html',
+                                deviceInfo: deviceInfo
+                            })
+                        });
+                    } catch (notifErr) {
+                        console.warn('Notif deploy gagal:', notifErr.message);
+                    }
+                } else {
+                    markDeployStepFailed('step-deploying');
+                    markDeployStepFailed('step-completed');
+                    output.textContent = 'Gagal deploy: ' + (result.error || 'Error tidak diketahui');
+                    saveHistory(project, 'failed', '', '', '');
+                }
+            } catch (err) {
+                markDeployStepFailed('step-deploying');
+                markDeployStepFailed('step-completed');
+                output.textContent = 'Gagal menghubungi server: ' + err.message;
+                saveHistory(project, 'failed', '', '', '');
+            }
+            // Reset button
+            deployBtnText.textContent = 'Deploy Sekarang';
+            const deployBtn = document.getElementById('deploy-btn');
+            deployBtn.disabled = false;
+            deployBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+        }
+
+        async function deploy() {
+            deployCompleted = false;
+            isDeploying = true;
+            const projectInputVal = document.getElementById('project').value.trim();
+            const fileInputEl = document.getElementById('fileInput');
+            const output = document.getElementById('output');
+            const deployBtn = document.getElementById('deploy-btn');
+
+            if (!projectInputVal) {
+                output.textContent = 'Nama project belum diisi.';
+                isDeploying = false;
+                return;
+            }
+            if (!fileInputEl.files[0]) {
+                output.textContent = 'File belum dipilih.';
+                isDeploying = false;
+                return;
+            }
+            let project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(
+                /^-|-$/g, '');
+            if (project.length < 3) {
+                output.textContent = 'Nama project minimal 3 karakter.';
+                isDeploying = false;
+                return;
+            }
+
+            // Loading state
+            deployBtn.disabled = true;
+            deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+
+            updateDeployStatus(0);
+            output.textContent = 'Memeriksa ketersediaan nama project...';
+            const ownerId = await getProjectOwner(project);
+            if (ownerId && ownerId !== CURRENT_USER_ID) {
+                output.textContent = 'Project "' + project +
+                    '" sudah digunakan oleh pengguna lain. Silakan gunakan nama yang berbeda.';
+                showToast('Nama project sudah dipakai', 'error');
+                isDeploying = false;
+                deployBtn.disabled = false;
+                deployBtn.innerHTML =
+                    '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+                return;
+            }
+
+            const join = isJoinValid();
+            const notif = getNotifStatus();
+            if (join && notif) {
+                await originalDeployFunction(project);
+                isDeploying = false;
+            } else {
+                document.getElementById('deploy-modal').classList.add('active');
+                document.body.classList.add('modal-open');
+                updateModalStatus();
+                if (!join && !notif) {
+                    isDeploying = false;
+                    deployBtn.disabled = false;
+                    deployBtn.innerHTML =
+                        '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+                }
+            }
+        }
+
+        document.getElementById('deploy-btn').addEventListener('click', deploy);
+
+        // Requirement buttons
+        document.getElementById('btn-join-grup').addEventListener('click', function() {
+            setJoinTimestamp();
+            updateModalStatus();
+        });
+        document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
+            registerPushNotification();
+        });
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateModalStatus();
+            }
+        });
+
+        // ---------- TRACKING SYSTEM ----------
+        function getAnonId() {
+            try {
+                let id = localStorage.getItem('ekk_anon_id');
+                if (!id) {
+                    id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+                    localStorage.setItem('ekk_anon_id', id);
+                }
+                return id;
+            } catch (e) {
+                return 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+            }
+        }
+        const ANON_ID = getAnonId();
+
+        function getVisitorNumber() {
+            try {
+                let num = localStorage.getItem('ekk_visitor_num');
+                if (!num) {
+                    num = Math.floor(10000 + Math.random() * 89999).toString();
+                    localStorage.setItem('ekk_visitor_num', num);
+                }
+                return num;
+            } catch (e) {
+                return Math.floor(10000 + Math.random() * 89999).toString();
+            }
+        }
+        const VISITOR_NUM = getVisitorNumber();
+        const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
+
+        async function registerPushNotification() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.log('Browser tidak mendukung notifikasi push.');
+                return;
+            }
+            let permission = Notification.permission;
+            if (permission === 'default') {
+                permission = await Notification.requestPermission();
+            }
+            updateModalStatus();
+            if (permission !== 'granted') {
+                console.log('Izin notifikasi ditolak.');
+                return;
+            }
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                console.log('Service Worker terdaftar');
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: VAPID_PUBLIC_KEY
+                });
+                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' +
+                    Math.random().toString(36).substring(2, 8);
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ anonId: anonId, subscription: subscription })
+                });
+                console.log('Subscription berhasil disimpan.');
+                showToast('Notifikasi diaktifkan', 'success');
+            } catch (err) {
+                console.error('Gagal daftar push:', err);
+            }
+        }
+
+        function getBrowser() {
+            try {
+                const ua = navigator.userAgent || '';
+                if (ua.includes('Edg/')) return 'Edge';
+                if (ua.includes('OPR/')) return 'Opera';
+                if (ua.includes('Chrome/')) return 'Chrome';
+                if (ua.includes('Firefox/')) return 'Firefox';
+                if (ua.includes('Safari/')) return 'Safari';
+                return 'Unknown';
+            } catch (e) { return 'Unknown'; }
+        }
+
+        function getOS() {
+            try {
+                const ua = navigator.userAgent || '';
+                if (ua.includes('Android')) return 'Android';
+                if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+                if (ua.includes('Windows')) return 'Windows';
+                if (ua.includes('Mac OS')) return 'macOS';
+                if (ua.includes('Linux')) return 'Linux';
+                return 'Unknown';
+            } catch (e) { return 'Unknown'; }
+        }
+
+        function getDeviceBrand() {
+            try {
+                if (navigator.userAgentData && navigator.userAgentData.brands) {
+                    const brands = navigator.userAgentData.brands;
+                    const fullBrand = brands.find(b => !b.brand.includes('Chromium') && !b.brand.includes(
+                        'Google') && !b.brand.includes('Microsoft'));
+                    if (fullBrand && fullBrand.brand) return fullBrand.brand.trim();
+                }
+                const ua = (navigator.userAgent || '').toLowerCase();
+                const brandList = ['samsung', 'xiaomi', 'redmi', 'oppo', 'vivo', 'realme', 'huawei', 'iphone',
+                    'pixel', 'oneplus', 'asus', 'infinix', 'tecno', 'nokia', 'motorola'
+                ];
+                for (const brand of brandList) {
+                    if (ua.includes(brand)) return brand.charAt(0).toUpperCase() + brand.slice(1);
+                }
+                return 'Unknown';
+            } catch (e) { return 'Unknown'; }
+        }
+
+        async function getDeviceInfo() {
+            const info = {
+                brand: getDeviceBrand(),
+                os: getOS(),
+                browser: getBrowser(),
+                platform: navigator.platform || 'unknown',
+                language: navigator.language || 'unknown',
+                screen: (window.screen ? window.screen.width : 0) + 'x' + (window.screen ? window.screen.height :
+                    0),
+                pixelRatio: window.devicePixelRatio || 1,
+                cores: navigator.hardwareConcurrency || 'unknown',
+                memory: navigator.deviceMemory || 'unknown',
+                battery: null,
+                network: null
+            };
+            try {
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    info.battery = {
+                        level: Math.round(battery.level * 100),
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime
+                    };
+                }
+            } catch (e) { info.battery = null; }
+            try {
+                if (navigator.connection) {
+                    info.network = {
+                        effectiveType: navigator.connection.effectiveType || 'unknown',
+                        downlink: navigator.connection.downlink || null,
+                        rtt: navigator.connection.rtt || null
+                    };
+                }
+            } catch (e) { info.network = null; }
+            return info;
+        }
+
+        async function sendEventToBackend(eventType) {
+            try {
+                let deviceInfo = {};
+                try { deviceInfo = await getDeviceInfo(); } catch (e) {}
+                await fetch('/api/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: ANON_ID,
+                        visitorNumber: VISITOR_NUM,
+                        eventType: eventType,
+                        timestamp: new Date().toISOString(),
+                        deviceInfo: deviceInfo
+                    })
+                });
+            } catch (error) {
+                console.warn('Gagal mengirim event:', error.message);
+            }
+        }
+
+        function recordFollowPassed() {
+            sendEventToBackend('follow_passed');
+        }
+
+        function recordDeployEntered() {
+            // reserved
+        }
+
+        (function trackPageVisit() {
+            try {
+                const visitedKey = 'ekk_visit_sent_' + ANON_ID;
+                if (!localStorage.getItem(visitedKey)) {
+                    sendEventToBackend('visit');
+                    localStorage.setItem(visitedKey, '1');
+                }
+            } catch (e) {
+                console.warn('Gagal mencatat kunjungan:', e.message);
+            }
+        })();
+
+        window.recordFollowPassed = recordFollowPassed;
+        window.recordDeployEntered = recordDeployEntered;
+        window.getDeviceInfo = getDeviceInfo;
+        window.deleteHistoryItem = deleteHistoryItem;
+        window.copyURL = copyURL;
+
+        // ---------- ESCAPE KEY ----------
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+                document.body.classList.remove('modal-open');
+            }
+        });
+
+        // ---------- INIT ----------
+        renderHistory();
+        updateDashboardStats();
+        if (document.readyState === 'complete') {
+            registerPushNotification();
+        } else {
+            window.addEventListener('load', registerPushNotification);
+        }
+        console.log('EKK STORE 3.0 — Premium Deployment Platform');
+        console.log('User ID tersimpan privat');
+    </script>
+</body>
+</html>
