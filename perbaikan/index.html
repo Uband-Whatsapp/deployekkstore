@@ -1350,60 +1350,180 @@
         .deploy-status-panel.hidden {
             display: none;
         }
-        .status-step {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-2) 0;
-            font-size: 12px;
-            color: var(--text-muted);
-            transition: all var(--transition);
-        }
-        .status-step .step-indicator {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            flex-shrink: 0;
-            transition: all var(--transition);
-        }
-        .status-step.done {
-            color: var(--success);
-        }
-        .status-step.done .step-indicator {
-            border-color: var(--success);
-            background: var(--success-soft);
-            color: var(--success);
-        }
-        .status-step.active {
-            color: var(--accent);
-            font-weight: 600;
-        }
-        .status-step.active .step-indicator {
-            border-color: var(--accent);
-            border-top-color: transparent;
-            animation: spin 0.7s linear infinite;
-        }
-        .status-step.completed {
-            color: var(--text);
-        }
-        .status-step.completed .step-indicator {
-            border-color: var(--success);
-            background: var(--success);
-            color: #fff;
-        }
-        .status-step.failed-step {
-            color: var(--danger);
-        }
-        .status-step.failed-step .step-indicator {
-            border-color: var(--danger);
-            background: var(--danger);
-            color: #fff;
-        }
+        /* ================================
+   DEPLOYMENT STATUS
+================================ */
+
+.status-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+
+    margin-top: 12px;
+    padding: 14px 4px;
+}
+
+/* Item status */
+.status-step {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+    min-width: 0;
+
+    padding: 10px 11px;
+
+    border-radius: 10px;
+
+    font-size: 12px;
+    line-height: 1.2;
+
+    color: var(--text-muted);
+
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.035);
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+/* Hover */
+.status-step:hover {
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.07);
+    transform: translateY(-1px);
+}
+
+/* Indicator */
+.status-step .step-indicator {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+
+    border-radius: 50%;
+    border: 2px solid var(--border);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    flex-shrink: 0;
+
+    transition: all var(--transition);
+}
+
+/* Text */
+.status-step span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* ================================
+   DONE
+================================ */
+
+.status-step.done {
+    color: var(--success);
+}
+
+.status-step.done .step-indicator {
+    border-color: var(--success);
+    background: var(--success-soft);
+    color: var(--success);
+
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.06);
+}
+
+
+/* ================================
+   ACTIVE
+================================ */
+
+.status-step.active {
+    color: var(--accent);
+    font-weight: 600;
+
+    border-color: rgba(59, 130, 246, 0.15);
+    background: rgba(59, 130, 246, 0.045);
+}
+
+.status-step.active .step-indicator {
+    border-color: var(--accent);
+    border-top-color: transparent;
+
+    animation: spin 0.7s linear infinite;
+}
+
+
+/* ================================
+   COMPLETED
+================================ */
+
+.status-step.completed {
+    color: var(--text);
+}
+
+.status-step.completed .step-indicator {
+    border-color: var(--success);
+    background: var(--success);
+    color: #fff;
+
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.08);
+}
+
+
+/* ================================
+   FAILED
+================================ */
+
+.status-step.failed-step {
+    color: var(--danger);
+}
+
+.status-step.failed-step .step-indicator {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: #fff;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 480px) {
+
+    .status-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 8px;
+        margin-top: 10px;
+        padding: 12px 2px;
+    }
+
+    .status-step {
+        gap: 7px;
+        padding: 9px 8px;
+
+        border-radius: 9px;
+        font-size: 11px;
+    }
+
+    .status-step .step-indicator {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+
+        font-size: 8px;
+    }
+}
 
         /* History List with internal scroll */
         .history-list-container {
