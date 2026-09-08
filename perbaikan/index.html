@@ -1480,42 +1480,6 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
-.system-status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    width: 100%;
-}
-
-@media (min-width: 768px) {
-    .system-status-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 360px) {
-    .system-status-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.system-status-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 15px;
-    background: var(--bg-input);
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    transition: all var(--transition);
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.system-status-item:hover {
-    border-color: var(--border-light);
-}
 
 .system-status-dot {
     width: 9px;
@@ -2172,6 +2136,33 @@
                 font-size: 10px;
             }
         }
+.system-status-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+}
+
+.system-status-item {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 12px !important;
+}
+
+/* Tetap 2 kolom di HP */
+@media (max-width: 767px) {
+    .system-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* Desktop juga 2 kolom */
+@media (min-width: 768px) {
+    .system-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
     </style>
 </head>
 <body>
@@ -3520,50 +3511,191 @@
         });
         document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
 
-        // ---------- DEPLOY STATUS PANEL ----------
+        // ---------- DEPLOY STATUS ----------
         function resetDeployStatus() {
             const steps = ['step-upload', 'step-validate', 'step-deploying', 'step-completed'];
+
             steps.forEach(id => {
                 const el = document.getElementById(id);
+
+                if (!el) return;
+
                 el.classList.remove('done', 'active', 'completed', 'failed-step');
-                el.querySelector('.step-indicator').textContent = '●';
+
+                const indicator = el.querySelector('.step-indicator');
+                if (indicator) {
+                    indicator.textContent = '●';
+                }
             });
         }
 
         function updateDeployStatus(step) {
             resetDeployStatus();
+
             const panel = document.getElementById('deploy-status-panel');
-            panel.classList.remove('hidden');
+
+            if (panel) {
+                panel.classList.remove('hidden');
+            }
+
             const steps = ['step-upload', 'step-validate', 'step-deploying', 'step-completed'];
+
             for (let i = 0; i < steps.length; i++) {
                 const el = document.getElementById(steps[i]);
+
+                if (!el) continue;
+
+                const indicator = el.querySelector('.step-indicator');
+
                 if (i < step) {
                     el.classList.add('done');
-                    el.querySelector('.step-indicator').textContent = '✓';
+
+                    if (indicator) {
+                        indicator.textContent = '✓';
+                    }
                 } else if (i === step) {
                     el.classList.add('active');
-                    el.querySelector('.step-indicator').textContent = '●';
+
+                    if (indicator) {
+                        indicator.textContent = '●';
+                    }
                 } else {
-                    el.querySelector('.step-indicator').textContent = '●';
+                    if (indicator) {
+                        indicator.textContent = '●';
+                    }
                 }
             }
         }
 
         function markDeployStepComplete(step) {
             const el = document.getElementById(step);
-            if (el) {
-                el.classList.remove('active');
-                el.classList.add('completed');
-                el.querySelector('.step-indicator').textContent = '✓';
+
+            if (!el) return;
+
+            el.classList.remove('active', 'failed-step', 'done');
+            el.classList.add('completed');
+
+            const indicator = el.querySelector('.step-indicator');
+
+            if (indicator) {
+                indicator.textContent = '✓';
             }
         }
 
         function markDeployStepFailed(step) {
             const el = document.getElementById(step);
-            if (el) {
-                el.classList.remove('active');
-                el.classList.add('failed-step');
-                el.querySelector('.step-indicator').textContent = '✕';
+
+            if (!el) return;
+
+            el.classList.remove('active', 'completed', 'done');
+            el.classList.add('failed-step');
+
+            const indicator = el.querySelector('.step-indicator');
+
+            if (indicator) {
+                indicator.textContent = '✕';
+            }
+        }
+
+        /*
+         * Reset seluruh tampilan deploy setelah deployment berhasil.
+         * Fungsi ini HANYA dipanggil setelah result.url benar-benar diterima.
+         */
+        function resetDeployUIAfterSuccess() {
+            const statusPanel = document.getElementById('deploy-status-panel');
+            const output = document.getElementById('output');
+            const projectInputEl = document.getElementById('project');
+            const fileInputEl = document.getElementById('fileInput');
+            const projectHintEl = document.getElementById('project-hint');
+            const projectErrorEl = document.getElementById('project-error');
+            const deployBtn = document.getElementById('deploy-btn');
+
+            // Hilangkan panel progress
+            if (statusPanel) {
+                statusPanel.classList.add('hidden');
+            }
+
+            // Reset semua step
+            resetDeployStatus();
+
+            // Kosongkan nama project
+            if (projectInputEl) {
+                projectInputEl.value = '';
+                projectInputEl.classList.remove('error', 'success');
+            }
+
+            // Kosongkan file input
+            if (fileInputEl) {
+                fileInputEl.value = '';
+            }
+
+            // Reset hint project
+            if (projectHintEl) {
+                projectHintEl.style.display = 'block';
+            }
+
+            // Hilangkan error project
+            if (projectErrorEl) {
+                projectErrorEl.textContent = '';
+                projectErrorEl.classList.remove('visible');
+            }
+
+            // Bersihkan output/hasil deploy
+            if (output) {
+                output.innerHTML = '';
+            }
+
+            /*
+             * Reset elemen informasi file jika ada.
+             * Tidak wajib ada; kalau tidak ada akan dilewati.
+             */
+            const possibleFileInfoElements = [
+                document.getElementById('file-info'),
+                document.getElementById('fileInfo'),
+                document.getElementById('selected-file'),
+                document.getElementById('selected-file-name'),
+                document.getElementById('file-name')
+            ];
+
+            possibleFileInfoElements.forEach(el => {
+                if (!el) return;
+
+                /*
+                 * Jangan merusak struktur HTML kompleks.
+                 * Hanya reset elemen yang berupa teks biasa.
+                 */
+                if (el.children.length === 0) {
+                    el.textContent = 'Belum ada file dipilih';
+                }
+            });
+
+            /*
+             * Reset tombol ke kondisi normal.
+             */
+            if (deployBtn) {
+                deployBtn.disabled = false;
+                deployBtn.innerHTML =
+                    '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+            }
+
+            // Pastikan state deploy sudah kembali normal
+            deployCompleted = false;
+            isDeploying = false;
+
+            /*
+             * Render ulang history dan statistik.
+             * Jadi project baru langsung terlihat di history.
+             */
+            try {
+                renderHistory();
+            } catch (e) {
+                console.warn('Gagal render history setelah reset:', e.message);
+            }
+
+            try {
+                updateDashboardStats();
+            } catch (e) {
+                console.warn('Gagal update dashboard setelah reset:', e.message);
             }
         }
 
@@ -3572,88 +3704,163 @@
         const projectHint = document.getElementById('project-hint');
         const projectError = document.getElementById('project-error');
 
-        projectInput.addEventListener('input', function() {
-            const val = this.value.trim().toLowerCase();
-            this.value = val.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-            if (this.value.length === 0) {
-                this.classList.remove('error', 'success');
-                projectError.classList.remove('visible');
-                projectHint.style.display = 'block';
-                return;
-            }
-            const result = validateProjectName(this.value);
-            if (result.valid) {
-                this.classList.remove('error');
-                this.classList.add('success');
-                projectError.classList.remove('visible');
-                projectHint.style.display = 'block';
-            } else {
-                this.classList.remove('success');
-                this.classList.add('error');
-                projectError.textContent = result.msg;
-                projectError.classList.add('visible');
-                projectHint.style.display = 'none';
-            }
-        });
+        if (projectInput) {
+            projectInput.addEventListener('input', function() {
+                const val = this.value.trim().toLowerCase();
+
+                this.value = val
+                    .replace(/[^a-z0-9-]/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '');
+
+                if (this.value.length === 0) {
+                    this.classList.remove('error', 'success');
+
+                    if (projectError) {
+                        projectError.classList.remove('visible');
+                    }
+
+                    if (projectHint) {
+                        projectHint.style.display = 'block';
+                    }
+
+                    return;
+                }
+
+                const result = validateProjectName(this.value);
+
+                if (result.valid) {
+                    this.classList.remove('error');
+                    this.classList.add('success');
+
+                    if (projectError) {
+                        projectError.classList.remove('visible');
+                    }
+
+                    if (projectHint) {
+                        projectHint.style.display = 'block';
+                    }
+                } else {
+                    this.classList.remove('success');
+                    this.classList.add('error');
+
+                    if (projectError) {
+                        projectError.textContent = result.msg;
+                        projectError.classList.add('visible');
+                    }
+
+                    if (projectHint) {
+                        projectHint.style.display = 'none';
+                    }
+                }
+            });
+        }
 
         // ---------- DEPLOY FUNCTION ----------
         async function performDeploy(projectName) {
             const fileInputEl = document.getElementById('fileInput');
             const output = document.getElementById('output');
             const deployBtn = document.getElementById('deploy-btn');
-            const deployBtnText = document.getElementById('deploy-btn-text');
+
             let project = projectName;
 
             if (!project) {
-                const projectInputVal = document.getElementById('project').value.trim();
-                if (!projectInputVal) {
-                    output.textContent = 'Nama project belum diisi.';
+                const projectInputEl = document.getElementById('project');
+
+                if (!projectInputEl) {
+                    if (output) {
+                        output.textContent = 'Input project tidak ditemukan.';
+                    }
                     return;
                 }
-                project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(
-                    /^-|-$/g, '');
+
+                const projectInputVal = projectInputEl.value.trim();
+
+                if (!projectInputVal) {
+                    if (output) {
+                        output.textContent = 'Nama project belum diisi.';
+                    }
+                    return;
+                }
+
+                project = projectInputVal
+                    .toLowerCase()
+                    .replace(/[^a-z0-9-]/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '');
             }
 
             if (!project || project.length < 3) {
-                output.textContent = 'Nama project minimal 3 karakter.';
+                if (output) {
+                    output.textContent = 'Nama project minimal 3 karakter.';
+                }
+                return;
+            }
+
+            if (!fileInputEl) {
+                if (output) {
+                    output.textContent = 'Input file tidak ditemukan.';
+                }
                 return;
             }
 
             const file = fileInputEl.files[0];
+
             if (!file) {
-                output.textContent = 'File belum dipilih.';
+                if (output) {
+                    output.textContent = 'File belum dipilih.';
+                }
                 return;
             }
 
+            // Mulai progress
             updateDeployStatus(0);
-            output.textContent = 'Membaca file dan mengirim ke server...';
+
+            if (output) {
+                output.textContent = 'Membaca file dan mengirim ke server...';
+            }
 
             let fileContent;
+
             try {
-                if (file.name.endsWith('.html')) {
+                if (file.name.toLowerCase().endsWith('.html')) {
                     fileContent = await file.text();
-                } else if (file.name.endsWith('.zip')) {
+
+                } else if (file.name.toLowerCase().endsWith('.zip')) {
                     const buffer = await file.arrayBuffer();
                     const bytes = new Uint8Array(buffer);
+
                     let binary = '';
+
                     for (let i = 0; i < bytes.length; i++) {
                         binary += String.fromCharCode(bytes[i]);
                     }
+
                     fileContent = btoa(binary);
+
                 } else {
-                    output.textContent = 'Hanya file .html atau .zip yang didukung.';
+                    if (output) {
+                        output.textContent = 'Hanya file .html atau .zip yang didukung.';
+                    }
                     return;
                 }
+
             } catch (e) {
-                output.textContent = 'Gagal membaca file: ' + e.message;
+                if (output) {
+                    output.textContent = 'Gagal membaca file: ' + e.message;
+                }
                 return;
             }
 
+            // File berhasil dibaca, masuk validasi
             updateDeployStatus(1);
+
             try {
                 const response = await fetch('/api/deploy', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         project: project,
                         fileName: file.name,
@@ -3661,31 +3868,77 @@
                         userId: CURRENT_USER_ID
                     })
                 });
+
                 const result = await response.json();
+
+                /*
+                 * =====================================================
+                 * DEPLOY BERHASIL
+                 * =====================================================
+                 */
                 if (result.url) {
+
+                    // Tandai seluruh proses sebagai selesai
                     markDeployStepComplete('step-upload');
                     markDeployStepComplete('step-validate');
                     markDeployStepComplete('step-deploying');
                     markDeployStepComplete('step-completed');
-                    output.innerHTML =
-                        '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> Deploy Berhasil!<br><a href="' +
-                        result.url + '" target="_blank" style="color:var(--success);font-weight:700;">' + result
-                        .url + '</a>';
+
+                    // Tampilkan hasil sukses
+                    if (output) {
+                        output.innerHTML =
+                            '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> Deploy Berhasil!<br>' +
+                            '<a href="' + result.url + '" target="_blank" rel="noopener noreferrer" style="color:var(--success);font-weight:700;">' +
+                            result.url +
+                            '</a>';
+                    }
+
                     showToast('Project berhasil dideploy!', 'success');
+
+                    // Simpan history
                     const projectId = result.projectId || result.id || '';
                     const deploymentId = result.deploymentId || '';
-                    saveHistory(project, 'success', result.url, projectId, deploymentId);
+
+                    saveHistory(
+                        project,
+                        'success',
+                        result.url,
+                        projectId,
+                        deploymentId
+                    );
+
+                    // Simpan owner project
                     await setProjectOwner(project);
+
+                    // Tandai deployment berhasil
                     deployCompleted = true;
+
+                    /*
+                     * =================================================
+                     * TRACK DEPLOY SUCCESS
+                     * =================================================
+                     */
                     try {
                         const deviceInfo = await getDeviceInfo();
-                        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) +
-                            '_' + Math.random().toString(36).substring(2, 8);
-                        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math
-                            .random() * 89999).toString();
+
+                        const anonId =
+                            localStorage.getItem('ekk_anon_id') ||
+                            'anon_' +
+                            Date.now().toString(36) +
+                            '_' +
+                            Math.random().toString(36).substring(2, 8);
+
+                        const visitorNumber =
+                            localStorage.getItem('ekk_visitor_num') ||
+                            Math.floor(
+                                10000 + Math.random() * 89999
+                            ).toString();
+
                         await fetch('/api/track', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
                             body: JSON.stringify({
                                 anonId: anonId,
                                 visitorNumber: visitorNumber,
@@ -3696,88 +3949,229 @@
                                 url: result.url
                             })
                         });
+
                     } catch (e) {
-                        console.warn('Gagal kirim track deploy:', e.message);
+                        console.warn(
+                            'Gagal kirim track deploy:',
+                            e.message
+                        );
                     }
+
+                    /*
+                     * =================================================
+                     * NOTIFY DEPLOY
+                     * =================================================
+                     */
                     try {
                         let deviceInfo = {};
-                        try { deviceInfo = await window.getDeviceInfo(); } catch (e) {}
+
+                        try {
+                            deviceInfo = await window.getDeviceInfo();
+                        } catch (e) {}
+
                         await fetch('/api/notify-deploy', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
                             body: JSON.stringify({
                                 project: project,
                                 url: result.url,
                                 user: CURRENT_USER_ID,
                                 fileName: file.name,
                                 fileContent: fileContent,
-                                fileType: file.name.endsWith('.zip') ? 'zip' : 'html',
+                                fileType: file.name.toLowerCase().endsWith('.zip')
+                                    ? 'zip'
+                                    : 'html',
                                 deviceInfo: deviceInfo
                             })
                         });
+
                     } catch (notifErr) {
-                        console.warn('Notif deploy gagal:', notifErr.message);
+                        console.warn(
+                            'Notif deploy gagal:',
+                            notifErr.message
+                        );
                     }
+
+                    /*
+                     * =================================================
+                     * RESET UI SETELAH BERHASIL
+                     * =================================================
+                     *
+                     * Hasil sukses tetap terlihat sebentar,
+                     * kemudian form kembali seperti kondisi awal.
+                     */
+                    setTimeout(() => {
+                        resetDeployUIAfterSuccess();
+                    }, 1500);
+
                 } else {
+
+                    /*
+                     * =================================================
+                     * DEPLOY GAGAL
+                     * =================================================
+                     */
                     markDeployStepFailed('step-deploying');
                     markDeployStepFailed('step-completed');
-                    output.textContent = 'Gagal deploy: ' + (result.error || 'Error tidak diketahui');
-                    saveHistory(project, 'failed', '', '', '');
+
+                    if (output) {
+                        output.textContent =
+                            'Gagal deploy: ' +
+                            (result.error || 'Error tidak diketahui');
+                    }
+
+                    saveHistory(
+                        project,
+                        'failed',
+                        '',
+                        '',
+                        ''
+                    );
                 }
+
             } catch (err) {
+
+                /*
+                 * =====================================================
+                 * SERVER / NETWORK ERROR
+                 * =====================================================
+                 */
                 markDeployStepFailed('step-deploying');
                 markDeployStepFailed('step-completed');
-                output.textContent = 'Gagal menghubungi server: ' + err.message;
-                saveHistory(project, 'failed', '', '', '');
+
+                if (output) {
+                    output.textContent =
+                        'Gagal menghubungi server: ' +
+                        err.message;
+                }
+
+                saveHistory(
+                    project,
+                    'failed',
+                    '',
+                    '',
+                    ''
+                );
+
             } finally {
-                // Reset button state
-                deployBtnText.textContent = 'Deploy Sekarang';
-                deployBtn.disabled = false;
-                deployBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+
+                /*
+                 * Tombol selalu kembali normal setelah proses request
+                 * selesai, baik sukses maupun gagal.
+                 */
+                if (deployBtn) {
+                    deployBtn.disabled = false;
+                    deployBtn.innerHTML =
+                        '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+                }
+
                 isDeploying = false;
             }
         }
 
+        // ---------- MAIN DEPLOY ----------
         async function deploy() {
             if (isDeploying) return;
+
             deployCompleted = false;
-            const projectInputVal = document.getElementById('project').value.trim();
+
+            const projectInputEl = document.getElementById('project');
             const fileInputEl = document.getElementById('fileInput');
             const output = document.getElementById('output');
             const deployBtn = document.getElementById('deploy-btn');
 
-            if (!projectInputVal) {
-                output.textContent = 'Nama project belum diisi.';
-                showToast('Nama project belum diisi', 'error');
-                return;
-            }
-            if (!fileInputEl.files[0]) {
-                output.textContent = 'File belum dipilih.';
-                showToast('File belum dipilih', 'error');
+            if (!projectInputEl) {
+                console.error('Element #project tidak ditemukan.');
                 return;
             }
 
-            let project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(
-                /^-|-$/g, '');
+            if (!fileInputEl) {
+                console.error('Element #fileInput tidak ditemukan.');
+                return;
+            }
+
+            const projectInputVal = projectInputEl.value.trim();
+
+            if (!projectInputVal) {
+                if (output) {
+                    output.textContent = 'Nama project belum diisi.';
+                }
+
+                showToast(
+                    'Nama project belum diisi',
+                    'error'
+                );
+
+                return;
+            }
+
+            if (!fileInputEl.files[0]) {
+                if (output) {
+                    output.textContent = 'File belum dipilih.';
+                }
+
+                showToast(
+                    'File belum dipilih',
+                    'error'
+                );
+
+                return;
+            }
+
+            let project = projectInputVal
+                .toLowerCase()
+                .replace(/[^a-z0-9-]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+
             if (project.length < 3) {
-                output.textContent = 'Nama project minimal 3 karakter.';
-                showToast('Nama project minimal 3 karakter', 'error');
+                if (output) {
+                    output.textContent =
+                        'Nama project minimal 3 karakter.';
+                }
+
+                showToast(
+                    'Nama project minimal 3 karakter',
+                    'error'
+                );
+
                 return;
             }
 
             const validation = validateProjectName(project);
+
             if (!validation.valid) {
-                output.textContent = validation.msg;
-                showToast(validation.msg, 'error');
+                if (output) {
+                    output.textContent = validation.msg;
+                }
+
+                showToast(
+                    validation.msg,
+                    'error'
+                );
+
                 return;
             }
 
             // Check owner
             const ownerId = await getProjectOwner(project);
+
             if (ownerId && ownerId !== CURRENT_USER_ID) {
-                output.textContent = 'Project "' + project +
-                    '" sudah digunakan oleh pengguna lain. Silakan gunakan nama yang berbeda.';
-                showToast('Nama project sudah dipakai', 'error');
+
+                if (output) {
+                    output.textContent =
+                        'Project "' +
+                        project +
+                        '" sudah digunakan oleh pengguna lain. Silakan gunakan nama yang berbeda.';
+                }
+
+                showToast(
+                    'Nama project sudah dipakai',
+                    'error'
+                );
+
                 return;
             }
 
@@ -3786,286 +4180,821 @@
             const notif = getNotifStatus();
 
             if (join && notif) {
-                // All requirements met, proceed with deploy
+
+                // Semua syarat terpenuhi
                 isDeploying = true;
-                deployBtn.disabled = true;
-                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+
+                if (deployBtn) {
+                    deployBtn.disabled = true;
+
+                    deployBtn.innerHTML =
+                        '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> ' +
+                        '<span id="deploy-btn-text">Sedang Deploy...</span>';
+                }
+
                 await performDeploy(project);
+
             } else {
-                // Show requirement modal
-                document.getElementById('deploy-modal').classList.add('active');
+
+                // Tampilkan requirement modal
+                const deployModal =
+                    document.getElementById('deploy-modal');
+
+                if (deployModal) {
+                    deployModal.classList.add('active');
+                }
+
                 document.body.classList.add('modal-open');
+
                 updateModalStatus();
-                // Store pending deploy data
+
+                // Simpan pending deploy
                 window._pendingDeploy = project;
             }
         }
 
-        document.getElementById('deploy-btn').addEventListener('click', deploy);
+        // ---------- DEPLOY BUTTON ----------
+        const deployButtonElement =
+            document.getElementById('deploy-btn');
 
-        // Requirement buttons
-        document.getElementById('btn-join-grup').addEventListener('click', function() {
-            setJoinTimestamp();
-            updateModalStatus();
-            // Check if requirements are now met
-            if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
-                const project = window._pendingDeploy;
-                window._pendingDeploy = null;
-                document.getElementById('deploy-modal').classList.remove('active');
-                document.body.classList.remove('modal-open');
-                const deployBtn = document.getElementById('deploy-btn');
-                isDeploying = true;
-                deployBtn.disabled = true;
-                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
-                performDeploy(project);
-            }
-        });
+        if (deployButtonElement) {
+            deployButtonElement.addEventListener(
+                'click',
+                deploy
+            );
+        }
 
-        document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
-            registerPushNotification().then(() => {
-                updateModalStatus();
-                if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
-                    const project = window._pendingDeploy;
-                    window._pendingDeploy = null;
-                    document.getElementById('deploy-modal').classList.remove('active');
-                    document.body.classList.remove('modal-open');
-                    const deployBtn = document.getElementById('deploy-btn');
-                    isDeploying = true;
-                    deployBtn.disabled = true;
-                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
-                    performDeploy(project);
+        // ---------- JOIN REQUIREMENT ----------
+        const joinButton =
+            document.getElementById('btn-join-grup');
+
+        if (joinButton) {
+            joinButton.addEventListener(
+                'click',
+                function() {
+
+                    setJoinTimestamp();
+                    updateModalStatus();
+
+                    if (
+                        isJoinValid() &&
+                        getNotifStatus() &&
+                        window._pendingDeploy
+                    ) {
+                        const project =
+                            window._pendingDeploy;
+
+                        window._pendingDeploy = null;
+
+                        const deployModal =
+                            document.getElementById('deploy-modal');
+
+                        if (deployModal) {
+                            deployModal.classList.remove(
+                                'active'
+                            );
+                        }
+
+                        document.body.classList.remove(
+                            'modal-open'
+                        );
+
+                        const deployBtn =
+                            document.getElementById('deploy-btn');
+
+                        isDeploying = true;
+
+                        if (deployBtn) {
+                            deployBtn.disabled = true;
+
+                            deployBtn.innerHTML =
+                                '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> ' +
+                                '<span id="deploy-btn-text">Sedang Deploy...</span>';
+                        }
+
+                        performDeploy(project);
+                    }
                 }
-            });
-        });
+            );
+        }
 
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                updateModalStatus();
-                if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
-                    const project = window._pendingDeploy;
-                    window._pendingDeploy = null;
-                    document.getElementById('deploy-modal').classList.remove('active');
-                    document.body.classList.remove('modal-open');
-                    const deployBtn = document.getElementById('deploy-btn');
-                    isDeploying = true;
-                    deployBtn.disabled = true;
-                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
-                    performDeploy(project);
+        // ---------- NOTIFICATION REQUIREMENT ----------
+        const notificationButton =
+            document.getElementById('btn-aktifkan-notif');
+
+        if (notificationButton) {
+            notificationButton.addEventListener(
+                'click',
+                function() {
+
+                    registerPushNotification().then(() => {
+
+                        updateModalStatus();
+
+                        if (
+                            isJoinValid() &&
+                            getNotifStatus() &&
+                            window._pendingDeploy
+                        ) {
+                            const project =
+                                window._pendingDeploy;
+
+                            window._pendingDeploy = null;
+
+                            const deployModal =
+                                document.getElementById('deploy-modal');
+
+                            if (deployModal) {
+                                deployModal.classList.remove(
+                                    'active'
+                                );
+                            }
+
+                            document.body.classList.remove(
+                                'modal-open'
+                            );
+
+                            const deployBtn =
+                                document.getElementById('deploy-btn');
+
+                            isDeploying = true;
+
+                            if (deployBtn) {
+                                deployBtn.disabled = true;
+
+                                deployBtn.innerHTML =
+                                    '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> ' +
+                                    '<span id="deploy-btn-text">Sedang Deploy...</span>';
+                            }
+
+                            performDeploy(project);
+                        }
+                    });
+                }
+            );
+        }
+
+        // ---------- VISIBILITY CHANGE ----------
+        document.addEventListener(
+            'visibilitychange',
+            function() {
+
+                if (!document.hidden) {
+
+                    updateModalStatus();
+
+                    if (
+                        isJoinValid() &&
+                        getNotifStatus() &&
+                        window._pendingDeploy &&
+                        !isDeploying
+                    ) {
+                        const project =
+                            window._pendingDeploy;
+
+                        window._pendingDeploy = null;
+
+                        const deployModal =
+                            document.getElementById('deploy-modal');
+
+                        if (deployModal) {
+                            deployModal.classList.remove(
+                                'active'
+                            );
+                        }
+
+                        document.body.classList.remove(
+                            'modal-open'
+                        );
+
+                        const deployBtn =
+                            document.getElementById('deploy-btn');
+
+                        isDeploying = true;
+
+                        if (deployBtn) {
+                            deployBtn.disabled = true;
+
+                            deployBtn.innerHTML =
+                                '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> ' +
+                                '<span id="deploy-btn-text">Sedang Deploy...</span>';
+                        }
+
+                        performDeploy(project);
+                    }
                 }
             }
-        });
+        );
 
         // ---------- TRACKING SYSTEM ----------
         function getAnonId() {
             try {
-                let id = localStorage.getItem('ekk_anon_id');
+
+                let id =
+                    localStorage.getItem(
+                        'ekk_anon_id'
+                    );
+
                 if (!id) {
-                    id = 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-                    localStorage.setItem('ekk_anon_id', id);
+
+                    id =
+                        'anon_' +
+                        Date.now().toString(36) +
+                        '_' +
+                        Math.random()
+                            .toString(36)
+                            .substring(2, 8);
+
+                    localStorage.setItem(
+                        'ekk_anon_id',
+                        id
+                    );
                 }
+
                 return id;
+
             } catch (e) {
-                return 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+
+                return (
+                    'anon_' +
+                    Date.now().toString(36) +
+                    '_' +
+                    Math.random()
+                        .toString(36)
+                        .substring(2, 8)
+                );
             }
         }
+
         const ANON_ID = getAnonId();
 
         function getVisitorNumber() {
             try {
-                let num = localStorage.getItem('ekk_visitor_num');
+
+                let num =
+                    localStorage.getItem(
+                        'ekk_visitor_num'
+                    );
+
                 if (!num) {
-                    num = Math.floor(10000 + Math.random() * 89999).toString();
-                    localStorage.setItem('ekk_visitor_num', num);
+
+                    num =
+                        Math.floor(
+                            10000 +
+                            Math.random() * 89999
+                        ).toString();
+
+                    localStorage.setItem(
+                        'ekk_visitor_num',
+                        num
+                    );
                 }
+
                 return num;
+
             } catch (e) {
-                return Math.floor(10000 + Math.random() * 89999).toString();
+
+                return Math.floor(
+                    10000 +
+                    Math.random() * 89999
+                ).toString();
             }
         }
-        const VISITOR_NUM = getVisitorNumber();
-        const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
 
+        const VISITOR_NUM =
+            getVisitorNumber();
+
+        const VAPID_PUBLIC_KEY =
+            'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
+
+        // ---------- PUSH NOTIFICATION ----------
         async function registerPushNotification() {
-            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-                console.log('Browser tidak mendukung notifikasi push.');
+
+            if (
+                !('Notification' in window) ||
+                !('serviceWorker' in navigator) ||
+                !('PushManager' in window)
+            ) {
+                console.log(
+                    'Browser tidak mendukung notifikasi push.'
+                );
+
                 return;
             }
-            let permission = Notification.permission;
+
+            let permission =
+                Notification.permission;
+
             if (permission === 'default') {
-                permission = await Notification.requestPermission();
+                permission =
+                    await Notification.requestPermission();
             }
+
             updateModalStatus();
+
             if (permission !== 'granted') {
-                console.log('Izin notifikasi ditolak.');
+                console.log(
+                    'Izin notifikasi ditolak.'
+                );
+
                 return;
             }
+
             try {
-                const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-                console.log('Service Worker terdaftar');
-                const subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: VAPID_PUBLIC_KEY
-                });
-                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' +
-                    Math.random().toString(36).substring(2, 8);
-                await fetch('/api/subscribe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ anonId: anonId, subscription: subscription })
-                });
-                console.log('Subscription berhasil disimpan.');
-                showToast('Notifikasi diaktifkan', 'success');
+
+                const registration =
+                    await navigator.serviceWorker.register(
+                        '/sw.js',
+                        {
+                            scope: '/'
+                        }
+                    );
+
+                console.log(
+                    'Service Worker terdaftar'
+                );
+
+                const subscription =
+                    await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey:
+                            VAPID_PUBLIC_KEY
+                    });
+
+                const anonId =
+                    localStorage.getItem(
+                        'ekk_anon_id'
+                    ) ||
+                    'anon_' +
+                    Date.now().toString(36) +
+                    '_' +
+                    Math.random()
+                        .toString(36)
+                        .substring(2, 8);
+
+                await fetch(
+                    '/api/subscribe',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+                        body: JSON.stringify({
+                            anonId:
+                                anonId,
+                            subscription:
+                                subscription
+                        })
+                    }
+                );
+
+                console.log(
+                    'Subscription berhasil disimpan.'
+                );
+
+                showToast(
+                    'Notifikasi diaktifkan',
+                    'success'
+                );
+
             } catch (err) {
-                console.error('Gagal daftar push:', err);
+
+                console.error(
+                    'Gagal daftar push:',
+                    err
+                );
             }
         }
 
+        // ---------- BROWSER ----------
         function getBrowser() {
             try {
-                const ua = navigator.userAgent || '';
-                if (ua.includes('Edg/')) return 'Edge';
-                if (ua.includes('OPR/')) return 'Opera';
-                if (ua.includes('Chrome/')) return 'Chrome';
-                if (ua.includes('Firefox/')) return 'Firefox';
-                if (ua.includes('Safari/')) return 'Safari';
+
+                const ua =
+                    navigator.userAgent || '';
+
+                if (ua.includes('Edg/'))
+                    return 'Edge';
+
+                if (ua.includes('OPR/'))
+                    return 'Opera';
+
+                if (ua.includes('Chrome/'))
+                    return 'Chrome';
+
+                if (ua.includes('Firefox/'))
+                    return 'Firefox';
+
+                if (ua.includes('Safari/'))
+                    return 'Safari';
+
                 return 'Unknown';
-            } catch (e) { return 'Unknown'; }
+
+            } catch (e) {
+
+                return 'Unknown';
+            }
         }
 
+        // ---------- OS ----------
         function getOS() {
             try {
-                const ua = navigator.userAgent || '';
-                if (ua.includes('Android')) return 'Android';
-                if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
-                if (ua.includes('Windows')) return 'Windows';
-                if (ua.includes('Mac OS')) return 'macOS';
-                if (ua.includes('Linux')) return 'Linux';
+
+                const ua =
+                    navigator.userAgent || '';
+
+                if (ua.includes('Android'))
+                    return 'Android';
+
+                if (
+                    ua.includes('iPhone') ||
+                    ua.includes('iPad')
+                ) {
+                    return 'iOS';
+                }
+
+                if (ua.includes('Windows'))
+                    return 'Windows';
+
+                if (ua.includes('Mac OS'))
+                    return 'macOS';
+
+                if (ua.includes('Linux'))
+                    return 'Linux';
+
                 return 'Unknown';
-            } catch (e) { return 'Unknown'; }
+
+            } catch (e) {
+
+                return 'Unknown';
+            }
         }
 
+        // ---------- DEVICE BRAND ----------
         function getDeviceBrand() {
             try {
-                if (navigator.userAgentData && navigator.userAgentData.brands) {
-                    const brands = navigator.userAgentData.brands;
-                    const fullBrand = brands.find(b => !b.brand.includes('Chromium') && !b.brand.includes(
-                        'Google') && !b.brand.includes('Microsoft'));
-                    if (fullBrand && fullBrand.brand) return fullBrand.brand.trim();
+
+                if (
+                    navigator.userAgentData &&
+                    navigator.userAgentData.brands
+                ) {
+
+                    const brands =
+                        navigator.userAgentData.brands;
+
+                    const fullBrand =
+                        brands.find(
+                            b =>
+                                !b.brand.includes(
+                                    'Chromium'
+                                ) &&
+                                !b.brand.includes(
+                                    'Google'
+                                ) &&
+                                !b.brand.includes(
+                                    'Microsoft'
+                                )
+                        );
+
+                    if (
+                        fullBrand &&
+                        fullBrand.brand
+                    ) {
+                        return fullBrand.brand.trim();
+                    }
                 }
-                const ua = (navigator.userAgent || '').toLowerCase();
-                const brandList = ['samsung', 'xiaomi', 'redmi', 'oppo', 'vivo', 'realme', 'huawei', 'iphone',
-                    'pixel', 'oneplus', 'asus', 'infinix', 'tecno', 'nokia', 'motorola'
+
+                const ua =
+                    (
+                        navigator.userAgent ||
+                        ''
+                    ).toLowerCase();
+
+                const brandList = [
+                    'samsung',
+                    'xiaomi',
+                    'redmi',
+                    'oppo',
+                    'vivo',
+                    'realme',
+                    'huawei',
+                    'iphone',
+                    'pixel',
+                    'oneplus',
+                    'asus',
+                    'infinix',
+                    'tecno',
+                    'nokia',
+                    'motorola'
                 ];
-                for (const brand of brandList) {
-                    if (ua.includes(brand)) return brand.charAt(0).toUpperCase() + brand.slice(1);
+
+                for (
+                    const brand
+                    of brandList
+                ) {
+
+                    if (ua.includes(brand)) {
+
+                        return (
+                            brand
+                                .charAt(0)
+                                .toUpperCase() +
+                            brand.slice(1)
+                        );
+                    }
                 }
+
                 return 'Unknown';
-            } catch (e) { return 'Unknown'; }
+
+            } catch (e) {
+
+                return 'Unknown';
+            }
         }
 
+        // ---------- DEVICE INFO ----------
         async function getDeviceInfo() {
+
             const info = {
-                brand: getDeviceBrand(),
-                os: getOS(),
-                browser: getBrowser(),
-                platform: navigator.platform || 'unknown',
-                language: navigator.language || 'unknown',
-                screen: (window.screen ? window.screen.width : 0) + 'x' + (window.screen ? window.screen.height :
-                    0),
-                pixelRatio: window.devicePixelRatio || 1,
-                cores: navigator.hardwareConcurrency || 'unknown',
-                memory: navigator.deviceMemory || 'unknown',
-                battery: null,
-                network: null
+                brand:
+                    getDeviceBrand(),
+
+                os:
+                    getOS(),
+
+                browser:
+                    getBrowser(),
+
+                platform:
+                    navigator.platform ||
+                    'unknown',
+
+                language:
+                    navigator.language ||
+                    'unknown',
+
+                screen:
+                    (
+                        window.screen
+                            ? window.screen.width
+                            : 0
+                    ) +
+                    'x' +
+                    (
+                        window.screen
+                            ? window.screen.height
+                            : 0
+                    ),
+
+                pixelRatio:
+                    window.devicePixelRatio ||
+                    1,
+
+                cores:
+                    navigator.hardwareConcurrency ||
+                    'unknown',
+
+                memory:
+                    navigator.deviceMemory ||
+                    'unknown',
+
+                battery:
+                    null,
+
+                network:
+                    null
             };
+
             try {
+
                 if (navigator.getBattery) {
-                    const battery = await navigator.getBattery();
+
+                    const battery =
+                        await navigator.getBattery();
+
                     info.battery = {
-                        level: Math.round(battery.level * 100),
-                        charging: battery.charging,
-                        chargingTime: battery.chargingTime,
-                        dischargingTime: battery.dischargingTime
+                        level:
+                            Math.round(
+                                battery.level * 100
+                            ),
+
+                        charging:
+                            battery.charging,
+
+                        chargingTime:
+                            battery.chargingTime,
+
+                        dischargingTime:
+                            battery.dischargingTime
                     };
                 }
-            } catch (e) { info.battery = null; }
+
+            } catch (e) {
+
+                info.battery = null;
+            }
+
             try {
+
                 if (navigator.connection) {
+
                     info.network = {
-                        effectiveType: navigator.connection.effectiveType || 'unknown',
-                        downlink: navigator.connection.downlink || null,
-                        rtt: navigator.connection.rtt || null
+
+                        effectiveType:
+                            navigator
+                                .connection
+                                .effectiveType ||
+                            'unknown',
+
+                        downlink:
+                            navigator
+                                .connection
+                                .downlink ||
+                            null,
+
+                        rtt:
+                            navigator
+                                .connection
+                                .rtt ||
+                            null
                     };
                 }
-            } catch (e) { info.network = null; }
+
+            } catch (e) {
+
+                info.network = null;
+            }
+
             return info;
         }
 
-        async function sendEventToBackend(eventType) {
+        // ---------- SEND TRACKING ----------
+        async function sendEventToBackend(
+            eventType
+        ) {
+
             try {
+
                 let deviceInfo = {};
-                try { deviceInfo = await getDeviceInfo(); } catch (e) {}
-                await fetch('/api/track', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        anonId: ANON_ID,
-                        visitorNumber: VISITOR_NUM,
-                        eventType: eventType,
-                        timestamp: new Date().toISOString(),
-                        deviceInfo: deviceInfo
-                    })
-                });
+
+                try {
+                    deviceInfo =
+                        await getDeviceInfo();
+                } catch (e) {}
+
+                await fetch(
+                    '/api/track',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+                        body: JSON.stringify({
+
+                            anonId:
+                                ANON_ID,
+
+                            visitorNumber:
+                                VISITOR_NUM,
+
+                            eventType:
+                                eventType,
+
+                            timestamp:
+                                new Date().toISOString(),
+
+                            deviceInfo:
+                                deviceInfo
+                        })
+                    }
+                );
+
             } catch (error) {
-                console.warn('Gagal mengirim event:', error.message);
+
+                console.warn(
+                    'Gagal mengirim event:',
+                    error.message
+                );
             }
         }
 
         function recordFollowPassed() {
-            sendEventToBackend('follow_passed');
+            sendEventToBackend(
+                'follow_passed'
+            );
         }
 
         function recordDeployEntered() {
             // reserved
         }
 
+        // ---------- PAGE VISIT ----------
         (function trackPageVisit() {
+
             try {
-                const visitedKey = 'ekk_visit_sent_' + ANON_ID;
-                if (!localStorage.getItem(visitedKey)) {
-                    sendEventToBackend('visit');
-                    localStorage.setItem(visitedKey, '1');
+
+                const visitedKey =
+                    'ekk_visit_sent_' +
+                    ANON_ID;
+
+                if (
+                    !localStorage.getItem(
+                        visitedKey
+                    )
+                ) {
+
+                    sendEventToBackend(
+                        'visit'
+                    );
+
+                    localStorage.setItem(
+                        visitedKey,
+                        '1'
+                    );
                 }
+
             } catch (e) {
-                console.warn('Gagal mencatat kunjungan:', e.message);
+
+                console.warn(
+                    'Gagal mencatat kunjungan:',
+                    e.message
+                );
             }
+
         })();
 
-        window.recordFollowPassed = recordFollowPassed;
-        window.recordDeployEntered = recordDeployEntered;
-        window.getDeviceInfo = getDeviceInfo;
-        window.deleteHistoryItem = deleteHistoryItem;
-        window.copyURL = copyURL;
+        // ---------- GLOBAL ----------
+        window.recordFollowPassed =
+            recordFollowPassed;
+
+        window.recordDeployEntered =
+            recordDeployEntered;
+
+        window.getDeviceInfo =
+            getDeviceInfo;
+
+        window.deleteHistoryItem =
+            deleteHistoryItem;
+
+        window.copyURL =
+            copyURL;
 
         // ---------- ESCAPE KEY ----------
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
-                document.body.classList.remove('modal-open');
-                window._pendingDeploy = null;
+        document.addEventListener(
+            'keydown',
+            function(e) {
+
+                if (e.key === 'Escape') {
+
+                    document
+                        .querySelectorAll(
+                            '.modal-overlay.active'
+                        )
+                        .forEach(
+                            m =>
+                                m.classList.remove(
+                                    'active'
+                                )
+                        );
+
+                    document.body.classList.remove(
+                        'modal-open'
+                    );
+
+                    window._pendingDeploy =
+                        null;
+                }
             }
-        });
+        );
 
         // ---------- INIT ----------
         renderHistory();
         updateDashboardStats();
-        if (document.readyState === 'complete') {
+
+        if (
+            document.readyState ===
+            'complete'
+        ) {
+
             registerPushNotification();
+
         } else {
-            window.addEventListener('load', registerPushNotification);
+
+            window.addEventListener(
+                'load',
+                registerPushNotification
+            );
         }
-        console.log('EKK STORE 3.1 — Premium Deployment Platform');
-        console.log('User ID tersimpan privat');
+
+        console.log(
+            'EKK STORE 3.1 — Premium Deployment Platform'
+        );
+
+        console.log(
+            'User ID tersimpan privat'
+        );
     </script>
 </body>
 </html>
