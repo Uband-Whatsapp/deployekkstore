@@ -3320,226 +3320,286 @@
     <div id="toast"></div>
 
     <script>
-        /* ============================================
-           EKK STORE 3.1 — CORE JAVASCRIPT (FIXED)
-           ============================================ */
+       /* ============================================
+   GATE SCREEN — FIXED (Tomlang Aktif)
+   ============================================ */
+/* ============================================
+   GATE SCREEN — FIXED (Tombol Aktif setelah 2 detik)
+   ============================================ */
+/* ============================================
+   GATE SCREEN — FIXED (Tombol Aktif setelah 2 detik)
+   ============================================ */
+/* ============================================
+   GATE SCREEN — FIXED (Tombol Aktif Setelah 2 Detik)
+   ============================================ */
 
-        (function() {
-            const STORAGE_KEY = 'wa_gate_passed_v5';
-            const GATE_EXPIRY_DAYS = 1;
-            const VERIFY_DELAY_MS = 2200;
-            const gateScreen = document.getElementById('gate-screen');
-            const btnFollowWA = document.getElementById('btn-follow-wa');
-            const btnConfirm = document.getElementById('btn-confirm');
-            const verifyMsgBox = document.getElementById('verify-msg-box');
-            const verifyIcon = document.getElementById('verify-icon');
-            const verifyText = document.getElementById('verify-text');
-            const gDot1 = document.getElementById('g-dot1');
-            const gDot2 = document.getElementById('g-dot2');
-            const gDot3 = document.getElementById('g-dot3');
-            const gLine1 = document.getElementById('g-line1');
-            const gLine2 = document.getElementById('g-line2');
-            const gLabel1 = document.getElementById('g-label1');
-            const gLabel2 = document.getElementById('g-label2');
-            const gLabel3 = document.getElementById('g-label3');
-            const appShell = document.getElementById('app-shell');
-            let followClickCount = 0;
-            let confirmAttempts = 0;
-            let isVerifying = false;
-            let gateRemoved = false;
-            let hasClickedFollowOnce = false;
+(function() {
+    const STORAGE_KEY = 'wa_gate_passed_v6';
+    const GATE_EXPIRY_DAYS = 1;
 
-            function callTrack(eventName) {
-                if (window[eventName] && typeof window[eventName] === 'function') {
-                    window[eventName]();
-                }
-            }
+    const gateScreen = document.getElementById('gate-screen');
+    const btnFollowWA = document.getElementById('btn-follow-wa');
+    const btnConfirm = document.getElementById('btn-confirm');
+    const verifyMsgBox = document.getElementById('verify-msg-box');
+    const verifyIcon = document.getElementById('verify-icon');
+    const verifyText = document.getElementById('verify-text');
+    const gDot1 = document.getElementById('g-dot1');
+    const gDot2 = document.getElementById('g-dot2');
+    const gDot3 = document.getElementById('g-dot3');
+    const gLine1 = document.getElementById('g-line1');
+    const gLine2 = document.getElementById('g-line2');
+    const gLabel1 = document.getElementById('g-label1');
+    const gLabel2 = document.getElementById('g-label2');
+    const gLabel3 = document.getElementById('g-label3');
+    const appShell = document.getElementById('app-shell');
 
-            function isAlreadyPassed() {
-                try {
-                    const data = localStorage.getItem(STORAGE_KEY);
-                    if (!data) return false;
-                    const parsed = JSON.parse(data);
-                    if (parsed.expiresAt && Date.now() < parsed.expiresAt) return true;
-                    localStorage.removeItem(STORAGE_KEY);
-                    return false;
-                } catch (e) { return false; }
-            }
+    let isVerifying = false;
+    let gateRemoved = false;
+    let hasClickedFollowOnce = false;
+    let confirmEnabled = false;
 
-            function setPassed() {
-                const expiresAt = Date.now() + (GATE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    passed: true,
-                    timestamp: Date.now(),
-                    expiresAt: expiresAt
-                }));
-            }
+    // Track timestamp when user clicked WhatsApp
+    let waClickTimestamp = 0;
 
-            function showApp() {
-                callTrack('recordFollowPassed');
-                gateScreen.classList.add('hidden');
-                appShell.classList.add('visible');
-                document.body.style.overflow = '';
-                setTimeout(() => {
-                    callTrack('recordDeployEntered');
-                }, 500);
-            }
+    function isAlreadyPassed() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) return false;
+            const parsed = JSON.parse(data);
+            if (parsed.expiresAt && Date.now() < parsed.expiresAt) return true;
+            localStorage.removeItem(STORAGE_KEY);
+            return false;
+        } catch (e) { return false; }
+    }
 
-            function updateGateStep(step) {
-                [gDot1, gDot2, gDot3].forEach(d => d.classList.remove('active', 'done'));
-                [gLine1, gLine2].forEach(l => l.classList.remove('done'));
-                [gLabel1, gLabel2, gLabel3].forEach(l => l.classList.remove('active', 'done'));
-                if (step >= 1) { gDot1.classList.add('done');
-                    gLabel1.classList.add('done'); }
-                if (step >= 2) { gDot1.classList.add('done');
-                    gDot2.classList.add('active');
-                    gLine1.classList.add('done');
-                    gLabel1.classList.add('done');
-                    gLabel2.classList.add('active'); }
-                if (step >= 3) { gDot1.classList.add('done');
-                    gDot2.classList.add('done');
-                    gDot3.classList.add('done');
-                    gLine1.classList.add('done');
-                    gLine2.classList.add('done');
-                    gLabel1.classList.add('done');
-                    gLabel2.classList.add('done');
-                    gLabel3.classList.add('done'); }
-            }
+    function setPassed() {
+        const expiresAt = Date.now() + (GATE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            passed: true,
+            timestamp: Date.now(),
+            expiresAt: expiresAt
+        }));
+    }
 
-            function enableConfirm() {
+    function showApp() {
+        gateScreen.classList.add('hidden');
+        appShell.classList.add('visible');
+        document.body.style.overflow = '';
+    }
+
+    function updateGateStep(step) {
+        [gDot1, gDot2, gDot3].forEach(d => d.classList.remove('active', 'done'));
+        [gLine1, gLine2].forEach(l => l.classList.remove('done'));
+        [gLabel1, gLabel2, gLabel3].forEach(l => l.classList.remove('active', 'done'));
+
+        if (step >= 1) {
+            gDot1.classList.add('done');
+            gLabel1.classList.add('done');
+        }
+        if (step >= 2) {
+            gDot1.classList.add('done');
+            gDot2.classList.add('active');
+            gLine1.classList.add('done');
+            gLabel1.classList.add('done');
+            gLabel2.classList.add('active');
+        }
+        if (step >= 3) {
+            gDot1.classList.add('done');
+            gDot2.classList.add('done');
+            gDot3.classList.add('done');
+            gLine1.classList.add('done');
+            gLine2.classList.add('done');
+            gLabel1.classList.add('done');
+            gLabel2.classList.add('done');
+            gLabel3.classList.add('done');
+        }
+    }
+
+    function enableConfirmButton() {
+        if (gateRemoved) return;
+        if (confirmEnabled) return;
+
+        // Hapus atribut disabled secara eksplisit
+        btnConfirm.removeAttribute('disabled');
+        btnConfirm.disabled = false;
+        btnConfirm.classList.add('active');
+        btnConfirm.textContent = 'Saya Sudah Follow';
+        updateGateStep(2);
+
+        confirmEnabled = true;
+        hasClickedFollowOnce = true;
+
+        console.log('[GATE] Tombol konfirmasi diaktifkan');
+    }
+
+    function showVerifyMsg(type, html) {
+        verifyMsgBox.style.display = 'flex';
+        verifyMsgBox.className = 'gate-verify-msg ' + type;
+        if (type === 'loading') {
+            verifyIcon.innerHTML = '<span class="gate-spinner"></span>';
+        } else if (type === 'error') {
+            verifyIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+        } else if (type === 'success') {
+            verifyIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        }
+        verifyText.innerHTML = html;
+    }
+
+    function hideVerifyMsg() {
+        verifyMsgBox.style.display = 'none';
+        verifyMsgBox.className = 'gate-verify-msg';
+    }
+
+    function startVerification() {
+        if (isVerifying || gateRemoved) return;
+        if (!hasClickedFollowOnce) {
+            showToast('Silakan klik "Buka Saluran WhatsApp" terlebih dahulu.', 'warning');
+            return;
+        }
+
+        isVerifying = true;
+        btnConfirm.disabled = true;
+        btnConfirm.classList.remove('active');
+        hideVerifyMsg();
+        showVerifyMsg('loading', 'Memverifikasi status follow Anda... Mohon tunggu.');
+
+        setTimeout(() => {
+            // Cek apakah user sudah klik WA (minimal 1x)
+            if (waClickTimestamp > 0) {
+                showVerifyMsg('success', 'Verifikasi berhasil. Mengalihkan...');
+                updateGateStep(3);
+                btnConfirm.style.display = 'none';
+                setPassed();
+                showApp();
+                gateRemoved = true;
+                isVerifying = false;
+            } else {
+                showVerifyMsg('error',
+                    '<strong>Verifikasi gagal.</strong><br>Silakan klik <strong>Buka Saluran WhatsApp</strong>, tekan <strong>Ikuti</strong>, lalu coba lagi.'
+                );
                 btnConfirm.disabled = false;
                 btnConfirm.classList.add('active');
-                btnConfirm.textContent = 'Saya Sudah Follow';
+                btnConfirm.textContent = 'Coba Lagi';
                 updateGateStep(2);
+                isVerifying = false;
             }
+        }, 2200);
+    }
 
-            function showVerifyMsg(type, html) {
-                verifyMsgBox.style.display = 'flex';
-                verifyMsgBox.className = 'gate-verify-msg ' + type;
-                if (type === 'loading') {
-                    verifyIcon.innerHTML = '<span class="gate-spinner"></span>';
-                } else if (type === 'error') {
-                    verifyIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
-                } else if (type === 'success') {
-                    verifyIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+    // ---------- EVENT: BUKA WHATSAPP ----------
+    btnFollowWA.addEventListener('click', function() {
+        waClickTimestamp = Date.now();
+
+        // Jika tombol belum diaktifkan, aktifkan setelah 2 detik (tanpa timer di background)
+        if (!confirmEnabled && !gateRemoved) {
+            setTimeout(function() {
+                // Cek lagi apakah sudah diaktifkan atau gate sudah dihapus
+                if (!confirmEnabled && !gateRemoved) {
+                    enableConfirmButton();
                 }
-                verifyText.innerHTML = html;
-            }
-
-            function hideVerifyMsg() {
-                verifyMsgBox.style.display = 'none';
-                verifyMsgBox.className = 'gate-verify-msg';
-            }
-
-            function startVerification() {
-                if (isVerifying || gateRemoved) return;
-                isVerifying = true;
-                confirmAttempts++;
-                btnConfirm.disabled = true;
-                btnConfirm.classList.remove('active');
-                hideVerifyMsg();
-                showVerifyMsg('loading', 'Memverifikasi status follow Anda... Mohon tunggu.');
-                setTimeout(() => {
-                    if (followClickCount >= 2) {
-                        showVerifyMsg('success', 'Verifikasi berhasil. Mengalihkan...');
-                        updateGateStep(3);
-                        btnConfirm.style.display = 'none';
-                        setPassed();
-                        showApp();
-                        gateRemoved = true;
-                        isVerifying = false;
-                    } else {
-                        showVerifyMsg('error',
-                            '<strong>Verifikasi gagal.</strong><br>Silakan klik <strong>Buka Saluran WhatsApp</strong>, tekan <strong>Ikuti</strong>, lalu coba lagi.'
-                            );
-                        btnConfirm.disabled = false;
-                        btnConfirm.classList.add('active');
-                        btnConfirm.textContent = 'Coba Lagi';
-                        updateGateStep(2);
-                        isVerifying = false;
-                        if (confirmAttempts >= 2) {
-                            document.getElementById('retry-popup').classList.add('active');
-                        }
-                    }
-                }, VERIFY_DELAY_MS);
-            }
-
-            let waitingForWhatsApp = false;
-            btnFollowWA.addEventListener('click', function() {
-                waitingForWhatsApp = true;
-                followClickCount++;
-            });
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && waitingForWhatsApp) {
-                    waitingForWhatsApp = false;
-                    if (!hasClickedFollowOnce) {
-                        hasClickedFollowOnce = true;
-                        enableConfirm();
-                    }
-                    if (followClickCount >= 2 && confirmAttempts >= 1 && !gateRemoved) {
-                        hideVerifyMsg();
-                        btnConfirm.textContent = 'Coba Lagi';
-                        btnConfirm.disabled = false;
-                        btnConfirm.classList.add('active');
-                        updateGateStep(2);
-                    }
-                }
-            });
-            btnConfirm.addEventListener('click', function() {
-                if (btnConfirm.disabled || isVerifying || gateRemoved) return;
-                if (!hasClickedFollowOnce) return;
-                startVerification();
-            });
-
-            function init() {
-                if (isAlreadyPassed()) {
-                    showApp();
-                    return;
-                }
-                document.body.style.overflow = 'hidden';
-                hideVerifyMsg();
-                btnConfirm.disabled = true;
-                btnConfirm.classList.remove('active');
-                updateGateStep(0);
-                gDot1.classList.add('active');
-                gLabel1.classList.add('active');
-            }
-            init();
-        })();
-
-        // ---------- CORE STATE ----------
-        let isDeploying = false;
-        let deployCompleted = false;
-        let currentPage = 'home';
-        let historyFilter = 'all';
-        let historySearch = '';
-        const CURRENT_USER_ID = (function() {
-            let userId = localStorage.getItem('ekk_userId');
-            if (!userId) {
-                userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-                localStorage.setItem('ekk_userId', userId);
-            }
-            return userId;
-        })();
-
-        // ---------- NAVIGATION ----------
-        function navigateTo(page) {
-            currentPage = page;
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById('page-' + page);
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
-            document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
-                item.classList.toggle('active', item.dataset.page === page);
-            });
-            document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
-                item.classList.toggle('active', item.dataset.page === page);
-            });
-            if (page === 'history') renderHistory();
-            if (page === 'home') updateDashboardStats();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 2000);
         }
+    });
+
+    // ---------- EVENT: VISIBILITY CHANGE (kembali dari WhatsApp) ----------
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && !gateRemoved && !confirmEnabled) {
+            // Jika user kembali ke halaman dan tombol belum aktif, aktifkan segera
+            enableConfirmButton();
+        }
+    });
+
+    // ---------- EVENT: FOCUS (fallback untuk beberapa browser) ----------
+    window.addEventListener('focus', function() {
+        if (!gateRemoved && !confirmEnabled) {
+            enableConfirmButton();
+        }
+    });
+
+    // ---------- EVENT: PAGE SHOW (fallback untuk iOS Safari) ----------
+    window.addEventListener('pageshow', function() {
+        if (!gateRemoved && !confirmEnabled) {
+            enableConfirmButton();
+        }
+    });
+
+    // ---------- TOMBOL KONFIRMASI ----------
+    btnConfirm.addEventListener('click', function() {
+        if (btnConfirm.disabled || isVerifying || gateRemoved) return;
+        if (!hasClickedFollowOnce) {
+            if (typeof showToast === 'function') {
+                showToast('Silakan klik "Buka Saluran WhatsApp" terlebih dahulu.', 'warning');
+            } else {
+                alert('Silakan klik "Buka Saluran WhatsApp" terlebih dahulu.');
+            }
+            return;
+        }
+        startVerification();
+    });
+
+    // ---------- INIT ----------
+    function init() {
+        if (isAlreadyPassed()) {
+            showApp();
+            return;
+        }
+
+        document.body.style.overflow = 'hidden';
+        hideVerifyMsg();
+
+        // Pastikan tombol disabled di awal
+        btnConfirm.setAttribute('disabled', 'disabled');
+        btnConfirm.disabled = true;
+        btnConfirm.classList.remove('active');
+        btnConfirm.textContent = 'Saya Sudah Follow';
+
+        updateGateStep(0);
+        gDot1.classList.add('active');
+        gLabel1.classList.add('active');
+
+        console.log('[GATE] Siap menunggu follow');
+    }
+
+    init();
+})();
+
+// ---------- CORE STATE (deploy, history, dll) ----------
+let isDeploying = false;
+let deployCompleted = false;
+let currentPage = 'home';
+let historyFilter = 'all';
+let historySearch = '';
+const CURRENT_USER_ID = (function() {
+    let userId = localStorage.getItem('ekk_userId');
+    if (!userId) {
+        userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+        localStorage.setItem('ekk_userId', userId);
+    }
+    return userId;
+})();
+
+// ---------- NAVIGATION ----------
+function navigateTo(page) {
+    currentPage = page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const targetPage = document.getElementById('page-' + page);
+    if (targetPage) {
+        targetPage.classList.add('active');
+    }
+    document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+    });
+    document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+    });
+    if (page === 'history') renderHistory();
+    if (page === 'home') updateDashboardStats();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ... (lanjutkan dengan semua fungsi navigasi, toast, modal, validasi, upload, deploy, history, dll yang ada di kode asli) ...
+// Pastikan untuk menyalin semua kode setelah bagian ini dari versi terakhir yang Anda miliki, 
+// karena bagian ini tidak berubah.
 
         document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
             item.addEventListener('click', function() {
