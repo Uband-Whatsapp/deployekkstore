@@ -1341,15 +1341,22 @@
         }
 
         .deploy-status-panel {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: var(--space-4);
-            margin-top: var(--space-4);
-        }
-        .deploy-status-panel.hidden {
-            display: none;
-        }
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    padding: var(--space-4);
+    margin-top: var(--space-4);
+
+    /* TAMBAHKAN INI */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+}
+
+.deploy-status-panel.hidden {
+    display: none;
+}
         /* ================================
    DEPLOYMENT STATUS
 ================================ */
@@ -1367,26 +1374,35 @@
 .status-step {
     display: flex;
     align-items: center;
-
     gap: 9px;
+
     min-width: 0;
-
-    padding: 10px 11px;
-
-    border-radius: 10px;
+    padding: 9px 8px;
 
     font-size: 12px;
-    line-height: 1.2;
-
     color: var(--text-muted);
 
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.035);
+    border-radius: 9px;
 
-    transition:
-        background var(--transition),
-        border-color var(--transition),
-        transform var(--transition);
+    transition: all var(--transition);
+}
+
+.status-step .step-indicator {
+    width: 19px;
+    height: 19px;
+    min-width: 19px;
+
+    border-radius: 50%;
+    border: 2px solid var(--border);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 8px;
+    flex-shrink: 0;
+
+    transition: all var(--transition);
 }
 
 /* Hover */
