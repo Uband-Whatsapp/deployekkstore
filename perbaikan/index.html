@@ -4204,29 +4204,31 @@
 
         if (projectInput) {
 
-            projectInput.addEventListener(
-                'input',
-                function() {
+projectInput.addEventListener(
+    'input',
+    function() {
 
-                    const val =
-                        this.value
-                            .trim()
-                            .toLowerCase();
+        const val =
+            this.value
+                .trim()
+                .toLowerCase();
 
-                    this.value =
-                        val
-                            .replace(
-                                /[^a-z0-9-]/g,
-                                '-'
-                            )
-                            .replace(
-                                /-+/g,
-                                '-'
-                            )
-                            .replace(
-                                /^-|-$/g,
-                                ''
-                            );
+        this.value =
+            val
+                .replace(
+                    /[^a-z0-9.-]/g,
+                    '-'
+                )
+                .replace(
+                    /-+/g,
+                    '-'
+                )
+                .replace(
+                    /^[-.]|[-.]$/g,
+                    ''
+                );
+    }
+);
 
                     if (
                         this.value.length === 0
