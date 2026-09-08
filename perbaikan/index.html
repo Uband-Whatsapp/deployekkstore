@@ -2478,6 +2478,147 @@
     font-size: 10px;
     color: var(--text-muted);
 }
+/* =========================================
+   DEPLOY SUCCESS
+========================================= */
+
+.deploy-success {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: var(--space-4);
+
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+
+/* Judul berhasil */
+.deploy-success-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: var(--success);
+
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.deploy-success-title i {
+    font-size: 15px;
+}
+
+
+/* URL */
+.deploy-url {
+    display: block;
+
+    margin-top: 8px;
+
+    color: var(--success);
+    font-size: 13px;
+    font-weight: 700;
+
+    text-decoration: none;
+
+    word-break: break-all;
+}
+
+.deploy-url:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+========================================= */
+
+.deploy-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 14px;
+}
+
+
+/* Tombol */
+.deploy-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    width: 100%;
+    min-height: 42px;
+
+    padding: 9px 10px;
+
+    border-radius: 10px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+/* Buka Website */
+.deploy-open-btn {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: #fff;
+}
+
+
+/* Salin Link */
+.deploy-copy-btn {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+
+/* Hover */
+.deploy-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+
+/* Klik */
+.deploy-action-btn:active {
+    transform: scale(0.97);
+}
+
+
+/* HP */
+@media (max-width: 480px) {
+
+    .deploy-success {
+        padding: 13px;
+    }
+
+    .deploy-actions {
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .deploy-action-btn {
+        min-height: 40px;
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+}
     </style>
 </head>
 <body>
@@ -4439,20 +4580,51 @@
 
 
                     // ---------- OUTPUT SUKSES ----------
-                    if (output) {
+if (output) {
 
-                        output.innerHTML =
-                            '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i> ' +
-                            'Deploy Berhasil!<br>' +
+    output.innerHTML = `
+        <div class="deploy-success">
 
-                            '<a href="' +
-                            result.url +
-                            '" target="_blank" rel="noopener noreferrer" style="color:var(--success);font-weight:700;">' +
+            <div class="deploy-success-title">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Deploy Berhasil!</span>
+            </div>
 
-                            result.url +
+            <a
+                href="${result.url}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="deploy-url"
+                id="deploy-url"
+            >
+                ${result.url}
+            </a>
 
-                            '</a>';
-                    }
+            <div class="deploy-actions">
+
+                <button
+                    type="button"
+                    class="deploy-action-btn deploy-open-btn"
+                    onclick="openDeployedWebsite()"
+                >
+                    <i class="fa-solid fa-globe"></i>
+                    <span>Buka Website</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="deploy-action-btn deploy-copy-btn"
+                    onclick="copyDeployedLink()"
+                >
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Salin Link</span>
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
 
 
                     showToast(
@@ -4745,7 +4917,114 @@
                 isDeploying = false;
             }
         }
+// =========================================================
+// BUKA WEBSITE HASIL DEPLOY
+// =========================================================
+function openDeployedWebsite() {
 
+    const urlElement =
+        document.getElementById('deploy-url');
+
+    if (!urlElement) {
+        showToast(
+            'URL deploy tidak ditemukan.',
+            'error'
+        );
+        return;
+    }
+
+    const url =
+        urlElement.href ||
+        urlElement.textContent.trim();
+
+    if (!url) {
+        showToast(
+            'URL deploy tidak tersedia.',
+            'error'
+        );
+        return;
+    }
+
+    window.open(
+        url,
+        '_blank',
+        'noopener,noreferrer'
+    );
+}
+
+
+// =========================================================
+// SALIN LINK DEPLOY
+// =========================================================
+async function copyDeployedLink() {
+
+    const urlElement =
+        document.getElementById('deploy-url');
+
+    if (!urlElement) {
+        showToast(
+            'URL deploy tidak ditemukan.',
+            'error'
+        );
+        return;
+    }
+
+    const url =
+        urlElement.href ||
+        urlElement.textContent.trim();
+
+    if (!url) {
+        showToast(
+            'URL deploy tidak tersedia.',
+            'error'
+        );
+        return;
+    }
+
+    try {
+
+        await navigator.clipboard.writeText(url);
+
+        showToast(
+            'Link berhasil disalin!',
+            'success'
+        );
+
+    } catch (err) {
+
+        // Fallback untuk browser tertentu
+        try {
+
+            const textarea =
+                document.createElement('textarea');
+
+            textarea.value = url;
+
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+
+            document.body.appendChild(textarea);
+
+            textarea.select();
+
+            document.execCommand('copy');
+
+            textarea.remove();
+
+            showToast(
+                'Link berhasil disalin!',
+                'success'
+            );
+
+        } catch (e) {
+
+            showToast(
+                'Gagal menyalin link.',
+                'error'
+            );
+        }
+    }
+}
 
         // =========================================================
         // MAIN DEPLOY
@@ -4834,21 +5113,21 @@
             }
 
 
-            let project =
-                projectInputVal
-                    .toLowerCase()
-                    .replace(
-                        /[^a-z0-9-]/g,
-                        '-'
-                    )
-                    .replace(
-                        /-+/g,
-                        '-'
-                    )
-                    .replace(
-                        /^-|-$/g,
-                        ''
-                    );
+let project =
+    projectInputVal
+        .toLowerCase()
+        .replace(
+            /[^a-z0-9.-]/g,
+            '-'
+        )
+        .replace(
+            /-+/g,
+            '-'
+        )
+        .replace(
+            /^[-.]|[-.]$/g,
+            ''
+        );
 
 
             if (project.length < 3) {
