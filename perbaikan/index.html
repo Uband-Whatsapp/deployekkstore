@@ -1480,82 +1480,95 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
+.system-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+}
 
-        .system-status-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-3);
-            width: 100%;
-        }
-        @media (min-width: 768px) {
-            .system-status-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        @media (max-width: 380px) {
-            .system-status-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        .system-status-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-3) var(--space-4);
-            background: var(--bg-input);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            transition: all var(--transition);
-            min-width: 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .system-status-item:hover {
-            border-color: var(--border-light);
-        }
-        .system-status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .system-status-dot.online {
-            background: var(--success);
-            animation: pulse-dot 2.2s infinite;
-        }
-        .system-status-dot.offline {
-            background: var(--danger);
-        }
-        .system-status-dot.unknown {
-            background: var(--text-muted);
-        }
-        .system-status-info {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-            min-width: 0;
-            flex: 1;
-        }
-        .system-status-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .system-status-desc {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-        .system-status-ms {
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--success);
-            font-family: var(--font-mono);
-            flex-shrink: 0;
-        }
+@media (min-width: 768px) {
+    .system-status-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
 
+@media (max-width: 360px) {
+    .system-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.system-status-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 15px;
+    background: var(--bg-input);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    transition: all var(--transition);
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.system-status-item:hover {
+    border-color: var(--border-light);
+}
+
+.system-status-dot {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.system-status-dot.online {
+    background: var(--success);
+    animation: pulse-dot 2.2s infinite;
+}
+
+.system-status-dot.offline {
+    background: var(--danger);
+}
+
+.system-status-dot.unknown {
+    background: var(--text-muted);
+}
+
+.system-status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.system-status-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.system-status-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+.system-status-ms {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--success);
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+}
         .announcement-card {
             background: var(--accent-soft);
             border: 1px solid rgba(59, 130, 246, 0.25);
