@@ -8,11 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* ============================================
-           EKK STORE 3.0 — PREMIUM DARK SAAS DESIGN SYSTEM
+           EKK STORE 3.1 — REDESIGNED DEPLOYMENT PLATFORM
            ============================================ */
 
         :root {
-            /* Spacing Scale */
             --space-1: 4px;
             --space-2: 8px;
             --space-3: 12px;
@@ -22,7 +21,6 @@
             --space-8: 32px;
             --space-10: 40px;
 
-            /* Colors */
             --bg: #0a0a0b;
             --bg-card: #111113;
             --bg-input: #1a1a1e;
@@ -33,13 +31,11 @@
             --text-secondary: #b0b0b5;
             --text-muted: #7a7a80;
 
-            /* Accent */
             --accent: #3b82f6;
             --accent-hover: #60a5fa;
             --accent-glow: rgba(59, 130, 246, 0.18);
             --accent-soft: #1a2332;
 
-            /* Status */
             --success: #22c55e;
             --success-soft: #0f2a1a;
             --danger: #ef4444;
@@ -51,11 +47,9 @@
             --proses: #8b5cf6;
             --proses-soft: #1e1a2e;
 
-            /* Typography */
             --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
 
-            /* Effects */
             --radius-sm: 8px;
             --radius: 12px;
             --radius-lg: 16px;
@@ -65,15 +59,14 @@
             --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.6);
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-            /* Layout */
             --header-h: 56px;
             --bottom-nav-h: 64px;
             --sidebar-w: 280px;
             --max-width: 1280px;
             --page-pad-x: 20px;
+            --history-scroll-max: 420px;
         }
 
-        /* Reset */
         *,
         *::before,
         *::after {
@@ -384,7 +377,6 @@
             opacity: 1;
         }
 
-        /* Top Header — bersih, tanpa tombol */
         #top-header {
             position: fixed;
             top: 0;
@@ -478,7 +470,6 @@
             }
         }
 
-        /* Sidebar (Desktop only) */
         #sidebar {
             position: fixed;
             top: var(--header-h);
@@ -605,7 +596,6 @@
             color: var(--text);
         }
 
-        /* Main Content */
         #main-content {
             padding: calc(var(--header-h) + var(--space-5)) var(--page-pad-x) calc(var(--bottom-nav-h) + var(--space-8));
             max-width: var(--max-width);
@@ -622,15 +612,16 @@
         @media (max-width: 480px) {
             :root {
                 --page-pad-x: 16px;
+                --history-scroll-max: 350px;
             }
             #main-content {
                 padding-left: var(--page-pad-x);
                 padding-right: var(--page-pad-x);
                 padding-top: calc(var(--header-h) + var(--space-4));
+                padding-bottom: calc(var(--bottom-nav-h) + var(--space-6) + env(safe-area-inset-bottom));
             }
         }
 
-        /* Bottom Navigation — Premium */
         #bottom-nav {
             position: fixed;
             bottom: 0;
@@ -720,7 +711,6 @@
             opacity: 0.6;
         }
 
-        /* ============ PAGES ============ */
         .page {
             display: none;
             animation: pageIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -739,8 +729,6 @@
             }
         }
 
-        /* ============ COMPONENTS ============ */
-        /* Cards */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -773,7 +761,6 @@
             color: var(--accent);
         }
 
-        /* Page Header */
         .page-header {
             margin-bottom: var(--space-6);
         }
@@ -791,7 +778,6 @@
             font-weight: 400;
         }
 
-        /* Stats Grid — Icon di atas, angka besar */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -865,7 +851,6 @@
             white-space: nowrap;
         }
 
-        /* Quick Actions — 2x2 grid */
         .quick-actions {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -931,7 +916,6 @@
             border-color: var(--accent-hover);
         }
 
-        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -1022,7 +1006,6 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* Forms */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -1078,7 +1061,6 @@
             animation: msgIn 0.3s ease;
         }
 
-        /* Upload Dropzone */
         .upload-dropzone {
             border: 2px dashed var(--border);
             border-radius: var(--radius);
@@ -1150,7 +1132,6 @@
             animation: msgIn 0.3s ease;
         }
 
-        /* Status Badges */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -1183,7 +1164,6 @@
             border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
-        /* Deploy Status Panel */
         .deploy-status-panel {
             background: var(--bg-input);
             border: 1px solid var(--border);
@@ -1249,33 +1229,48 @@
             color: #fff;
         }
 
-        /* History Items */
+        /* History List with internal scroll */
         .history-list-container {
             display: flex;
             flex-direction: column;
             gap: var(--space-2);
+            max-height: var(--history-scroll-max);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 4px;
         }
+        .history-list-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .history-list-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+        .history-list-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
         .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-3);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "name actions"
+                "meta actions"
+                "url actions";
+            gap: 4px var(--space-3);
             padding: var(--space-3) var(--space-4);
             background: var(--bg-input);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             transition: all var(--transition);
-            flex-wrap: wrap;
+            align-items: start;
         }
         .history-item:hover {
             border-color: var(--border-light);
             background: var(--bg-hover);
         }
         .history-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            flex: 1;
+            grid-area: name;
             min-width: 0;
         }
         .history-name {
@@ -1283,32 +1278,46 @@
             font-weight: 600;
             color: var(--text);
             font-family: var(--font-mono);
-            word-break: break-all;
             letter-spacing: -0.02em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+            max-width: 100%;
         }
         .history-meta {
+            grid-area: meta;
             font-size: 10px;
             color: var(--text-muted);
             display: flex;
             align-items: center;
             gap: var(--space-2);
             flex-wrap: wrap;
+            min-width: 0;
         }
         .history-url {
+            grid-area: url;
             font-size: 10px;
             color: var(--accent);
-            word-break: break-all;
-            max-width: 180px;
+            max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             display: inline-block;
+            text-decoration: none;
+        }
+        .history-url:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
         }
         .history-actions {
+            grid-area: actions;
             display: flex;
             align-items: center;
             gap: var(--space-2);
             flex-shrink: 0;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
         .history-action-btn {
             width: 30px;
@@ -1324,6 +1333,7 @@
             cursor: pointer;
             transition: all var(--transition);
             min-height: 30px;
+            text-decoration: none;
         }
         .history-action-btn:hover {
             background: var(--bg-input);
@@ -1336,7 +1346,6 @@
             border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* Filter Chips */
         .filter-chips {
             display: flex;
             gap: var(--space-2);
@@ -1365,7 +1374,6 @@
             border-color: var(--accent);
         }
 
-        /* Search */
         .search-wrapper {
             position: relative;
             flex: 1;
@@ -1396,7 +1404,6 @@
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
 
-        /* System Status */
         .system-status-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1468,15 +1475,15 @@
             flex-shrink: 0;
         }
 
-        /* Announcement */
         .announcement-card {
             background: var(--accent-soft);
             border: 1px solid rgba(59, 130, 246, 0.25);
             border-radius: var(--radius);
-            padding: var(--space-4) var(--space-4);
+            padding: var(--space-4);
             display: flex;
             align-items: flex-start;
             gap: var(--space-3);
+            margin-bottom: var(--space-6);
         }
         .announcement-icon {
             font-size: 18px;
@@ -1516,7 +1523,6 @@
             gap: 6px;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: var(--space-8) var(--space-4);
@@ -1542,7 +1548,6 @@
             margin-bottom: var(--space-3);
         }
 
-        /* Output */
         #output {
             background: var(--bg-input);
             border: 1px solid var(--border);
@@ -1557,7 +1562,6 @@
             margin-top: var(--space-4);
         }
 
-        /* Footer */
         .footer-text {
             margin-top: var(--space-8);
             padding: var(--space-4) 0;
@@ -1569,7 +1573,6 @@
             border-top: 1px solid var(--border);
         }
 
-        /* Toast */
         #toast {
             position: fixed;
             bottom: calc(var(--bottom-nav-h) + var(--space-4) + env(safe-area-inset-bottom));
@@ -1603,7 +1606,6 @@
             }
         }
 
-        /* Modals */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -1663,7 +1665,6 @@
             flex-wrap: wrap;
         }
 
-        /* Requirement Items */
         .requirement-item {
             display: flex;
             align-items: center;
@@ -1718,6 +1719,10 @@
             transition: all var(--transition);
             flex-shrink: 0;
             min-height: 32px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         .requirement-item .req-btn:hover {
             background: var(--success);
@@ -1736,7 +1741,6 @@
             display: none;
         }
 
-        /* Step Cards (Documentation) */
         .step-cards {
             display: grid;
             gap: var(--space-3);
@@ -1794,7 +1798,6 @@
             line-height: 1.5;
         }
 
-        /* Accordion */
         .accordion-item {
             border-bottom: 1px solid var(--border);
             padding: var(--space-3) 0;
@@ -1853,7 +1856,6 @@
             color: var(--accent);
         }
 
-        /* Responsive tweaks */
         @media (max-width: 480px) {
             .card {
                 padding: var(--space-4);
@@ -1887,9 +1889,13 @@
             }
             .history-item {
                 padding: var(--space-2) var(--space-3);
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+            .history-name {
+                font-size: 12px;
             }
             .history-url {
-                max-width: 120px;
+                max-width: 140px;
             }
         }
     </style>
@@ -1939,7 +1945,7 @@
 
     <!-- ==================== APP SHELL ==================== -->
     <div id="app-shell">
-        <!-- Header — bersih, tanpa tombol hamburger/riwayat -->
+        <!-- Header -->
         <header id="top-header">
             <div class="header-left">
                 <div class="header-logo">
@@ -2031,7 +2037,6 @@
                     <p>Kelola dan deploy project Anda dengan cepat.</p>
                 </div>
 
-                <!-- Stats — Icon di atas, Angka besar, Label -->
                 <div class="stats-grid" id="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon blue"><i class="fa-solid fa-diagram-project"></i></div>
@@ -2055,7 +2060,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Access — 2x2 grid, tanpa Info & Jasa -->
                 <div class="card" style="margin-bottom: var(--space-6);">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-bolt"></i> Akses Cepat</h3>
@@ -2080,13 +2084,12 @@
                     </div>
                 </div>
 
-                <!-- Recent Deployments -->
                 <div class="card" style="margin-bottom: var(--space-6);">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-clock-rotate-left"></i> Deployment Terbaru</h3>
                         <button class="btn btn-outline btn-sm" data-page="history">Lihat Semua</button>
                     </div>
-                    <div id="recent-deployments">
+                    <div id="recent-deployments" class="history-list-container" style="max-height: 300px;">
                         <div class="empty-state">
                             <i class="fa-solid fa-inbox"></i>
                             <p>Belum ada deployment</p>
@@ -2098,7 +2101,6 @@
                     </div>
                 </div>
 
-                <!-- System Status Compact -->
                 <div class="card" style="margin-bottom: var(--space-6);">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-server"></i> System Status</h3>
@@ -2108,44 +2110,44 @@
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Deployment Service</span>
-                                <span class="system-status-desc">Online · 42ms</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
                         </div>
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Database</span>
-                                <span class="system-status-desc">Online · 12ms</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
                         </div>
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Storage</span>
-                                <span class="system-status-desc">Online · 28ms</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
                         </div>
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Authentication</span>
-                                <span class="system-status-desc">Online · 15ms</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Announcement -->
-                <div class="announcement-card" style="margin-bottom: var(--space-6);">
+                <!-- CTA WhatsApp -->
+                <div class="announcement-card">
                     <div class="announcement-icon">
-                        <i class="fa-solid fa-bullhorn"></i>
+                        <i class="fa-brands fa-whatsapp"></i>
                     </div>
                     <div class="announcement-content">
-                        <h4>Informasi Terbaru</h4>
-                        <p>Platform Ekk Store menyediakan layanan deployment gratis untuk file HTML dan ZIP. Pastikan Anda mengikuti saluran WhatsApp untuk update terbaru.</p>
-                        <span class="announcement-link" data-page="docs">
-                            Selengkapnya <i class="fa-solid fa-arrow-right"></i>
-                        </span>
+                        <h4>Gabung Channel WhatsApp Ekk Store</h4>
+                        <p>Dapatkan informasi terbaru, update layanan, pengumuman, dan kabar terbaru dari Ekk Store langsung melalui channel WhatsApp.</p>
+                        <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top: var(--space-2); display: inline-flex;">
+                            <i class="fa-brands fa-whatsapp"></i> Gabung Channel WhatsApp
+                        </a>
                     </div>
                 </div>
             </div>
@@ -2180,7 +2182,6 @@
                         <i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>
                     </button>
 
-                    <!-- Deploy Status Panel -->
                     <div class="deploy-status-panel hidden" id="deploy-status-panel">
                         <div class="status-step" id="step-upload">
                             <span class="step-indicator">●</span>
@@ -2237,74 +2238,244 @@
                     <h1>Dokumentasi</h1>
                     <p>Panduan lengkap penggunaan platform.</p>
                 </div>
-                <div class="step-cards" style="margin-bottom: var(--space-6);">
-                    <div class="step-card">
-                        <div class="step-number">1</div>
-                        <div class="step-card-info">
-                            <h4>Siapkan Project</h4>
-                            <p>Siapkan file HTML atau ZIP yang ingin Anda deploy.</p>
+
+                <div class="card" style="margin-bottom: var(--space-6);">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-list-ol"></i> Cara Deploy</h3>
+                    </div>
+                    <div class="step-cards" style="margin-bottom: var(--space-4);">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <div class="step-card-info">
+                                <h4>Siapkan Project</h4>
+                                <p>Siapkan file HTML atau ZIP yang ingin Anda deploy.</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <div class="step-card-info">
+                                <h4>Upload File</h4>
+                                <p>Masukkan nama project dan pilih file Anda.</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <div class="step-card-info">
+                                <h4>Deploy</h4>
+                                <p>Klik tombol Deploy dan tunggu proses selesai.</p>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">4</div>
+                            <div class="step-card-info">
+                                <h4>Buka Hasil</h4>
+                                <p>Akses website Anda melalui URL yang diberikan.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="step-card">
-                        <div class="step-number">2</div>
-                        <div class="step-card-info">
-                            <h4>Upload File</h4>
-                            <p>Masukkan nama project dan pilih file Anda.</p>
-                        </div>
+
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-lightbulb"></i> Tips agar deployment berhasil</h3>
                     </div>
-                    <div class="step-card">
-                        <div class="step-number">3</div>
-                        <div class="step-card-info">
-                            <h4>Deploy</h4>
-                            <p>Klik tombol Deploy dan tunggu proses selesai.</p>
-                        </div>
+                    <ul style="margin-bottom: var(--space-4); padding-left: var(--space-4);">
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• Pastikan nama project minimal 3 karakter dan hanya mengandung huruf kecil, angka, dan tanda hubung.</li>
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• File HTML harus valid dan memiliki struktur yang benar.</li>
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• Jika menggunakan ZIP, pastikan file index.html berada di root ZIP, bukan di dalam folder.</li>
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• Ukuran file tidak boleh melebihi batas yang ditentukan.</li>
+                    </ul>
+
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-wrench"></i> Troubleshooting</h3>
                     </div>
-                    <div class="step-card">
-                        <div class="step-number">4</div>
-                        <div class="step-card-info">
-                            <h4>Buka Hasil</h4>
-                            <p>Akses website Anda melalui URL yang diberikan.</p>
-                        </div>
-                    </div>
+                    <ul style="padding-left: var(--space-4);">
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• Jika deployment gagal, periksa kembali nama project dan format file.</li>
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• Jika URL tidak dapat dibuka, tunggu beberapa saat atau coba deploy ulang.</li>
+                        <li style="font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-2);">• Pastikan koneksi internet stabil selama proses deployment.</li>
+                    </ul>
                 </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-circle-question"></i> FAQ</h3>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-header" data-accordion="faq1">
-                            <i class="fa-solid fa-file"></i> File apa yang bisa digunakan?
+                            <i class="fa-solid fa-circle-question"></i> Apa itu Ekk Store Deployment Platform?
                             <i class="fa-solid fa-chevron-down chev"></i>
                         </button>
                         <div class="accordion-content" id="faq1">
-                            <p>File HTML (.html) atau ZIP (.zip) yang berisi file HTML.</p>
+                            <p>Ekk Store Deployment Platform adalah layanan untuk men-deploy file HTML atau ZIP menjadi website yang dapat diakses publik secara gratis.</p>
                         </div>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-header" data-accordion="faq2">
-                            <i class="fa-solid fa-rocket"></i> Bagaimana cara deploy?
+                            <i class="fa-solid fa-circle-question"></i> Apa yang bisa di-deploy?
                             <i class="fa-solid fa-chevron-down chev"></i>
                         </button>
                         <div class="accordion-content" id="faq2">
-                            <p>Masukkan nama project, upload file, lalu klik Deploy Sekarang.</p>
+                            <p>Anda dapat men-deploy website statis berupa file HTML atau file ZIP yang berisi HTML, CSS, JavaScript, dan aset lainnya.</p>
                         </div>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-header" data-accordion="faq3">
-                            <i class="fa-solid fa-circle-xmark"></i> Kenapa deployment gagal?
+                            <i class="fa-solid fa-circle-question"></i> Format file apa yang didukung?
                             <i class="fa-solid fa-chevron-down chev"></i>
                         </button>
                         <div class="accordion-content" id="faq3">
-                            <p>Periksa nama project (minimal 3 karakter, huruf kecil, angka, dan tanda hubung) dan pastikan file valid.</p>
+                            <p>Format yang didukung adalah file .html dan .zip. File ZIP harus berisi file index.html di root arsip.</p>
                         </div>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-header" data-accordion="faq4">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Di mana melihat riwayat?
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana cara membuat project?
                             <i class="fa-solid fa-chevron-down chev"></i>
                         </button>
                         <div class="accordion-content" id="faq4">
-                            <p>Klik menu Riwayat di navigasi utama atau sidebar.</p>
+                            <p>Masukkan nama project di halaman Deploy, upload file HTML atau ZIP, lalu klik tombol Deploy Sekarang.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq5">
+                            <i class="fa-solid fa-circle-question"></i> Apa aturan nama project?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq5">
+                            <p>Nama project minimal 3 karakter, hanya boleh mengandung huruf kecil (a-z), angka (0-9), dan tanda hubung (-). Harus diawali dan diakhiri huruf kecil atau angka. Tidak boleh ada dua tanda hubung berurutan (--).</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq6">
+                            <i class="fa-solid fa-circle-question"></i> Berapa lama proses deployment?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq6">
+                            <p>Proses deployment biasanya memakan waktu beberapa detik hingga satu menit tergantung ukuran file dan kondisi server.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq7">
+                            <i class="fa-solid fa-circle-question"></i> Apa arti status "Sedang deploy"?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq7">
+                            <p>Status "Sedang deploy" berarti file Anda sedang diproses dan dikirim ke server. Tunggu hingga proses selesai.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq8">
+                            <i class="fa-solid fa-circle-question"></i> Apa arti "Berhasil"?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq8">
+                            <p>"Berhasil" berarti project Anda telah berhasil di-deploy dan dapat diakses melalui URL yang diberikan.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq9">
+                            <i class="fa-solid fa-circle-question"></i> Apa yang harus dilakukan jika deployment gagal?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq9">
+                            <p>Periksa kembali nama project (minimal 3 karakter, format benar) dan pastikan file valid. Coba lagi setelah beberapa saat.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq10">
+                            <i class="fa-solid fa-circle-question"></i> Di mana melihat URL project?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq10">
+                            <p>URL project ditampilkan di output deploy setelah berhasil, dan juga tersimpan di halaman Riwayat Deploy.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq11">
+                            <i class="fa-solid fa-circle-question"></i> Di mana melihat riwayat deployment?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq11">
+                            <p>Klik menu "Riwayat" di navigasi utama atau sidebar untuk melihat semua riwayat deployment Anda.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq12">
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana mencari deployment lama?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq12">
+                            <p>Gunakan kolom pencarian di halaman Riwayat untuk mencari berdasarkan nama project.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq13">
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana menghapus riwayat?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq13">
+                            <p>Klik ikon tempat sampah pada setiap item riwayat untuk menghapus satu per satu, atau gunakan tombol "Bersihkan Riwayat" untuk menghapus semua riwayat lokal.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq14">
+                            <i class="fa-solid fa-circle-question"></i> Apakah project dapat di-deploy ulang?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq14">
+                            <p>Ya, Anda dapat men-deploy ulang project dengan nama yang sama. Project lama akan ditimpa dengan yang baru.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq15">
+                            <i class="fa-solid fa-circle-question"></i> Apa yang terjadi ketika upload ZIP?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq15">
+                            <p>File ZIP akan diekstrak di server dan file index.html di dalamnya akan dijadikan halaman utama website Anda.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq16">
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana memastikan file HTML berjalan?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq16">
+                            <p>Pastikan file HTML Anda valid, tidak ada error JavaScript yang fatal, dan semua resource (CSS, JS, gambar) terhubung dengan benar.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq17">
+                            <i class="fa-solid fa-circle-question"></i> Apa yang harus dilakukan jika URL tidak dapat dibuka?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq17">
+                            <p>Tunggu beberapa saat karena server mungkin masih memproses. Jika masih tidak bisa, coba deploy ulang atau hubungi Ekk Store.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq18">
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana mendapatkan informasi terbaru?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq18">
+                            <p>Gabung ke channel WhatsApp Ekk Store melalui tombol "Gabung Channel WhatsApp" di halaman Beranda.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq19">
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana menghubungi Ekk Store?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq19">
+                            <p>Anda dapat menghubungi Ekk Store melalui WhatsApp atau Telegram yang tersedia di menu Contact pada sidebar.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header" data-accordion="faq20">
+                            <i class="fa-solid fa-circle-question"></i> Bagaimana bergabung ke channel WhatsApp?
+                            <i class="fa-solid fa-chevron-down chev"></i>
+                        </button>
+                        <div class="accordion-content" id="faq20">
+                            <p>Klik tombol "Gabung Channel WhatsApp" di halaman Beranda atau ikuti saluran WhatsApp Ekk Store melalui link yang tersedia.</p>
                         </div>
                     </div>
                 </div>
@@ -2350,7 +2521,7 @@
                             <i class="fa-solid fa-chevron-down chev"></i>
                         </button>
                         <div class="accordion-content" id="info4">
-                            <p>3.0.0</p>
+                            <p>3.1.0</p>
                         </div>
                     </div>
                 </div>
@@ -2368,33 +2539,29 @@
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Deployment Service</span>
-                                <span class="system-status-desc">Operasional normal</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
-                            <span class="system-status-ms">42ms</span>
                         </div>
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Database</span>
-                                <span class="system-status-desc">Firestore berjalan normal</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
-                            <span class="system-status-ms">12ms</span>
                         </div>
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Storage</span>
-                                <span class="system-status-desc">Penyimpanan tersedia</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
-                            <span class="system-status-ms">28ms</span>
                         </div>
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
                                 <span class="system-status-name">Authentication</span>
-                                <span class="system-status-desc">Verifikasi aktif</span>
+                                <span class="system-status-desc">Online</span>
                             </div>
-                            <span class="system-status-ms">15ms</span>
                         </div>
                     </div>
                 </div>
@@ -2469,10 +2636,10 @@
                 </div>
             </div>
 
-            <div class="footer-text">&copy; 2026 Ekk Store — Deployment Platform v3.0.0</div>
+            <div class="footer-text">&copy; 2026 Ekk Store — Deployment Platform v3.1.0</div>
         </main>
 
-        <!-- Bottom Navigation — 4 menu utama -->
+        <!-- Bottom Navigation -->
         <nav id="bottom-nav" aria-label="Navigasi Mobile">
             <button class="bottom-nav-item active" data-page="home">
                 <i class="fa-solid fa-house"></i>
@@ -2548,8 +2715,7 @@
 
     <script>
         /* ============================================
-           EKK STORE 3.0 — CORE JAVASCRIPT
-           Semua fungsi existing dipertahankan
+           EKK STORE 3.1 — CORE JAVASCRIPT (FIXED)
            ============================================ */
 
         (function() {
@@ -2752,10 +2918,6 @@
 
         // ---------- NAVIGATION ----------
         function navigateTo(page) {
-            if (page === 'group') {
-                // Group is a full page now
-                page = 'group';
-            }
             currentPage = page;
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById('page-' + page);
@@ -2773,35 +2935,30 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Sidebar items
         document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
             item.addEventListener('click', function() {
                 navigateTo(this.dataset.page);
             });
         });
 
-        // Bottom nav items
         document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
             item.addEventListener('click', function() {
                 navigateTo(this.dataset.page);
             });
         });
 
-        // Quick actions
         document.querySelectorAll('.quick-action[data-page]').forEach(item => {
             item.addEventListener('click', function() {
                 navigateTo(this.dataset.page);
             });
         });
 
-        // Buttons with data-page
         document.querySelectorAll('.btn[data-page], .announcement-link[data-page]').forEach(item => {
             item.addEventListener('click', function() {
                 navigateTo(this.dataset.page);
             });
         });
 
-        // Accordion in sidebar
         document.querySelectorAll('.sidebar-item.accordion-trigger').forEach(item => {
             item.addEventListener('click', function() {
                 const submenuId = this.dataset.accordion;
@@ -2813,7 +2970,6 @@
             });
         });
 
-        // Accordion headers
         document.querySelectorAll('.accordion-header').forEach(header => {
             header.addEventListener('click', function() {
                 const contentId = this.dataset.accordion;
@@ -2903,7 +3059,6 @@
             }
         });
 
-        // Drag & drop
         uploadDropzone.addEventListener('dragover', function(e) {
             e.preventDefault();
             this.classList.add('dragover');
@@ -2983,12 +3138,6 @@
                 notifStatus.textContent = 'Belum';
                 notifStatus.className = 'req-status';
             }
-            if (join && notif && !deployCompleted && isDeploying) {
-                document.getElementById('deploy-modal').classList.remove('active');
-                document.body.classList.remove('modal-open');
-                isDeploying = false;
-                originalDeployFunction();
-            }
         }
 
         // ---------- PROJECT OWNER (API) ----------
@@ -3063,7 +3212,6 @@
             if (filtered.length === 0) {
                 historyList.innerHTML =
                     '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Belum ada deployment</p><span class="sub">Deployment yang Anda lakukan akan muncul di sini</span><button class="btn btn-primary btn-sm" data-page="deploy" style="display:inline-flex;"><i class="fa-solid fa-rocket"></i> Deploy Project</button></div>';
-                // Re-bind buttons inside empty state
                 historyList.querySelectorAll('[data-page]').forEach(btn => {
                     btn.addEventListener('click', function() {
                         navigateTo(this.dataset.page);
@@ -3089,7 +3237,8 @@
                     '';
                 return '<div class="history-item" data-index="' + realIndex + '">' +
                     '<div class="history-info">' +
-                    '<span class="history-name">' + escapeHTML(item.project) + '</span>' +
+                    '<span class="history-name" title="' + escapeHTML(item.project) + '">' + escapeHTML(item
+                        .project) + '</span>' +
                     '<span class="history-meta"><i class="fa-regular fa-clock"></i> ' + escapeHTML(item.date) +
                     ' · ' + escapeHTML(item.time) + '</span>' +
                     (urlDisplay ? '<span class="history-meta">' + urlDisplay + '</span>' : '') +
@@ -3143,7 +3292,8 @@
                     }
                     return '<div class="history-item" style="margin-bottom:var(--space-2);">' +
                         '<div class="history-info">' +
-                        '<span class="history-name">' + escapeHTML(item.project) + '</span>' +
+                        '<span class="history-name" title="' + escapeHTML(item.project) + '">' + escapeHTML(item
+                            .project) + '</span>' +
                         '<span class="history-meta"><i class="fa-regular fa-clock"></i> ' + escapeHTML(item
                             .date) + ' · ' + escapeHTML(item.time) + '</span>' +
                         (item.url ? '<a href="' + escapeHTML(item.url) +
@@ -3217,11 +3367,31 @@
         }
 
         function copyURL(url) {
-            navigator.clipboard.writeText(url).then(() => {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Link berhasil disalin', 'success');
+                }).catch(() => {
+                    fallbackCopy(url);
+                });
+            } else {
+                fallbackCopy(url);
+            }
+        }
+
+        function fallbackCopy(url) {
+            const textarea = document.createElement('textarea');
+            textarea.value = url;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
                 showToast('Link berhasil disalin', 'success');
-            }).catch(() => {
+            } catch (e) {
                 showToast('Gagal menyalin link', 'error');
-            });
+            }
+            document.body.removeChild(textarea);
         }
 
         // ---------- HISTORY SEARCH & FILTER ----------
@@ -3316,11 +3486,13 @@
         });
 
         // ---------- DEPLOY FUNCTION ----------
-        async function originalDeployFunction(projectName) {
+        async function performDeploy(projectName) {
             const fileInputEl = document.getElementById('fileInput');
             const output = document.getElementById('output');
+            const deployBtn = document.getElementById('deploy-btn');
             const deployBtnText = document.getElementById('deploy-btn-text');
             let project = projectName;
+
             if (!project) {
                 const projectInputVal = document.getElementById('project').value.trim();
                 if (!projectInputVal) {
@@ -3330,10 +3502,12 @@
                 project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(
                     /^-|-$/g, '');
             }
+
             if (!project || project.length < 3) {
                 output.textContent = 'Nama project minimal 3 karakter.';
                 return;
             }
+
             const file = fileInputEl.files[0];
             if (!file) {
                 output.textContent = 'File belum dipilih.';
@@ -3342,6 +3516,7 @@
 
             updateDeployStatus(0);
             output.textContent = 'Membaca file dan mengirim ke server...';
+
             let fileContent;
             try {
                 if (file.name.endsWith('.html')) {
@@ -3443,17 +3618,18 @@
                 markDeployStepFailed('step-completed');
                 output.textContent = 'Gagal menghubungi server: ' + err.message;
                 saveHistory(project, 'failed', '', '', '');
+            } finally {
+                // Reset button state
+                deployBtnText.textContent = 'Deploy Sekarang';
+                deployBtn.disabled = false;
+                deployBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+                isDeploying = false;
             }
-            // Reset button
-            deployBtnText.textContent = 'Deploy Sekarang';
-            const deployBtn = document.getElementById('deploy-btn');
-            deployBtn.disabled = false;
-            deployBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
         }
 
         async function deploy() {
+            if (isDeploying) return;
             deployCompleted = false;
-            isDeploying = true;
             const projectInputVal = document.getElementById('project').value.trim();
             const fileInputEl = document.getElementById('fileInput');
             const output = document.getElementById('output');
@@ -3461,55 +3637,56 @@
 
             if (!projectInputVal) {
                 output.textContent = 'Nama project belum diisi.';
-                isDeploying = false;
+                showToast('Nama project belum diisi', 'error');
                 return;
             }
             if (!fileInputEl.files[0]) {
                 output.textContent = 'File belum dipilih.';
-                isDeploying = false;
+                showToast('File belum dipilih', 'error');
                 return;
             }
+
             let project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(
                 /^-|-$/g, '');
             if (project.length < 3) {
                 output.textContent = 'Nama project minimal 3 karakter.';
-                isDeploying = false;
+                showToast('Nama project minimal 3 karakter', 'error');
                 return;
             }
 
-            // Loading state
-            deployBtn.disabled = true;
-            deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+            const validation = validateProjectName(project);
+            if (!validation.valid) {
+                output.textContent = validation.msg;
+                showToast(validation.msg, 'error');
+                return;
+            }
 
-            updateDeployStatus(0);
-            output.textContent = 'Memeriksa ketersediaan nama project...';
+            // Check owner
             const ownerId = await getProjectOwner(project);
             if (ownerId && ownerId !== CURRENT_USER_ID) {
                 output.textContent = 'Project "' + project +
                     '" sudah digunakan oleh pengguna lain. Silakan gunakan nama yang berbeda.';
                 showToast('Nama project sudah dipakai', 'error');
-                isDeploying = false;
-                deployBtn.disabled = false;
-                deployBtn.innerHTML =
-                    '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
                 return;
             }
 
+            // Check requirements
             const join = isJoinValid();
             const notif = getNotifStatus();
+
             if (join && notif) {
-                await originalDeployFunction(project);
-                isDeploying = false;
+                // All requirements met, proceed with deploy
+                isDeploying = true;
+                deployBtn.disabled = true;
+                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+                await performDeploy(project);
             } else {
+                // Show requirement modal
                 document.getElementById('deploy-modal').classList.add('active');
                 document.body.classList.add('modal-open');
                 updateModalStatus();
-                if (!join && !notif) {
-                    isDeploying = false;
-                    deployBtn.disabled = false;
-                    deployBtn.innerHTML =
-                        '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
-                }
+                // Store pending deploy data
+                window._pendingDeploy = project;
             }
         }
 
@@ -3519,13 +3696,51 @@
         document.getElementById('btn-join-grup').addEventListener('click', function() {
             setJoinTimestamp();
             updateModalStatus();
+            // Check if requirements are now met
+            if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
+                const project = window._pendingDeploy;
+                window._pendingDeploy = null;
+                document.getElementById('deploy-modal').classList.remove('active');
+                document.body.classList.remove('modal-open');
+                const deployBtn = document.getElementById('deploy-btn');
+                isDeploying = true;
+                deployBtn.disabled = true;
+                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+                performDeploy(project);
+            }
         });
+
         document.getElementById('btn-aktifkan-notif').addEventListener('click', function() {
-            registerPushNotification();
+            registerPushNotification().then(() => {
+                updateModalStatus();
+                if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
+                    const project = window._pendingDeploy;
+                    window._pendingDeploy = null;
+                    document.getElementById('deploy-modal').classList.remove('active');
+                    document.body.classList.remove('modal-open');
+                    const deployBtn = document.getElementById('deploy-btn');
+                    isDeploying = true;
+                    deployBtn.disabled = true;
+                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+                    performDeploy(project);
+                }
+            });
         });
+
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 updateModalStatus();
+                if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
+                    const project = window._pendingDeploy;
+                    window._pendingDeploy = null;
+                    document.getElementById('deploy-modal').classList.remove('active');
+                    document.body.classList.remove('modal-open');
+                    const deployBtn = document.getElementById('deploy-btn');
+                    isDeploying = true;
+                    deployBtn.disabled = true;
+                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span>Sedang Deploy...</span>';
+                    performDeploy(project);
+                }
             }
         });
 
@@ -3726,6 +3941,7 @@
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
                 document.body.classList.remove('modal-open');
+                window._pendingDeploy = null;
             }
         });
 
@@ -3737,7 +3953,7 @@
         } else {
             window.addEventListener('load', registerPushNotification);
         }
-        console.log('EKK STORE 3.0 — Premium Deployment Platform');
+        console.log('EKK STORE 3.1 — Premium Deployment Platform');
         console.log('User ID tersimpan privat');
     </script>
 </body>
