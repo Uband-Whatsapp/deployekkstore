@@ -3264,18 +3264,32 @@
 
         // ---------- TOAST SYSTEM ----------
         function showToast(msg, type) {
-            const toast = document.getElementById('toast');
-            let icon = '';
-            if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
-            else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger);"></i>';
-            else if (type === 'warning') icon =
-                '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i>';
-            else icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>';
-            toast.innerHTML = icon + ' ' + msg;
-            toast.classList.add('show');
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2600);
-        }
+    const toast = document.getElementById('toast');
+    let icon = '';
+
+    if (type === 'success') {
+        icon = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
+    } else if (type === 'error') {
+        icon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger);"></i>';
+    } else if (type === 'warning') {
+        icon = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i>';
+    } else {
+        icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>';
+    }
+
+    toast.innerHTML = icon + ' ' + msg;
+
+    // Paksa teks tetap dalam satu baris
+    toast.style.whiteSpace = 'nowrap';
+
+    toast.classList.add('show');
+
+    clearTimeout(toast._timeout);
+
+    toast._timeout = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2600);
+}
 
         // ---------- CONFIRM MODAL ----------
         function showConfirmModal(title, message, confirmText) {
