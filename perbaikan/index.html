@@ -648,70 +648,225 @@
             }
         }
         .bottom-nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: var(--space-1) var(--space-3);
-            border-radius: var(--radius);
-            min-width: 56px;
-            letter-spacing: 0.01em;
-            position: relative;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        .bottom-nav-item i {
-            font-size: 18px;
-            transition: transform 0.3s ease;
-        }
-        .bottom-nav-item .nav-label {
-            font-size: 10px;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-        .bottom-nav-item:hover {
-            color: var(--text);
-        }
-        .bottom-nav-item:hover i {
-            transform: translateY(-1px);
-        }
-        .bottom-nav-item.active {
-            color: var(--accent);
-        }
-        .bottom-nav-item.active i {
-            transform: scale(1.1);
-        }
-        .bottom-nav-item.active .nav-label {
-            font-weight: 600;
-            color: var(--accent);
-        }
-        .bottom-nav-item.active::before {
-            content: '';
-            position: absolute;
-            top: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 3px;
-            border-radius: 99px;
-            background: var(--accent);
-            box-shadow: 0 0 12px var(--accent-glow);
-        }
-        .bottom-nav-item.active::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--accent-soft);
-            border-radius: var(--radius);
-            z-index: -1;
-            opacity: 0.6;
-        }
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    /* Animasi lebih halus */
+    transition:
+        color 0.25s ease,
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.25s ease;
+
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius);
+    min-width: 56px;
+    letter-spacing: 0.01em;
+
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+
+    /* Supaya efek indikator tetap rapi */
+    isolation: isolate;
+}
+
+/* =========================
+   ICON
+   ========================= */
+
+.bottom-nav-item i {
+    font-size: 18px;
+    transition:
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.25s ease,
+        filter 0.25s ease;
+}
+
+/* =========================
+   LABEL
+   ========================= */
+
+.bottom-nav-item .nav-label {
+    font-size: 10px;
+    font-weight: 500;
+
+    transition:
+        color 0.25s ease,
+        transform 0.25s ease,
+        font-weight 0.25s ease;
+}
+
+/* =========================
+   HOVER
+   ========================= */
+
+.bottom-nav-item:hover {
+    color: var(--text);
+}
+
+.bottom-nav-item:hover i {
+    transform: translateY(-1px);
+}
+
+/* =========================
+   ACTIVE
+   ========================= */
+
+.bottom-nav-item.active {
+    color: var(--accent);
+
+    /* Menu aktif sedikit naik */
+    transform: translateY(-2px);
+}
+
+/* Icon aktif naik + sedikit membesar */
+.bottom-nav-item.active i {
+    transform: translateY(-2px) scale(1.1);
+
+    /* Glow sangat tipis */
+    filter: drop-shadow(0 3px 7px var(--accent-glow));
+}
+
+/* Label aktif */
+.bottom-nav-item.active .nav-label {
+    font-weight: 600;
+    color: var(--accent);
+
+    /* Ikut naik sedikit */
+    transform: translateY(-1px);
+}
+
+/* =========================
+   GARIS INDIKATOR AKTIF
+   ========================= */
+
+.bottom-nav-item.active::before {
+    content: '';
+
+    position: absolute;
+
+    /* Garis berada di bawah menu */
+    bottom: -3px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 22px;
+    height: 3px;
+
+    border-radius: 999px;
+
+    background: var(--accent);
+
+    /* Glow tipis, tidak berlebihan */
+    box-shadow:
+        0 0 6px var(--accent-glow),
+        0 0 12px var(--accent-glow);
+
+    /* Animasi muncul */
+    animation: navIndicatorIn 0.25s ease-out;
+}
+
+/* =========================
+   BACKGROUND MENU AKTIF
+   ========================= */
+
+.bottom-nav-item.active::after {
+    content: '';
+
+    position: absolute;
+    inset: 1px 3px;
+
+    background: var(--accent-soft);
+
+    border-radius: var(--radius);
+
+    z-index: -1;
+
+    opacity: 0.45;
+
+    /* Supaya background terasa soft */
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+
+/* =========================
+   ANIMASI GARIS
+   ========================= */
+
+@keyframes navIndicatorIn {
+    from {
+        width: 0;
+        opacity: 0;
+        transform: translateX(-50%) scaleX(0.5);
+    }
+
+    to {
+        width: 22px;
+        opacity: 1;
+        transform: translateX(-50%) scaleX(1);
+    }
+}
+
+/* =========================
+   SAAT DITEKAN DI HP
+   ========================= */
+
+.bottom-nav-item:active {
+    transform: translateY(-1px) scale(0.97);
+}
+
+.bottom-nav-item.active:active {
+    transform: translateY(-2px) scale(0.97);
+}
+
+/* =========================
+   HP KECIL
+   ========================= */
+
+@media (max-width: 380px) {
+    .bottom-nav-item {
+        min-width: 52px;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .bottom-nav-item i {
+        font-size: 17px;
+    }
+
+    .bottom-nav-item .nav-label {
+        font-size: 9px;
+    }
+
+    .bottom-nav-item.active::before {
+        width: 20px;
+        height: 3px;
+    }
+}
+
+/* =========================
+   REDUCE MOTION
+   ========================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .bottom-nav-item,
+    .bottom-nav-item i,
+    .bottom-nav-item .nav-label,
+    .bottom-nav-item::before,
+    .bottom-nav-item::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
 
         .page {
             display: none;
@@ -2398,7 +2553,7 @@
                         <div class="system-status-item">
                             <span class="system-status-dot online"></span>
                             <div class="system-status-info">
-                                <span class="system-status-name">Deployment Service</span>
+                                <span class="system-status-name">Deployment</span>
                                 <span class="system-status-desc">Online</span>
                             </div>
                         </div>
