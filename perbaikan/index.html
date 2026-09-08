@@ -2622,6 +2622,11 @@
     </style>
 </head>
 <body>
+<body>
+
+<div style="color:red; font-size:30px;">
+    TEST HTML
+</div>
     <!-- ==================== GATE SCREEN ==================== -->
     <div id="gate-screen">
         <div class="gate-card" id="gate-card">
@@ -2650,8 +2655,9 @@
             <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener noreferrer" class="gate-btn" id="btn-follow-wa">
                 <i class="fa-brands fa-whatsapp"></i> Buka Saluran WhatsApp
             </a>
-            <button class="gate-btn secondary" id="btn-confirm" disabled>
-                Saya Sudah Follow
+    <button class="gate-btn secondary" id="btn-confirm" disabled>
+    Saya Sudah Follow
+</button>
             </button>
             <div class="gate-verify-msg" id="verify-msg-box">
                 <i class="fa-solid fa-circle-info" id="verify-icon"></i>
@@ -3316,253 +3322,512 @@
             </div>
         </div>
     </div>
+<div id="toast"></div>
+<script>
+(function () {
 
-    <div id="toast"></div>
+    // ============================================================
+    // GATE SCREEN
+    // ============================================================
 
-    <script>
-       /* ============================================
-   GATE SCREEN — FIXED (Tomlang Aktif)
-   ============================================ */
-/* ============================================
-   GATE SCREEN — FIXED (Tombol Aktif setelah 2 detik)
-   ============================================ */
-/* ============================================
-   GATE SCREEN — FIXED (Tombol Aktif setelah 2 detik)
-   ============================================ */
-/* ============================================
-   GATE SCREEN — FIXED (Tombol Aktif Setelah 2 Detik)
-   ============================================ */
-
-(function() {
-    const STORAGE_KEY = 'wa_gate_passed_v6';
+    const STORAGE_KEY = 'wa_gate_passed_v12';
     const GATE_EXPIRY_DAYS = 1;
+    const VERIFY_DELAY_MS = 2200;
 
-    const gateScreen = document.getElementById('gate-screen');
-    const btnFollowWA = document.getElementById('btn-follow-wa');
-    const btnConfirm = document.getElementById('btn-confirm');
+    const gateScreen   = document.getElementById('gate-screen');
+    const btnFollowWA  = document.getElementById('btn-follow-wa');
+    const btnConfirm   = document.getElementById('btn-confirm');
     const verifyMsgBox = document.getElementById('verify-msg-box');
-    const verifyIcon = document.getElementById('verify-icon');
-    const verifyText = document.getElementById('verify-text');
-    const gDot1 = document.getElementById('g-dot1');
-    const gDot2 = document.getElementById('g-dot2');
-    const gDot3 = document.getElementById('g-dot3');
-    const gLine1 = document.getElementById('g-line1');
-    const gLine2 = document.getElementById('g-line2');
+    const verifyIcon   = document.getElementById('verify-icon');
+    const verifyText   = document.getElementById('verify-text');
+
+    const gDot1   = document.getElementById('g-dot1');
+    const gDot2   = document.getElementById('g-dot2');
+    const gDot3   = document.getElementById('g-dot3');
+    const gLine1  = document.getElementById('g-line1');
+    const gLine2  = document.getElementById('g-line2');
     const gLabel1 = document.getElementById('g-label1');
     const gLabel2 = document.getElementById('g-label2');
     const gLabel3 = document.getElementById('g-label3');
+
     const appShell = document.getElementById('app-shell');
 
+    if (!gateScreen || !btnFollowWA || !btnConfirm) {
+        console.error('[GATE] Element gate tidak ditemukan!');
+        return;
+    }
+
+    // ============================================================
+    // STATE — SAMA SEPERTI SISTEM LAMA
+    // ============================================================
+
+    let followClickCount = 0;
+    let confirmAttempts = 0;
     let isVerifying = false;
     let gateRemoved = false;
     let hasClickedFollowOnce = false;
-    let confirmEnabled = false;
+    let waitingForWhatsApp = false;
 
-    // Track timestamp when user clicked WhatsApp
-    let waClickTimestamp = 0;
+    // ============================================================
+    // STORAGE
+    // ============================================================
 
     function isAlreadyPassed() {
+
         try {
-            const data = localStorage.getItem(STORAGE_KEY);
+
+            const data =
+                localStorage.getItem(STORAGE_KEY);
+
             if (!data) return false;
-            const parsed = JSON.parse(data);
-            if (parsed.expiresAt && Date.now() < parsed.expiresAt) return true;
-            localStorage.removeItem(STORAGE_KEY);
+
+            const parsed =
+                JSON.parse(data);
+
+            if (
+                parsed.passed === true &&
+                parsed.expiresAt &&
+                Date.now() < parsed.expiresAt
+            ) {
+                return true;
+            }
+
+            localStorage.removeItem(
+                STORAGE_KEY
+            );
+
             return false;
-        } catch (e) { return false; }
+
+        } catch (e) {
+
+            return false;
+        }
     }
 
     function setPassed() {
-        const expiresAt = Date.now() + (GATE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            passed: true,
-            timestamp: Date.now(),
-            expiresAt: expiresAt
-        }));
+
+        const expiresAt =
+            Date.now() +
+            (
+                GATE_EXPIRY_DAYS *
+                24 *
+                60 *
+                60 *
+                1000
+            );
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+                passed: true,
+                timestamp: Date.now(),
+                expiresAt: expiresAt
+            })
+        );
     }
+
+    // ============================================================
+    // SHOW APP
+    // ============================================================
 
     function showApp() {
+
         gateScreen.classList.add('hidden');
-        appShell.classList.add('visible');
+
+        if (appShell) {
+            appShell.classList.add('visible');
+        }
+
         document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
     }
 
-    function updateGateStep(step) {
-        [gDot1, gDot2, gDot3].forEach(d => d.classList.remove('active', 'done'));
-        [gLine1, gLine2].forEach(l => l.classList.remove('done'));
-        [gLabel1, gLabel2, gLabel3].forEach(l => l.classList.remove('active', 'done'));
+    // ============================================================
+    // STEP
+    // ============================================================
+
+    function updateStep(step) {
+
+        [gDot1, gDot2, gDot3]
+            .forEach(function (el) {
+
+                if (el) {
+                    el.classList.remove(
+                        'active',
+                        'done'
+                    );
+                }
+            });
+
+        [gLine1, gLine2]
+            .forEach(function (el) {
+
+                if (el) {
+                    el.classList.remove('done');
+                }
+            });
+
+        [gLabel1, gLabel2, gLabel3]
+            .forEach(function (el) {
+
+                if (el) {
+                    el.classList.remove(
+                        'active',
+                        'done'
+                    );
+                }
+            });
 
         if (step >= 1) {
-            gDot1.classList.add('done');
-            gLabel1.classList.add('done');
+
+            gDot1?.classList.add('done');
+            gLabel1?.classList.add('done');
         }
+
         if (step >= 2) {
-            gDot1.classList.add('done');
-            gDot2.classList.add('active');
-            gLine1.classList.add('done');
-            gLabel1.classList.add('done');
-            gLabel2.classList.add('active');
+
+            gDot1?.classList.add('done');
+            gDot2?.classList.add('active');
+
+            gLine1?.classList.add('done');
+
+            gLabel1?.classList.add('done');
+            gLabel2?.classList.add('active');
         }
+
         if (step >= 3) {
-            gDot1.classList.add('done');
-            gDot2.classList.add('done');
-            gDot3.classList.add('done');
-            gLine1.classList.add('done');
-            gLine2.classList.add('done');
-            gLabel1.classList.add('done');
-            gLabel2.classList.add('done');
-            gLabel3.classList.add('done');
+
+            gDot1?.classList.add('done');
+            gDot2?.classList.add('done');
+            gDot3?.classList.add('done');
+
+            gLine1?.classList.add('done');
+            gLine2?.classList.add('done');
+
+            gLabel1?.classList.add('done');
+            gLabel2?.classList.add('done');
+            gLabel3?.classList.add('done');
         }
     }
 
-    function enableConfirmButton() {
+    // ============================================================
+    // ENABLE BUTTON
+    // ============================================================
+
+    function enableConfirm() {
+
         if (gateRemoved) return;
-        if (confirmEnabled) return;
 
-        // Hapus atribut disabled secara eksplisit
-        btnConfirm.removeAttribute('disabled');
         btnConfirm.disabled = false;
+        btnConfirm.removeAttribute('disabled');
+
         btnConfirm.classList.add('active');
-        btnConfirm.textContent = 'Saya Sudah Follow';
-        updateGateStep(2);
 
-        confirmEnabled = true;
-        hasClickedFollowOnce = true;
+        btnConfirm.setAttribute(
+            'aria-disabled',
+            'false'
+        );
 
-        console.log('[GATE] Tombol konfirmasi diaktifkan');
+        btnConfirm.style.pointerEvents = 'auto';
+        btnConfirm.style.cursor = 'pointer';
+        btnConfirm.style.opacity = '1';
+
+        btnConfirm.textContent =
+            'Saya Sudah Follow';
+
+        updateStep(2);
     }
 
-    function showVerifyMsg(type, html) {
+    // ============================================================
+    // RESET BUTTON
+    // ============================================================
+
+    function resetConfirmButton() {
+
+        btnConfirm.disabled = true;
+
+        btnConfirm.setAttribute(
+            'disabled',
+            'disabled'
+        );
+
+        btnConfirm.classList.remove('active');
+
+        btnConfirm.setAttribute(
+            'aria-disabled',
+            'true'
+        );
+
+        btnConfirm.style.pointerEvents = 'none';
+        btnConfirm.style.cursor = 'default';
+        btnConfirm.style.opacity = '';
+
+        btnConfirm.textContent =
+            'Saya Sudah Follow';
+    }
+
+    // ============================================================
+    // MESSAGE
+    // ============================================================
+
+    function showVerify(type, html) {
+
+        if (!verifyMsgBox) return;
+
         verifyMsgBox.style.display = 'flex';
-        verifyMsgBox.className = 'gate-verify-msg ' + type;
-        if (type === 'loading') {
-            verifyIcon.innerHTML = '<span class="gate-spinner"></span>';
-        } else if (type === 'error') {
-            verifyIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
-        } else if (type === 'success') {
-            verifyIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+
+        verifyMsgBox.className =
+            'gate-verify-msg ' + type;
+
+        if (verifyIcon) {
+
+            if (type === 'loading') {
+
+                verifyIcon.innerHTML =
+                    '<span class="gate-spinner"></span>';
+
+            } else if (type === 'error') {
+
+                verifyIcon.innerHTML =
+                    '<i class="fa-solid fa-circle-exclamation"></i>';
+
+            } else if (type === 'success') {
+
+                verifyIcon.innerHTML =
+                    '<i class="fa-solid fa-circle-check"></i>';
+            }
         }
-        verifyText.innerHTML = html;
+
+        if (verifyText) {
+            verifyText.innerHTML = html;
+        }
     }
 
-    function hideVerifyMsg() {
+    function hideVerify() {
+
+        if (!verifyMsgBox) return;
+
         verifyMsgBox.style.display = 'none';
-        verifyMsgBox.className = 'gate-verify-msg';
+
+        verifyMsgBox.className =
+            'gate-verify-msg';
     }
+
+    // ============================================================
+    // VERIFIKASI 2 KALI
+    // ============================================================
 
     function startVerification() {
-        if (isVerifying || gateRemoved) return;
-        if (!hasClickedFollowOnce) {
-            showToast('Silakan klik "Buka Saluran WhatsApp" terlebih dahulu.', 'warning');
+
+        if (
+            isVerifying ||
+            gateRemoved
+        ) {
             return;
         }
 
         isVerifying = true;
+        confirmAttempts++;
+
         btnConfirm.disabled = true;
         btnConfirm.classList.remove('active');
-        hideVerifyMsg();
-        showVerifyMsg('loading', 'Memverifikasi status follow Anda... Mohon tunggu.');
+        btnConfirm.style.pointerEvents = 'none';
 
-        setTimeout(() => {
-            // Cek apakah user sudah klik WA (minimal 1x)
-            if (waClickTimestamp > 0) {
-                showVerifyMsg('success', 'Verifikasi berhasil. Mengalihkan...');
-                updateGateStep(3);
+        hideVerify();
+
+        showVerify(
+            'loading',
+            'Sistem sedang memverifikasi status follow kamu. Tunggu sebentar...'
+        );
+
+        setTimeout(function () {
+
+            // ====================================================
+            // KLIK WHATSAPP SUDAH 2 KALI → BERHASIL
+            // ====================================================
+
+            if (followClickCount >= 2) {
+
+                showVerify(
+                    'success',
+                    'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan...'
+                );
+
+                updateStep(3);
+
                 btnConfirm.style.display = 'none';
+
                 setPassed();
-                showApp();
+
                 gateRemoved = true;
                 isVerifying = false;
-            } else {
-                showVerifyMsg('error',
-                    '<strong>Verifikasi gagal.</strong><br>Silakan klik <strong>Buka Saluran WhatsApp</strong>, tekan <strong>Ikuti</strong>, lalu coba lagi.'
-                );
-                btnConfirm.disabled = false;
-                btnConfirm.classList.add('active');
-                btnConfirm.textContent = 'Coba Lagi';
-                updateGateStep(2);
-                isVerifying = false;
+
+                setTimeout(function () {
+                    showApp();
+                }, 500);
+
+                return;
             }
-        }, 2200);
+
+            // ====================================================
+            // KLIK BARU 1 KALI → GAGAL
+            // ====================================================
+
+            showVerify(
+                'error',
+                '<b>Verifikasi gagal.</b><br>' +
+                'Kami belum mendeteksi bahwa kamu sudah mengikuti saluran WhatsApp. ' +
+                'Silakan klik <b>Buka Saluran WhatsApp</b> sekali lagi, ' +
+                'pastikan kamu sudah menekan <b>Ikuti</b>, lalu tekan ' +
+                '<b>Coba Lagi</b>.'
+            );
+
+            btnConfirm.disabled = false;
+            btnConfirm.classList.add('active');
+            btnConfirm.style.pointerEvents = 'auto';
+            btnConfirm.style.cursor = 'pointer';
+
+            btnConfirm.textContent =
+                'Coba Lagi';
+
+            updateStep(2);
+
+            isVerifying = false;
+
+        }, VERIFY_DELAY_MS);
     }
 
-    // ---------- EVENT: BUKA WHATSAPP ----------
-    btnFollowWA.addEventListener('click', function() {
-        waClickTimestamp = Date.now();
+    // ============================================================
+    // KLIK WHATSAPP
+    // ============================================================
 
-        // Jika tombol belum diaktifkan, aktifkan setelah 2 detik (tanpa timer di background)
-        if (!confirmEnabled && !gateRemoved) {
-            setTimeout(function() {
-                // Cek lagi apakah sudah diaktifkan atau gate sudah dihapus
-                if (!confirmEnabled && !gateRemoved) {
-                    enableConfirmButton();
+    btnFollowWA.addEventListener(
+        'click',
+        function () {
+
+            waitingForWhatsApp = true;
+
+            followClickCount++;
+
+            console.log(
+                '[GATE] WhatsApp click:',
+                followClickCount
+            );
+        }
+    );
+
+    // ============================================================
+    // KEMBALI DARI WHATSAPP
+    // ============================================================
+
+    document.addEventListener(
+        'visibilitychange',
+        function () {
+
+            if (
+                document.hidden &&
+                waitingForWhatsApp
+            ) {
+
+                waitingForWhatsApp = false;
+
+                if (!hasClickedFollowOnce) {
+
+                    hasClickedFollowOnce = true;
+
+                    enableConfirm();
                 }
-            }, 2000);
-        }
-    });
 
-    // ---------- EVENT: VISIBILITY CHANGE (kembali dari WhatsApp) ----------
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && !gateRemoved && !confirmEnabled) {
-            // Jika user kembali ke halaman dan tombol belum aktif, aktifkan segera
-            enableConfirmButton();
-        }
-    });
+                // Klik WhatsApp kedua
+                if (
+                    followClickCount >= 2 &&
+                    confirmAttempts >= 1 &&
+                    !gateRemoved
+                ) {
 
-    // ---------- EVENT: FOCUS (fallback untuk beberapa browser) ----------
-    window.addEventListener('focus', function() {
-        if (!gateRemoved && !confirmEnabled) {
-            enableConfirmButton();
-        }
-    });
+                    hideVerify();
 
-    // ---------- EVENT: PAGE SHOW (fallback untuk iOS Safari) ----------
-    window.addEventListener('pageshow', function() {
-        if (!gateRemoved && !confirmEnabled) {
-            enableConfirmButton();
-        }
-    });
+                    btnConfirm.textContent =
+                        'Coba Lagi';
 
-    // ---------- TOMBOL KONFIRMASI ----------
-    btnConfirm.addEventListener('click', function() {
-        if (btnConfirm.disabled || isVerifying || gateRemoved) return;
-        if (!hasClickedFollowOnce) {
-            if (typeof showToast === 'function') {
-                showToast('Silakan klik "Buka Saluran WhatsApp" terlebih dahulu.', 'warning');
-            } else {
-                alert('Silakan klik "Buka Saluran WhatsApp" terlebih dahulu.');
+                    btnConfirm.disabled = false;
+
+                    btnConfirm.classList.add(
+                        'active'
+                    );
+
+                    btnConfirm.style.pointerEvents =
+                        'auto';
+
+                    updateStep(2);
+                }
             }
-            return;
         }
-        startVerification();
-    });
+    );
 
-    // ---------- INIT ----------
+    // ============================================================
+    // TOMBOL CONFIRM
+    // ============================================================
+
+    btnConfirm.addEventListener(
+        'click',
+        function (e) {
+
+            e.preventDefault();
+
+            if (
+                btnConfirm.disabled ||
+                isVerifying ||
+                gateRemoved
+            ) {
+                return;
+            }
+
+            if (!hasClickedFollowOnce) {
+                return;
+            }
+
+            startVerification();
+        }
+    );
+
+    // ============================================================
+    // INIT
+    // ============================================================
+
     function init() {
+
         if (isAlreadyPassed()) {
+
+            gateRemoved = true;
+
             showApp();
+
             return;
         }
 
         document.body.style.overflow = 'hidden';
-        hideVerifyMsg();
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
 
-        // Pastikan tombol disabled di awal
-        btnConfirm.setAttribute('disabled', 'disabled');
-        btnConfirm.disabled = true;
-        btnConfirm.classList.remove('active');
-        btnConfirm.textContent = 'Saya Sudah Follow';
+        hideVerify();
 
-        updateGateStep(0);
-        gDot1.classList.add('active');
-        gLabel1.classList.add('active');
+        resetConfirmButton();
 
-        console.log('[GATE] Siap menunggu follow');
+        updateStep(0);
+
+        gDot1?.classList.add('active');
+        gLabel1?.classList.add('active');
+
+        console.log(
+            '[GATE] Siap. Klik WhatsApp pertama untuk mengaktifkan tombol.'
+        );
     }
 
     init();
-})();
 
+})();
 // ---------- CORE STATE (deploy, history, dll) ----------
 let isDeploying = false;
 let deployCompleted = false;
@@ -4264,110 +4529,107 @@ function navigateTo(page) {
 
         if (projectInput) {
 
-projectInput.addEventListener(
-    'input',
-    function() {
+    projectInput.addEventListener(
+        'input',
+        function () {
 
-        const val =
-            this.value
-                .trim()
-                .toLowerCase();
+            const val =
+                this.value
+                    .trim()
+                    .toLowerCase();
 
-        this.value =
-            val
-                .replace(
-                    /[^a-z0-9.-]/g,
-                    '-'
-                )
-                .replace(
-                    /-+/g,
-                    '-'
-                )
-                .replace(
-                    /^[-.]|[-.]$/g,
-                    ''
+            this.value =
+                val
+                    .replace(
+                        /[^a-z0-9.-]/g,
+                        '-'
+                    )
+                    .replace(
+                        /-+/g,
+                        '-'
+                    )
+                    .replace(
+                        /^[-.]|[-.]$/g,
+                        ''
+                    );
+
+            if (
+                this.value.length === 0
+            ) {
+
+                this.classList.remove(
+                    'error',
+                    'success'
                 );
-    }
-);
 
-                    if (
-                        this.value.length === 0
-                    ) {
-
-                        this.classList.remove(
-                            'error',
-                            'success'
-                        );
-
-                        if (projectError) {
-                            projectError.classList.remove(
-                                'visible'
-                            );
-                        }
-
-                        if (projectHint) {
-                            projectHint.style.display =
-                                'block';
-                        }
-
-                        return;
-                    }
-
-                    const result =
-                        validateProjectName(
-                            this.value
-                        );
-
-                    if (result.valid) {
-
-                        this.classList.remove(
-                            'error'
-                        );
-
-                        this.classList.add(
-                            'success'
-                        );
-
-                        if (projectError) {
-                            projectError.classList.remove(
-                                'visible'
-                            );
-                        }
-
-                        if (projectHint) {
-                            projectHint.style.display =
-                                'block';
-                        }
-
-                    } else {
-
-                        this.classList.remove(
-                            'success'
-                        );
-
-                        this.classList.add(
-                            'error'
-                        );
-
-                        if (projectError) {
-
-                            projectError.textContent =
-                                result.msg;
-
-                            projectError.classList.add(
-                                'visible'
-                            );
-                        }
-
-                        if (projectHint) {
-                            projectHint.style.display =
-                                'none';
-                        }
-                    }
+                if (projectError) {
+                    projectError.classList.remove(
+                        'visible'
+                    );
                 }
-            );
-        }
 
+                if (projectHint) {
+                    projectHint.style.display =
+                        'block';
+                }
+
+                return;
+            }
+
+            const result =
+                validateProjectName(
+                    this.value
+                );
+
+            if (result.valid) {
+
+                this.classList.remove(
+                    'error'
+                );
+
+                this.classList.add(
+                    'success'
+                );
+
+                if (projectError) {
+                    projectError.classList.remove(
+                        'visible'
+                    );
+                }
+
+                if (projectHint) {
+                    projectHint.style.display =
+                        'block';
+                }
+
+            } else {
+
+                this.classList.remove(
+                    'success'
+                );
+
+                this.classList.add(
+                    'error'
+                );
+
+                if (projectError) {
+
+                    projectError.textContent =
+                        result.msg;
+
+                    projectError.classList.add(
+                        'visible'
+                    );
+                }
+
+                if (projectHint) {
+                    projectHint.style.display =
+                        'none';
+                }
+            }
+        }
+    );
+}
 
         // =========================================================
         // DEPLOY FUNCTION
