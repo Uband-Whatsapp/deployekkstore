@@ -2619,14 +2619,10 @@
         font-size: 11px;
     }
 }
-    </style>
+ </style>
 </head>
-<body>
-<body>
 
-<div style="color:red; font-size:30px;">
-    TEST HTML
-</div>
+<body>
     <!-- ==================== GATE SCREEN ==================== -->
     <div id="gate-screen">
         <div class="gate-card" id="gate-card">
@@ -2658,7 +2654,6 @@
     <button class="gate-btn secondary" id="btn-confirm" disabled>
     Saya Sudah Follow
 </button>
-            </button>
             <div class="gate-verify-msg" id="verify-msg-box">
          <i id="verify-icon"></i>       
                 <span id="verify-text"></span>
@@ -3516,56 +3511,33 @@
     // ============================================================
 
     function enableConfirm() {
-
-        if (gateRemoved) return;
-
-        btnConfirm.disabled = false;
-        btnConfirm.removeAttribute('disabled');
-
-        btnConfirm.classList.add('active');
-
-        btnConfirm.setAttribute(
-            'aria-disabled',
-            'false'
-        );
-
-        btnConfirm.style.pointerEvents = 'auto';
-        btnConfirm.style.cursor = 'pointer';
-        btnConfirm.style.opacity = '1';
-
-        btnConfirm.textContent =
-            'Saya Sudah Follow';
-
-        updateStep(2);
-    }
-
+    if (gateRemoved) return;
+    btnConfirm.disabled = false;
+    btnConfirm.removeAttribute('disabled');
+    btnConfirm.classList.add('active');
+    btnConfirm.setAttribute('aria-disabled', 'false');
+    btnConfirm.style.pointerEvents = 'auto';
+    btnConfirm.style.cursor = 'pointer';
+    btnConfirm.style.opacity = '1';
+    btnConfirm.style.visibility = 'visible'; // ✅ tambahkan ini
+    btnConfirm.textContent = 'Saya Sudah Follow';
+    updateStep(2);
+}
     // ============================================================
     // RESET BUTTON
     // ============================================================
 
     function resetConfirmButton() {
-
-        btnConfirm.disabled = true;
-
-        btnConfirm.setAttribute(
-            'disabled',
-            'disabled'
-        );
-
-        btnConfirm.classList.remove('active');
-
-        btnConfirm.setAttribute(
-            'aria-disabled',
-            'true'
-        );
-
-        btnConfirm.style.pointerEvents = 'none';
-        btnConfirm.style.cursor = 'default';
-        btnConfirm.style.opacity = '';
-
-        btnConfirm.textContent =
-            'Saya Sudah Follow';
-    }
+    btnConfirm.disabled = true;
+    btnConfirm.setAttribute('disabled', 'disabled');
+    btnConfirm.classList.remove('active');
+    btnConfirm.setAttribute('aria-disabled', 'true');
+    btnConfirm.style.pointerEvents = 'none';
+    btnConfirm.style.cursor = 'default';
+    btnConfirm.style.opacity = '';
+    btnConfirm.style.visibility = 'visible'; // ✅ tambahkan ini
+    btnConfirm.textContent = 'Saya Sudah Follow';
+}
 
     // ============================================================
     // MESSAGE
@@ -3639,8 +3611,9 @@
                 );
 
                 updateStep(3);
-
-                btnConfirm.style.display = 'none';
+// Perbaiki menjadi
+btnConfirm.style.visibility = 'hidden';
+btnConfirm.style.pointerEvents = 'none'; // nonaktifkan interaksi
 
                 setPassed();
 
