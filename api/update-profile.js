@@ -2,7 +2,7 @@
 import admin from 'firebase-admin';
 
 // ============================================================
-// INISIALISASI FIREBASE ADMIN (DENGAN ERROR HANDLING)
+// INISIALISASI FIREBASE ADMIN (PASTIKAN BERHASIL)
 // ============================================================
 if (!admin.apps.length) {
   try {
