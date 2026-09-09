@@ -2437,6 +2437,135 @@ ul {
         font-size: 10px;
     }
 }
+/* ==================== DEPLOY REQUIREMENTS ==================== */
+
+#deploy-modal .modal-box {
+    width: min(92%, 440px);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+#deploy-modal .modal-description {
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+#deploy-modal .requirement-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-card);
+    box-sizing: border-box;
+}
+
+#deploy-modal .req-icon {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(139, 92, 246, 0.10);
+    color: var(--accent);
+    font-size: 17px;
+}
+
+#deploy-modal .req-content {
+    flex: 1;
+    min-width: 0;
+}
+
+#deploy-modal .req-label {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text);
+}
+
+#deploy-modal .req-desc {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+#deploy-modal .req-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+#deploy-modal .req-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 32px;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: #25d366;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+#deploy-modal .req-btn.blue {
+    background: #3b82f6;
+}
+
+#deploy-modal .req-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* HP */
+@media (max-width: 480px) {
+    #deploy-modal .modal-box {
+        width: calc(100% - 28px);
+        padding: 20px 16px;
+        border-radius: 18px;
+    }
+
+    #deploy-modal .requirement-item {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    #deploy-modal .req-icon {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
+    }
+
+    #deploy-modal .req-label {
+        font-size: 12px;
+    }
+
+    #deploy-modal .req-desc {
+        font-size: 10px;
+    }
+}
 </style>  
 <body>
     <!-- ==================== GATE SCREEN ==================== -->
@@ -3189,31 +3318,88 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     </div>
 
     <div class="modal-overlay" id="deploy-modal">
-        <div class="modal-box">
-            <div class="modal-icon"><i class="fa-solid fa-clipboard-check" style="color:var(--accent);"></i></div>
-            <h4>Syarat Deploy</h4>
-            <p>Lengkapi semua persyaratan berikut sebelum melakukan deploy.</p>
-            <div class="requirement-item" id="req-grup">
-                <span class="req-icon"><i class="fa-solid fa-users"></i></span>
-                <div class="req-info">
-                    <div class="req-label">Join Grup WhatsApp</div>
-                    <div class="req-desc">Gabung grup WhatsApp</div>
-                </div>
-                <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" id="btn-join-grup" class="req-btn">Join</a>
-                <span class="req-status" id="req-grup-status">Belum</span>
-            </div>
-            <div class="requirement-item" id="req-notif">
-                <span class="req-icon"><i class="fa-solid fa-bell"></i></span>
-                <div class="req-info">
-                    <div class="req-label">Aktifkan Notifikasi</div>
-                    <div class="req-desc">Izinkan notifikasi browser</div>
-                </div>
-                <button id="btn-aktifkan-notif" class="req-btn blue">Aktifkan</button>
-                <span class="req-status" id="req-notif-status">Belum</span>
-            </div>
-        </div>
-    </div>
+    <div class="modal-box">
 
+        <!-- HEADER -->
+        <div class="modal-icon">
+            <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+
+        <h4>Syarat Deploy</h4>
+
+        <p class="modal-description">
+            Selesaikan persyaratan berikut untuk melanjutkan proses deployment.
+        </p>
+
+        <!-- REQUIREMENT GRUP -->
+        <div class="requirement-item" id="req-grup">
+
+            <div class="req-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <div class="req-content">
+                <div class="req-info">
+                    <div class="req-label">Bergabung ke Grup WhatsApp</div>
+                    <div class="req-desc">
+                        Bergabung ke grup untuk mendapatkan informasi dan dukungan.
+                    </div>
+                </div>
+
+                <div class="req-action">
+                    <a
+                        href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4"
+                        target="_blank"
+                        rel="noopener"
+                        id="btn-join-grup"
+                        class="req-btn"
+                    >
+                        <i class="fa-brands fa-whatsapp"></i>
+                        Gabung
+                    </a>
+
+                    <span class="req-status" id="req-grup-status">
+                        Belum
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- REQUIREMENT NOTIFIKASI -->
+        <div class="requirement-item" id="req-notif">
+
+            <div class="req-icon">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+
+            <div class="req-content">
+                <div class="req-info">
+                    <div class="req-label">Aktifkan Notifikasi Browser</div>
+                    <div class="req-desc">
+                        Izinkan notifikasi browser agar mendapatkan pembaruan Website.
+                    </div>
+                </div>
+
+                <div class="req-action">
+                    <button
+                        id="btn-aktifkan-notif"
+                        class="req-btn blue"
+                    >
+                        <i class="fa-solid fa-bell"></i>
+                        Aktifkan
+                    </button>
+
+                    <span class="req-status" id="req-notif-status">
+                        Belum
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
     <div class="modal-overlay" id="retry-popup">
         <div class="modal-box">
             <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
