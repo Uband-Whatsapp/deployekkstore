@@ -2,11 +2,17 @@
 import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('[send-message] ✅ Firebase Admin initialized');
+  } catch (error) {
+    console.error('[send-message] ❌ Init error:', error.message);
+  }
 }
+
 const db = admin.firestore();
 
 export default async function handler(req, res) {
@@ -14,10 +20,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { uid, username, avatar, text, replyTo } = req.body;
+  const { uid, username, avatar, text, replyTo, mediaUrl, mediaType, fileName, fileSize } = req.body;
 
-  if (!uid || !text) {
-    return res.status(400).json({ error: 'uid and text are required' });
+  if (!uid) {
+    return res.status(400).json({ error: 'uid is required' });
+  }
+
+  // Minimal harus ada teks atau media
+  if (!text && !mediaUrl) {
+    return res.status(400).json({ error: 'text or mediaUrl is required' });
   }
 
   try {
@@ -25,18 +36,22 @@ export default async function handler(req, res) {
       senderId: uid,
       username: username || 'Anonymous',
       avatar: avatar || '',
-      text: text,
+      text: text || '',
       type: 'text',
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // Tambahkan replyTo jika ada
+    // Tambahkan media jika ada
+    if (mediaUrl) {
+      messageData.mediaUrl = mediaUrl;
+      messageData.mediaType = mediaType || 'file';
+      messageData.fileName = fileName || '';
+      messageData.fileSize = fileSize || 0;
+      messageData.type = mediaType || 'file';
+    }
+
     if (replyTo) {
-      messageData.replyTo = {
-        docId: replyTo.docId || '',
-        username: replyTo.username || '',
-        text: replyTo.text || ''
-      };
+      messageData.replyTo = replyTo;
     }
 
     await db.collection('messages').add(messageData);
