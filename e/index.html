@@ -5436,34 +5436,31 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         console.log('EKK STORE 3.2 — Premium Deployment Platform');
         console.log('User ID tersimpan privat');
 // ============================================================
-// BAGIAN GRUP (WhatsApp-like)
 // ============================================================
+// BAGIAN GRUP (WhatsApp-like) — PERBAIKAN FINAL
+// ============================================================
+
 // ---------- KONFIGURASI CLOUDINARY ----------
 const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
 const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
-
-// Variabel untuk menyimpan URL avatar setelah upload
 let uploadedAvatarUrl = '';
 
-// Fungsi upload ke Cloudinary
 async function uploadAvatarToCloudinary(file) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
     { method: 'POST', body: formData }
   );
-  
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.error?.message || 'Upload gagal');
   }
-  
   const data = await response.json();
-  return data.secure_url; // URL gambar hasil upload
+  return data.secure_url;
 }
+
 // ---------- EVENT: PILIH FILE AVATAR ----------
 const avatarInput = document.getElementById('avatar-input');
 const avatarPreview = document.getElementById('avatar-preview');
@@ -5473,60 +5470,49 @@ if (avatarInput) {
   avatarInput.addEventListener('change', async function() {
     const file = this.files[0];
     if (!file) return;
-
-    // Validasi ukuran maksimal 2MB
     if (file.size > 2 * 1024 * 1024) {
       avatarError.textContent = 'Ukuran file maksimal 2MB';
       avatarError.classList.add('visible');
-      this.value = ''; // reset input
+      this.value = '';
       return;
     }
-
-    // Validasi tipe file (hanya gambar)
     if (!file.type.startsWith('image/')) {
       avatarError.textContent = 'Hanya file gambar yang didukung';
       avatarError.classList.add('visible');
       this.value = '';
       return;
     }
-
     avatarError.classList.remove('visible');
-
-    // Tampilkan preview gambar
     const reader = new FileReader();
     reader.onload = function(e) {
       avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(file);
-
-    // Upload ke Cloudinary
     try {
       showToast('Mengupload foto...', 'info');
       const url = await uploadAvatarToCloudinary(file);
-      uploadedAvatarUrl = url; // simpan URL avatar
+      uploadedAvatarUrl = url;
       showToast('Foto profil berhasil diupload!', 'success');
     } catch (error) {
       avatarError.textContent = 'Gagal upload: ' + error.message;
       avatarError.classList.add('visible');
-      // Reset preview
       avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
       uploadedAvatarUrl = '';
     }
   });
 }
-// Konfigurasi Firebase Client SDK (ganti dengan punya kamu)
-// Kamu bisa dapatkan dari Firebase Console > Project Settings > Your apps > Config
+
+// ---------- FIREBASE CONFIG & INISIALISASI ----------
 const firebaseConfig = {
-    apiKey: "AIzaSyCesmK4pK1sv48Z9EkYDapH7XRf7BeOkA",
-    authDomain: "deploy-ekkstore.firebaseapp.com",
-    projectId: "deploy-ekkstore",
-    storageBucket: "deploy-ekkstore.firebasestorage.app",
-    messagingSenderId: "715346814022",
-    appId: "1:715346814022:web:e7c6091481347538c2d647",
-    measurementId: "G-667XX2R18N"
+  apiKey: "AIzaSyCesmK4pK1sv48Z9EkYDapH7XRf7BeOkA",
+  authDomain: "deploy-ekkstore.firebaseapp.com",
+  projectId: "deploy-ekkstore",
+  storageBucket: "deploy-ekkstore.firebasestorage.app",
+  messagingSenderId: "715346814022",
+  appId: "1:715346814022:web:e7c6091481347538c2d647",
+  measurementId: "G-667XX2R18N"
 };
 
-// Inisialisasi Firebase (jika belum)
 if (typeof firebase === 'undefined') {
   console.error('Firebase SDK belum di-load!');
 } else {
@@ -5542,8 +5528,8 @@ if (typeof firebase === 'undefined') {
   let messagesUnsubscribe = null;
   let usersUnsubscribe = null;
   let statusInterval = null;
+  let replyingTo = null; // Pindah ke sini (di luar renderMessage)
 
-  // Fungsi untuk mendapatkan user dari localStorage
   function getCurrentUser() {
     const data = localStorage.getItem(GRP_STORAGE_KEY);
     if (data) {
@@ -5557,7 +5543,6 @@ if (typeof firebase === 'undefined') {
     localStorage.setItem(GRP_STORAGE_KEY, JSON.stringify(user));
   }
 
-  // Fungsi untuk mendapatkan uid (generate jika belum ada)
   function getOrCreateUid() {
     let uid = localStorage.getItem(UID_STORAGE_KEY);
     if (!uid) {
@@ -5567,7 +5552,6 @@ if (typeof firebase === 'undefined') {
     return uid;
   }
 
-  // Cek user saat load
   const savedUser = getCurrentUser();
   if (savedUser) {
     currentUser = savedUser;
@@ -5595,35 +5579,32 @@ if (typeof firebase === 'undefined') {
   }
 
   async function createProfile(uid, username, avatar) {
-  const res = await fetch('/api/create-profile', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uid, username, avatar: avatar || '' })
-  });
-  return res.ok;
-}
-
-  // Ganti fungsi sendMessage dengan ini:
-async function sendMessage(text, replyTo = null) {
-  if (!currentUser) return false;
-  const payload = {
-    uid: currentUser.uid,
-    username: currentUser.username,
-    avatar: currentUser.avatar || '',
-    text: text
-  };
-
-  if (replyTo) {
-    payload.replyTo = replyTo;
+    const res = await fetch('/api/create-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, username, avatar: avatar || '' })
+    });
+    return res.ok;
   }
 
-  const res = await fetch('/api/send-message', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  return res.ok;
-}
+  async function sendMessage(text, replyTo = null) {
+    if (!currentUser) return false;
+    const payload = {
+      uid: currentUser.uid,
+      username: currentUser.username,
+      avatar: currentUser.avatar || '',
+      text: text
+    };
+    if (replyTo) {
+      payload.replyTo = replyTo;
+    }
+    const res = await fetch('/api/send-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return res.ok;
+  }
 
   async function updateOnlineStatus(isOnline) {
     if (!currentUser) return;
@@ -5643,232 +5624,214 @@ async function sendMessage(text, replyTo = null) {
     return res.ok;
   }
 
-  // ---------- RENDER PESAN ----------
-  // ============================================================
-// RENDER PESAN (Gaya WhatsApp)
-// ============================================================
-function renderMessage(doc) {
-  const data = doc.data();
-  const isMine = data.senderId === currentUser?.uid;
-  const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
+  // ---------- FUNGSI REPLY ----------
+  function startReply(docId, username, text) {
+    replyingTo = { docId, username, text };
+    chatInput.focus();
+    chatInput.placeholder = `Reply to ${username}...`;
+    chatInput.style.borderColor = 'var(--accent)';
+    showToast(`Reply to ${username}`, 'info');
 
-  // Container utama
-  const div = document.createElement('div');
-  div.style.display = 'flex';
-  div.style.marginBottom = '8px';
-  div.style.gap = '8px';
-  div.style.alignItems = 'flex-start';
-
-  // ========== AVATAR ==========
-  const avatarDiv = document.createElement('div');
-  avatarDiv.style.width = '38px';
-  avatarDiv.style.height = '38px';
-  avatarDiv.style.minWidth = '38px';
-  avatarDiv.style.borderRadius = '50%';
-  avatarDiv.style.background = '#2a2a2e';
-  avatarDiv.style.display = 'flex';
-  avatarDiv.style.alignItems = 'center';
-  avatarDiv.style.justifyContent = 'center';
-  avatarDiv.style.fontSize = '14px';
-  avatarDiv.style.fontWeight = 'bold';
-  avatarDiv.style.color = '#fff';
-  avatarDiv.style.overflow = 'hidden';
-  avatarDiv.style.flexShrink = '0';
-
-  if (data.avatar) {
-    avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-  } else {
-    avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
-  }
-// ======================== FUNGSI REPLY ========================
-let replyingTo = null;
-
-function startReply(docId, username, text) {
-  replyingTo = { docId, username, text };
-  const input = document.getElementById('chat-input');
-  input.focus();
-  input.placeholder = `Reply to ${username}...`;
-  input.style.borderColor = 'var(--accent)';
-  showToast(`Reply to ${username}`, 'info');
-
-  // Tombol batal reply
-  let cancelBtn = document.getElementById('cancel-reply-btn');
-  if (!cancelBtn) {
-    cancelBtn = document.createElement('button');
-    cancelBtn.id = 'cancel-reply-btn';
-    cancelBtn.innerHTML = '✕';
-    cancelBtn.style.background = 'var(--danger)';
-    cancelBtn.style.color = '#fff';
-    cancelBtn.style.border = 'none';
-    cancelBtn.style.borderRadius = '50%';
-    cancelBtn.style.width = '24px';
-    cancelBtn.style.height = '24px';
-    cancelBtn.style.fontSize = '12px';
-    cancelBtn.style.cursor = 'pointer';
-    cancelBtn.style.marginLeft = '4px';
-    cancelBtn.style.flexShrink = '0';
-
-    const inputWrapper = input.parentElement;
-    inputWrapper.style.display = 'flex';
-    inputWrapper.style.alignItems = 'center';
-    inputWrapper.style.gap = '4px';
-    inputWrapper.appendChild(cancelBtn);
-
-    cancelBtn.addEventListener('click', function() {
-      cancelReply();
-    });
-  }
-  cancelBtn.style.display = 'flex';
-}
-
-function cancelReply() {
-  replyingTo = null;
-  const input = document.getElementById('chat-input');
-  input.placeholder = 'Ketik pesan...';
-  input.style.borderColor = 'var(--border)';
-  const cancelBtn = document.getElementById('cancel-reply-btn');
-  if (cancelBtn) cancelBtn.style.display = 'none';
-}
-  // ========== BUBBLE ==========
-  const bubbleWrapper = document.createElement('div');
-  bubbleWrapper.style.flex = '1';
-  bubbleWrapper.style.maxWidth = '75%';
-  bubbleWrapper.style.display = 'flex';
-  bubbleWrapper.style.flexDirection = 'column';
-
-  // Bubble
-  const bubble = document.createElement('div');
-  bubble.style.padding = '8px 14px';
-  bubble.style.borderRadius = '12px';
-  bubble.style.wordBreak = 'break-word';
-  bubble.style.lineHeight = '1.4';
-  bubble.style.fontSize = '13px';
-  bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-
-  // Warna bubble
-  if (isMine) {
-    bubble.style.background = 'var(--accent)';
-    bubble.style.color = '#fff';
-    bubble.style.borderTopRightRadius = '4px';
-    bubbleWrapper.style.alignItems = 'flex-end';
-  } else if (isSystem) {
-    bubble.style.background = 'transparent';
-    bubble.style.color = 'var(--text-muted)';
-    bubble.style.textAlign = 'center';
-    bubble.style.fontSize = '12px';
-    bubble.style.padding = '4px 0';
-    bubble.style.boxShadow = 'none';
-    bubbleWrapper.style.alignItems = 'center';
-    bubbleWrapper.style.maxWidth = '100%';
-  } else {
-    bubble.style.background = 'var(--bg-input)';
-    bubble.style.color = 'var(--text)';
-    bubble.style.borderTopLeftRadius = '4px';
+    let cancelBtn = document.getElementById('cancel-reply-btn');
+    if (!cancelBtn) {
+      cancelBtn = document.createElement('button');
+      cancelBtn.id = 'cancel-reply-btn';
+      cancelBtn.innerHTML = '✕';
+      cancelBtn.style.background = 'var(--danger)';
+      cancelBtn.style.color = '#fff';
+      cancelBtn.style.border = 'none';
+      cancelBtn.style.borderRadius = '50%';
+      cancelBtn.style.width = '24px';
+      cancelBtn.style.height = '24px';
+      cancelBtn.style.fontSize = '12px';
+      cancelBtn.style.cursor = 'pointer';
+      cancelBtn.style.marginLeft = '4px';
+      cancelBtn.style.flexShrink = '0';
+      const inputWrapper = chatInput.parentElement;
+      inputWrapper.style.display = 'flex';
+      inputWrapper.style.alignItems = 'center';
+      inputWrapper.style.gap = '4px';
+      inputWrapper.appendChild(cancelBtn);
+      cancelBtn.addEventListener('click', function() {
+        cancelReply();
+      });
+    }
+    cancelBtn.style.display = 'flex';
   }
 
-  // ========== NAMA USER ==========
-  if (!isSystem && !isMine) {
-    const nameSpan = document.createElement('div');
-    nameSpan.style.fontSize = '11px';
-    nameSpan.style.fontWeight = '600';
-    nameSpan.style.color = 'var(--accent)';
-    nameSpan.style.marginBottom = '2px';
-    nameSpan.textContent = data.username || 'unknown';
-    bubble.appendChild(nameSpan);
+  function cancelReply() {
+    replyingTo = null;
+    chatInput.placeholder = 'Ketik pesan...';
+    chatInput.style.borderColor = 'var(--border)';
+    const cancelBtn = document.getElementById('cancel-reply-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
   }
 
-  // ========== PESAN ==========
-  const textSpan = document.createElement('div');
-  let displayText = data.text || '';
+  // ---------- RENDER PESAN (Gaya WhatsApp, sudah bersih) ----------
+  function renderMessage(doc) {
+    const data = doc.data();
+    const isMine = data.senderId === currentUser?.uid;
+    const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
 
-  // Khusus join, ubah teks untuk user sendiri
-  if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
-    displayText = 'Anda bergabung ke grup';
-  }
-  textSpan.textContent = displayText;
-  bubble.appendChild(textSpan);
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.marginBottom = '8px';
+    div.style.gap = '8px';
+    div.style.alignItems = 'flex-start';
 
-  // ========== WAKTU ==========
-  const timeSpan = document.createElement('div');
-  timeSpan.style.fontSize = '9px';
-  timeSpan.style.opacity = '0.6';
-  timeSpan.style.marginTop = '3px';
-  timeSpan.style.textAlign = 'right';
-  if (data.timestamp) {
-    const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  }
-  bubble.appendChild(timeSpan);
-
-  // ========== TOMBOL REPLY ==========
-  if (!isSystem) {
-    const replyBtn = document.createElement('button');
-    replyBtn.innerHTML = '<i class="fa-regular fa-reply-all" style="font-size:10px;"></i>';
-    replyBtn.style.background = 'transparent';
-    replyBtn.style.border = 'none';
-    replyBtn.style.color = 'var(--text-muted)';
-    replyBtn.style.fontSize = '10px';
-    replyBtn.style.cursor = 'pointer';
-    replyBtn.style.marginTop = '2px';
-    replyBtn.style.padding = '2px 6px';
-    replyBtn.style.borderRadius = '4px';
-    replyBtn.style.transition = 'all 0.2s';
-    replyBtn.title = 'Reply';
-    replyBtn.dataset.docId = doc.id;
-
-    replyBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      startReply(doc.id, data.username, data.text);
-    });
-
-    bubble.appendChild(replyBtn);
-  }
-
-  // ========== REPLY PESAN (jika ada) ==========
-  if (data.replyTo) {
-    const replyContainer = document.createElement('div');
-    replyContainer.style.padding = '4px 10px';
-    replyContainer.style.marginBottom = '4px';
-    replyContainer.style.borderRadius = '6px';
-    replyContainer.style.fontSize = '11px';
-    replyContainer.style.opacity = '0.7';
-    replyContainer.style.borderLeft = '3px solid var(--accent)';
-
-    if (isMine) {
-      replyContainer.style.background = 'rgba(255,255,255,0.1)';
+    // Avatar
+    const avatarDiv = document.createElement('div');
+    avatarDiv.style.width = '38px';
+    avatarDiv.style.height = '38px';
+    avatarDiv.style.minWidth = '38px';
+    avatarDiv.style.borderRadius = '50%';
+    avatarDiv.style.background = '#2a2a2e';
+    avatarDiv.style.display = 'flex';
+    avatarDiv.style.alignItems = 'center';
+    avatarDiv.style.justifyContent = 'center';
+    avatarDiv.style.fontSize = '14px';
+    avatarDiv.style.fontWeight = 'bold';
+    avatarDiv.style.color = '#fff';
+    avatarDiv.style.overflow = 'hidden';
+    avatarDiv.style.flexShrink = '0';
+    if (data.avatar) {
+      avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
     } else {
-      replyContainer.style.background = 'var(--bg-hover)';
+      avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
     }
 
-    const replyName = document.createElement('span');
-    replyName.style.fontWeight = '600';
-    replyName.textContent = data.replyTo.username || 'unknown';
-    replyContainer.appendChild(replyName);
+    // Bubble wrapper
+    const bubbleWrapper = document.createElement('div');
+    bubbleWrapper.style.flex = '1';
+    bubbleWrapper.style.maxWidth = '75%';
+    bubbleWrapper.style.display = 'flex';
+    bubbleWrapper.style.flexDirection = 'column';
 
-    const replyText = document.createElement('span');
-    replyText.textContent = ': ' + (data.replyTo.text || '');
-    replyContainer.appendChild(replyText);
+    // Bubble
+    const bubble = document.createElement('div');
+    bubble.style.padding = '8px 14px';
+    bubble.style.borderRadius = '12px';
+    bubble.style.wordBreak = 'break-word';
+    bubble.style.lineHeight = '1.4';
+    bubble.style.fontSize = '13px';
+    bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
 
-    bubble.prepend(replyContainer);
+    if (isMine) {
+      bubble.style.background = 'var(--accent)';
+      bubble.style.color = '#fff';
+      bubble.style.borderTopRightRadius = '4px';
+      bubbleWrapper.style.alignItems = 'flex-end';
+    } else if (isSystem) {
+      bubble.style.background = 'transparent';
+      bubble.style.color = 'var(--text-muted)';
+      bubble.style.textAlign = 'center';
+      bubble.style.fontSize = '12px';
+      bubble.style.padding = '4px 0';
+      bubble.style.boxShadow = 'none';
+      bubbleWrapper.style.alignItems = 'center';
+      bubbleWrapper.style.maxWidth = '100%';
+    } else {
+      bubble.style.background = 'var(--bg-input)';
+      bubble.style.color = 'var(--text)';
+      bubble.style.borderTopLeftRadius = '4px';
+    }
+
+    // Nama user (kecuali sistem dan pesan sendiri)
+    if (!isSystem && !isMine) {
+      const nameSpan = document.createElement('div');
+      nameSpan.style.fontSize = '11px';
+      nameSpan.style.fontWeight = '600';
+      nameSpan.style.color = 'var(--accent)';
+      nameSpan.style.marginBottom = '2px';
+      nameSpan.textContent = data.username || 'unknown';
+      bubble.appendChild(nameSpan);
+    }
+
+    // Teks pesan
+    const textSpan = document.createElement('div');
+    let displayText = data.text || '';
+    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+      displayText = 'Anda bergabung ke grup';
+    }
+    textSpan.textContent = displayText;
+    bubble.appendChild(textSpan);
+
+    // Waktu
+    const timeSpan = document.createElement('div');
+    timeSpan.style.fontSize = '9px';
+    timeSpan.style.opacity = '0.6';
+    timeSpan.style.marginTop = '3px';
+    timeSpan.style.textAlign = 'right';
+    if (data.timestamp) {
+      const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+      timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }
+    bubble.appendChild(timeSpan);
+
+    // Tombol reply (kecuali pesan sistem)
+    if (!isSystem) {
+      const replyBtn = document.createElement('button');
+      replyBtn.innerHTML = '<i class="fa-regular fa-reply-all" style="font-size:10px;"></i>';
+      replyBtn.style.background = 'transparent';
+      replyBtn.style.border = 'none';
+      replyBtn.style.color = 'var(--text-muted)';
+      replyBtn.style.fontSize = '10px';
+      replyBtn.style.cursor = 'pointer';
+      replyBtn.style.marginTop = '2px';
+      replyBtn.style.padding = '2px 6px';
+      replyBtn.style.borderRadius = '4px';
+      replyBtn.style.transition = 'all 0.2s';
+      replyBtn.title = 'Reply';
+      replyBtn.dataset.docId = doc.id;
+      replyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        startReply(doc.id, data.username, data.text);
+      });
+      bubble.appendChild(replyBtn);
+    }
+
+    // Reply pesan (jika ada)
+    if (data.replyTo) {
+      const replyContainer = document.createElement('div');
+      replyContainer.style.padding = '4px 10px';
+      replyContainer.style.marginBottom = '4px';
+      replyContainer.style.borderRadius = '6px';
+      replyContainer.style.fontSize = '11px';
+      replyContainer.style.opacity = '0.7';
+      replyContainer.style.borderLeft = '3px solid var(--accent)';
+      if (isMine) {
+        replyContainer.style.background = 'rgba(255,255,255,0.1)';
+      } else {
+        replyContainer.style.background = 'var(--bg-hover)';
+      }
+      const replyName = document.createElement('span');
+      replyName.style.fontWeight = '600';
+      replyName.textContent = data.replyTo.username || 'unknown';
+      replyContainer.appendChild(replyName);
+      const replyText = document.createElement('span');
+      replyText.textContent = ': ' + (data.replyTo.text || '');
+      replyContainer.appendChild(replyText);
+      bubble.prepend(replyContainer);
+    }
+
+    // Susun layout
+    if (isSystem) {
+      div.style.justifyContent = 'center';
+      div.appendChild(bubble);
+    } else if (isMine) {
+      div.style.flexDirection = 'row-reverse';
+      div.appendChild(avatarDiv);
+      bubbleWrapper.appendChild(bubble);
+      div.appendChild(bubbleWrapper);
+    } else {
+      div.appendChild(avatarDiv);
+      bubbleWrapper.appendChild(bubble);
+      div.appendChild(bubbleWrapper);
+    }
+
+    return div;
   }
 
-  // ========== SUSUN ==========
-  if (isSystem) {
-    div.style.justifyContent = 'center';
-    div.appendChild(bubble);
-  } else if (isMine) {
-    div.style.flexDirection = 'row-reverse';
-    div.appendChild(avatarDiv);
-    bubbleWrapper.appendChild(bubble);
-    div.appendChild(bubbleWrapper);
-  } else {
-    div.appendChild(avatarDiv);
-    bubbleWrapper.appendChild(bubble);
-    div.appendChild(bubbleWrapper);
-  }
-
-  return div;
-}
   // ---------- SUBSCRIBE MESSAGES ----------
   function subscribeMessages() {
     if (messagesUnsubscribe) {
@@ -5883,14 +5846,13 @@ function cancelReply() {
           const el = renderMessage(doc);
           messagesList.appendChild(el);
         });
-        // Scroll ke bawah
         messagesList.scrollTop = messagesList.scrollHeight;
       }, (error) => {
         console.error('Error listening messages:', error);
       });
   }
 
-  // ---------- SUBSCRIBE USERS (untuk member count & online) ----------
+  // ---------- SUBSCRIBE USERS ----------
   function subscribeUsers() {
     if (usersUnsubscribe) {
       usersUnsubscribe();
@@ -5907,33 +5869,27 @@ function cancelReply() {
 
   // ---------- INIT CHAT ----------
   function initChat() {
-    // Tampilkan chat, sembunyikan form profil
     profileSetup.style.display = 'none';
     chatContainer.style.display = 'block';
 
-    // Tampilkan username dan avatar
     myUsernameDisplay.textContent = currentUser.username;
+    if (currentUser.avatar) {
+      myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
+      myAvatarPlaceholder.style.background = 'var(--accent-soft)';
+      myAvatarPlaceholder.style.color = 'var(--accent)';
+    }
 
-if (currentUser.avatar) {
-  myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-} else {
-  myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
-  myAvatarPlaceholder.style.background = 'var(--accent-soft)';
-  myAvatarPlaceholder.style.color = 'var(--accent)';
-}
-
-    // Mulai listener
     subscribeMessages();
     subscribeUsers();
 
-    // Mulai update status online
     if (statusInterval) clearInterval(statusInterval);
     updateOnlineStatus(true);
     statusInterval = setInterval(() => {
       updateOnlineStatus(true);
     }, 10000);
 
-    // Event visibility change
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         updateOnlineStatus(false);
@@ -5946,7 +5902,6 @@ if (currentUser.avatar) {
   // ---------- CEK USER SAAT LOAD ----------
   async function checkUser() {
     const uid = getOrCreateUid();
-    // Cek apakah user sudah ada di Firestore
     const userDoc = await db.collection('users').doc(uid).get();
     if (userDoc.exists) {
       const data = userDoc.data();
@@ -5958,10 +5913,8 @@ if (currentUser.avatar) {
       setCurrentUser(currentUser);
       initChat();
     } else {
-      // Belum punya profil, tampilkan form
       profileSetup.style.display = 'block';
       chatContainer.style.display = 'none';
-      // Hapus listener jika ada
       if (messagesUnsubscribe) messagesUnsubscribe();
       if (usersUnsubscribe) usersUnsubscribe();
       if (statusInterval) clearInterval(statusInterval);
@@ -5969,174 +5922,188 @@ if (currentUser.avatar) {
   }
 
   // ---------- EVENT: BUAT PROFIL ----------
-  // ---------- EVENT: BUAT PROFIL (dengan loading) ----------
-// ---------- EVENT: BUAT PROFIL (dengan loading + avatar) ----------
-btnCreateProfile.addEventListener('click', async function() {
-  const username = newUsernameInput.value.trim();
-  const errorEl = document.getElementById('username-error');
+  btnCreateProfile.addEventListener('click', async function() {
+    const username = newUsernameInput.value.trim();
+    const errorEl = document.getElementById('username-error');
 
-  // Validasi username kosong
-  if (!username) {
-    errorEl.textContent = 'Username tidak boleh kosong';
-    errorEl.classList.add('visible');
-    return;
-  }
-
-  // Validasi format username
-  if (!/^[a-z0-9_]+$/.test(username)) {
-    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
-    errorEl.classList.add('visible');
-    return;
-  }
-
-  // Disable tombol & tampilkan loading
-  btnCreateProfile.disabled = true;
-  btnCreateProfile.innerHTML = `
-    <span class="gate-spinner" style="
-      width:18px;height:18px;
-      border-color:rgba(255,255,255,0.3);
-      border-top-color:#fff;
-      display:inline-block;
-    "></span> Memproses...
-  `;
-  errorEl.classList.remove('visible');
-
-  try {
-    // 1. Cek username (API)
-    const exists = await checkUsername(username);
-    if (exists) {
-      errorEl.textContent = 'Username sudah dipakai, coba yang lain';
+    if (!username) {
+      errorEl.textContent = 'Username tidak boleh kosong';
       errorEl.classList.add('visible');
-      btnCreateProfile.disabled = false;
-      btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+      return;
+    }
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+      errorEl.classList.add('visible');
       return;
     }
 
-    // 2. Dapatkan UID
-    const uid = getOrCreateUid();
+    btnCreateProfile.disabled = true;
+    btnCreateProfile.innerHTML = `
+      <span class="gate-spinner" style="
+        width:18px;height:18px;
+        border-color:rgba(255,255,255,0.3);
+        border-top-color:#fff;
+        display:inline-block;
+      "></span> Memproses...
+    `;
+    errorEl.classList.remove('visible');
 
-    // 3. Kirim data ke API create-profile (dengan avatar jika ada)
-    const avatarUrl = uploadedAvatarUrl || ''; // dari upload avatar sebelumnya
-    const success = await createProfile(uid, username, avatarUrl);
+    try {
+      const exists = await checkUsername(username);
+      if (exists) {
+        errorEl.textContent = 'Username sudah dipakai, coba yang lain';
+        errorEl.classList.add('visible');
+        btnCreateProfile.disabled = false;
+        btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+        return;
+      }
 
-    if (success) {
-      // Simpan user ke localStorage
-      currentUser = {
-        uid: uid,
-        username: username,
-        avatar: avatarUrl
-      };
-      setCurrentUser(currentUser);
+      const uid = getOrCreateUid();
+      const avatarUrl = uploadedAvatarUrl || '';
+      const success = await createProfile(uid, username, avatarUrl);
 
-      showToast('Selamat datang di grup! 🎉', 'success');
-      initChat(); // masuk ke chat
-    } else {
-      errorEl.textContent = 'Gagal membuat profil, coba lagi';
+      if (success) {
+        currentUser = { uid, username, avatar: avatarUrl };
+        setCurrentUser(currentUser);
+        showToast('Selamat datang di grup! 🎉', 'success');
+        initChat();
+      } else {
+        errorEl.textContent = 'Gagal membuat profil, coba lagi';
+        errorEl.classList.add('visible');
+        btnCreateProfile.disabled = false;
+        btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+      }
+    } catch (err) {
+      console.error('Error saat membuat profil:', err);
+      errorEl.textContent = 'Terjadi error: ' + err.message;
       errorEl.classList.add('visible');
       btnCreateProfile.disabled = false;
       btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
     }
-  } catch (err) {
-    console.error('Error saat membuat profil:', err);
-    errorEl.textContent = 'Terjadi error: ' + err.message;
-    errorEl.classList.add('visible');
-    btnCreateProfile.disabled = false;
-    btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
-  }
-});
+  });
+
   // ---------- EVENT: KIRIM PESAN ----------
-  // Ganti event btnSend dengan ini:
-btnSend.addEventListener('click', async function() {
-  const text = chatInput.value.trim();
-  if (!text) return;
+  btnSend.addEventListener('click', async function() {
+    const text = chatInput.value.trim();
+    if (!text) return;
 
-  let replyData = null;
-  if (replyingTo) {
-    replyData = {
-      docId: replyingTo.docId,
-      username: replyingTo.username,
-      text: replyingTo.text
-    };
-  }
+    let replyData = null;
+    if (replyingTo) {
+      replyData = {
+        docId: replyingTo.docId,
+        username: replyingTo.username,
+        text: replyingTo.text
+      };
+    }
 
-  const ok = await sendMessage(text, replyData);
-  if (ok) {
-    chatInput.value = '';
-    cancelReply();
-  } else {
-    showToast('Gagal mengirim pesan', 'error');
-  }
-});
+    const ok = await sendMessage(text, replyData);
+    if (ok) {
+      chatInput.value = '';
+      cancelReply();
+    } else {
+      showToast('Gagal mengirim pesan', 'error');
+    }
+  });
 
-// Enter untuk kirim (tetap sama)
-chatInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    btnSend.click();
-  }
-});
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      btnSend.click();
+    }
+  });
 
-  // --------- EVENT: EDIT PROFIL ----------
-  // ---------- EVENT: EDIT PROFIL (pakai modal) ----------
-btnEditProfile.addEventListener('click', function() {
-  const modal = document.getElementById('edit-profile-modal');
-  const input = document.getElementById('edit-username-input');
-  const errorEl = document.getElementById('edit-username-error');
-  
-  input.value = currentUser.username;
-  errorEl.classList.remove('visible');
-  modal.classList.add('active');
-  document.body.classList.add('modal-open');
-  setTimeout(() => input.focus(), 100);
-});
+  // ---------- EVENT: EDIT PROFIL ----------
+  btnEditProfile.addEventListener('click', function() {
+    const modal = document.getElementById('edit-profile-modal');
+    const input = document.getElementById('edit-username-input');
+    const errorEl = document.getElementById('edit-username-error');
+    input.value = currentUser.username;
+    errorEl.classList.remove('visible');
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+    setTimeout(() => input.focus(), 100);
+  });
 
-document.getElementById('edit-profile-cancel').addEventListener('click', function() {
-  document.getElementById('edit-profile-modal').classList.remove('active');
-  document.body.classList.remove('modal-open');
-});
-
-document.getElementById('edit-profile-save').addEventListener('click', async function() {
-  const input = document.getElementById('edit-username-input');
-  const errorEl = document.getElementById('edit-username-error');
-  const newUsername = input.value.trim();
-
-  if (!newUsername || newUsername === currentUser.username) {
+  document.getElementById('edit-profile-cancel').addEventListener('click', function() {
     document.getElementById('edit-profile-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
-    return;
-  }
-  if (!/^[a-z0-9_]+$/.test(newUsername)) {
-    errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
-    errorEl.classList.add('visible');
-    return;
-  }
+  });
 
-  // Cek username
-  const exists = await checkUsername(newUsername);
-  if (exists) {
-    errorEl.textContent = 'Username sudah dipakai';
-    errorEl.classList.add('visible');
-    return;
-  }
+  document.getElementById('edit-profile-save').addEventListener('click', async function() {
+    const input = document.getElementById('edit-username-input');
+    const errorEl = document.getElementById('edit-username-error');
+    const newUsername = input.value.trim();
 
-  // Save
-  const success = await updateProfile(currentUser.uid, newUsername);
-  if (success) {
-    currentUser.username = newUsername;
-    setCurrentUser(currentUser);
-    myUsernameDisplay.textContent = newUsername;
-    myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
-    showToast('Profil berhasil diupdate!', 'success');
-    document.getElementById('edit-profile-modal').classList.remove('active');
-    document.body.classList.remove('modal-open');
-  } else {
-    errorEl.textContent = 'Gagal update, coba lagi';
-    errorEl.classList.add('visible');
-  }
-});
+    if (!newUsername || newUsername === currentUser.username) {
+      document.getElementById('edit-profile-modal').classList.remove('active');
+      document.body.classList.remove('modal-open');
+      return;
+    }
+    if (!/^[a-z0-9_]+$/.test(newUsername)) {
+      errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
+      errorEl.classList.add('visible');
+      return;
+    }
+
+    const exists = await checkUsername(newUsername);
+    if (exists) {
+      errorEl.textContent = 'Username sudah dipakai';
+      errorEl.classList.add('visible');
+      return;
+    }
+
+    const success = await updateProfile(currentUser.uid, newUsername);
+    if (success) {
+      currentUser.username = newUsername;
+      setCurrentUser(currentUser);
+      myUsernameDisplay.textContent = newUsername;
+      myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
+      showToast('Profil berhasil diupdate!', 'success');
+      document.getElementById('edit-profile-modal').classList.remove('active');
+      document.body.classList.remove('modal-open');
+    } else {
+      errorEl.textContent = 'Gagal update, coba lagi';
+      errorEl.classList.add('visible');
+    }
+  });
+
+  // ---------- VALIDASI USERNAME REAL-TIME ----------
+  newUsernameInput.addEventListener('input', async function() {
+    const val = this.value.trim();
+    const errorEl = document.getElementById('username-error');
+    const hintEl = document.getElementById('username-hint');
+    const checkIcon = document.getElementById('username-check-icon');
+
+    if (val.length < 3) {
+      errorEl.textContent = 'Minimal 3 karakter';
+      errorEl.classList.add('visible');
+      checkIcon.innerHTML = '❌';
+      return;
+    }
+    if (!/^[a-z0-9_]+$/.test(val)) {
+      errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+      errorEl.classList.add('visible');
+      checkIcon.innerHTML = '❌';
+      return;
+    }
+
+    clearTimeout(this._timeout);
+    this._timeout = setTimeout(async () => {
+      const exists = await checkUsername(val);
+      if (exists) {
+        errorEl.textContent = 'Username sudah dipakai';
+        errorEl.classList.add('visible');
+        checkIcon.innerHTML = '❌';
+      } else {
+        errorEl.classList.remove('visible');
+        checkIcon.innerHTML = '✅';
+        hintEl.textContent = 'Username tersedia!';
+        hintEl.style.color = 'var(--success)';
+      }
+    }, 500);
+  });
 
   // ---------- JALANKAN ----------
-  // Tunggu Firebase siap
   if (db) {
     checkUser();
   } else {
