@@ -5611,7 +5611,7 @@ if (typeof firebase === 'undefined') {
   let usersUnsubscribe = null;
   let statusInterval = null;
   let replyingTo = null; // Pindah ke sini (di luar renderMessage)
-
+let messagesObserver = null;
   function getCurrentUser() {
     const data = localStorage.getItem(GRP_STORAGE_KEY);
     if (data) {
@@ -6565,9 +6565,15 @@ async function markMessageAsRead(docId) {
   }
 }
 
-// Observer untuk mendeteksi pesan yang masuk viewport
+// Observer untuk mendeteksi pesan yang masuk viewport (dengan cleanup)
 function observeMessages() {
-  const observer = new IntersectionObserver((entries) => {
+  // Hapus observer lama jika ada
+  if (messagesObserver) {
+    messagesObserver.disconnect();
+    messagesObserver = null;
+  }
+
+  messagesObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const el = entry.target;
@@ -6580,7 +6586,7 @@ function observeMessages() {
   }, { threshold: 0.5 });
 
   document.querySelectorAll('.message-item').forEach(el => {
-    observer.observe(el);
+    messagesObserver.observe(el);
   });
 }
   // ---------- SUBSCRIBE MESSAGES (hanya 10 pesan terakhir) ----------
