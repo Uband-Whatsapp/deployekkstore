@@ -2976,6 +2976,7 @@ ul {
 }
 
 </style>  
+</head>
 <body>
     <!-- ==================== GATE SCREEN ==================== -->
     <div id="gate-screen">
@@ -3657,38 +3658,64 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             </div>
 
             <!-- ==================== PAGE: GROUP ==================== -->
-            <div class="page" id="page-group">
-                <div class="page-header">
-                    <h1>Grup Ekk Store</h1>
-                    <p>Bergabung dengan komunitas kami.</p>
-                </div>
-                <div class="card" style="text-align:center; margin-bottom: var(--space-6);">
-                    <div style="font-size:40px; margin-bottom: var(--space-3); color: var(--accent);">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <h3 style="font-size:16px; font-weight:700; margin-bottom: var(--space-2);">Grup WhatsApp Ekk Store</h3>
-                    <p style="font-size:12px; color: var(--text-muted); margin-bottom: var(--space-4);">
-                        Bergabunglah dengan grup untuk diskusi, update, dan bantuan seputar deployment.
-                    </p>
-                    <a href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4" target="_blank" rel="noopener" class="btn btn-primary btn-lg" style="display:inline-flex;">
-                        <i class="fa-brands fa-whatsapp"></i> Join Grup WhatsApp
-                    </a>
-                </div>
-                <div class="card" style="text-align:center;">
-                    <h3 style="font-size:14px; font-weight:700; margin-bottom: var(--space-3);">Kontak Lainnya</h3>
-                    <div style="display:flex; gap: var(--space-3); justify-content:center; flex-wrap:wrap;">
-                        <a href="https://t.me/XzzEkk" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
-                            <i class="fa-brands fa-telegram"></i> Telegram
-                        </a>
-                        <a href="https://wa.me/6285177464515" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <!-- ==================== PAGE: GROUP ==================== -->
+<div class="page" id="page-group">
+  <div class="page-header">
+    <h1><i class="fa-solid fa-users"></i> Grup Ekk Store</h1>
+    <p id="group-info">0 Member • Online 0</p>
+  </div>
 
-            <div class="footer-text">&copy; 2026 Ekk Store — Deployment Platform v3.2</div>
-        </main>
+  <!-- Bagian untuk membuat profil (muncul jika belum punya akun) -->
+  <div id="profile-setup" style="display: none;">
+    <div class="card">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4);">
+        <i class="fa-solid fa-user-plus" style="font-size: 24px; color: var(--accent);"></i>
+        <h3 style="margin:0;">Buat Profil untuk Bergabung</h3>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pilih Username</label>
+        <input type="text" id="new-username" class="form-input" placeholder="contoh: ekkstore" autocomplete="off">
+        <span class="form-error" id="username-error"></span>
+        <span class="form-hint">Username unik, huruf kecil, angka, dan underscore.</span>
+      </div>
+      <button class="btn btn-primary btn-lg" id="btn-create-profile" style="width:100%;">
+        <i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup
+      </button>
+    </div>
+  </div>
+
+  <!-- Bagian chat (muncul jika sudah punya profil) -->
+  <div id="chat-container" style="display: none;">
+    <!-- Profil user saat ini -->
+    <div class="card" style="margin-bottom: var(--space-4);">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div id="my-avatar-placeholder" style="width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;color:var(--accent);">
+          ?
+        </div>
+        <div style="flex:1; min-width:0;">
+          <strong id="my-username-display" style="font-size:16px;">username</strong>
+          <span style="display:block;font-size:11px;color:var(--text-muted);">Online</span>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btn-edit-profile">
+          <i class="fa-solid fa-pen"></i> Edit Profil
+        </button>
+      </div>
+    </div>
+
+    <!-- Kotak chat -->
+    <div class="card" style="padding:0; display: flex; flex-direction: column; height: 480px; overflow:hidden;">
+      <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: 6px;">
+        <!-- Pesan akan di-render di sini -->
+      </div>
+      <div style="padding: var(--space-3); border-top: 1px solid var(--border); display: flex; gap: var(--space-2); background: var(--bg-card);">
+        <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:40px;">
+        <button class="btn btn-primary" id="btn-send" style="min-height:40px;">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav id="bottom-nav" aria-label="Navigasi Mobile">
 
@@ -4766,63 +4793,48 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
                     markDeployStepComplete('step-deploying');
                     markDeployStepComplete('step-completed');
 
-                    if (output) {
-                        output.innerHTML = `
-if (output) {
-    output.innerHTML = `
-if (output) {
+                 if (output) {
     output.innerHTML = `
         <div class="deploy-success">
-
             <div class="deploy-success-header">
                 <div class="deploy-success-icon">
                     <i class="fa-solid fa-check"></i>
                 </div>
-
                 <div class="deploy-success-info">
                     <div class="deploy-success-title">
                         Deploy Berhasil
                     </div>
-
                     <div class="deploy-success-subtitle">
                         Project berhasil dipublikasikan.
                     </div>
                 </div>
             </div>
-
             <div class="deploy-url-row">
                 <i class="fa-solid fa-link"></i>
-
                 <a href="${result.url}"
                    target="_blank"
                    rel="noopener noreferrer"
                    class="deploy-url"
                    id="deploy-url">${result.url}</a>
             </div>
-
             <div class="deploy-actions">
-
                 <button type="button"
                         class="deploy-action-btn deploy-open-btn"
                         onclick="openDeployedWebsite()">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     <span>Buka Website</span>
                 </button>
-
                 <button type="button"
                         class="deploy-action-btn deploy-copy-btn"
                         onclick="copyDeployedLink()">
                     <i class="fa-regular fa-copy"></i>
                     <span>Salin Link</span>
                 </button>
-
             </div>
-
         </div>
     `;
 }
-                    `;
-                    }
+                    
                     showToast('Project berhasil dideploy!', 'success');
 
                     const projectId = result.projectId || result.id || '';
@@ -5331,6 +5343,409 @@ if (output) {
 
         console.log('EKK STORE 3.2 — Premium Deployment Platform');
         console.log('User ID tersimpan privat');
+// ============================================================
+// BAGIAN GRUP (WhatsApp-like)
+// ============================================================
+
+// Konfigurasi Firebase Client SDK (ganti dengan punya kamu)
+// Kamu bisa dapatkan dari Firebase Console > Project Settings > Your apps > Config
+const firebaseConfig = {
+    apiKey: "AIzaSyCesmK4pK1sv48Z9EkYDapH7XRf7BeOkA",
+    authDomain: "deploy-ekkstore.firebaseapp.com",
+    projectId: "deploy-ekkstore",
+    storageBucket: "deploy-ekkstore.firebasestorage.app",
+    messagingSenderId: "715346814022",
+    appId: "1:715346814022:web:e7c6091481347538c2d647",
+    measurementId: "G-667XX2R18N"
+};
+
+// Inisialisasi Firebase (jika belum)
+if (typeof firebase === 'undefined') {
+  console.error('Firebase SDK belum di-load!');
+} else {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  // ---------- STATE ----------
+  const GRP_STORAGE_KEY = 'ekk_group_user';
+  const UID_STORAGE_KEY = 'ekk_group_uid';
+  let currentUser = null;
+  let messagesUnsubscribe = null;
+  let usersUnsubscribe = null;
+  let statusInterval = null;
+
+  // Fungsi untuk mendapatkan user dari localStorage
+  function getCurrentUser() {
+    const data = localStorage.getItem(GRP_STORAGE_KEY);
+    if (data) {
+      try { return JSON.parse(data); } catch(e) {}
+    }
+    return null;
+  }
+
+  function setCurrentUser(user) {
+    currentUser = user;
+    localStorage.setItem(GRP_STORAGE_KEY, JSON.stringify(user));
+  }
+
+  // Fungsi untuk mendapatkan uid (generate jika belum ada)
+  function getOrCreateUid() {
+    let uid = localStorage.getItem(UID_STORAGE_KEY);
+    if (!uid) {
+      uid = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+      localStorage.setItem(UID_STORAGE_KEY, uid);
+    }
+    return uid;
+  }
+
+  // Cek user saat load
+  const savedUser = getCurrentUser();
+  if (savedUser) {
+    currentUser = savedUser;
+  }
+
+  // ---------- ELEMEN ----------
+  const profileSetup = document.getElementById('profile-setup');
+  const chatContainer = document.getElementById('chat-container');
+  const newUsernameInput = document.getElementById('new-username');
+  const usernameError = document.getElementById('username-error');
+  const btnCreateProfile = document.getElementById('btn-create-profile');
+  const messagesList = document.getElementById('messages-list');
+  const chatInput = document.getElementById('chat-input');
+  const btnSend = document.getElementById('btn-send');
+  const myUsernameDisplay = document.getElementById('my-username-display');
+  const myAvatarPlaceholder = document.getElementById('my-avatar-placeholder');
+  const groupInfo = document.getElementById('group-info');
+  const btnEditProfile = document.getElementById('btn-edit-profile');
+
+  // ---------- FUNGSI API ----------
+  async function checkUsername(username) {
+    const res = await fetch(`/api/check-username?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+    return data.exists;
+  }
+
+  async function createProfile(uid, username, avatar) {
+    const res = await fetch('/api/create-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, username, avatar: avatar || '' })
+    });
+    return res.ok;
+  }
+
+  async function sendMessage(text) {
+    if (!currentUser) return false;
+    const res = await fetch('/api/send-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: currentUser.uid,
+        username: currentUser.username,
+        avatar: currentUser.avatar || '',
+        text: text
+      })
+    });
+    return res.ok;
+  }
+
+  async function updateOnlineStatus(isOnline) {
+    if (!currentUser) return;
+    await fetch('/api/update-status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: currentUser.uid, isOnline })
+    });
+  }
+
+  async function updateProfile(uid, newUsername) {
+    const res = await fetch('/api/update-profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, username: newUsername })
+    });
+    return res.ok;
+  }
+
+  // ---------- RENDER PESAN ----------
+  function renderMessage(doc) {
+    const data = doc.data();
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.alignItems = 'flex-start';
+    div.style.gap = '8px';
+    div.style.marginBottom = '4px';
+
+    const isSystem = data.senderId === 'system' || data.type === 'join' || data.type === 'leave';
+    const isMine = data.senderId === currentUser?.uid;
+
+    // Avatar
+    const avatarDiv = document.createElement('div');
+    avatarDiv.style.width = '32px';
+    avatarDiv.style.height = '32px';
+    avatarDiv.style.borderRadius = '50%';
+    avatarDiv.style.background = '#2a2a2e';
+    avatarDiv.style.display = 'flex';
+    avatarDiv.style.alignItems = 'center';
+    avatarDiv.style.justifyContent = 'center';
+    avatarDiv.style.fontSize = '12px';
+    avatarDiv.style.fontWeight = 'bold';
+    avatarDiv.style.color = '#fff';
+    avatarDiv.style.flexShrink = '0';
+    if (data.avatar) {
+      avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    } else {
+      avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+    }
+
+    // Bubble
+    const bubble = document.createElement('div');
+    bubble.style.flex = '1';
+    bubble.style.padding = '6px 12px';
+    bubble.style.borderRadius = '12px';
+    bubble.style.maxWidth = '70%';
+    bubble.style.wordBreak = 'break-word';
+    bubble.style.lineHeight = '1.4';
+
+    if (isMine) {
+      bubble.style.background = 'var(--accent)';
+      bubble.style.color = '#fff';
+      bubble.style.marginLeft = 'auto';
+    } else if (isSystem) {
+      bubble.style.background = 'transparent';
+      bubble.style.color = 'var(--text-muted)';
+      bubble.style.textAlign = 'center';
+      bubble.style.fontSize = '12px';
+      bubble.style.width = '100%';
+      bubble.style.maxWidth = '100%';
+      bubble.style.padding = '4px 0';
+    } else {
+      bubble.style.background = 'var(--bg-input)';
+      bubble.style.color = 'var(--text)';
+    }
+
+    // Jika bukan system, tampilkan nama user
+    if (!isSystem) {
+      const nameSpan = document.createElement('div');
+      nameSpan.style.fontSize = '11px';
+      nameSpan.style.fontWeight = 'bold';
+      nameSpan.style.color = isMine ? 'rgba(255,255,255,0.7)' : 'var(--accent)';
+      nameSpan.textContent = data.username || 'unknown';
+      bubble.appendChild(nameSpan);
+    }
+
+    // Text pesan (khusus join, kita ubah teksnya untuk user sendiri)
+    let displayText = data.text || '';
+    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+      displayText = 'Anda bergabung ke grup';
+    }
+    const textSpan = document.createElement('div');
+    textSpan.textContent = displayText;
+    bubble.appendChild(textSpan);
+
+    // Waktu
+    const timeSpan = document.createElement('div');
+    timeSpan.style.fontSize = '9px';
+    timeSpan.style.opacity = '0.6';
+    timeSpan.style.marginTop = '2px';
+    if (data.timestamp) {
+      const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+      timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }
+    bubble.appendChild(timeSpan);
+
+    if (!isSystem) {
+      div.appendChild(avatarDiv);
+    }
+    div.appendChild(bubble);
+
+    return div;
+  }
+
+  // ---------- SUBSCRIBE MESSAGES ----------
+  function subscribeMessages() {
+    if (messagesUnsubscribe) {
+      messagesUnsubscribe();
+      messagesUnsubscribe = null;
+    }
+    messagesUnsubscribe = db.collection('messages')
+      .orderBy('timestamp', 'asc')
+      .onSnapshot((snapshot) => {
+        messagesList.innerHTML = '';
+        snapshot.forEach(doc => {
+          const el = renderMessage(doc);
+          messagesList.appendChild(el);
+        });
+        // Scroll ke bawah
+        messagesList.scrollTop = messagesList.scrollHeight;
+      }, (error) => {
+        console.error('Error listening messages:', error);
+      });
+  }
+
+  // ---------- SUBSCRIBE USERS (untuk member count & online) ----------
+  function subscribeUsers() {
+    if (usersUnsubscribe) {
+      usersUnsubscribe();
+      usersUnsubscribe = null;
+    }
+    usersUnsubscribe = db.collection('users').onSnapshot((snapshot) => {
+      const total = snapshot.size;
+      const online = snapshot.docs.filter(doc => doc.data().isOnline === true).length;
+      groupInfo.textContent = `${total} Member • Online ${online}`;
+    }, (error) => {
+      console.error('Error listening users:', error);
+    });
+  }
+
+  // ---------- INIT CHAT ----------
+  function initChat() {
+    // Tampilkan chat, sembunyikan form profil
+    profileSetup.style.display = 'none';
+    chatContainer.style.display = 'block';
+
+    // Tampilkan username dan avatar
+    myUsernameDisplay.textContent = currentUser.username;
+    myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
+
+    // Mulai listener
+    subscribeMessages();
+    subscribeUsers();
+
+    // Mulai update status online
+    if (statusInterval) clearInterval(statusInterval);
+    updateOnlineStatus(true);
+    statusInterval = setInterval(() => {
+      updateOnlineStatus(true);
+    }, 10000);
+
+    // Event visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        updateOnlineStatus(false);
+      } else {
+        updateOnlineStatus(true);
+      }
+    });
+  }
+
+  // ---------- CEK USER SAAT LOAD ----------
+  async function checkUser() {
+    const uid = getOrCreateUid();
+    // Cek apakah user sudah ada di Firestore
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      const data = userDoc.data();
+      currentUser = {
+        uid: uid,
+        username: data.username,
+        avatar: data.avatar || ''
+      };
+      setCurrentUser(currentUser);
+      initChat();
+    } else {
+      // Belum punya profil, tampilkan form
+      profileSetup.style.display = 'block';
+      chatContainer.style.display = 'none';
+      // Hapus listener jika ada
+      if (messagesUnsubscribe) messagesUnsubscribe();
+      if (usersUnsubscribe) usersUnsubscribe();
+      if (statusInterval) clearInterval(statusInterval);
+    }
+  }
+
+  // ---------- EVENT: BUAT PROFIL ----------
+  btnCreateProfile.addEventListener('click', async function() {
+    const username = newUsernameInput.value.trim();
+    if (!username) {
+      usernameError.textContent = 'Username tidak boleh kosong';
+      usernameError.classList.add('visible');
+      return;
+    }
+    // Validasi sederhana: huruf kecil, angka, underscore
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      usernameError.textContent = 'Hanya huruf kecil, angka, dan underscore';
+      usernameError.classList.add('visible');
+      return;
+    }
+
+    // Cek username
+    const exists = await checkUsername(username);
+    if (exists) {
+      usernameError.textContent = 'Username sudah dipakai, coba yang lain';
+      usernameError.classList.add('visible');
+      return;
+    }
+
+    const uid = getOrCreateUid();
+    const success = await createProfile(uid, username, '');
+    if (success) {
+      currentUser = { uid, username, avatar: '' };
+      setCurrentUser(currentUser);
+      showToast('Selamat datang di grup!', 'success');
+      initChat();
+    } else {
+      usernameError.textContent = 'Gagal membuat profil, coba lagi';
+      usernameError.classList.add('visible');
+    }
+  });
+
+  // ---------- EVENT: KIRIM PESAN ----------
+  btnSend.addEventListener('click', async function() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    const ok = await sendMessage(text);
+    if (ok) {
+      chatInput.value = '';
+    } else {
+      showToast('Gagal mengirim pesan', 'error');
+    }
+  });
+
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      btnSend.click();
+    }
+  });
+
+  // ---------- EVENT: EDIT PROFIL ----------
+  btnEditProfile.addEventListener('click', function() {
+    const newUsername = prompt('Masukkan username baru:', currentUser.username);
+    if (!newUsername || newUsername === currentUser.username) return;
+    if (!/^[a-z0-9_]+$/.test(newUsername)) {
+      showToast('Username hanya huruf kecil, angka, underscore', 'error');
+      return;
+    }
+    // Cek username
+    checkUsername(newUsername).then(async (exists) => {
+      if (exists) {
+        showToast('Username sudah dipakai', 'error');
+        return;
+      }
+      const success = await updateProfile(currentUser.uid, newUsername);
+      if (success) {
+        currentUser.username = newUsername;
+        setCurrentUser(currentUser);
+        myUsernameDisplay.textContent = newUsername;
+        myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
+        showToast('Profil berhasil diupdate', 'success');
+      } else {
+        showToast('Gagal update profil', 'error');
+      }
+    });
+  });
+
+  // ---------- JALANKAN ----------
+  // Tunggu Firebase siap
+  if (db) {
+    checkUser();
+  } else {
+    console.error('Firebase tidak terinisialisasi');
+  }
+
+} // akhir if firebase
     </script>
 </body>
 </html>
