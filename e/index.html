@@ -5615,15 +5615,36 @@ if (typeof firebase === 'undefined') {
     });
   }
 
-  async function updateProfile(uid, newUsername) {
-    const res = await fetch('/api/update-profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid, username: newUsername })
-    });
-    return res.ok;
-  }
+  // updateProfile langsung ke Firestore (tanpa API)
+// ============================================================
+// UPDATE PROFIL LANGSUNG KE FIRESTORE (TANPA API)
+// ============================================================
+async function updateProfile(uid, newUsername) {
+  try {
+    // Cek username unik
+    const snapshot = await db.collection('users')
+      .where('username', '==', newUsername)
+      .get();
+    
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      if (doc.id !== uid) {
+        return { success: false, error: 'Username sudah dipakai oleh orang lain' };
+      }
+    }
 
+    // Update username
+    await db.collection('users').doc(uid).update({
+      username: newUsername,
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updateProfile] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
   // ---------- FUNGSI REPLY ----------
   function startReply(docId, username, text) {
     replyingTo = { docId, username, text };
@@ -6029,43 +6050,52 @@ if (typeof firebase === 'undefined') {
     document.body.classList.remove('modal-open');
   });
 
-  document.getElementById('edit-profile-save').addEventListener('click', async function() {
-    const input = document.getElementById('edit-username-input');
-    const errorEl = document.getElementById('edit-username-error');
-    const newUsername = input.value.trim();
+  // ============================================================
+// EVENT: EDIT PROFIL (Simpan)
+// ============================================================
+document.getElementById('edit-profile-save').addEventListener('click', async function() {
+  const input = document.getElementById('edit-username-input');
+  const errorEl = document.getElementById('edit-username-error');
+  const newUsername = input.value.trim();
 
-    if (!newUsername || newUsername === currentUser.username) {
-      document.getElementById('edit-profile-modal').classList.remove('active');
-      document.body.classList.remove('modal-open');
-      return;
-    }
-    if (!/^[a-z0-9_]+$/.test(newUsername)) {
-      errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
-      errorEl.classList.add('visible');
-      return;
-    }
+  // Jika kosong atau sama dengan username lama, tutup modal
+  if (!newUsername || newUsername === currentUser.username) {
+    document.getElementById('edit-profile-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+    return;
+  }
 
-    const exists = await checkUsername(newUsername);
-    if (exists) {
-      errorEl.textContent = 'Username sudah dipakai';
-      errorEl.classList.add('visible');
-      return;
-    }
+  // Validasi format username
+  if (!/^[a-z0-9_]+$/.test(newUsername)) {
+    errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
+    errorEl.classList.add('visible');
+    return;
+  }
 
-    const success = await updateProfile(currentUser.uid, newUsername);
-    if (success) {
-      currentUser.username = newUsername;
-      setCurrentUser(currentUser);
-      myUsernameDisplay.textContent = newUsername;
-      myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
-      showToast('Profil berhasil diupdate!', 'success');
-      document.getElementById('edit-profile-modal').classList.remove('active');
-      document.body.classList.remove('modal-open');
-    } else {
-      errorEl.textContent = 'Gagal update, coba lagi';
-      errorEl.classList.add('visible');
-    }
-  });
+  // Cek username (API check-username)
+  const exists = await checkUsername(newUsername);
+  if (exists) {
+    errorEl.textContent = 'Username sudah dipakai';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  // Update profil langsung ke Firestore (tanpa API)
+  const result = await updateProfile(currentUser.uid, newUsername);
+  if (result.success) {
+    // Update state & tampilan
+    currentUser.username = newUsername;
+    setCurrentUser(currentUser);
+    myUsernameDisplay.textContent = newUsername;
+    myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
+    showToast('Profil berhasil diupdate!', 'success');
+    document.getElementById('edit-profile-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+  } else {
+    errorEl.textContent = result.error || 'Gagal update, coba lagi';
+    errorEl.classList.add('visible');
+  }
+});
 
   // ---------- VALIDASI USERNAME REAL-TIME ----------
   newUsernameInput.addEventListener('input', async function() {
