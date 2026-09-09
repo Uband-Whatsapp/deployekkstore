@@ -3817,16 +3817,42 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 </nav>
     <!-- ==================== MODALS ==================== -->
 <!-- MODAL EDIT PROFIL -->
+<!-- MODAL EDIT PROFIL (dengan upload avatar) -->
 <div class="modal-overlay" id="edit-profile-modal">
-  <div class="modal-box" style="max-width:380px;">
+  <div class="modal-box" style="max-width:420px;">
     <div class="modal-icon"><i class="fa-solid fa-user-pen"></i></div>
     <h4>Edit Profil</h4>
-    <p>Ganti username kamu.</p>
+    <p>Ganti username atau foto profilmu.</p>
+
+    <!-- GANTI USERNAME -->
     <div class="form-group" style="text-align:left;">
       <label class="form-label">Username Baru</label>
       <input type="text" id="edit-username-input" class="form-input" placeholder="username baru">
+      <span class="form-hint" id="edit-username-hint">Maksimal 2x ganti per minggu.</span>
       <span class="form-error" id="edit-username-error"></span>
     </div>
+
+    <!-- GANTI AVATAR -->
+    <div class="form-group" style="text-align:left;">
+      <label class="form-label">Foto Profil</label>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div id="edit-avatar-preview" style="
+          width:64px;height:64px;border-radius:50%;
+          background:var(--bg-input);
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;color:var(--text-muted);
+          border:2px solid var(--border);
+          overflow:hidden;
+          flex-shrink:0;
+        ">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <input type="file" id="edit-avatar-input" accept="image/*" style="flex:1;min-width:120px;">
+      </div>
+      <span class="form-hint" id="edit-avatar-hint">Maksimal 2x ganti per minggu. Max 2MB.</span>
+      <span class="form-error" id="edit-avatar-error"></span>
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-outline" id="edit-profile-cancel">Batal</button>
       <button class="btn btn-primary" id="edit-profile-save">Simpan</button>
@@ -5468,6 +5494,52 @@ const avatarError = document.getElementById('avatar-error');
 
 if (avatarInput) {
   avatarInput.addEventListener('change', async function() {
+  // ============================================================
+// UPLOAD AVATAR DI MODAL EDIT PROFIL
+// ============================================================
+const editAvatarInput = document.getElementById('edit-avatar-input');
+const editAvatarPreview = document.getElementById('edit-avatar-preview');
+const editAvatarError = document.getElementById('edit-avatar-error');
+let newAvatarUrl = null;
+
+if (editAvatarInput) {
+  editAvatarInput.addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      editAvatarError.textContent = 'Ukuran file maksimal 2MB';
+      editAvatarError.classList.add('visible');
+      this.value = '';
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      editAvatarError.textContent = 'Hanya file gambar yang didukung';
+      editAvatarError.classList.add('visible');
+      this.value = '';
+      return;
+    }
+    editAvatarError.classList.remove('visible');
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      editAvatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      showToast('Mengupload foto...', 'info');
+      const url = await uploadAvatarToCloudinary(file);
+      newAvatarUrl = url;
+      showToast('Foto baru berhasil diupload!', 'success');
+    } catch (error) {
+      editAvatarError.textContent = 'Gagal upload: ' + error.message;
+      editAvatarError.classList.add('visible');
+      editAvatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
+      newAvatarUrl = null;
+    }
+  });
+}
     const file = this.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
@@ -5619,13 +5691,46 @@ if (typeof firebase === 'undefined') {
 // ============================================================
 // UPDATE PROFIL LANGSUNG KE FIRESTORE (TANPA API)
 // ============================================================
-async function updateProfile(uid, newUsername) {
+// ============================================================
+// UPDATE USERNAME (dengan batasan 2x/minggu)
+// ============================================================
+async function updateUsername(uid, newUsername) {
   try {
+    // Ambil data user dari Firestore
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return { success: false, error: 'User tidak ditemukan' };
+    }
+    const userData = userDoc.data();
+
+    // Cek batasan 2x/minggu
+    const now = Date.now();
+    const resetDate = userData.usernameChangeReset?.toMillis?.() || 0;
+    const count = userData.usernameChangeCount || 0;
+
+    // Jika sudah melewati 7 hari sejak reset, reset counter
+    if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
+      // Reset counter
+      await db.collection('users').doc(uid).update({
+        usernameChangeCount: 0,
+        usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Ambil ulang data setelah reset
+      const newDoc = await db.collection('users').doc(uid).get();
+      const newData = newDoc.data();
+      const newCount = newData.usernameChangeCount || 0;
+      if (newCount >= 2) {
+        return { success: false, error: 'Batas ganti username (2x/minggu) sudah habis. Tunggu minggu depan.' };
+      }
+    } else {
+      // Masih dalam periode 7 hari
+      if (count >= 2) {
+        return { success: false, error: 'Batas ganti username (2x/minggu) sudah habis. Tunggu minggu depan.' };
+      }
+    }
+
     // Cek username unik
-    const snapshot = await db.collection('users')
-      .where('username', '==', newUsername)
-      .get();
-    
+    const snapshot = await db.collection('users').where('username', '==', newUsername).get();
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
       if (doc.id !== uid) {
@@ -5633,15 +5738,67 @@ async function updateProfile(uid, newUsername) {
       }
     }
 
-    // Update username
+    // Update username + increment counter
     await db.collection('users').doc(uid).update({
       username: newUsername,
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+      usernameChangeCount: firebase.firestore.FieldValue.increment(1),
+      usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     return { success: true };
   } catch (error) {
-    console.error('[updateProfile] Error:', error);
+    console.error('[updateUsername] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================================
+// UPDATE AVATAR (dengan batasan 2x/minggu)
+// ============================================================
+async function updateAvatar(uid, newAvatarUrl) {
+  try {
+    // Ambil data user
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return { success: false, error: 'User tidak ditemukan' };
+    }
+    const userData = userDoc.data();
+
+    // Cek batasan 2x/minggu
+    const now = Date.now();
+    const resetDate = userData.avatarChangeReset?.toMillis?.() || 0;
+    const count = userData.avatarChangeCount || 0;
+
+    if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
+      // Reset counter
+      await db.collection('users').doc(uid).update({
+        avatarChangeCount: 0,
+        avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      const newDoc = await db.collection('users').doc(uid).get();
+      const newData = newDoc.data();
+      const newCount = newData.avatarChangeCount || 0;
+      if (newCount >= 2) {
+        return { success: false, error: 'Batas ganti foto (2x/minggu) sudah habis. Tunggu minggu depan.' };
+      }
+    } else {
+      if (count >= 2) {
+        return { success: false, error: 'Batas ganti foto (2x/minggu) sudah habis. Tunggu minggu depan.' };
+      }
+    }
+
+    // Update avatar + increment counter
+    await db.collection('users').doc(uid).update({
+      avatar: newAvatarUrl,
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+      avatarChangeCount: firebase.firestore.FieldValue.increment(1),
+      avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updateAvatar] Error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -6035,15 +6192,31 @@ async function updateProfile(uid, newUsername) {
 
   // ---------- EVENT: EDIT PROFIL ----------
   btnEditProfile.addEventListener('click', function() {
-    const modal = document.getElementById('edit-profile-modal');
-    const input = document.getElementById('edit-username-input');
-    const errorEl = document.getElementById('edit-username-error');
-    input.value = currentUser.username;
-    errorEl.classList.remove('visible');
-    modal.classList.add('active');
-    document.body.classList.add('modal-open');
-    setTimeout(() => input.focus(), 100);
-  });
+  const modal = document.getElementById('edit-profile-modal');
+  const input = document.getElementById('edit-username-input');
+  const errorEl = document.getElementById('edit-username-error');
+  const avatarPreview = document.getElementById('edit-avatar-preview');
+  const avatarError = document.getElementById('edit-avatar-error');
+
+  input.value = currentUser.username;
+  errorEl.classList.remove('visible');
+  avatarError.classList.remove('visible');
+
+  // Tampilkan avatar saat ini
+  if (currentUser.avatar) {
+    avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
+  }
+
+  // Reset state upload
+  newAvatarUrl = null;
+  document.getElementById('edit-avatar-input').value = '';
+
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+  setTimeout(() => input.focus(), 100);
+});
 
   document.getElementById('edit-profile-cancel').addEventListener('click', function() {
     document.getElementById('edit-profile-modal').classList.remove('active');
@@ -6058,43 +6231,91 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
   const errorEl = document.getElementById('edit-username-error');
   const newUsername = input.value.trim();
 
-  // Jika kosong atau sama dengan username lama, tutup modal
-  if (!newUsername || newUsername === currentUser.username) {
+  // Cek apakah ada perubahan
+  const usernameChanged = newUsername && newUsername !== currentUser.username;
+  const avatarChanged = newAvatarUrl && newAvatarUrl !== currentUser.avatar;
+
+  if (!usernameChanged && !avatarChanged) {
     document.getElementById('edit-profile-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
     return;
   }
 
-  // Validasi format username
-  if (!/^[a-z0-9_]+$/.test(newUsername)) {
-    errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
-    errorEl.classList.add('visible');
-    return;
+  // Validasi username jika diubah
+  if (usernameChanged) {
+    if (!/^[a-z0-9_]+$/.test(newUsername)) {
+      errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
+      errorEl.classList.add('visible');
+      return;
+    }
+    // Cek username via API
+    const exists = await checkUsername(newUsername);
+    if (exists) {
+      errorEl.textContent = 'Username sudah dipakai';
+      errorEl.classList.add('visible');
+      return;
+    }
   }
 
-  // Cek username (API check-username)
-  const exists = await checkUsername(newUsername);
-  if (exists) {
-    errorEl.textContent = 'Username sudah dipakai';
-    errorEl.classList.add('visible');
-    return;
+  // Disable tombol simpan
+  const saveBtn = document.getElementById('edit-profile-save');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Menyimpan...';
+
+  let success = true;
+  let errorMsg = '';
+
+  // Update username jika berubah
+  if (usernameChanged) {
+    const result = await updateUsername(currentUser.uid, newUsername);
+    if (!result.success) {
+      success = false;
+      errorMsg = result.error;
+      errorEl.textContent = errorMsg;
+      errorEl.classList.add('visible');
+    } else {
+      currentUser.username = newUsername;
+    }
   }
 
-  // Update profil langsung ke Firestore (tanpa API)
-  const result = await updateProfile(currentUser.uid, newUsername);
-  if (result.success) {
-    // Update state & tampilan
-    currentUser.username = newUsername;
+  // Update avatar jika berubah
+  if (avatarChanged && success) {
+    const result = await updateAvatar(currentUser.uid, newAvatarUrl);
+    if (!result.success) {
+      success = false;
+      errorMsg = result.error;
+      const avatarErrorEl = document.getElementById('edit-avatar-error');
+      avatarErrorEl.textContent = errorMsg;
+      avatarErrorEl.classList.add('visible');
+    } else {
+      currentUser.avatar = newAvatarUrl;
+    }
+  }
+
+  // Jika semua berhasil
+  if (success) {
     setCurrentUser(currentUser);
-    myUsernameDisplay.textContent = newUsername;
-    myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
+    myUsernameDisplay.textContent = currentUser.username;
+    if (currentUser.avatar) {
+      myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
+      myAvatarPlaceholder.style.background = 'var(--accent-soft)';
+      myAvatarPlaceholder.style.color = 'var(--accent)';
+    }
     showToast('Profil berhasil diupdate!', 'success');
     document.getElementById('edit-profile-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
+    // Reset state
+    newAvatarUrl = null;
+    document.getElementById('edit-avatar-input').value = '';
   } else {
-    errorEl.textContent = result.error || 'Gagal update, coba lagi';
-    errorEl.classList.add('visible');
+    // Jika gagal, jangan tutup modal
+    showToast('Gagal update: ' + errorMsg, 'error');
   }
+
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = 'Simpan';
 });
 
   // ---------- VALIDASI USERNAME REAL-TIME ----------
