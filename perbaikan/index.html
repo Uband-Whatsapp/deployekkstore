@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id" data-theme="dark">
 <head>
@@ -3573,29 +3574,35 @@
 
     function showVerify(type, html) {
 
-        if (!verifyMsgBox) return;
+    if (!verifyMsgBox) return;
 
-        verifyMsgBox.style.display = 'flex';
+    verifyMsgBox.style.display = 'flex';
 
-        verifyMsgBox.className =
-            'gate-verify-msg ' + type;
+    verifyMsgBox.className =
+        'gate-verify-msg ' + type;
 
-        if (verifyIcon) {
-if (type === 'loading') {
-    verifyIcon.innerHTML =
-        '<span class="gate-spinner"></span>';
+    if (verifyIcon) {
 
-} else if (type === 'error') {
-    verifyIcon.innerHTML =
-        '<i class="fa-solid fa-circle-exclamation"></i>';
+        if (type === 'loading') {
 
-} else if (type === 'success') {
-    verifyIcon.innerHTML =
-        '<i class="fa-solid fa-circle-check"></i>';
-}
+            verifyIcon.innerHTML =
+                '<span class="gate-spinner"></span>';
 
-if (verifyText) {
-    verifyText.innerHTML = html;
+        } else if (type === 'error') {
+
+            verifyIcon.innerHTML =
+                '<i class="fa-solid fa-circle-exclamation"></i>';
+
+        } else if (type === 'success') {
+
+            verifyIcon.innerHTML =
+                '<i class="fa-solid fa-circle-check"></i>';
+        }
+    }
+
+    if (verifyText) {
+        verifyText.innerHTML = html;
+    }
 }
 
     // ============================================================
