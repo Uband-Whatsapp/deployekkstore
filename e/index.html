@@ -5533,15 +5533,20 @@ if (avatarInput) {
 // ============================================================
 // EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL
 // ============================================================
+// ============================================================
+// EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL
+// ============================================================
 const editAvatarInput = document.getElementById('edit-avatar-input');
 const editAvatarPreview = document.getElementById('edit-avatar-preview');
 const editAvatarError = document.getElementById('edit-avatar-error');
-let newAvatarUrl = null;
+let newAvatarUrl = null; // ini harus di deklarasi di sini (sudah)
 
 if (editAvatarInput) {
   editAvatarInput.addEventListener('change', async function() {
     const file = this.files[0];
     if (!file) return;
+
+    console.log('[Avatar Edit] File selected:', file.name);
 
     if (file.size > 2 * 1024 * 1024) {
       editAvatarError.textContent = 'Ukuran file maksimal 2MB';
@@ -5566,9 +5571,11 @@ if (editAvatarInput) {
     try {
       showToast('Mengupload foto...', 'info');
       const url = await uploadAvatarToCloudinary(file);
+      console.log('[Avatar Edit] Upload success, URL:', url);
       newAvatarUrl = url;
       showToast('Foto baru berhasil diupload!', 'success');
     } catch (error) {
+      console.error('[Avatar Edit] Upload error:', error);
       editAvatarError.textContent = 'Gagal upload: ' + error.message;
       editAvatarError.classList.add('visible');
       editAvatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
@@ -6164,27 +6171,38 @@ async function updateAvatar(uid, newAvatarUrl) {
   });
 
   // ---------- EVENT: KIRIM PESAN ----------
-  btnSend.addEventListener('click', async function() {
-    const text = chatInput.value.trim();
-    if (!text) return;
+  // ============================================================
+// EVENT: KIRIM PESAN (LANGSUNG, TANPA JEDA)
+// ============================================================
+btnSend.addEventListener('click', async function() {
+  const text = chatInput.value.trim();
+  if (!text) return;
 
-    let replyData = null;
-    if (replyingTo) {
-      replyData = {
-        docId: replyingTo.docId,
-        username: replyingTo.username,
-        text: replyingTo.text
-      };
-    }
+  // Simpan data reply jika ada
+  let replyData = null;
+  if (replyingTo) {
+    replyData = {
+      docId: replyingTo.docId,
+      username: replyingTo.username,
+      text: replyingTo.text
+    };
+  }
 
-    const ok = await sendMessage(text, replyData);
-    if (ok) {
-      chatInput.value = '';
-      cancelReply();
-    } else {
-      showToast('Gagal mengirim pesan', 'error');
-    }
-  });
+  // ==========================================
+  // LANGSUNG KOSONGKAN INPUT & BATAL REPLY
+  // ==========================================
+  chatInput.value = '';
+  cancelReply(); // batalkan reply agar tidak tersisa
+
+  // Kirim pesan di latar belakang (tanpa nunggu UI)
+  const ok = await sendMessage(text, replyData);
+  if (!ok) {
+    // Kalau gagal, kasih tahu user (tapi teks sudah hilang)
+    showToast('Gagal mengirim pesan, coba lagi', 'error');
+    // Opsional: kembalikan teks ke input kalau mau
+    // chatInput.value = text;
+  }
+});
 
   chatInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -6205,16 +6223,18 @@ async function updateAvatar(uid, newAvatarUrl) {
   errorEl.classList.remove('visible');
   avatarError.classList.remove('visible');
 
-  // Tampilkan avatar saat ini
   if (currentUser.avatar) {
     avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   } else {
     avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
   }
 
-  // Reset state upload
+  // ==========================================
+  // INI 3 BARIS YANG HARUS ADA (RESET STATE)
+  // ==========================================
   newAvatarUrl = null;
   document.getElementById('edit-avatar-input').value = '';
+  // ==========================================
 
   modal.classList.add('active');
   document.body.classList.add('modal-open');
@@ -6234,9 +6254,14 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
   const errorEl = document.getElementById('edit-username-error');
   const newUsername = input.value.trim();
 
-  // Cek apakah ada perubahan
+  console.log('[Edit Save] newAvatarUrl:', newAvatarUrl);
+  console.log('[Edit Save] currentUser.avatar:', currentUser.avatar);
+
   const usernameChanged = newUsername && newUsername !== currentUser.username;
   const avatarChanged = newAvatarUrl && newAvatarUrl !== currentUser.avatar;
+
+  console.log('[Edit Save] usernameChanged:', usernameChanged);
+  console.log('[Edit Save] avatarChanged:', avatarChanged);
 
   if (!usernameChanged && !avatarChanged) {
     document.getElementById('edit-profile-modal').classList.remove('active');
