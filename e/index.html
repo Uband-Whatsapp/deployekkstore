@@ -6019,34 +6019,37 @@ document.addEventListener('mouseup', function(e) {
   // ============================================================
 // RENDER PESAN (Gaya WhatsApp + Swipe to Reply)
 // ============================================================
+// ============================================================
+// RENDER PESAN (RAPI, TANPA ICON MENGGANGGU)
+// ============================================================
 function renderMessage(doc) {
   const data = doc.data();
   const isMine = data.senderId === currentUser?.uid;
   const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
 
   const div = document.createElement('div');
-  div.className = 'message-item'; // untuk swipe
+  div.className = 'message-item';
   div.dataset.docId = doc.id;
   div.dataset.username = data.username || 'unknown';
   div.dataset.text = data.text || '';
   div.style.display = 'flex';
-  div.style.marginBottom = '8px';
-  div.style.gap = '8px';
+  div.style.marginBottom = '4px'; // <- dikurangi dari 8px
+  div.style.gap = '6px';
   div.style.alignItems = 'flex-start';
   div.style.transition = 'transform 0.2s';
-  div.style.touchAction = 'pan-y'; // biar scroll tetap jalan
+  div.style.touchAction = 'pan-y';
 
-  // Avatar
+  // Avatar (ukuran lebih kecil)
   const avatarDiv = document.createElement('div');
-  avatarDiv.style.width = '38px';
-  avatarDiv.style.height = '38px';
-  avatarDiv.style.minWidth = '38px';
+  avatarDiv.style.width = '32px';
+  avatarDiv.style.height = '32px';
+  avatarDiv.style.minWidth = '32px';
   avatarDiv.style.borderRadius = '50%';
   avatarDiv.style.background = '#2a2a2e';
   avatarDiv.style.display = 'flex';
   avatarDiv.style.alignItems = 'center';
   avatarDiv.style.justifyContent = 'center';
-  avatarDiv.style.fontSize = '14px';
+  avatarDiv.style.fontSize = '12px';
   avatarDiv.style.fontWeight = 'bold';
   avatarDiv.style.color = '#fff';
   avatarDiv.style.overflow = 'hidden';
@@ -6057,16 +6060,14 @@ function renderMessage(doc) {
     avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
   }
 
-  // Bubble wrapper
   const bubbleWrapper = document.createElement('div');
   bubbleWrapper.style.flex = '1';
   bubbleWrapper.style.maxWidth = '75%';
   bubbleWrapper.style.display = 'flex';
   bubbleWrapper.style.flexDirection = 'column';
 
-  // Bubble
   const bubble = document.createElement('div');
-  bubble.style.padding = '8px 14px';
+  bubble.style.padding = '6px 12px'; // <- dikurangi
   bubble.style.borderRadius = '12px';
   bubble.style.wordBreak = 'break-word';
   bubble.style.lineHeight = '1.4';
@@ -6082,8 +6083,8 @@ function renderMessage(doc) {
     bubble.style.background = 'transparent';
     bubble.style.color = 'var(--text-muted)';
     bubble.style.textAlign = 'center';
-    bubble.style.fontSize = '12px';
-    bubble.style.padding = '4px 0';
+    bubble.style.fontSize = '11px';
+    bubble.style.padding = '2px 0';
     bubble.style.boxShadow = 'none';
     bubbleWrapper.style.alignItems = 'center';
     bubbleWrapper.style.maxWidth = '100%';
@@ -6093,13 +6094,13 @@ function renderMessage(doc) {
     bubble.style.borderTopLeftRadius = '4px';
   }
 
-  // Nama user
+  // Nama user (hanya untuk pesan orang lain)
   if (!isSystem && !isMine) {
     const nameSpan = document.createElement('div');
-    nameSpan.style.fontSize = '11px';
+    nameSpan.style.fontSize = '10px';
     nameSpan.style.fontWeight = '600';
     nameSpan.style.color = 'var(--accent)';
-    nameSpan.style.marginBottom = '2px';
+    nameSpan.style.marginBottom = '1px';
     nameSpan.textContent = data.username || 'unknown';
     bubble.appendChild(nameSpan);
   }
@@ -6113,11 +6114,11 @@ function renderMessage(doc) {
   textSpan.textContent = displayText;
   bubble.appendChild(textSpan);
 
-  // Waktu
+  // Waktu (lebih kecil)
   const timeSpan = document.createElement('div');
-  timeSpan.style.fontSize = '9px';
-  timeSpan.style.opacity = '0.6';
-  timeSpan.style.marginTop = '3px';
+  timeSpan.style.fontSize = '8px';
+  timeSpan.style.opacity = '0.5';
+  timeSpan.style.marginTop = '2px';
   timeSpan.style.textAlign = 'right';
   if (data.timestamp) {
     const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
@@ -6125,39 +6126,20 @@ function renderMessage(doc) {
   }
   bubble.appendChild(timeSpan);
 
-  // ========== TOMBOL REPLY (tetap ada, tapi swipe lebih utama) ==========
-  if (!isSystem) {
-    const replyBtn = document.createElement('button');
-    replyBtn.innerHTML = '<i class="fa-regular fa-reply-all" style="font-size:10px;"></i>';
-    replyBtn.style.background = 'transparent';
-    replyBtn.style.border = 'none';
-    replyBtn.style.color = 'var(--text-muted)';
-    replyBtn.style.fontSize = '10px';
-    replyBtn.style.cursor = 'pointer';
-    replyBtn.style.marginTop = '2px';
-    replyBtn.style.padding = '2px 6px';
-    replyBtn.style.borderRadius = '4px';
-    replyBtn.style.transition = 'all 0.2s';
-    replyBtn.title = 'Reply';
-    replyBtn.dataset.docId = doc.id;
-    replyBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      startReply(doc.id, data.username, data.text);
-    });
-    bubble.appendChild(replyBtn);
-  }
+  // ========== HAPUS TOMBOL REPLY ==========
+  // (karena sudah ada swipe, tombol ini tidak perlu)
 
   // Reply pesan (jika ada)
   if (data.replyTo) {
     const replyContainer = document.createElement('div');
-    replyContainer.style.padding = '4px 10px';
-    replyContainer.style.marginBottom = '4px';
-    replyContainer.style.borderRadius = '6px';
-    replyContainer.style.fontSize = '11px';
+    replyContainer.style.padding = '2px 8px';
+    replyContainer.style.marginBottom = '3px';
+    replyContainer.style.borderRadius = '4px';
+    replyContainer.style.fontSize = '10px';
     replyContainer.style.opacity = '0.7';
-    replyContainer.style.borderLeft = '3px solid var(--accent)';
+    replyContainer.style.borderLeft = '2px solid var(--accent)';
     if (isMine) {
-      replyContainer.style.background = 'rgba(255,255,255,0.1)';
+      replyContainer.style.background = 'rgba(255,255,255,0.08)';
     } else {
       replyContainer.style.background = 'var(--bg-hover)';
     }
