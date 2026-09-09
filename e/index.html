@@ -2977,6 +2977,30 @@ ul {
         font-size: 8px;
     }
 }
+/* Tambahkan di style */
+.chat-bubble {
+  border-radius: 12px;
+  padding: 8px 14px;
+  max-width: 75%;
+  word-break: break-word;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.chat-bubble-mine {
+  background: var(--accent);
+  color: #fff;
+  margin-left: auto;
+}
+.chat-bubble-other {
+  background: var(--bg-input);
+  color: var(--text);
+}
+.chat-bubble-system {
+  background: transparent;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 12px;
+  width: 100%;
+}
 
 </style>  
 </head>
@@ -3675,17 +3699,56 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         <i class="fa-solid fa-user-plus" style="font-size: 24px; color: var(--accent);"></i>
         <h3 style="margin:0;">Buat Profil untuk Bergabung</h3>
       </div>
-      <div class="form-group">
-        <label class="form-label">Pilih Username</label>
-        <input type="text" id="new-username" class="form-input" placeholder="contoh: ekkstore" autocomplete="off">
-        <span class="form-error" id="username-error"></span>
-        <span class="form-hint">Username unik, huruf kecil, angka, dan underscore.</span>
-      </div>
-      <button class="btn btn-primary btn-lg" id="btn-create-profile" style="width:100%;">
-        <i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup
-      </button>
+<!-- Bagian untuk membuat profil (muncul jika belum punya akun) -->
+<div id="profile-setup" style="display: none;">
+  <div class="card">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4);">
+      <i class="fa-solid fa-user-plus" style="font-size: 24px; color: var(--accent);"></i>
+      <h3 style="margin:0;">Buat Profil untuk Bergabung</h3>
     </div>
+
+    <!-- FORM USERNAME -->
+    <div class="form-group">
+      <label class="form-label">Pilih Username</label>
+      <div style="position:relative;">
+        <input type="text" id="new-username" class="form-input" 
+               placeholder="contoh: ekkstore" autocomplete="off"
+               style="padding-right:40px;">
+        <span id="username-check-icon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
+      </div>
+      <span class="form-hint" id="username-hint">Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.</span>
+      <span class="form-error" id="username-error"></span>
+    </div>
+
+    <!-- UPLOAD AVATAR -->
+    <div class="form-group">
+      <label class="form-label">Foto Profil (opsional)</label>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <!-- Preview Avatar -->
+        <div id="avatar-preview" style="
+          width:64px;height:64px;border-radius:50%;
+          background:var(--bg-input);
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;color:var(--text-muted);
+          border:2px dashed var(--border);
+          overflow:hidden;
+          flex-shrink:0;
+        ">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <!-- Input File -->
+        <input type="file" id="avatar-input" accept="image/*" style="flex:1;min-width:120px;">
+      </div>
+      <span class="form-hint">Upload gambar (max 2MB, format JPG/PNG).</span>
+      <span class="form-error" id="avatar-error"></span>
+    </div>
+
+    <!-- TOMBOL -->
+    <button class="btn btn-primary btn-lg" id="btn-create-profile" style="width:100%;">
+      <i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup
+    </button>
   </div>
+</div>
 
   <!-- Bagian chat (muncul jika sudah punya profil) -->
   <div id="chat-container" style="display: none;">
@@ -3744,6 +3807,23 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 
 </nav>
     <!-- ==================== MODALS ==================== -->
+<!-- MODAL EDIT PROFIL -->
+<div class="modal-overlay" id="edit-profile-modal">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="modal-icon"><i class="fa-solid fa-user-pen"></i></div>
+    <h4>Edit Profil</h4>
+    <p>Ganti username kamu.</p>
+    <div class="form-group" style="text-align:left;">
+      <label class="form-label">Username Baru</label>
+      <input type="text" id="edit-username-input" class="form-input" placeholder="username baru">
+      <span class="form-error" id="edit-username-error"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="edit-profile-cancel">Batal</button>
+      <button class="btn btn-primary" id="edit-profile-save">Simpan</button>
+    </div>
+  </div>
+</div>
     <div class="modal-overlay" id="confirm-modal-overlay">
         <div class="modal-box">
             <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
@@ -5349,7 +5429,82 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 // ============================================================
 // BAGIAN GRUP (WhatsApp-like)
 // ============================================================
+// ---------- KONFIGURASI CLOUDINARY ----------
+const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
+const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
 
+// Variabel untuk menyimpan URL avatar setelah upload
+let uploadedAvatarUrl = '';
+
+// Fungsi upload ke Cloudinary
+async function uploadAvatarToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: formData }
+  );
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || 'Upload gagal');
+  }
+  
+  const data = await response.json();
+  return data.secure_url; // URL gambar hasil upload
+}
+// ---------- EVENT: PILIH FILE AVATAR ----------
+const avatarInput = document.getElementById('avatar-input');
+const avatarPreview = document.getElementById('avatar-preview');
+const avatarError = document.getElementById('avatar-error');
+
+if (avatarInput) {
+  avatarInput.addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    // Validasi ukuran maksimal 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      avatarError.textContent = 'Ukuran file maksimal 2MB';
+      avatarError.classList.add('visible');
+      this.value = ''; // reset input
+      return;
+    }
+
+    // Validasi tipe file (hanya gambar)
+    if (!file.type.startsWith('image/')) {
+      avatarError.textContent = 'Hanya file gambar yang didukung';
+      avatarError.classList.add('visible');
+      this.value = '';
+      return;
+    }
+
+    avatarError.classList.remove('visible');
+
+    // Tampilkan preview gambar
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    };
+    reader.readAsDataURL(file);
+
+    // Upload ke Cloudinary
+    try {
+      showToast('Mengupload foto...', 'info');
+      const url = await uploadAvatarToCloudinary(file);
+      uploadedAvatarUrl = url; // simpan URL avatar
+      showToast('Foto profil berhasil diupload!', 'success');
+    } catch (error) {
+      avatarError.textContent = 'Gagal upload: ' + error.message;
+      avatarError.classList.add('visible');
+      // Reset preview
+      avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
+      uploadedAvatarUrl = '';
+    }
+  });
+}
 // Konfigurasi Firebase Client SDK (ganti dengan punya kamu)
 // Kamu bisa dapatkan dari Firebase Console > Project Settings > Your apps > Config
 const firebaseConfig = {
@@ -5431,13 +5586,13 @@ if (typeof firebase === 'undefined') {
   }
 
   async function createProfile(uid, username, avatar) {
-    const res = await fetch('/api/create-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid, username, avatar: avatar || '' })
-    });
-    return res.ok;
-  }
+  const res = await fetch('/api/create-profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uid, username, avatar: avatar || '' })
+  });
+  return res.ok;
+}
 
   async function sendMessage(text) {
     if (!currentUser) return false;
@@ -5485,23 +5640,28 @@ if (typeof firebase === 'undefined') {
     const isMine = data.senderId === currentUser?.uid;
 
     // Avatar
-    const avatarDiv = document.createElement('div');
-    avatarDiv.style.width = '32px';
-    avatarDiv.style.height = '32px';
-    avatarDiv.style.borderRadius = '50%';
-    avatarDiv.style.background = '#2a2a2e';
-    avatarDiv.style.display = 'flex';
-    avatarDiv.style.alignItems = 'center';
-    avatarDiv.style.justifyContent = 'center';
-    avatarDiv.style.fontSize = '12px';
-    avatarDiv.style.fontWeight = 'bold';
-    avatarDiv.style.color = '#fff';
-    avatarDiv.style.flexShrink = '0';
-    if (data.avatar) {
-      avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-    } else {
-      avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
-    }
+    // Avatar
+const avatarDiv = document.createElement('div');
+avatarDiv.style.width = '32px';
+avatarDiv.style.height = '32px';
+avatarDiv.style.borderRadius = '50%';
+avatarDiv.style.background = '#2a2a2e';
+avatarDiv.style.display = 'flex';
+avatarDiv.style.alignItems = 'center';
+avatarDiv.style.justifyContent = 'center';
+avatarDiv.style.fontSize = '12px';
+avatarDiv.style.fontWeight = 'bold';
+avatarDiv.style.color = '#fff';
+avatarDiv.style.flexShrink = '0';
+avatarDiv.style.overflow = 'hidden';
+
+if (data.avatar) {
+  // Tampilkan gambar avatar
+  avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+} else {
+  // Tampilkan inisial jika tidak ada avatar
+  avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+}
 
     // Bubble
     const bubble = document.createElement('div');
@@ -5611,7 +5771,14 @@ if (typeof firebase === 'undefined') {
 
     // Tampilkan username dan avatar
     myUsernameDisplay.textContent = currentUser.username;
-    myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
+
+if (currentUser.avatar) {
+  myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+} else {
+  myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
+  myAvatarPlaceholder.style.background = 'var(--accent-soft)';
+  myAvatarPlaceholder.style.color = 'var(--accent)';
+}
 
     // Mulai listener
     subscribeMessages();
@@ -5660,41 +5827,81 @@ if (typeof firebase === 'undefined') {
   }
 
   // ---------- EVENT: BUAT PROFIL ----------
-  btnCreateProfile.addEventListener('click', async function() {
-    const username = newUsernameInput.value.trim();
-    if (!username) {
-      usernameError.textContent = 'Username tidak boleh kosong';
-      usernameError.classList.add('visible');
-      return;
-    }
-    // Validasi sederhana: huruf kecil, angka, underscore
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      usernameError.textContent = 'Hanya huruf kecil, angka, dan underscore';
-      usernameError.classList.add('visible');
-      return;
-    }
+  // ---------- EVENT: BUAT PROFIL (dengan loading) ----------
+// ---------- EVENT: BUAT PROFIL (dengan loading + avatar) ----------
+btnCreateProfile.addEventListener('click', async function() {
+  const username = newUsernameInput.value.trim();
+  const errorEl = document.getElementById('username-error');
 
-    // Cek username
+  // Validasi username kosong
+  if (!username) {
+    errorEl.textContent = 'Username tidak boleh kosong';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  // Validasi format username
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  // Disable tombol & tampilkan loading
+  btnCreateProfile.disabled = true;
+  btnCreateProfile.innerHTML = `
+    <span class="gate-spinner" style="
+      width:18px;height:18px;
+      border-color:rgba(255,255,255,0.3);
+      border-top-color:#fff;
+      display:inline-block;
+    "></span> Memproses...
+  `;
+  errorEl.classList.remove('visible');
+
+  try {
+    // 1. Cek username (API)
     const exists = await checkUsername(username);
     if (exists) {
-      usernameError.textContent = 'Username sudah dipakai, coba yang lain';
-      usernameError.classList.add('visible');
+      errorEl.textContent = 'Username sudah dipakai, coba yang lain';
+      errorEl.classList.add('visible');
+      btnCreateProfile.disabled = false;
+      btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
       return;
     }
 
+    // 2. Dapatkan UID
     const uid = getOrCreateUid();
-    const success = await createProfile(uid, username, '');
-    if (success) {
-      currentUser = { uid, username, avatar: '' };
-      setCurrentUser(currentUser);
-      showToast('Selamat datang di grup!', 'success');
-      initChat();
-    } else {
-      usernameError.textContent = 'Gagal membuat profil, coba lagi';
-      usernameError.classList.add('visible');
-    }
-  });
 
+    // 3. Kirim data ke API create-profile (dengan avatar jika ada)
+    const avatarUrl = uploadedAvatarUrl || ''; // dari upload avatar sebelumnya
+    const success = await createProfile(uid, username, avatarUrl);
+
+    if (success) {
+      // Simpan user ke localStorage
+      currentUser = {
+        uid: uid,
+        username: username,
+        avatar: avatarUrl
+      };
+      setCurrentUser(currentUser);
+
+      showToast('Selamat datang di grup! 🎉', 'success');
+      initChat(); // masuk ke chat
+    } else {
+      errorEl.textContent = 'Gagal membuat profil, coba lagi';
+      errorEl.classList.add('visible');
+      btnCreateProfile.disabled = false;
+      btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+    }
+  } catch (err) {
+    console.error('Error saat membuat profil:', err);
+    errorEl.textContent = 'Terjadi error: ' + err.message;
+    errorEl.classList.add('visible');
+    btnCreateProfile.disabled = false;
+    btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+  }
+});
   // ---------- EVENT: KIRIM PESAN ----------
   btnSend.addEventListener('click', async function() {
     const text = chatInput.value.trim();
@@ -5714,31 +5921,63 @@ if (typeof firebase === 'undefined') {
   });
 
   // ---------- EVENT: EDIT PROFIL ----------
-  btnEditProfile.addEventListener('click', function() {
-    const newUsername = prompt('Masukkan username baru:', currentUser.username);
-    if (!newUsername || newUsername === currentUser.username) return;
-    if (!/^[a-z0-9_]+$/.test(newUsername)) {
-      showToast('Username hanya huruf kecil, angka, underscore', 'error');
-      return;
-    }
-    // Cek username
-    checkUsername(newUsername).then(async (exists) => {
-      if (exists) {
-        showToast('Username sudah dipakai', 'error');
-        return;
-      }
-      const success = await updateProfile(currentUser.uid, newUsername);
-      if (success) {
-        currentUser.username = newUsername;
-        setCurrentUser(currentUser);
-        myUsernameDisplay.textContent = newUsername;
-        myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
-        showToast('Profil berhasil diupdate', 'success');
-      } else {
-        showToast('Gagal update profil', 'error');
-      }
-    });
-  });
+  // ---------- EVENT: EDIT PROFIL (pakai modal) ----------
+btnEditProfile.addEventListener('click', function() {
+  const modal = document.getElementById('edit-profile-modal');
+  const input = document.getElementById('edit-username-input');
+  const errorEl = document.getElementById('edit-username-error');
+  
+  input.value = currentUser.username;
+  errorEl.classList.remove('visible');
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+  setTimeout(() => input.focus(), 100);
+});
+
+document.getElementById('edit-profile-cancel').addEventListener('click', function() {
+  document.getElementById('edit-profile-modal').classList.remove('active');
+  document.body.classList.remove('modal-open');
+});
+
+document.getElementById('edit-profile-save').addEventListener('click', async function() {
+  const input = document.getElementById('edit-username-input');
+  const errorEl = document.getElementById('edit-username-error');
+  const newUsername = input.value.trim();
+
+  if (!newUsername || newUsername === currentUser.username) {
+    document.getElementById('edit-profile-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(newUsername)) {
+    errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  // Cek username
+  const exists = await checkUsername(newUsername);
+  if (exists) {
+    errorEl.textContent = 'Username sudah dipakai';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  // Save
+  const success = await updateProfile(currentUser.uid, newUsername);
+  if (success) {
+    currentUser.username = newUsername;
+    setCurrentUser(currentUser);
+    myUsernameDisplay.textContent = newUsername;
+    myAvatarPlaceholder.textContent = newUsername[0].toUpperCase();
+    showToast('Profil berhasil diupdate!', 'success');
+    document.getElementById('edit-profile-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+  } else {
+    errorEl.textContent = 'Gagal update, coba lagi';
+    errorEl.classList.add('visible');
+  }
+});
 
   // ---------- JALANKAN ----------
   // Tunggu Firebase siap
@@ -5749,6 +5988,42 @@ if (typeof firebase === 'undefined') {
   }
 
 } // akhir if firebase
+// Validasi username real-time
+newUsernameInput.addEventListener('input', async function() {
+  const val = this.value.trim();
+  const errorEl = document.getElementById('username-error');
+  const hintEl = document.getElementById('username-hint');
+  const checkIcon = document.getElementById('username-check-icon');
+
+  if (val.length < 3) {
+    errorEl.textContent = 'Minimal 3 karakter';
+    errorEl.classList.add('visible');
+    checkIcon.innerHTML = '❌';
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(val)) {
+    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+    errorEl.classList.add('visible');
+    checkIcon.innerHTML = '❌';
+    return;
+  }
+
+  // Cek username ke server (debounce)
+  clearTimeout(this._timeout);
+  this._timeout = setTimeout(async () => {
+    const exists = await checkUsername(val);
+    if (exists) {
+      errorEl.textContent = 'Username sudah dipakai';
+      errorEl.classList.add('visible');
+      checkIcon.innerHTML = '❌';
+    } else {
+      errorEl.classList.remove('visible');
+      checkIcon.innerHTML = '✅';
+      hintEl.textContent = 'Username tersedia!';
+      hintEl.style.color = 'var(--success)';
+    }
+  }, 500);
+});
     </script>
 </body>
 </html>
