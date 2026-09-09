@@ -16,40 +16,40 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export default async function handler(req, res) {
+  // Hanya menerima method POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { uid, username, avatar } = req.body;
 
+  // Validasi input
   if (!uid || !username) {
     return res.status(400).json({ error: 'uid and username are required' });
   }
 
   try {
-    // Cek username unik
+    // 1. Cek apakah username sudah dipakai
     const existing = await db.collection('users').where('username', '==', username).get();
     if (!existing.empty) {
       return res.status(400).json({ error: 'Username already taken' });
     }
 
-    // ============================================================
-    // SIMPAN USER DENGAN FIELD BATASAN 2x/MINGGU
-    // ============================================================
+    // 2. Simpan user baru dengan semua field (termasuk batasan 2x/minggu)
     await db.collection('users').doc(uid).set({
       username: username,
       avatar: avatar || '',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lastSeen: admin.firestore.FieldValue.serverTimestamp(),
       isOnline: true,
-      // ======== TAMBAHKAN 4 FIELD INI ========
+      // === FIELD UNTUK BATASAN 2x/MINGGU ===
       usernameChangeCount: 0,
       usernameChangeReset: admin.firestore.FieldValue.serverTimestamp(),
       avatarChangeCount: 0,
       avatarChangeReset: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Kirim pesan join
+    // 3. Kirim pesan "bergabung" ke grup
     await db.collection('messages').add({
       senderId: uid,
       username: username,
@@ -59,13 +59,14 @@ export default async function handler(req, res) {
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Update member count
+    // 4. Update total member di group_meta (opsional)
     const metaRef = db.collection('group_meta').doc('meta');
     await metaRef.set(
       { memberCount: admin.firestore.FieldValue.increment(1) },
       { merge: true }
     );
 
+    // 5. Response sukses
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('[create-profile] ❌ Error:', error);
