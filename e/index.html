@@ -3699,56 +3699,49 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         <i class="fa-solid fa-user-plus" style="font-size: 24px; color: var(--accent);"></i>
         <h3 style="margin:0;">Buat Profil untuk Bergabung</h3>
       </div>
-<!-- Bagian untuk membuat profil (muncul jika belum punya akun) -->
-<div id="profile-setup" style="display: none;">
-  <div class="card">
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4);">
-      <i class="fa-solid fa-user-plus" style="font-size: 24px; color: var(--accent);"></i>
-      <h3 style="margin:0;">Buat Profil untuk Bergabung</h3>
-    </div>
 
-    <!-- FORM USERNAME -->
-    <div class="form-group">
-      <label class="form-label">Pilih Username</label>
-      <div style="position:relative;">
-        <input type="text" id="new-username" class="form-input" 
-               placeholder="contoh: ekkstore" autocomplete="off"
-               style="padding-right:40px;">
-        <span id="username-check-icon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
-      </div>
-      <span class="form-hint" id="username-hint">Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.</span>
-      <span class="form-error" id="username-error"></span>
-    </div>
-
-    <!-- UPLOAD AVATAR -->
-    <div class="form-group">
-      <label class="form-label">Foto Profil (opsional)</label>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <!-- Preview Avatar -->
-        <div id="avatar-preview" style="
-          width:64px;height:64px;border-radius:50%;
-          background:var(--bg-input);
-          display:flex;align-items:center;justify-content:center;
-          font-size:28px;color:var(--text-muted);
-          border:2px dashed var(--border);
-          overflow:hidden;
-          flex-shrink:0;
-        ">
-          <i class="fa-solid fa-user"></i>
+      <!-- FORM USERNAME -->
+      <div class="form-group">
+        <label class="form-label">Pilih Username</label>
+        <div style="position:relative;">
+          <input type="text" id="new-username" class="form-input" 
+                 placeholder="contoh: ekkstore" autocomplete="off"
+                 style="padding-right:40px;">
+          <span id="username-check-icon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
         </div>
-        <!-- Input File -->
-        <input type="file" id="avatar-input" accept="image/*" style="flex:1;min-width:120px;">
+        <span class="form-hint" id="username-hint">Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.</span>
+        <span class="form-error" id="username-error"></span>
       </div>
-      <span class="form-hint">Upload gambar (max 2MB, format JPG/PNG).</span>
-      <span class="form-error" id="avatar-error"></span>
-    </div>
 
-    <!-- TOMBOL -->
-    <button class="btn btn-primary btn-lg" id="btn-create-profile" style="width:100%;">
-      <i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup
-    </button>
+      <!-- UPLOAD AVATAR -->
+      <div class="form-group">
+        <label class="form-label">Foto Profil (opsional)</label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <!-- Preview Avatar -->
+          <div id="avatar-preview" style="
+            width:64px;height:64px;border-radius:50%;
+            background:var(--bg-input);
+            display:flex;align-items:center;justify-content:center;
+            font-size:28px;color:var(--text-muted);
+            border:2px dashed var(--border);
+            overflow:hidden;
+            flex-shrink:0;
+          ">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <!-- Input File -->
+          <input type="file" id="avatar-input" accept="image/*" style="flex:1;min-width:120px;">
+        </div>
+        <span class="form-hint">Upload gambar (max 2MB, format JPG/PNG).</span>
+        <span class="form-error" id="avatar-error"></span>
+      </div>
+
+      <!-- TOMBOL -->
+      <button class="btn btn-primary btn-lg" id="btn-create-profile" style="width:100%;">
+        <i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup
+      </button>
+    </div>
   </div>
-</div>
 
   <!-- Bagian chat (muncul jika sudah punya profil) -->
   <div id="chat-container" style="display: none;">
@@ -3782,6 +3775,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     </div>
   </div>
 </div>
+<!-- ==================== AKHIR PAGE: GROUP ==================== -->
 
 <nav id="bottom-nav" aria-label="Navigasi Mobile">
 
