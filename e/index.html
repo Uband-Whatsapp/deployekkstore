@@ -3786,17 +3786,16 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     </div>
 
     <!-- Kotak chat -->
-    <div class="card" style="padding:0; display: flex; flex-direction: column; height: 480px; overflow:hidden;">
-      <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: 6px;">
-        <!-- Pesan akan di-render di sini -->
-      </div>
-      <div style="padding: var(--space-3); border-top: 1px solid var(--border); display: flex; gap: var(--space-2); background: var(--bg-card);">
-        <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:40px;">
-        <button class="btn btn-primary" id="btn-send" style="min-height:40px;">
-          <i class="fa-solid fa-paper-plane"></i>
-        </button>
-      </div>
-    </div>
+<div class="card" style="padding:0; display: flex; flex-direction: column; height: 480px; overflow:hidden;">
+  <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-3); display: flex; flex-direction: column; gap: 4px;">
+    <!-- Pesan akan di-render di sini -->
+  </div>
+  <!-- ======== PERBAIKAN INPUT CHAT ======== -->
+  <div class="chat-input-wrapper">
+    <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:44px; font-size:14px; padding:8px 12px; border-radius:8px;">
+    <button class="btn btn-primary" id="btn-send" style="min-width:48px; min-height:44px; font-size:18px; padding:0 16px; border-radius:8px;">
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
   </div>
 </div>
 <!-- ==================== AKHIR PAGE: GROUP ==================== -->
@@ -5903,46 +5902,81 @@ async function updateAvatar(uid, newAvatarUrl) {
 }
   // ---------- FUNGSI REPLY ----------
   function startReply(docId, username, text) {
-    replyingTo = { docId, username, text };
-    chatInput.focus();
-    chatInput.placeholder = `Reply to ${username}...`;
-    chatInput.style.borderColor = 'var(--accent)';
-    showToast(`Reply to ${username}`, 'info');
+  replyingTo = { docId, username, text };
+  const input = document.getElementById('chat-input');
+  input.focus();
+  input.placeholder = `Reply to ${username}...`;
+  input.style.borderColor = 'var(--accent)';
+  showToast(`Reply to ${username}`, 'info');
 
-    let cancelBtn = document.getElementById('cancel-reply-btn');
-    if (!cancelBtn) {
-      cancelBtn = document.createElement('button');
-      cancelBtn.id = 'cancel-reply-btn';
-      cancelBtn.innerHTML = '✕';
-      cancelBtn.style.background = 'var(--danger)';
-      cancelBtn.style.color = '#fff';
-      cancelBtn.style.border = 'none';
-      cancelBtn.style.borderRadius = '50%';
-      cancelBtn.style.width = '24px';
-      cancelBtn.style.height = '24px';
-      cancelBtn.style.fontSize = '12px';
-      cancelBtn.style.cursor = 'pointer';
-      cancelBtn.style.marginLeft = '4px';
-      cancelBtn.style.flexShrink = '0';
-      const inputWrapper = chatInput.parentElement;
-      inputWrapper.style.display = 'flex';
-      inputWrapper.style.alignItems = 'center';
-      inputWrapper.style.gap = '4px';
-      inputWrapper.appendChild(cancelBtn);
-      cancelBtn.addEventListener('click', function() {
-        cancelReply();
-      });
-    }
+  // ==========================================
+  // PERBAIKAN TOMBOL CANCEL (LEBIH RAPI)
+  // ==========================================
+  let cancelBtn = document.getElementById('cancel-reply-btn');
+  if (!cancelBtn) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancel-reply-btn';
+    cancelBtn.innerHTML = '✕';
+    cancelBtn.style.width = '28px';
+    cancelBtn.style.height = '28px';
+    cancelBtn.style.minWidth = '28px';
+    cancelBtn.style.minHeight = '28px';
+    cancelBtn.style.background = 'var(--danger)';
+    cancelBtn.style.color = '#fff';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.borderRadius = '50%';
+    cancelBtn.style.fontSize = '14px';
+    cancelBtn.style.cursor = 'pointer';
     cancelBtn.style.display = 'flex';
+    cancelBtn.style.alignItems = 'center';
+    cancelBtn.style.justifyContent = 'center';
+    cancelBtn.style.marginLeft = '6px';
+    cancelBtn.style.flexShrink = '0';
+    cancelBtn.style.transition = 'all 0.2s ease';
+
+    // Cari wrapper input (yang sudah kita buat dengan class .chat-input-wrapper)
+    let inputWrapper = input.parentElement;
+    if (!inputWrapper.classList.contains('chat-input-wrapper')) {
+      // Jika belum ada wrapper, buat wrapper baru
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chat-input-wrapper';
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.gap = '6px';
+      wrapper.style.padding = '8px 12px';
+      wrapper.style.background = 'var(--bg-card)';
+      wrapper.style.borderTop = '1px solid var(--border)';
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+      // Pindahkan tombol kirim ke dalam wrapper juga
+      const sendBtn = document.getElementById('btn-send');
+      if (sendBtn) wrapper.appendChild(sendBtn);
+      inputWrapper = wrapper;
+    }
+
+    // Tambahkan cancel button sebelum tombol kirim
+    const sendBtn = document.getElementById('btn-send');
+    if (sendBtn) {
+      inputWrapper.insertBefore(cancelBtn, sendBtn);
+    } else {
+      inputWrapper.appendChild(cancelBtn);
+    }
+
+    cancelBtn.addEventListener('click', function() {
+      cancelReply();
+    });
   }
+  cancelBtn.style.display = 'flex';
+}
 
   function cancelReply() {
-    replyingTo = null;
-    chatInput.placeholder = 'Ketik pesan...';
-    chatInput.style.borderColor = 'var(--border)';
-    const cancelBtn = document.getElementById('cancel-reply-btn');
-    if (cancelBtn) cancelBtn.style.display = 'none';
-  }
+  replyingTo = null;
+  const input = document.getElementById('chat-input');
+  input.placeholder = 'Ketik pesan...';
+  input.style.borderColor = 'var(--border)';
+  const cancelBtn = document.getElementById('cancel-reply-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
 // ============================================================
 // SWIPE TO REPLY (HANYA HORIZONTAL, TIDAK MENGGANGGU SCROLL)
 // ============================================================
