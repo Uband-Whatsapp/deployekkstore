@@ -6022,10 +6022,28 @@ document.addEventListener('mouseup', function(e) {
 // ============================================================
 // RENDER PESAN (RAPI, TANPA ICON MENGGANGGU)
 // ============================================================
+// ============================================================
+// RENDER PESAN (DENGAN LONG PRESS MENU)
+// ============================================================
+// ============================================================
+// RENDER PESAN (LENGKAP: EDIT, HAPUS, INFO, READ RECEIPTS)
+// ============================================================
 function renderMessage(doc) {
   const data = doc.data();
   const isMine = data.senderId === currentUser?.uid;
   const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
+
+  // Cek status hapus
+  const isDeletedForMe = data.deletedFor && data.deletedFor.includes(currentUser?.uid);
+  const isDeletedForAll = data.isDeletedForAll === true;
+
+  // Tentukan teks yang ditampilkan
+  let displayText = data.text || '';
+  if (isDeletedForAll) {
+    displayText = 'Pesan ini telah dihapus';
+  } else if (isDeletedForMe && !isMine) {
+    displayText = 'Pesan ini telah dihapus';
+  }
 
   const div = document.createElement('div');
   div.className = 'message-item';
@@ -6033,13 +6051,14 @@ function renderMessage(doc) {
   div.dataset.username = data.username || 'unknown';
   div.dataset.text = data.text || '';
   div.style.display = 'flex';
-  div.style.marginBottom = '4px'; // <- dikurangi dari 8px
+  div.style.marginBottom = '4px';
   div.style.gap = '6px';
   div.style.alignItems = 'flex-start';
   div.style.transition = 'transform 0.2s';
   div.style.touchAction = 'pan-y';
+  div.style.position = 'relative';
 
-  // Avatar (ukuran lebih kecil)
+  // ========== AVATAR ==========
   const avatarDiv = document.createElement('div');
   avatarDiv.style.width = '32px';
   avatarDiv.style.height = '32px';
@@ -6060,6 +6079,7 @@ function renderMessage(doc) {
     avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
   }
 
+  // ========== BUBBLE ==========
   const bubbleWrapper = document.createElement('div');
   bubbleWrapper.style.flex = '1';
   bubbleWrapper.style.maxWidth = '75%';
@@ -6067,7 +6087,7 @@ function renderMessage(doc) {
   bubbleWrapper.style.flexDirection = 'column';
 
   const bubble = document.createElement('div');
-  bubble.style.padding = '6px 12px'; // <- dikurangi
+  bubble.style.padding = '6px 12px';
   bubble.style.borderRadius = '12px';
   bubble.style.wordBreak = 'break-word';
   bubble.style.lineHeight = '1.4';
@@ -6107,14 +6127,23 @@ function renderMessage(doc) {
 
   // Teks pesan
   const textSpan = document.createElement('div');
-  let displayText = data.text || '';
   if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
     displayText = 'Anda bergabung ke grup';
   }
   textSpan.textContent = displayText;
   bubble.appendChild(textSpan);
 
-  // Waktu (lebih kecil)
+  // Label "Diedit" jika pesan sudah diedit dan tidak dihapus
+  if (data.isEdited && !isDeletedForAll && !isDeletedForMe) {
+    const editedLabel = document.createElement('span');
+    editedLabel.style.fontSize = '9px';
+    editedLabel.style.opacity = '0.5';
+    editedLabel.style.marginLeft = '4px';
+    editedLabel.textContent = ' (diedit)';
+    textSpan.appendChild(editedLabel);
+  }
+
+  // Waktu (tetap waktu kirim, bukan waktu hapus)
   const timeSpan = document.createElement('div');
   timeSpan.style.fontSize = '8px';
   timeSpan.style.opacity = '0.5';
@@ -6126,11 +6155,25 @@ function renderMessage(doc) {
   }
   bubble.appendChild(timeSpan);
 
-  // ========== HAPUS TOMBOL REPLY ==========
-  // (karena sudah ada swipe, tombol ini tidak perlu)
+  // Read receipt (centang) untuk pesan sendiri
+  if (isMine && !isSystem && !isDeletedForAll) {
+    const readStatus = document.createElement('span');
+    readStatus.style.fontSize = '10px';
+    readStatus.style.marginLeft = '4px';
+    readStatus.style.opacity = '0.6';
+    const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
+    if (readCount > 0) {
+      readStatus.innerHTML = '✓✓';
+      readStatus.style.color = 'var(--success)';
+    } else {
+      readStatus.innerHTML = '✓';
+      readStatus.style.color = 'var(--text-muted)';
+    }
+    timeSpan.appendChild(readStatus);
+  }
 
-  // Reply pesan (jika ada)
-  if (data.replyTo) {
+  // Reply pesan (jika ada dan tidak dihapus)
+  if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
     const replyContainer = document.createElement('div');
     replyContainer.style.padding = '2px 8px';
     replyContainer.style.marginBottom = '3px';
@@ -6168,29 +6211,402 @@ function renderMessage(doc) {
     div.appendChild(bubbleWrapper);
   }
 
-  return div;
-}
+  // ========== LONG PRESS / RIGHT CLICK MENU ==========
+  if (!isSystem && !isDeletedForAll) {
+    let longPressTimer = null;
 
-  // ---------- SUBSCRIBE MESSAGES ----------
-  function subscribeMessages() {
-    if (messagesUnsubscribe) {
-      messagesUnsubscribe();
-      messagesUnsubscribe = null;
-    }
-    messagesUnsubscribe = db.collection('messages')
-      .orderBy('timestamp', 'asc')
-      .onSnapshot((snapshot) => {
-        messagesList.innerHTML = '';
-        snapshot.forEach(doc => {
-          const el = renderMessage(doc);
-          messagesList.appendChild(el);
-        });
-        messagesList.scrollTop = messagesList.scrollHeight;
-      }, (error) => {
-        console.error('Error listening messages:', error);
-      });
+    const showMenu = (e) => {
+      e.preventDefault();
+
+      // Cek apakah pesan masih bisa diedit (1 jam)
+      const now = Date.now();
+      const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
+      const canEdit = (now - msgTime) < 60 * 60 * 1000; // 1 jam
+
+      showMessageMenu(doc.id, data.senderId, data.username, data.text, isMine, canEdit, data.isEdited);
+    };
+
+    // Touch: long press (mobile)
+    div.addEventListener('touchstart', function(e) {
+      longPressTimer = setTimeout(() => {
+        showMenu(e);
+      }, 600);
+    });
+
+    div.addEventListener('touchmove', function() {
+      clearTimeout(longPressTimer);
+    });
+
+    div.addEventListener('touchend', function() {
+      clearTimeout(longPressTimer);
+    });
+
+    // Mouse: right click (desktop)
+    div.addEventListener('contextmenu', function(e) {
+      showMenu(e);
+    });
+
+    // Double click (opsional)
+    div.addEventListener('dblclick', function(e) {
+      showMenu(e);
+    });
   }
 
+  return div;
+}
+// ============================================================
+// MENU PESAN (INFO, EDIT, HAPUS)
+// ============================================================
+function showMessageMenu(docId, senderId, username, text, isMine, canEdit, isEdited) {
+  // Hapus menu lama jika ada
+  const oldMenu = document.getElementById('message-menu');
+  if (oldMenu) oldMenu.remove();
+
+  const menu = document.createElement('div');
+  menu.id = 'message-menu';
+  menu.style.position = 'fixed';
+  menu.style.bottom = '80px';
+  menu.style.left = '50%';
+  menu.style.transform = 'translateX(-50%)';
+  menu.style.background = 'var(--bg-card)';
+  menu.style.border = '1px solid var(--border)';
+  menu.style.borderRadius = '12px';
+  menu.style.padding = '8px';
+  menu.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+  menu.style.zIndex = '99999';
+  menu.style.minWidth = '200px';
+  menu.style.display = 'flex';
+  menu.style.flexDirection = 'column';
+  menu.style.gap = '4px';
+
+  // Tombol Info (selalu ada)
+  const infoBtn = createMenuItem('Info (baca)', 'fa-solid fa-circle-info', 'var(--text)');
+  infoBtn.addEventListener('click', function() {
+    menu.remove();
+    showReadReceipts(docId);
+  });
+  menu.appendChild(infoBtn);
+
+  // Tombol Edit (hanya untuk pesan sendiri, jika masih dalam 1 jam dan belum diedit? Boleh diedit berkali-kali asal masih <1 jam)
+  if (isMine && canEdit) {
+    const editBtn = createMenuItem('Edit pesan', 'fa-solid fa-pen', 'var(--text)');
+    editBtn.addEventListener('click', function() {
+      menu.remove();
+      editMessage(docId, text);
+    });
+    menu.appendChild(editBtn);
+  } else if (isMine && !canEdit) {
+    const editBtn = createMenuItem('Edit pesan (tidak tersedia)', 'fa-solid fa-pen', 'var(--text-muted)');
+    editBtn.style.opacity = '0.5';
+    editBtn.style.cursor = 'not-allowed';
+    menu.appendChild(editBtn);
+  }
+
+  // Tombol Hapus untuk diri sendiri (selalu ada untuk semua pesan)
+  const deleteMeBtn = createMenuItem('Hapus untuk saya', 'fa-solid fa-trash-can', 'var(--danger)');
+  deleteMeBtn.addEventListener('click', function() {
+    menu.remove();
+    deleteMessageForMe(docId);
+  });
+  menu.appendChild(deleteMeBtn);
+
+  // Tombol Hapus untuk semua (hanya untuk pesan sendiri)
+  if (isMine) {
+    const deleteAllBtn = createMenuItem('Hapus untuk semua', 'fa-solid fa-trash-can', 'var(--danger)');
+    deleteAllBtn.addEventListener('click', function() {
+      menu.remove();
+      deleteMessageForAll(docId);
+    });
+    menu.appendChild(deleteAllBtn);
+  }
+
+  // Tombol Tutup
+  const closeBtn = createMenuItem('Tutup', 'fa-solid fa-xmark', 'var(--text-muted)');
+  closeBtn.style.borderTop = '1px solid var(--border)';
+  closeBtn.addEventListener('click', function() { menu.remove(); });
+  menu.appendChild(closeBtn);
+
+  document.body.appendChild(menu);
+
+  // Klik di luar menu untuk menutup
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 100);
+
+  function createMenuItem(label, icon, color) {
+    const btn = document.createElement('button');
+    btn.innerHTML = `<i class="${icon}"></i> ${label}`;
+    btn.style.padding = '10px 16px';
+    btn.style.background = 'transparent';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '8px';
+    btn.style.color = color;
+    btn.style.fontSize = '14px';
+    btn.style.cursor = 'pointer';
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.gap = '10px';
+    btn.style.width = '100%';
+    btn.style.textAlign = 'left';
+    btn.addEventListener('mouseenter', function() { this.style.background = 'var(--bg-hover)'; });
+    btn.addEventListener('mouseleave', function() { this.style.background = 'transparent'; });
+    return btn;
+  }
+}
+// ============================================================
+// SHOW READ RECEIPTS (INFO + TIMESTAMP)
+// ============================================================
+async function showReadReceipts(docId) {
+  try {
+    const doc = await db.collection('messages').doc(docId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+    const readBy = data.readBy || {};
+    const userIds = Object.keys(readBy);
+
+    // Ambil data user yang sudah baca + timestamp
+    const readUsers = [];
+    for (const uid of userIds) {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        const username = userDoc.data().username || uid;
+        const timestamp = readBy[uid];
+        const time = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+        const timeStr = time.toLocaleString('id-ID', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        readUsers.push({ username, time: timeStr });
+      }
+    }
+
+    // Tampilkan modal
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.background = 'rgba(0,0,0,0.6)';
+    modal.style.backdropFilter = 'blur(4px)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '100000';
+    modal.style.padding = '20px';
+
+    const box = document.createElement('div');
+    box.style.background = 'var(--bg-card)';
+    box.style.border = '1px solid var(--border)';
+    box.style.borderRadius = '16px';
+    box.style.padding = '24px';
+    box.style.maxWidth = '400px';
+    box.style.width = '100%';
+    box.style.maxHeight = '70vh';
+    box.style.overflowY = 'auto';
+    box.style.textAlign = 'center';
+
+    let content = `<h4 style="margin-bottom:16px;font-size:18px;color:var(--text);">
+      <i class="fa-solid fa-eye" style="color:var(--success);"></i> Telah Membaca
+    </h4>`;
+
+    if (readUsers.length === 0) {
+      content += '<p style="color:var(--text-muted);">Belum ada yang membaca</p>';
+    } else {
+      readUsers.forEach(u => {
+        content += `
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);color:var(--text);">
+            <span>${u.username}</span>
+            <span style="font-size:11px;color:var(--text-muted);">${u.time}</span>
+          </div>
+        `;
+      });
+    }
+
+    content += `<button class="btn btn-primary" style="margin-top:16px;width:100%;" onclick="this.closest('div[style]').parentElement.remove()">Tutup</button>`;
+    box.innerHTML = content;
+    modal.appendChild(box);
+
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) modal.remove();
+    });
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('Error showReadReceipts:', error);
+    showToast('Gagal mengambil data baca', 'error');
+  }
+}
+// ============================================================
+// EDIT PESAN (HANYA DALAM 1 JAM)
+// ============================================================
+async function editMessage(docId, oldText) {
+  const newText = prompt('Edit pesan:', oldText);
+  if (newText === null || newText.trim() === '') return;
+
+  try {
+    // Cek apakah masih dalam 1 jam (validasi ulang)
+    const doc = await db.collection('messages').doc(docId).get();
+    if (!doc.exists) {
+      showToast('Pesan tidak ditemukan', 'error');
+      return;
+    }
+    const data = doc.data();
+    const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
+    const now = Date.now();
+    if (now - msgTime > 60 * 60 * 1000) {
+      showToast('Waktu edit sudah habis (1 jam)', 'error');
+      return;
+    }
+
+    // Update pesan
+    await db.collection('messages').doc(docId).update({
+      text: newText.trim(),
+      isEdited: true,
+      editedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showToast('Pesan berhasil diedit', 'success');
+  } catch (error) {
+    console.error('Error editMessage:', error);
+    showToast('Gagal mengedit pesan', 'error');
+  }
+}
+// ============================================================
+// DELETE MESSAGE FOR ME (HAPUS UNTUK DIRI SENDIRI)
+// ============================================================
+async function deleteMessageForMe(docId) {
+  try {
+    const uid = currentUser?.uid;
+    if (!uid) {
+      showToast('Anda belum login', 'error');
+      return;
+    }
+
+    const doc = await db.collection('messages').doc(docId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    if (data.isDeletedForAll) {
+      showToast('Pesan sudah dihapus untuk semua', 'info');
+      return;
+    }
+
+    const deletedFor = data.deletedFor || [];
+    if (!deletedFor.includes(uid)) {
+      deletedFor.push(uid);
+    }
+
+    await db.collection('messages').doc(docId).update({
+      deletedFor: deletedFor
+    });
+
+    showToast('Pesan dihapus untuk Anda', 'success');
+  } catch (error) {
+    console.error('Error deleteMessageForMe:', error);
+    showToast('Gagal menghapus pesan', 'error');
+  }
+}
+
+// ============================================================
+// DELETE MESSAGE FOR ALL (HAPUS UNTUK SEMUA)
+// ============================================================
+async function deleteMessageForAll(docId) {
+  try {
+    const confirm = await showConfirmModal(
+      'Hapus untuk semua?',
+      'Pesan akan dihapus untuk semua anggota grup. Lanjutkan?',
+      'Hapus'
+    );
+    if (!confirm) return;
+
+    // Update pesan menjadi dihapus untuk semua, tapi tetap pertahankan timestamp kirim asli
+    await db.collection('messages').doc(docId).update({
+      isDeletedForAll: true,
+      text: 'Pesan ini telah dihapus',
+      replyTo: null
+      // timestamp tetap tidak diubah
+    });
+
+    showToast('Pesan dihapus untuk semua', 'success');
+  } catch (error) {
+    console.error('Error deleteMessageForAll:', error);
+    showToast('Gagal menghapus pesan', 'error');
+  }
+}
+// ============================================================
+// MARK MESSAGE AS READ (OTOMATIS)
+// ============================================================
+async function markMessageAsRead(docId) {
+  const uid = currentUser?.uid;
+  if (!uid) return;
+
+  try {
+    const doc = await db.collection('messages').doc(docId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    if (data.senderId === uid) return; // jangan tandai pesan sendiri
+    if (data.isDeletedForAll) return;
+
+    const readBy = data.readBy || {};
+    if (readBy[uid]) return; // sudah dibaca
+
+    readBy[uid] = firebase.firestore.FieldValue.serverTimestamp();
+    await db.collection('messages').doc(docId).update({
+      readBy: readBy
+    });
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+  }
+}
+
+// Observer untuk mendeteksi pesan yang masuk viewport
+function observeMessages() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const docId = el.dataset.docId;
+        if (docId) {
+          markMessageAsRead(docId);
+        }
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.message-item').forEach(el => {
+    observer.observe(el);
+  });
+}
+  // ---------- SUBSCRIBE MESSAGES (hanya 10 pesan terakhir) ----------
+function subscribeMessages() {
+  if (messagesUnsubscribe) {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
+  }
+
+  messagesUnsubscribe = db.collection('messages')
+    .orderBy('timestamp', 'asc')
+    .limitToLast(10)
+    .onSnapshot((snapshot) => {
+      messagesList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const el = renderMessage(doc);
+        messagesList.appendChild(el);
+      });
+      messagesList.scrollTop = messagesList.scrollHeight;
+
+      // ========== TAMBAHKAN INI ==========
+      observeMessages(); // tandai pesan yang terlihat sudah dibaca
+    }, (error) => {
+      console.error('Error listening messages:', error);
+    });
+}
   // ---------- SUBSCRIBE USERS ----------
   function subscribeUsers() {
     if (usersUnsubscribe) {
