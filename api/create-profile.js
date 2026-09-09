@@ -2,11 +2,17 @@
 import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('[create-profile] ✅ Firebase Admin initialized');
+  } catch (error) {
+    console.error('[create-profile] ❌ Init error:', error.message);
+  }
 }
+
 const db = admin.firestore();
 
 export default async function handler(req, res) {
@@ -21,19 +27,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Cek lagi username unik
+    // Cek username unik
     const existing = await db.collection('users').where('username', '==', username).get();
     if (!existing.empty) {
       return res.status(400).json({ error: 'Username already taken' });
     }
 
-    // Simpan user
+    // ============================================================
+    // SIMPAN USER DENGAN FIELD BATASAN 2x/MINGGU
+    // ============================================================
     await db.collection('users').doc(uid).set({
       username: username,
       avatar: avatar || '',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lastSeen: admin.firestore.FieldValue.serverTimestamp(),
       isOnline: true,
+      // ======== TAMBAHKAN 4 FIELD INI ========
+      usernameChangeCount: 0,
+      usernameChangeReset: admin.firestore.FieldValue.serverTimestamp(),
+      avatarChangeCount: 0,
+      avatarChangeReset: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     // Kirim pesan join
@@ -46,7 +59,7 @@ export default async function handler(req, res) {
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Update total member (opsional)
+    // Update member count
     const metaRef = db.collection('group_meta').doc('meta');
     await metaRef.set(
       { memberCount: admin.firestore.FieldValue.increment(1) },
@@ -55,7 +68,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error creating profile:', error);
-    res.status(500).json({ error: 'Failed to create profile' });
+    console.error('[create-profile] ❌ Error:', error);
+    res.status(500).json({ error: error.message });
   }
 }
