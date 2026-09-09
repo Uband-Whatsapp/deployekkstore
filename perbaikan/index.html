@@ -2660,7 +2660,7 @@
 </button>
             </button>
             <div class="gate-verify-msg" id="verify-msg-box">
-                <i class="fa-solid fa-circle-info" id="verify-icon"></i>
+         <i id="verify-icon"></i>       
                 <span id="verify-text"></span>
             </div>
             <div class="gate-footer-text">
@@ -3581,38 +3581,22 @@
             'gate-verify-msg ' + type;
 
         if (verifyIcon) {
+if (type === 'loading') {
+    verifyIcon.innerHTML =
+        '<span class="gate-spinner"></span>';
 
-            if (type === 'loading') {
+} else if (type === 'error') {
+    verifyIcon.innerHTML =
+        '<i class="fa-solid fa-circle-exclamation"></i>';
 
-                verifyIcon.innerHTML =
-                    '<span class="gate-spinner"></span>';
+} else if (type === 'success') {
+    verifyIcon.innerHTML =
+        '<i class="fa-solid fa-circle-check"></i>';
+}
 
-            } else if (type === 'error') {
-
-                verifyIcon.innerHTML =
-                    '<i class="fa-solid fa-circle-exclamation"></i>';
-
-            } else if (type === 'success') {
-
-                verifyIcon.innerHTML =
-                    '<i class="fa-solid fa-circle-check"></i>';
-            }
-        }
-
-        if (verifyText) {
-            verifyText.innerHTML = html;
-        }
-    }
-
-    function hideVerify() {
-
-        if (!verifyMsgBox) return;
-
-        verifyMsgBox.style.display = 'none';
-
-        verifyMsgBox.className =
-            'gate-verify-msg';
-    }
+if (verifyText) {
+    verifyText.innerHTML = html;
+}
 
     // ============================================================
     // VERIFIKASI 2 KALI
