@@ -5487,15 +5487,51 @@ async function uploadAvatarToCloudinary(file) {
   return data.secure_url;
 }
 
-// ---------- EVENT: PILIH FILE AVATAR ----------
+// ============================================================
+// EVENT: UPLOAD AVATAR (Form Buat Profil)
+// ============================================================
 const avatarInput = document.getElementById('avatar-input');
 const avatarPreview = document.getElementById('avatar-preview');
 const avatarError = document.getElementById('avatar-error');
 
 if (avatarInput) {
   avatarInput.addEventListener('change', async function() {
-  // ============================================================
-// UPLOAD AVATAR DI MODAL EDIT PROFIL
+    const file = this.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      avatarError.textContent = 'Ukuran file maksimal 2MB';
+      avatarError.classList.add('visible');
+      this.value = '';
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      avatarError.textContent = 'Hanya file gambar yang didukung';
+      avatarError.classList.add('visible');
+      this.value = '';
+      return;
+    }
+    avatarError.classList.remove('visible');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    };
+    reader.readAsDataURL(file);
+    try {
+      showToast('Mengupload foto...', 'info');
+      const url = await uploadAvatarToCloudinary(file);
+      uploadedAvatarUrl = url;
+      showToast('Foto profil berhasil diupload!', 'success');
+    } catch (error) {
+      avatarError.textContent = 'Gagal upload: ' + error.message;
+      avatarError.classList.add('visible');
+      avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
+      uploadedAvatarUrl = '';
+    }
+  });
+}
+
+// ============================================================
+// EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL
 // ============================================================
 const editAvatarInput = document.getElementById('edit-avatar-input');
 const editAvatarPreview = document.getElementById('edit-avatar-preview');
@@ -5537,39 +5573,6 @@ if (editAvatarInput) {
       editAvatarError.classList.add('visible');
       editAvatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
       newAvatarUrl = null;
-    }
-  });
-}
-    const file = this.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      avatarError.textContent = 'Ukuran file maksimal 2MB';
-      avatarError.classList.add('visible');
-      this.value = '';
-      return;
-    }
-    if (!file.type.startsWith('image/')) {
-      avatarError.textContent = 'Hanya file gambar yang didukung';
-      avatarError.classList.add('visible');
-      this.value = '';
-      return;
-    }
-    avatarError.classList.remove('visible');
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    };
-    reader.readAsDataURL(file);
-    try {
-      showToast('Mengupload foto...', 'info');
-      const url = await uploadAvatarToCloudinary(file);
-      uploadedAvatarUrl = url;
-      showToast('Foto profil berhasil diupload!', 'success');
-    } catch (error) {
-      avatarError.textContent = 'Gagal upload: ' + error.message;
-      avatarError.classList.add('visible');
-      avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
-      uploadedAvatarUrl = '';
     }
   });
 }
