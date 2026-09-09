@@ -3786,17 +3786,27 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     </div>
 
     <!-- Kotak chat -->
+<!-- Kotak chat dengan tombol attach -->
 <div class="card" style="padding:0; display: flex; flex-direction: column; height: 480px; overflow:hidden;">
   <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-3); display: flex; flex-direction: column; gap: 4px;">
     <!-- Pesan akan di-render di sini -->
   </div>
-  <!-- ======== PERBAIKAN INPUT CHAT ======== -->
-  <div class="chat-input-wrapper">
+  <!-- ======== INPUT CHAT + ATTACH ======== -->
+  <div class="chat-input-wrapper" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--bg-card); border-top:1px solid var(--border);">
+    <!-- Tombol lampirkan file -->
+    <button id="btn-attach" style="min-width:40px; min-height:40px; background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:8px; transition:background 0.2s;" 
+            onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+      <i class="fa-solid fa-paperclip"></i>
+    </button>
+    <!-- Input file tersembunyi (bisa pilih kamera/galeri) -->
+    <input type="file" id="file-input" accept="image/*,video/*" capture style="display:none;" multiple>
+    
     <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:44px; font-size:14px; padding:8px 12px; border-radius:8px;">
     <button class="btn btn-primary" id="btn-send" style="min-width:48px; min-height:44px; font-size:18px; padding:0 16px; border-radius:8px;">
       <i class="fa-solid fa-paper-plane"></i>
     </button>
   </div>
+</div>
   </div>
 </div>
 <!-- ==================== AKHIR PAGE: GROUP ==================== -->
@@ -5512,7 +5522,106 @@ async function uploadAvatarToCloudinary(file) {
   const data = await response.json();
   return data.secure_url;
 }
+// ============================================================
+// UPLOAD MEDIA (GAMBAR/VIDEO) KE CLOUDINARY
+// ============================================================
+async function uploadMediaToCloudinary(file, folder = 'chat_media') {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
+  // Tentukan resource_type berdasarkan tipe file
+  let resourceType = 'auto';
+  if (file.type.startsWith('image/')) resourceType = 'image';
+  else if (file.type.startsWith('video/')) resourceType = 'video';
+  else resourceType = 'raw';
+
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Upload gagal');
+    }
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error('[Upload Media] Error:', error);
+    throw error;
+  }
+}
+// ============================================================
+// EVENT: TOMBOL ATTACH (BUKA FILE PICKER)
+// ============================================================
+const attachBtn = document.getElementById('btn-attach');
+const fileInput = document.getElementById('file-input');
+
+attachBtn.addEventListener('click', function() {
+  fileInput.click();
+});
+
+// Event saat user pilih file (atau ambil foto/video dari kamera)
+fileInput.addEventListener('change', async function() {
+  const files = this.files;
+  if (!files.length) return;
+
+  // Tampilkan loading
+  showToast(`Mengupload ${files.length} file...`, 'info');
+  this.disabled = true;
+  attachBtn.disabled = true;
+
+  try {
+    for (const file of files) {
+      // Validasi ukuran (maks 20MB)
+      if (file.size > 20 * 1024 * 1024) {
+        showToast(`File ${file.name} terlalu besar (maks 20MB)`, 'error');
+        continue;
+      }
+
+      // Upload ke Cloudinary
+      const mediaUrl = await uploadMediaToCloudinary(file);
+
+      // Tentukan tipe media
+      let mediaType = 'file';
+      if (file.type.startsWith('image/')) mediaType = 'image';
+      else if (file.type.startsWith('video/')) mediaType = 'video';
+
+      // Kirim pesan media ke server
+      const payload = {
+        uid: currentUser.uid,
+        username: currentUser.username,
+        avatar: currentUser.avatar || '',
+        text: '',
+        mediaUrl: mediaUrl,
+        mediaType: mediaType,
+        fileName: file.name,
+        fileSize: file.size
+      };
+
+      const res = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        showToast(`Gagal mengirim ${file.name}`, 'error');
+      }
+    }
+    showToast('File berhasil dikirim!', 'success');
+  } catch (error) {
+    console.error('Upload error:', error);
+    showToast('Gagal upload file: ' + error.message, 'error');
+  } finally {
+    this.value = '';
+    this.disabled = false;
+    attachBtn.disabled = false;
+  }
+});
 // ============================================================
 // EVENT: UPLOAD AVATAR (Form Buat Profil)
 // ============================================================
@@ -6162,6 +6271,9 @@ document.addEventListener('mouseup', function(e) {
 // ============================================================
 // RENDER PESAN (PERBAIKAN TAMPILAN HAPUS)
 // ============================================================
+// ============================================================
+// RENDER PESAN (LENGKAP: EDIT, HAPUS, INFO, READ RECEIPTS, MEDIA)
+// ============================================================
 function renderMessage(doc) {
   const data = doc.data();
   const isMine = data.senderId === currentUser?.uid;
@@ -6178,15 +6290,12 @@ function renderMessage(doc) {
   let isDeletedMessage = false;
 
   if (isDeletedForAll) {
-    // Dihapus untuk semua orang
     displayText = '⦸ Pesan ini telah dihapus';
     isDeletedMessage = true;
   } else if (isDeletedForMe && isMine) {
-    // Dihapus oleh diri sendiri (untuk diri sendiri)
     displayText = '⦸ Anda menghapus pesan ini';
     isDeletedMessage = true;
   } else if (isDeletedForMe && !isMine) {
-    // Dihapus oleh orang lain (untuk diri sendiri)
     displayText = '⦸ Pesan ini telah dihapus';
     isDeletedMessage = true;
   }
@@ -6239,6 +6348,7 @@ function renderMessage(doc) {
   bubble.style.lineHeight = '1.4';
   bubble.style.fontSize = '13px';
   bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+  bubble.style.position = 'relative'; // untuk posisi tombol download
 
   if (isMine) {
     bubble.style.background = 'var(--accent)';
@@ -6271,8 +6381,9 @@ function renderMessage(doc) {
     bubble.appendChild(nameSpan);
   }
 
-  // Teks pesan
+  // ========== TEKS PESAN ==========
   const textSpan = document.createElement('div');
+  textSpan.className = 'text-content';
   if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
     displayText = 'Anda bergabung ke grup';
   }
@@ -6289,7 +6400,96 @@ function renderMessage(doc) {
     textSpan.appendChild(editedLabel);
   }
 
-  // Waktu (tetap waktu kirim, bukan waktu hapus)
+  // ========== MEDIA (GAMBAR/VIDEO) ==========
+  if (data.mediaUrl && !isDeletedForAll && !isDeletedForMe) {
+    const mediaContainer = document.createElement('div');
+    mediaContainer.style.margin = '4px 0';
+    mediaContainer.style.maxWidth = '200px';
+    mediaContainer.style.borderRadius = '8px';
+    mediaContainer.style.overflow = 'hidden';
+    mediaContainer.style.position = 'relative';
+    mediaContainer.style.background = 'rgba(0,0,0,0.05)';
+
+    if (data.mediaType === 'image') {
+      const img = document.createElement('img');
+      img.src = data.mediaUrl;
+      img.style.width = '100%';
+      img.style.height = 'auto';
+      img.style.display = 'block';
+      img.style.borderRadius = '8px';
+      img.loading = 'lazy';
+      img.alt = data.fileName || 'Gambar';
+      // Klik gambar untuk memperbesar (opsional)
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', function() {
+        window.open(data.mediaUrl, '_blank');
+      });
+      mediaContainer.appendChild(img);
+    } else if (data.mediaType === 'video') {
+      const video = document.createElement('video');
+      video.src = data.mediaUrl;
+      video.style.width = '100%';
+      video.style.height = 'auto';
+      video.controls = true;
+      video.preload = 'metadata';
+      video.playsInline = true;
+      video.style.borderRadius = '8px';
+      video.style.background = '#000';
+      mediaContainer.appendChild(video);
+    } else {
+      // File lainnya (link download)
+      const link = document.createElement('a');
+      link.href = data.mediaUrl;
+      link.target = '_blank';
+      link.style.color = 'var(--accent)';
+      link.textContent = `📎 ${data.fileName || 'File'}`;
+      mediaContainer.appendChild(link);
+    }
+
+    // Tombol download (untuk gambar & video)
+    if (data.mediaType === 'image' || data.mediaType === 'video') {
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
+      downloadBtn.style.position = 'absolute';
+      downloadBtn.style.bottom = '6px';
+      downloadBtn.style.right = '6px';
+      downloadBtn.style.background = 'rgba(0,0,0,0.65)';
+      downloadBtn.style.color = '#fff';
+      downloadBtn.style.border = 'none';
+      downloadBtn.style.borderRadius = '6px';
+      downloadBtn.style.padding = '4px 8px';
+      downloadBtn.style.fontSize = '12px';
+      downloadBtn.style.cursor = 'pointer';
+      downloadBtn.style.opacity = '0.8';
+      downloadBtn.style.transition = 'opacity 0.2s, transform 0.2s';
+      downloadBtn.style.backdropFilter = 'blur(2px)';
+      downloadBtn.title = 'Download';
+      downloadBtn.addEventListener('mouseenter', function() { this.style.opacity = '1'; this.style.transform = 'scale(1.05)'; });
+      downloadBtn.addEventListener('mouseleave', function() { this.style.opacity = '0.8'; this.style.transform = 'scale(1)'; });
+      downloadBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // Download file
+        const a = document.createElement('a');
+        a.href = data.mediaUrl;
+        a.download = data.fileName || (data.mediaType === 'image' ? 'gambar.jpg' : 'video.mp4');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Mengunduh...', 'success');
+      });
+      mediaContainer.appendChild(downloadBtn);
+    }
+
+    // Sisipkan media container setelah teks
+    const textEl = bubble.querySelector('.text-content');
+    if (textEl) {
+      bubble.insertBefore(mediaContainer, textEl.nextSibling);
+    } else {
+      bubble.prepend(mediaContainer);
+    }
+  }
+
+  // ========== WAKTU ==========
   const timeSpan = document.createElement('div');
   timeSpan.style.fontSize = '8px';
   timeSpan.style.opacity = '0.5';
@@ -6301,7 +6501,7 @@ function renderMessage(doc) {
   }
   bubble.appendChild(timeSpan);
 
-  // Read receipt (centang) untuk pesan sendiri
+  // ========== READ RECEIPT (Centang) ==========
   if (isMine && !isSystem && !isDeletedForAll) {
     const readStatus = document.createElement('span');
     readStatus.style.fontSize = '10px';
@@ -6318,7 +6518,7 @@ function renderMessage(doc) {
     timeSpan.appendChild(readStatus);
   }
 
-  // Reply pesan (jika ada dan tidak dihapus)
+  // ========== REPLY PESAN ==========
   if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
     const replyContainer = document.createElement('div');
     replyContainer.style.padding = '2px 8px';
@@ -6342,7 +6542,7 @@ function renderMessage(doc) {
     bubble.prepend(replyContainer);
   }
 
-  // Susun layout
+  // ========== SUSUN LAYOUT ==========
   if (isSystem) {
     div.style.justifyContent = 'center';
     div.appendChild(bubble);
@@ -6363,12 +6563,9 @@ function renderMessage(doc) {
 
     const showMenu = (e) => {
       e.preventDefault();
-
-      // Cek apakah pesan masih bisa diedit (1 jam)
       const now = Date.now();
       const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
       const canEdit = (now - msgTime) < 60 * 60 * 1000; // 1 jam
-
       showMessageMenu(doc.id, data.senderId, data.username, data.text, isMine, canEdit, data.isEdited);
     };
 
