@@ -3016,7 +3016,16 @@ ul {
 .message-reply-other {
   background: var(--bg-hover);
 }
-
+/* Tambahkan di style */
+.modal-error-detail {
+  font-size: 12px;
+  color: var(--warning);
+  background: var(--warning-soft);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  border-left: 3px solid var(--warning);
+}
 </style>  
 </head>
 <body>
@@ -5553,10 +5562,13 @@ if (avatarInput) {
 // ============================================================
 // EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL
 // ============================================================
+// ============================================================
+// EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL (DENGAN LOG)
+// ============================================================
 const editAvatarInput = document.getElementById('edit-avatar-input');
 const editAvatarPreview = document.getElementById('edit-avatar-preview');
 const editAvatarError = document.getElementById('edit-avatar-error');
-let newAvatarUrl = null; // ini harus di deklarasi di sini (sudah)
+let newAvatarUrl = null;
 
 if (editAvatarInput) {
   editAvatarInput.addEventListener('change', async function() {
@@ -5579,17 +5591,19 @@ if (editAvatarInput) {
     }
     editAvatarError.classList.remove('visible');
 
+    // Preview
     const reader = new FileReader();
     reader.onload = function(e) {
       editAvatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(file);
 
+    // Upload ke Cloudinary
     try {
       showToast('Mengupload foto...', 'info');
       const url = await uploadAvatarToCloudinary(file);
       console.log('[Avatar Edit] Upload success, URL:', url);
-      newAvatarUrl = url;
+      newAvatarUrl = url; // <<< PASTIKAN INI ADA
       showToast('Foto baru berhasil diupload!', 'success');
     } catch (error) {
       console.error('[Avatar Edit] Upload error:', error);
@@ -5724,16 +5738,17 @@ let messagesObserver = null;
 // ============================================================
 // UPDATE USERNAME (dengan batasan 2x/minggu + update pesan lama)
 // ============================================================
+// ============================================================
+// UPDATE USERNAME (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
+// ============================================================
 async function updateUsername(uid, newUsername) {
   try {
-    // Ambil data user dari Firestore
     const userDoc = await db.collection('users').doc(uid).get();
     if (!userDoc.exists) {
       return { success: false, error: 'User tidak ditemukan' };
     }
     const userData = userDoc.data();
 
-    // Cek batasan 2x/minggu
     const now = Date.now();
     const resetDate = userData.usernameChangeReset?.toMillis?.() || 0;
     const count = userData.usernameChangeCount || 0;
@@ -5747,11 +5762,17 @@ async function updateUsername(uid, newUsername) {
       const newData = newDoc.data();
       const newCount = newData.usernameChangeCount || 0;
       if (newCount >= 2) {
-        return { success: false, error: 'Batas ganti username (2x/minggu) sudah habis. Tunggu minggu depan.' };
+        const nextReset = newData.usernameChangeReset?.toMillis?.() || 0;
+        const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
+        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
       }
     } else {
       if (count >= 2) {
-        return { success: false, error: 'Batas ganti username (2x/minggu) sudah habis. Tunggu minggu depan.' };
+        const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
+        const nextDate = new Date(nextReset);
+        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
       }
     }
 
@@ -5801,6 +5822,9 @@ async function updateUsername(uid, newUsername) {
 // ============================================================
 // UPDATE AVATAR (dengan batasan 2x/minggu + update pesan lama)
 // ============================================================
+// ============================================================
+// UPDATE AVATAR (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
+// ============================================================
 async function updateAvatar(uid, newAvatarUrl) {
   try {
     // Ambil data user
@@ -5815,20 +5839,35 @@ async function updateAvatar(uid, newAvatarUrl) {
     const resetDate = userData.avatarChangeReset?.toMillis?.() || 0;
     const count = userData.avatarChangeCount || 0;
 
+    // Jika sudah melewati 7 hari, reset counter
     if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
       await db.collection('users').doc(uid).update({
         avatarChangeCount: 0,
         avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
       });
+      // Ambil ulang data setelah reset
       const newDoc = await db.collection('users').doc(uid).get();
       const newData = newDoc.data();
       const newCount = newData.avatarChangeCount || 0;
       if (newCount >= 2) {
-        return { success: false, error: 'Batas ganti foto (2x/minggu) sudah habis. Tunggu minggu depan.' };
+        const nextReset = newData.avatarChangeReset?.toMillis?.() || 0;
+        const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
+        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        return { 
+          success: false, 
+          error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
+        };
       }
     } else {
+      // Masih dalam periode 7 hari
       if (count >= 2) {
-        return { success: false, error: 'Batas ganti foto (2x/minggu) sudah habis. Tunggu minggu depan.' };
+        const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
+        const nextDate = new Date(nextReset);
+        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        return { 
+          success: false, 
+          error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
+        };
       }
     }
 
@@ -5848,7 +5887,7 @@ async function updateAvatar(uid, newAvatarUrl) {
       console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
     }
 
-    // Update avatar user
+    // Update avatar user + increment counter
     await db.collection('users').doc(uid).update({
       avatar: newAvatarUrl,
       lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
@@ -6949,6 +6988,9 @@ btnSend.addEventListener('click', async function() {
   // ============================================================
 // EVENT: EDIT PROFIL (Simpan)
 // ============================================================
+// ============================================================
+// EVENT: EDIT PROFIL (Simpan) - DENGAN HANDLING BATAS
+// ============================================================
 document.getElementById('edit-profile-save').addEventListener('click', async function() {
   const input = document.getElementById('edit-username-input');
   const errorEl = document.getElementById('edit-username-error');
@@ -6976,7 +7018,6 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
       errorEl.classList.add('visible');
       return;
     }
-    // Cek username via API
     const exists = await checkUsername(newUsername);
     if (exists) {
       errorEl.textContent = 'Username sudah dipakai';
@@ -7015,6 +7056,7 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
       const avatarErrorEl = document.getElementById('edit-avatar-error');
       avatarErrorEl.textContent = errorMsg;
       avatarErrorEl.classList.add('visible');
+      showToast(errorMsg, 'error');
     } else {
       currentUser.avatar = newAvatarUrl;
     }
@@ -7039,13 +7081,12 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
     document.getElementById('edit-avatar-input').value = '';
   } else {
     // Jika gagal, jangan tutup modal
-    showToast('Gagal update: ' + errorMsg, 'error');
+    // Error sudah ditampilkan di masing-masing field
   }
 
   saveBtn.disabled = false;
   saveBtn.innerHTML = 'Simpan';
 });
-
   // ---------- VALIDASI USERNAME REAL-TIME ----------
   newUsernameInput.addEventListener('input', async function() {
     const val = this.value.trim();
