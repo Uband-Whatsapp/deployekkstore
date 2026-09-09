@@ -5704,6 +5704,9 @@ if (typeof firebase === 'undefined') {
 // ============================================================
 // UPDATE USERNAME (dengan batasan 2x/minggu)
 // ============================================================
+// ============================================================
+// UPDATE USERNAME (dengan batasan 2x/minggu + update pesan lama)
+// ============================================================
 async function updateUsername(uid, newUsername) {
   try {
     // Ambil data user dari Firestore
@@ -5718,14 +5721,11 @@ async function updateUsername(uid, newUsername) {
     const resetDate = userData.usernameChangeReset?.toMillis?.() || 0;
     const count = userData.usernameChangeCount || 0;
 
-    // Jika sudah melewati 7 hari sejak reset, reset counter
     if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
-      // Reset counter
       await db.collection('users').doc(uid).update({
         usernameChangeCount: 0,
         usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
       });
-      // Ambil ulang data setelah reset
       const newDoc = await db.collection('users').doc(uid).get();
       const newData = newDoc.data();
       const newCount = newData.usernameChangeCount || 0;
@@ -5733,7 +5733,6 @@ async function updateUsername(uid, newUsername) {
         return { success: false, error: 'Batas ganti username (2x/minggu) sudah habis. Tunggu minggu depan.' };
       }
     } else {
-      // Masih dalam periode 7 hari
       if (count >= 2) {
         return { success: false, error: 'Batas ganti username (2x/minggu) sudah habis. Tunggu minggu depan.' };
       }
@@ -5748,7 +5747,23 @@ async function updateUsername(uid, newUsername) {
       }
     }
 
-    // Update username + increment counter
+    // ============================================================
+    // UPDATE SEMUA PESAN LAMA (biar username ikut berubah)
+    // ============================================================
+    const messagesSnapshot = await db.collection('messages')
+      .where('senderId', '==', uid)
+      .get();
+
+    if (!messagesSnapshot.empty) {
+      const batch = db.batch();
+      messagesSnapshot.forEach((doc) => {
+        batch.update(doc.ref, { username: newUsername });
+      });
+      await batch.commit();
+      console.log(`[updateUsername] Updated ${messagesSnapshot.size} messages`);
+    }
+
+    // Update username user
     await db.collection('users').doc(uid).update({
       username: newUsername,
       lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
@@ -5766,6 +5781,9 @@ async function updateUsername(uid, newUsername) {
 // ============================================================
 // UPDATE AVATAR (dengan batasan 2x/minggu)
 // ============================================================
+// ============================================================
+// UPDATE AVATAR (dengan batasan 2x/minggu + update pesan lama)
+// ============================================================
 async function updateAvatar(uid, newAvatarUrl) {
   try {
     // Ambil data user
@@ -5781,7 +5799,6 @@ async function updateAvatar(uid, newAvatarUrl) {
     const count = userData.avatarChangeCount || 0;
 
     if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
-      // Reset counter
       await db.collection('users').doc(uid).update({
         avatarChangeCount: 0,
         avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
@@ -5798,7 +5815,23 @@ async function updateAvatar(uid, newAvatarUrl) {
       }
     }
 
-    // Update avatar + increment counter
+    // ============================================================
+    // UPDATE SEMUA PESAN LAMA (biar avatar ikut berubah)
+    // ============================================================
+    const messagesSnapshot = await db.collection('messages')
+      .where('senderId', '==', uid)
+      .get();
+
+    if (!messagesSnapshot.empty) {
+      const batch = db.batch();
+      messagesSnapshot.forEach((doc) => {
+        batch.update(doc.ref, { avatar: newAvatarUrl });
+      });
+      await batch.commit();
+      console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
+    }
+
+    // Update avatar user
     await db.collection('users').doc(uid).update({
       avatar: newAvatarUrl,
       lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
@@ -5854,171 +5887,307 @@ async function updateAvatar(uid, newAvatarUrl) {
     const cancelBtn = document.getElementById('cancel-reply-btn');
     if (cancelBtn) cancelBtn.style.display = 'none';
   }
+// ============================================================
+// SWIPE TO REPLY (Seperti WhatsApp)
+// ============================================================
+let swipeStartX = 0;
+let swipeTargetElement = null;
+let swipeCurrentX = 0;
+let swipeTimeout = null;
 
-  // ---------- RENDER PESAN (Gaya WhatsApp, sudah bersih) ----------
-  function renderMessage(doc) {
-    const data = doc.data();
-    const isMine = data.senderId === currentUser?.uid;
-    const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
+const messagesContainer = document.getElementById('messages-list');
 
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.marginBottom = '8px';
-    div.style.gap = '8px';
-    div.style.alignItems = 'flex-start';
+// Touch events untuk mobile
+messagesContainer.addEventListener('touchstart', function(e) {
+  const target = e.target.closest('.message-item');
+  if (!target) return;
+  // Abaikan jika target adalah sistem (join/leave)
+  if (target.classList.contains('system')) return;
+  swipeTargetElement = target;
+  swipeStartX = e.touches[0].clientX;
+  swipeCurrentX = swipeStartX;
+  target.style.transition = 'transform 0s';
+}, { passive: true });
 
-    // Avatar
-    const avatarDiv = document.createElement('div');
-    avatarDiv.style.width = '38px';
-    avatarDiv.style.height = '38px';
-    avatarDiv.style.minWidth = '38px';
-    avatarDiv.style.borderRadius = '50%';
-    avatarDiv.style.background = '#2a2a2e';
-    avatarDiv.style.display = 'flex';
-    avatarDiv.style.alignItems = 'center';
-    avatarDiv.style.justifyContent = 'center';
-    avatarDiv.style.fontSize = '14px';
-    avatarDiv.style.fontWeight = 'bold';
-    avatarDiv.style.color = '#fff';
-    avatarDiv.style.overflow = 'hidden';
-    avatarDiv.style.flexShrink = '0';
-    if (data.avatar) {
-      avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-    } else {
-      avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
-    }
-
-    // Bubble wrapper
-    const bubbleWrapper = document.createElement('div');
-    bubbleWrapper.style.flex = '1';
-    bubbleWrapper.style.maxWidth = '75%';
-    bubbleWrapper.style.display = 'flex';
-    bubbleWrapper.style.flexDirection = 'column';
-
-    // Bubble
-    const bubble = document.createElement('div');
-    bubble.style.padding = '8px 14px';
-    bubble.style.borderRadius = '12px';
-    bubble.style.wordBreak = 'break-word';
-    bubble.style.lineHeight = '1.4';
-    bubble.style.fontSize = '13px';
-    bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-
-    if (isMine) {
-      bubble.style.background = 'var(--accent)';
-      bubble.style.color = '#fff';
-      bubble.style.borderTopRightRadius = '4px';
-      bubbleWrapper.style.alignItems = 'flex-end';
-    } else if (isSystem) {
-      bubble.style.background = 'transparent';
-      bubble.style.color = 'var(--text-muted)';
-      bubble.style.textAlign = 'center';
-      bubble.style.fontSize = '12px';
-      bubble.style.padding = '4px 0';
-      bubble.style.boxShadow = 'none';
-      bubbleWrapper.style.alignItems = 'center';
-      bubbleWrapper.style.maxWidth = '100%';
-    } else {
-      bubble.style.background = 'var(--bg-input)';
-      bubble.style.color = 'var(--text)';
-      bubble.style.borderTopLeftRadius = '4px';
-    }
-
-    // Nama user (kecuali sistem dan pesan sendiri)
-    if (!isSystem && !isMine) {
-      const nameSpan = document.createElement('div');
-      nameSpan.style.fontSize = '11px';
-      nameSpan.style.fontWeight = '600';
-      nameSpan.style.color = 'var(--accent)';
-      nameSpan.style.marginBottom = '2px';
-      nameSpan.textContent = data.username || 'unknown';
-      bubble.appendChild(nameSpan);
-    }
-
-    // Teks pesan
-    const textSpan = document.createElement('div');
-    let displayText = data.text || '';
-    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
-      displayText = 'Anda bergabung ke grup';
-    }
-    textSpan.textContent = displayText;
-    bubble.appendChild(textSpan);
-
-    // Waktu
-    const timeSpan = document.createElement('div');
-    timeSpan.style.fontSize = '9px';
-    timeSpan.style.opacity = '0.6';
-    timeSpan.style.marginTop = '3px';
-    timeSpan.style.textAlign = 'right';
-    if (data.timestamp) {
-      const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-      timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    }
-    bubble.appendChild(timeSpan);
-
-    // Tombol reply (kecuali pesan sistem)
-    if (!isSystem) {
-      const replyBtn = document.createElement('button');
-      replyBtn.innerHTML = '<i class="fa-regular fa-reply-all" style="font-size:10px;"></i>';
-      replyBtn.style.background = 'transparent';
-      replyBtn.style.border = 'none';
-      replyBtn.style.color = 'var(--text-muted)';
-      replyBtn.style.fontSize = '10px';
-      replyBtn.style.cursor = 'pointer';
-      replyBtn.style.marginTop = '2px';
-      replyBtn.style.padding = '2px 6px';
-      replyBtn.style.borderRadius = '4px';
-      replyBtn.style.transition = 'all 0.2s';
-      replyBtn.title = 'Reply';
-      replyBtn.dataset.docId = doc.id;
-      replyBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        startReply(doc.id, data.username, data.text);
-      });
-      bubble.appendChild(replyBtn);
-    }
-
-    // Reply pesan (jika ada)
-    if (data.replyTo) {
-      const replyContainer = document.createElement('div');
-      replyContainer.style.padding = '4px 10px';
-      replyContainer.style.marginBottom = '4px';
-      replyContainer.style.borderRadius = '6px';
-      replyContainer.style.fontSize = '11px';
-      replyContainer.style.opacity = '0.7';
-      replyContainer.style.borderLeft = '3px solid var(--accent)';
-      if (isMine) {
-        replyContainer.style.background = 'rgba(255,255,255,0.1)';
-      } else {
-        replyContainer.style.background = 'var(--bg-hover)';
-      }
-      const replyName = document.createElement('span');
-      replyName.style.fontWeight = '600';
-      replyName.textContent = data.replyTo.username || 'unknown';
-      replyContainer.appendChild(replyName);
-      const replyText = document.createElement('span');
-      replyText.textContent = ': ' + (data.replyTo.text || '');
-      replyContainer.appendChild(replyText);
-      bubble.prepend(replyContainer);
-    }
-
-    // Susun layout
-    if (isSystem) {
-      div.style.justifyContent = 'center';
-      div.appendChild(bubble);
-    } else if (isMine) {
-      div.style.flexDirection = 'row-reverse';
-      div.appendChild(avatarDiv);
-      bubbleWrapper.appendChild(bubble);
-      div.appendChild(bubbleWrapper);
-    } else {
-      div.appendChild(avatarDiv);
-      bubbleWrapper.appendChild(bubble);
-      div.appendChild(bubbleWrapper);
-    }
-
-    return div;
+messagesContainer.addEventListener('touchmove', function(e) {
+  if (!swipeTargetElement) return;
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - swipeStartX;
+  swipeCurrentX = touch.clientX;
+  // Geser hanya ke kanan (untuk reply) dengan batas 80px
+  if (deltaX > 5) {
+    const translate = Math.min(deltaX, 80);
+    swipeTargetElement.style.transform = `translateX(${translate}px)`;
+    // Beri warna latar belakang sebagai indikasi reply
+    swipeTargetElement.style.background = 'rgba(249, 115, 22, 0.1)';
+    swipeTargetElement.style.borderRadius = '8px';
+  } else if (deltaX < -5) {
+    // Geser ke kiri (bisa untuk nanti, misal hapus)
+    const translate = Math.max(deltaX, -80);
+    swipeTargetElement.style.transform = `translateX(${translate}px)`;
+    swipeTargetElement.style.background = 'rgba(248, 113, 113, 0.1)';
+    swipeTargetElement.style.borderRadius = '8px';
+  } else {
+    swipeTargetElement.style.transform = '';
+    swipeTargetElement.style.background = '';
   }
+}, { passive: true });
+
+messagesContainer.addEventListener('touchend', function(e) {
+  if (!swipeTargetElement) return;
+  const deltaX = swipeCurrentX - swipeStartX;
+  // Reset style
+  swipeTargetElement.style.transition = 'transform 0.3s';
+  swipeTargetElement.style.transform = '';
+  swipeTargetElement.style.background = '';
+
+  // Jika swipe ke kanan melewati threshold 50px, maka reply
+  if (deltaX > 50) {
+    const docId = swipeTargetElement.dataset.docId;
+    const username = swipeTargetElement.dataset.username;
+    const text = swipeTargetElement.dataset.text;
+    if (docId) {
+      startReply(docId, username, text);
+      // Haptic feedback jika support
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+  }
+  // Jika swipe ke kiri melewati threshold, bisa untuk hapus nanti (opsional)
+
+  swipeTargetElement = null;
+  swipeCurrentX = 0;
+  swipeStartX = 0;
+}, { passive: true });
+
+// Mouse events untuk desktop (drag)
+let isDragging = false;
+let mouseStartX = 0;
+let mouseTarget = null;
+
+messagesContainer.addEventListener('mousedown', function(e) {
+  const target = e.target.closest('.message-item');
+  if (!target) return;
+  if (target.classList.contains('system')) return;
+  isDragging = true;
+  mouseTarget = target;
+  mouseStartX = e.clientX;
+  target.style.transition = 'transform 0s';
+});
+
+document.addEventListener('mousemove', function(e) {
+  if (!isDragging || !mouseTarget) return;
+  const deltaX = e.clientX - mouseStartX;
+  if (deltaX > 5) {
+    const translate = Math.min(deltaX, 80);
+    mouseTarget.style.transform = `translateX(${translate}px)`;
+    mouseTarget.style.background = 'rgba(249, 115, 22, 0.1)';
+    mouseTarget.style.borderRadius = '8px';
+  } else if (deltaX < -5) {
+    const translate = Math.max(deltaX, -80);
+    mouseTarget.style.transform = `translateX(${translate}px)`;
+    mouseTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+    mouseTarget.style.borderRadius = '8px';
+  } else {
+    mouseTarget.style.transform = '';
+    mouseTarget.style.background = '';
+  }
+});
+
+document.addEventListener('mouseup', function(e) {
+  if (!isDragging || !mouseTarget) {
+    isDragging = false;
+    return;
+  }
+  const deltaX = e.clientX - mouseStartX;
+  mouseTarget.style.transition = 'transform 0.3s';
+  mouseTarget.style.transform = '';
+  mouseTarget.style.background = '';
+
+  if (deltaX > 50) {
+    const docId = mouseTarget.dataset.docId;
+    const username = mouseTarget.dataset.username;
+    const text = mouseTarget.dataset.text;
+    if (docId) {
+      startReply(docId, username, text);
+    }
+  }
+  isDragging = false;
+  mouseTarget = null;
+  mouseStartX = 0;
+});
+  // ---------- RENDER PESAN (Gaya WhatsApp, sudah bersih) ----------
+  // ============================================================
+// RENDER PESAN (Gaya WhatsApp + Swipe to Reply)
+// ============================================================
+function renderMessage(doc) {
+  const data = doc.data();
+  const isMine = data.senderId === currentUser?.uid;
+  const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
+
+  const div = document.createElement('div');
+  div.className = 'message-item'; // untuk swipe
+  div.dataset.docId = doc.id;
+  div.dataset.username = data.username || 'unknown';
+  div.dataset.text = data.text || '';
+  div.style.display = 'flex';
+  div.style.marginBottom = '8px';
+  div.style.gap = '8px';
+  div.style.alignItems = 'flex-start';
+  div.style.transition = 'transform 0.2s';
+  div.style.touchAction = 'pan-y'; // biar scroll tetap jalan
+
+  // Avatar
+  const avatarDiv = document.createElement('div');
+  avatarDiv.style.width = '38px';
+  avatarDiv.style.height = '38px';
+  avatarDiv.style.minWidth = '38px';
+  avatarDiv.style.borderRadius = '50%';
+  avatarDiv.style.background = '#2a2a2e';
+  avatarDiv.style.display = 'flex';
+  avatarDiv.style.alignItems = 'center';
+  avatarDiv.style.justifyContent = 'center';
+  avatarDiv.style.fontSize = '14px';
+  avatarDiv.style.fontWeight = 'bold';
+  avatarDiv.style.color = '#fff';
+  avatarDiv.style.overflow = 'hidden';
+  avatarDiv.style.flexShrink = '0';
+  if (data.avatar) {
+    avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+  } else {
+    avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+  }
+
+  // Bubble wrapper
+  const bubbleWrapper = document.createElement('div');
+  bubbleWrapper.style.flex = '1';
+  bubbleWrapper.style.maxWidth = '75%';
+  bubbleWrapper.style.display = 'flex';
+  bubbleWrapper.style.flexDirection = 'column';
+
+  // Bubble
+  const bubble = document.createElement('div');
+  bubble.style.padding = '8px 14px';
+  bubble.style.borderRadius = '12px';
+  bubble.style.wordBreak = 'break-word';
+  bubble.style.lineHeight = '1.4';
+  bubble.style.fontSize = '13px';
+  bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+
+  if (isMine) {
+    bubble.style.background = 'var(--accent)';
+    bubble.style.color = '#fff';
+    bubble.style.borderTopRightRadius = '4px';
+    bubbleWrapper.style.alignItems = 'flex-end';
+  } else if (isSystem) {
+    bubble.style.background = 'transparent';
+    bubble.style.color = 'var(--text-muted)';
+    bubble.style.textAlign = 'center';
+    bubble.style.fontSize = '12px';
+    bubble.style.padding = '4px 0';
+    bubble.style.boxShadow = 'none';
+    bubbleWrapper.style.alignItems = 'center';
+    bubbleWrapper.style.maxWidth = '100%';
+  } else {
+    bubble.style.background = 'var(--bg-input)';
+    bubble.style.color = 'var(--text)';
+    bubble.style.borderTopLeftRadius = '4px';
+  }
+
+  // Nama user
+  if (!isSystem && !isMine) {
+    const nameSpan = document.createElement('div');
+    nameSpan.style.fontSize = '11px';
+    nameSpan.style.fontWeight = '600';
+    nameSpan.style.color = 'var(--accent)';
+    nameSpan.style.marginBottom = '2px';
+    nameSpan.textContent = data.username || 'unknown';
+    bubble.appendChild(nameSpan);
+  }
+
+  // Teks pesan
+  const textSpan = document.createElement('div');
+  let displayText = data.text || '';
+  if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+    displayText = 'Anda bergabung ke grup';
+  }
+  textSpan.textContent = displayText;
+  bubble.appendChild(textSpan);
+
+  // Waktu
+  const timeSpan = document.createElement('div');
+  timeSpan.style.fontSize = '9px';
+  timeSpan.style.opacity = '0.6';
+  timeSpan.style.marginTop = '3px';
+  timeSpan.style.textAlign = 'right';
+  if (data.timestamp) {
+    const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+  bubble.appendChild(timeSpan);
+
+  // ========== TOMBOL REPLY (tetap ada, tapi swipe lebih utama) ==========
+  if (!isSystem) {
+    const replyBtn = document.createElement('button');
+    replyBtn.innerHTML = '<i class="fa-regular fa-reply-all" style="font-size:10px;"></i>';
+    replyBtn.style.background = 'transparent';
+    replyBtn.style.border = 'none';
+    replyBtn.style.color = 'var(--text-muted)';
+    replyBtn.style.fontSize = '10px';
+    replyBtn.style.cursor = 'pointer';
+    replyBtn.style.marginTop = '2px';
+    replyBtn.style.padding = '2px 6px';
+    replyBtn.style.borderRadius = '4px';
+    replyBtn.style.transition = 'all 0.2s';
+    replyBtn.title = 'Reply';
+    replyBtn.dataset.docId = doc.id;
+    replyBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      startReply(doc.id, data.username, data.text);
+    });
+    bubble.appendChild(replyBtn);
+  }
+
+  // Reply pesan (jika ada)
+  if (data.replyTo) {
+    const replyContainer = document.createElement('div');
+    replyContainer.style.padding = '4px 10px';
+    replyContainer.style.marginBottom = '4px';
+    replyContainer.style.borderRadius = '6px';
+    replyContainer.style.fontSize = '11px';
+    replyContainer.style.opacity = '0.7';
+    replyContainer.style.borderLeft = '3px solid var(--accent)';
+    if (isMine) {
+      replyContainer.style.background = 'rgba(255,255,255,0.1)';
+    } else {
+      replyContainer.style.background = 'var(--bg-hover)';
+    }
+    const replyName = document.createElement('span');
+    replyName.style.fontWeight = '600';
+    replyName.textContent = data.replyTo.username || 'unknown';
+    replyContainer.appendChild(replyName);
+    const replyText = document.createElement('span');
+    replyText.textContent = ': ' + (data.replyTo.text || '');
+    replyContainer.appendChild(replyText);
+    bubble.prepend(replyContainer);
+  }
+
+  // Susun layout
+  if (isSystem) {
+    div.style.justifyContent = 'center';
+    div.appendChild(bubble);
+  } else if (isMine) {
+    div.style.flexDirection = 'row-reverse';
+    div.appendChild(avatarDiv);
+    bubbleWrapper.appendChild(bubble);
+    div.appendChild(bubbleWrapper);
+  } else {
+    div.appendChild(avatarDiv);
+    bubbleWrapper.appendChild(bubble);
+    div.appendChild(bubbleWrapper);
+  }
+
+  return div;
+}
 
   // ---------- SUBSCRIBE MESSAGES ----------
   function subscribeMessages() {
@@ -6390,42 +6559,7 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
   }
 
 } // akhir if firebase
-// Validasi username real-time
-newUsernameInput.addEventListener('input', async function() {
-  const val = this.value.trim();
-  const errorEl = document.getElementById('username-error');
-  const hintEl = document.getElementById('username-hint');
-  const checkIcon = document.getElementById('username-check-icon');
 
-  if (val.length < 3) {
-    errorEl.textContent = 'Minimal 3 karakter';
-    errorEl.classList.add('visible');
-    checkIcon.innerHTML = '❌';
-    return;
-  }
-  if (!/^[a-z0-9_]+$/.test(val)) {
-    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
-    errorEl.classList.add('visible');
-    checkIcon.innerHTML = '❌';
-    return;
-  }
-
-  // Cek username ke server (debounce)
-  clearTimeout(this._timeout);
-  this._timeout = setTimeout(async () => {
-    const exists = await checkUsername(val);
-    if (exists) {
-      errorEl.textContent = 'Username sudah dipakai';
-      errorEl.classList.add('visible');
-      checkIcon.innerHTML = '❌';
-    } else {
-      errorEl.classList.remove('visible');
-      checkIcon.innerHTML = '✅';
-      hintEl.textContent = 'Username tersedia!';
-      hintEl.style.color = 'var(--success)';
-    }
-  }, 500);
-});
     </script>
 </body>
 </html>
