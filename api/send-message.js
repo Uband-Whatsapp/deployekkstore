@@ -14,21 +14,32 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { uid, username, avatar, text } = req.body;
+  const { uid, username, avatar, text, replyTo } = req.body;
 
   if (!uid || !text) {
     return res.status(400).json({ error: 'uid and text are required' });
   }
 
   try {
-    await db.collection('messages').add({
+    const messageData = {
       senderId: uid,
       username: username || 'Anonymous',
       avatar: avatar || '',
       text: text,
       type: 'text',
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+
+    // Tambahkan replyTo jika ada
+    if (replyTo) {
+      messageData.replyTo = {
+        docId: replyTo.docId || '',
+        username: replyTo.username || '',
+        text: replyTo.text || ''
+      };
+    }
+
+    await db.collection('messages').add(messageData);
 
     await db.collection('users').doc(uid).update({
       lastSeen: admin.firestore.FieldValue.serverTimestamp(),
