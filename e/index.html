@@ -3859,6 +3859,23 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     </div>
   </div>
 </div>
+<!-- MODAL EDIT PESAN -->
+<div class="modal-overlay" id="edit-message-modal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-icon"><i class="fa-solid fa-pen"></i></div>
+    <h4>Edit Pesan</h4>
+    <p>Ubah isi pesanmu.</p>
+    <div class="form-group" style="text-align:left;">
+      <label class="form-label">Pesan Baru</label>
+      <input type="text" id="edit-message-input" class="form-input" placeholder="Tulis pesan baru...">
+      <span class="form-error" id="edit-message-error"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="edit-message-cancel">Batal</button>
+      <button class="btn btn-primary" id="edit-message-save">Simpan</button>
+    </div>
+  </div>
+</div>
     <div class="modal-overlay" id="confirm-modal-overlay">
         <div class="modal-box">
             <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
@@ -5888,12 +5905,14 @@ async function updateAvatar(uid, newAvatarUrl) {
     if (cancelBtn) cancelBtn.style.display = 'none';
   }
 // ============================================================
-// SWIPE TO REPLY (Seperti WhatsApp)
+// SWIPE TO REPLY (HANYA HORIZONTAL, TIDAK MENGGANGGU SCROLL)
 // ============================================================
 let swipeStartX = 0;
+let swipeStartY = 0;
 let swipeTargetElement = null;
 let swipeCurrentX = 0;
-let swipeTimeout = null;
+let swipeCurrentY = 0;
+let isSwiping = false;
 
 const messagesContainer = document.getElementById('messages-list');
 
@@ -5901,11 +5920,14 @@ const messagesContainer = document.getElementById('messages-list');
 messagesContainer.addEventListener('touchstart', function(e) {
   const target = e.target.closest('.message-item');
   if (!target) return;
-  // Abaikan jika target adalah sistem (join/leave)
   if (target.classList.contains('system')) return;
+  
   swipeTargetElement = target;
   swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
   swipeCurrentX = swipeStartX;
+  swipeCurrentY = swipeStartY;
+  isSwiping = false;
   target.style.transition = 'transform 0s';
 }, { passive: true });
 
@@ -5913,56 +5935,73 @@ messagesContainer.addEventListener('touchmove', function(e) {
   if (!swipeTargetElement) return;
   const touch = e.touches[0];
   const deltaX = touch.clientX - swipeStartX;
+  const deltaY = touch.clientY - swipeStartY;
   swipeCurrentX = touch.clientX;
-  // Geser hanya ke kanan (untuk reply) dengan batas 80px
-  if (deltaX > 5) {
-    const translate = Math.min(deltaX, 80);
-    swipeTargetElement.style.transform = `translateX(${translate}px)`;
-    // Beri warna latar belakang sebagai indikasi reply
-    swipeTargetElement.style.background = 'rgba(249, 115, 22, 0.1)';
-    swipeTargetElement.style.borderRadius = '8px';
-  } else if (deltaX < -5) {
-    // Geser ke kiri (bisa untuk nanti, misal hapus)
-    const translate = Math.max(deltaX, -80);
-    swipeTargetElement.style.transform = `translateX(${translate}px)`;
-    swipeTargetElement.style.background = 'rgba(248, 113, 113, 0.1)';
-    swipeTargetElement.style.borderRadius = '8px';
-  } else {
+  swipeCurrentY = touch.clientY;
+
+  // Jika gerakan lebih vertikal daripada horizontal, abaikan (biar scroll jalan)
+  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
     swipeTargetElement.style.transform = '';
     swipeTargetElement.style.background = '';
+    return;
+  }
+
+  // Hanya proses jika gerakan horizontal
+  if (Math.abs(deltaX) > 10) {
+    isSwiping = true;
+    // Geser ke kanan (reply) dengan batas 80px
+    if (deltaX > 0) {
+      const translate = Math.min(deltaX, 80);
+      swipeTargetElement.style.transform = `translateX(${translate}px)`;
+      swipeTargetElement.style.background = 'rgba(249, 115, 22, 0.1)';
+      swipeTargetElement.style.borderRadius = '8px';
+    } else {
+      // Geser ke kiri (opsional, bisa untuk hapus nanti)
+      const translate = Math.max(deltaX, -80);
+      swipeTargetElement.style.transform = `translateX(${translate}px)`;
+      swipeTargetElement.style.background = 'rgba(248, 113, 113, 0.1)';
+      swipeTargetElement.style.borderRadius = '8px';
+    }
   }
 }, { passive: true });
 
 messagesContainer.addEventListener('touchend', function(e) {
   if (!swipeTargetElement) return;
+  
   const deltaX = swipeCurrentX - swipeStartX;
+  const deltaY = swipeCurrentY - swipeStartY;
+  
   // Reset style
   swipeTargetElement.style.transition = 'transform 0.3s';
   swipeTargetElement.style.transform = '';
   swipeTargetElement.style.background = '';
 
-  // Jika swipe ke kanan melewati threshold 50px, maka reply
-  if (deltaX > 50) {
+  // Hanya reply jika swipe ke kanan melewati threshold 50px dan gerakan dominan horizontal
+  if (deltaX > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
     const docId = swipeTargetElement.dataset.docId;
     const username = swipeTargetElement.dataset.username;
     const text = swipeTargetElement.dataset.text;
     if (docId) {
       startReply(docId, username, text);
-      // Haptic feedback jika support
       if (navigator.vibrate) navigator.vibrate(10);
     }
   }
-  // Jika swipe ke kiri melewati threshold, bisa untuk hapus nanti (opsional)
 
   swipeTargetElement = null;
   swipeCurrentX = 0;
+  swipeCurrentY = 0;
   swipeStartX = 0;
+  swipeStartY = 0;
+  isSwiping = false;
 }, { passive: true });
 
 // Mouse events untuk desktop (drag)
 let isDragging = false;
 let mouseStartX = 0;
+let mouseStartY = 0;
 let mouseTarget = null;
+let mouseCurrentX = 0;
+let mouseCurrentY = 0;
 
 messagesContainer.addEventListener('mousedown', function(e) {
   const target = e.target.closest('.message-item');
@@ -5971,25 +6010,38 @@ messagesContainer.addEventListener('mousedown', function(e) {
   isDragging = true;
   mouseTarget = target;
   mouseStartX = e.clientX;
+  mouseStartY = e.clientY;
+  mouseCurrentX = mouseStartX;
+  mouseCurrentY = mouseStartY;
   target.style.transition = 'transform 0s';
 });
 
 document.addEventListener('mousemove', function(e) {
   if (!isDragging || !mouseTarget) return;
   const deltaX = e.clientX - mouseStartX;
-  if (deltaX > 5) {
-    const translate = Math.min(deltaX, 80);
-    mouseTarget.style.transform = `translateX(${translate}px)`;
-    mouseTarget.style.background = 'rgba(249, 115, 22, 0.1)';
-    mouseTarget.style.borderRadius = '8px';
-  } else if (deltaX < -5) {
-    const translate = Math.max(deltaX, -80);
-    mouseTarget.style.transform = `translateX(${translate}px)`;
-    mouseTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-    mouseTarget.style.borderRadius = '8px';
-  } else {
+  const deltaY = e.clientY - mouseStartY;
+  mouseCurrentX = e.clientX;
+  mouseCurrentY = e.clientY;
+
+  // Jika gerakan lebih vertikal, abaikan
+  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
     mouseTarget.style.transform = '';
     mouseTarget.style.background = '';
+    return;
+  }
+
+  if (Math.abs(deltaX) > 10) {
+    if (deltaX > 0) {
+      const translate = Math.min(deltaX, 80);
+      mouseTarget.style.transform = `translateX(${translate}px)`;
+      mouseTarget.style.background = 'rgba(249, 115, 22, 0.1)';
+      mouseTarget.style.borderRadius = '8px';
+    } else {
+      const translate = Math.max(deltaX, -80);
+      mouseTarget.style.transform = `translateX(${translate}px)`;
+      mouseTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+      mouseTarget.style.borderRadius = '8px';
+    }
   }
 });
 
@@ -5998,12 +6050,14 @@ document.addEventListener('mouseup', function(e) {
     isDragging = false;
     return;
   }
-  const deltaX = e.clientX - mouseStartX;
+  const deltaX = mouseCurrentX - mouseStartX;
+  const deltaY = mouseCurrentY - mouseStartY;
+  
   mouseTarget.style.transition = 'transform 0.3s';
   mouseTarget.style.transform = '';
   mouseTarget.style.background = '';
 
-  if (deltaX > 50) {
+  if (deltaX > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
     const docId = mouseTarget.dataset.docId;
     const username = mouseTarget.dataset.username;
     const text = mouseTarget.dataset.text;
@@ -6014,6 +6068,9 @@ document.addEventListener('mouseup', function(e) {
   isDragging = false;
   mouseTarget = null;
   mouseStartX = 0;
+  mouseStartY = 0;
+  mouseCurrentX = 0;
+  mouseCurrentY = 0;
 });
   // ---------- RENDER PESAN (Gaya WhatsApp, sudah bersih) ----------
   // ============================================================
@@ -6028,6 +6085,9 @@ document.addEventListener('mouseup', function(e) {
 // ============================================================
 // RENDER PESAN (LENGKAP: EDIT, HAPUS, INFO, READ RECEIPTS)
 // ============================================================
+// ============================================================
+// RENDER PESAN (PERBAIKAN TAMPILAN HAPUS)
+// ============================================================
 function renderMessage(doc) {
   const data = doc.data();
   const isMine = data.senderId === currentUser?.uid;
@@ -6037,12 +6097,24 @@ function renderMessage(doc) {
   const isDeletedForMe = data.deletedFor && data.deletedFor.includes(currentUser?.uid);
   const isDeletedForAll = data.isDeletedForAll === true;
 
-  // Tentukan teks yang ditampilkan
+  // ============================================================
+  // TAMPILAN PESAN DIHAPUS
+  // ============================================================
   let displayText = data.text || '';
+  let isDeletedMessage = false;
+
   if (isDeletedForAll) {
-    displayText = 'Pesan ini telah dihapus';
+    // Dihapus untuk semua orang
+    displayText = '⦸ Pesan ini telah dihapus';
+    isDeletedMessage = true;
+  } else if (isDeletedForMe && isMine) {
+    // Dihapus oleh diri sendiri (untuk diri sendiri)
+    displayText = '⦸ Anda menghapus pesan ini';
+    isDeletedMessage = true;
   } else if (isDeletedForMe && !isMine) {
-    displayText = 'Pesan ini telah dihapus';
+    // Dihapus oleh orang lain (untuk diri sendiri)
+    displayText = '⦸ Pesan ini telah dihapus';
+    isDeletedMessage = true;
   }
 
   const div = document.createElement('div');
@@ -6442,15 +6514,57 @@ async function showReadReceipts(docId) {
   }
 }
 // ============================================================
-// EDIT PESAN (HANYA DALAM 1 JAM)
+// EDIT PESAN (DENGAN MODAL CUSTOM)
 // ============================================================
-async function editMessage(docId, oldText) {
-  const newText = prompt('Edit pesan:', oldText);
-  if (newText === null || newText.trim() === '') return;
+let editingMessageId = null;
+let editingMessageOldText = '';
+
+function editMessage(docId, oldText) {
+  editingMessageId = docId;
+  editingMessageOldText = oldText;
+
+  const modal = document.getElementById('edit-message-modal');
+  const input = document.getElementById('edit-message-input');
+  const errorEl = document.getElementById('edit-message-error');
+
+  input.value = oldText;
+  errorEl.classList.remove('visible');
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+  setTimeout(() => input.focus(), 100);
+}
+
+// Event: Batal edit
+document.getElementById('edit-message-cancel').addEventListener('click', function() {
+  document.getElementById('edit-message-modal').classList.remove('active');
+  document.body.classList.remove('modal-open');
+  editingMessageId = null;
+  editingMessageOldText = '';
+});
+
+// Event: Simpan edit
+document.getElementById('edit-message-save').addEventListener('click', async function() {
+  const input = document.getElementById('edit-message-input');
+  const errorEl = document.getElementById('edit-message-error');
+  const newText = input.value.trim();
+
+  if (!newText) {
+    errorEl.textContent = 'Pesan tidak boleh kosong';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  if (newText === editingMessageOldText) {
+    document.getElementById('edit-message-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+    editingMessageId = null;
+    editingMessageOldText = '';
+    return;
+  }
 
   try {
-    // Cek apakah masih dalam 1 jam (validasi ulang)
-    const doc = await db.collection('messages').doc(docId).get();
+    // Cek apakah masih dalam 1 jam
+    const doc = await db.collection('messages').doc(editingMessageId).get();
     if (!doc.exists) {
       showToast('Pesan tidak ditemukan', 'error');
       return;
@@ -6459,23 +6573,36 @@ async function editMessage(docId, oldText) {
     const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
     const now = Date.now();
     if (now - msgTime > 60 * 60 * 1000) {
-      showToast('Waktu edit sudah habis (1 jam)', 'error');
+      errorEl.textContent = 'Waktu edit sudah habis (1 jam)';
+      errorEl.classList.add('visible');
       return;
     }
 
     // Update pesan
-    await db.collection('messages').doc(docId).update({
-      text: newText.trim(),
+    await db.collection('messages').doc(editingMessageId).update({
+      text: newText,
       isEdited: true,
       editedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     showToast('Pesan berhasil diedit', 'success');
+    document.getElementById('edit-message-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
+    editingMessageId = null;
+    editingMessageOldText = '';
   } catch (error) {
     console.error('Error editMessage:', error);
-    showToast('Gagal mengedit pesan', 'error');
+    errorEl.textContent = 'Gagal mengedit pesan';
+    errorEl.classList.add('visible');
   }
-}
+});
+
+// Enter untuk submit di modal edit
+document.getElementById('edit-message-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('edit-message-save').click();
+  }
+});
 // ============================================================
 // DELETE MESSAGE FOR ME (HAPUS UNTUK DIRI SENDIRI)
 // ============================================================
