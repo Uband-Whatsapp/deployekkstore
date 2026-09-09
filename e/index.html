@@ -3001,6 +3001,21 @@ ul {
   font-size: 12px;
   width: 100%;
 }
+/* Tambahkan di style */
+.message-reply {
+  padding: 4px 10px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  font-size: 11px;
+  opacity: 0.7;
+  border-left: 3px solid var(--accent);
+}
+.message-reply-mine {
+  background: rgba(255,255,255,0.1);
+}
+.message-reply-other {
+  background: var(--bg-hover);
+}
 
 </style>  
 </head>
@@ -5588,20 +5603,27 @@ if (typeof firebase === 'undefined') {
   return res.ok;
 }
 
-  async function sendMessage(text) {
-    if (!currentUser) return false;
-    const res = await fetch('/api/send-message', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        uid: currentUser.uid,
-        username: currentUser.username,
-        avatar: currentUser.avatar || '',
-        text: text
-      })
-    });
-    return res.ok;
+  // Ganti fungsi sendMessage dengan ini:
+async function sendMessage(text, replyTo = null) {
+  if (!currentUser) return false;
+  const payload = {
+    uid: currentUser.uid,
+    username: currentUser.username,
+    avatar: currentUser.avatar || '',
+    text: text
+  };
+
+  if (replyTo) {
+    payload.replyTo = replyTo;
   }
+
+  const res = await fetch('/api/send-message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.ok;
+}
 
   async function updateOnlineStatus(isOnline) {
     if (!currentUser) return;
@@ -5622,105 +5644,231 @@ if (typeof firebase === 'undefined') {
   }
 
   // ---------- RENDER PESAN ----------
-  function renderMessage(doc) {
-    const data = doc.data();
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.alignItems = 'flex-start';
-    div.style.gap = '8px';
-    div.style.marginBottom = '4px';
+  // ============================================================
+// RENDER PESAN (Gaya WhatsApp)
+// ============================================================
+function renderMessage(doc) {
+  const data = doc.data();
+  const isMine = data.senderId === currentUser?.uid;
+  const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
 
-    const isSystem = data.senderId === 'system' || data.type === 'join' || data.type === 'leave';
-    const isMine = data.senderId === currentUser?.uid;
+  // Container utama
+  const div = document.createElement('div');
+  div.style.display = 'flex';
+  div.style.marginBottom = '8px';
+  div.style.gap = '8px';
+  div.style.alignItems = 'flex-start';
 
-    // Avatar
-    // Avatar
-const avatarDiv = document.createElement('div');
-avatarDiv.style.width = '32px';
-avatarDiv.style.height = '32px';
-avatarDiv.style.borderRadius = '50%';
-avatarDiv.style.background = '#2a2a2e';
-avatarDiv.style.display = 'flex';
-avatarDiv.style.alignItems = 'center';
-avatarDiv.style.justifyContent = 'center';
-avatarDiv.style.fontSize = '12px';
-avatarDiv.style.fontWeight = 'bold';
-avatarDiv.style.color = '#fff';
-avatarDiv.style.flexShrink = '0';
-avatarDiv.style.overflow = 'hidden';
+  // ========== AVATAR ==========
+  const avatarDiv = document.createElement('div');
+  avatarDiv.style.width = '38px';
+  avatarDiv.style.height = '38px';
+  avatarDiv.style.minWidth = '38px';
+  avatarDiv.style.borderRadius = '50%';
+  avatarDiv.style.background = '#2a2a2e';
+  avatarDiv.style.display = 'flex';
+  avatarDiv.style.alignItems = 'center';
+  avatarDiv.style.justifyContent = 'center';
+  avatarDiv.style.fontSize = '14px';
+  avatarDiv.style.fontWeight = 'bold';
+  avatarDiv.style.color = '#fff';
+  avatarDiv.style.overflow = 'hidden';
+  avatarDiv.style.flexShrink = '0';
 
-if (data.avatar) {
-  // Tampilkan gambar avatar
-  avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-} else {
-  // Tampilkan inisial jika tidak ada avatar
-  avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+  if (data.avatar) {
+    avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+  } else {
+    avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+  }
+// ======================== FUNGSI REPLY ========================
+let replyingTo = null;
+
+function startReply(docId, username, text) {
+  replyingTo = { docId, username, text };
+  const input = document.getElementById('chat-input');
+  input.focus();
+  input.placeholder = `Reply to ${username}...`;
+  input.style.borderColor = 'var(--accent)';
+  showToast(`Reply to ${username}`, 'info');
+
+  // Tombol batal reply
+  let cancelBtn = document.getElementById('cancel-reply-btn');
+  if (!cancelBtn) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancel-reply-btn';
+    cancelBtn.innerHTML = '✕';
+    cancelBtn.style.background = 'var(--danger)';
+    cancelBtn.style.color = '#fff';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.borderRadius = '50%';
+    cancelBtn.style.width = '24px';
+    cancelBtn.style.height = '24px';
+    cancelBtn.style.fontSize = '12px';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.marginLeft = '4px';
+    cancelBtn.style.flexShrink = '0';
+
+    const inputWrapper = input.parentElement;
+    inputWrapper.style.display = 'flex';
+    inputWrapper.style.alignItems = 'center';
+    inputWrapper.style.gap = '4px';
+    inputWrapper.appendChild(cancelBtn);
+
+    cancelBtn.addEventListener('click', function() {
+      cancelReply();
+    });
+  }
+  cancelBtn.style.display = 'flex';
 }
 
-    // Bubble
-    const bubble = document.createElement('div');
-    bubble.style.flex = '1';
-    bubble.style.padding = '6px 12px';
-    bubble.style.borderRadius = '12px';
-    bubble.style.maxWidth = '70%';
-    bubble.style.wordBreak = 'break-word';
-    bubble.style.lineHeight = '1.4';
+function cancelReply() {
+  replyingTo = null;
+  const input = document.getElementById('chat-input');
+  input.placeholder = 'Ketik pesan...';
+  input.style.borderColor = 'var(--border)';
+  const cancelBtn = document.getElementById('cancel-reply-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
+  // ========== BUBBLE ==========
+  const bubbleWrapper = document.createElement('div');
+  bubbleWrapper.style.flex = '1';
+  bubbleWrapper.style.maxWidth = '75%';
+  bubbleWrapper.style.display = 'flex';
+  bubbleWrapper.style.flexDirection = 'column';
 
-    if (isMine) {
-      bubble.style.background = 'var(--accent)';
-      bubble.style.color = '#fff';
-      bubble.style.marginLeft = 'auto';
-    } else if (isSystem) {
-      bubble.style.background = 'transparent';
-      bubble.style.color = 'var(--text-muted)';
-      bubble.style.textAlign = 'center';
-      bubble.style.fontSize = '12px';
-      bubble.style.width = '100%';
-      bubble.style.maxWidth = '100%';
-      bubble.style.padding = '4px 0';
-    } else {
-      bubble.style.background = 'var(--bg-input)';
-      bubble.style.color = 'var(--text)';
-    }
+  // Bubble
+  const bubble = document.createElement('div');
+  bubble.style.padding = '8px 14px';
+  bubble.style.borderRadius = '12px';
+  bubble.style.wordBreak = 'break-word';
+  bubble.style.lineHeight = '1.4';
+  bubble.style.fontSize = '13px';
+  bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
 
-    // Jika bukan system, tampilkan nama user
-    if (!isSystem) {
-      const nameSpan = document.createElement('div');
-      nameSpan.style.fontSize = '11px';
-      nameSpan.style.fontWeight = 'bold';
-      nameSpan.style.color = isMine ? 'rgba(255,255,255,0.7)' : 'var(--accent)';
-      nameSpan.textContent = data.username || 'unknown';
-      bubble.appendChild(nameSpan);
-    }
-
-    // Text pesan (khusus join, kita ubah teksnya untuk user sendiri)
-    let displayText = data.text || '';
-    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
-      displayText = 'Anda bergabung ke grup';
-    }
-    const textSpan = document.createElement('div');
-    textSpan.textContent = displayText;
-    bubble.appendChild(textSpan);
-
-    // Waktu
-    const timeSpan = document.createElement('div');
-    timeSpan.style.fontSize = '9px';
-    timeSpan.style.opacity = '0.6';
-    timeSpan.style.marginTop = '2px';
-    if (data.timestamp) {
-      const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-      timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    }
-    bubble.appendChild(timeSpan);
-
-    if (!isSystem) {
-      div.appendChild(avatarDiv);
-    }
-    div.appendChild(bubble);
-
-    return div;
+  // Warna bubble
+  if (isMine) {
+    bubble.style.background = 'var(--accent)';
+    bubble.style.color = '#fff';
+    bubble.style.borderTopRightRadius = '4px';
+    bubbleWrapper.style.alignItems = 'flex-end';
+  } else if (isSystem) {
+    bubble.style.background = 'transparent';
+    bubble.style.color = 'var(--text-muted)';
+    bubble.style.textAlign = 'center';
+    bubble.style.fontSize = '12px';
+    bubble.style.padding = '4px 0';
+    bubble.style.boxShadow = 'none';
+    bubbleWrapper.style.alignItems = 'center';
+    bubbleWrapper.style.maxWidth = '100%';
+  } else {
+    bubble.style.background = 'var(--bg-input)';
+    bubble.style.color = 'var(--text)';
+    bubble.style.borderTopLeftRadius = '4px';
   }
 
+  // ========== NAMA USER ==========
+  if (!isSystem && !isMine) {
+    const nameSpan = document.createElement('div');
+    nameSpan.style.fontSize = '11px';
+    nameSpan.style.fontWeight = '600';
+    nameSpan.style.color = 'var(--accent)';
+    nameSpan.style.marginBottom = '2px';
+    nameSpan.textContent = data.username || 'unknown';
+    bubble.appendChild(nameSpan);
+  }
+
+  // ========== PESAN ==========
+  const textSpan = document.createElement('div');
+  let displayText = data.text || '';
+
+  // Khusus join, ubah teks untuk user sendiri
+  if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+    displayText = 'Anda bergabung ke grup';
+  }
+  textSpan.textContent = displayText;
+  bubble.appendChild(textSpan);
+
+  // ========== WAKTU ==========
+  const timeSpan = document.createElement('div');
+  timeSpan.style.fontSize = '9px';
+  timeSpan.style.opacity = '0.6';
+  timeSpan.style.marginTop = '3px';
+  timeSpan.style.textAlign = 'right';
+  if (data.timestamp) {
+    const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+  bubble.appendChild(timeSpan);
+
+  // ========== TOMBOL REPLY ==========
+  if (!isSystem) {
+    const replyBtn = document.createElement('button');
+    replyBtn.innerHTML = '<i class="fa-regular fa-reply-all" style="font-size:10px;"></i>';
+    replyBtn.style.background = 'transparent';
+    replyBtn.style.border = 'none';
+    replyBtn.style.color = 'var(--text-muted)';
+    replyBtn.style.fontSize = '10px';
+    replyBtn.style.cursor = 'pointer';
+    replyBtn.style.marginTop = '2px';
+    replyBtn.style.padding = '2px 6px';
+    replyBtn.style.borderRadius = '4px';
+    replyBtn.style.transition = 'all 0.2s';
+    replyBtn.title = 'Reply';
+    replyBtn.dataset.docId = doc.id;
+
+    replyBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      startReply(doc.id, data.username, data.text);
+    });
+
+    bubble.appendChild(replyBtn);
+  }
+
+  // ========== REPLY PESAN (jika ada) ==========
+  if (data.replyTo) {
+    const replyContainer = document.createElement('div');
+    replyContainer.style.padding = '4px 10px';
+    replyContainer.style.marginBottom = '4px';
+    replyContainer.style.borderRadius = '6px';
+    replyContainer.style.fontSize = '11px';
+    replyContainer.style.opacity = '0.7';
+    replyContainer.style.borderLeft = '3px solid var(--accent)';
+
+    if (isMine) {
+      replyContainer.style.background = 'rgba(255,255,255,0.1)';
+    } else {
+      replyContainer.style.background = 'var(--bg-hover)';
+    }
+
+    const replyName = document.createElement('span');
+    replyName.style.fontWeight = '600';
+    replyName.textContent = data.replyTo.username || 'unknown';
+    replyContainer.appendChild(replyName);
+
+    const replyText = document.createElement('span');
+    replyText.textContent = ': ' + (data.replyTo.text || '');
+    replyContainer.appendChild(replyText);
+
+    bubble.prepend(replyContainer);
+  }
+
+  // ========== SUSUN ==========
+  if (isSystem) {
+    div.style.justifyContent = 'center';
+    div.appendChild(bubble);
+  } else if (isMine) {
+    div.style.flexDirection = 'row-reverse';
+    div.appendChild(avatarDiv);
+    bubbleWrapper.appendChild(bubble);
+    div.appendChild(bubbleWrapper);
+  } else {
+    div.appendChild(avatarDiv);
+    bubbleWrapper.appendChild(bubble);
+    div.appendChild(bubbleWrapper);
+  }
+
+  return div;
+}
   // ---------- SUBSCRIBE MESSAGES ----------
   function subscribeMessages() {
     if (messagesUnsubscribe) {
@@ -5897,22 +6045,36 @@ btnCreateProfile.addEventListener('click', async function() {
   }
 });
   // ---------- EVENT: KIRIM PESAN ----------
-  btnSend.addEventListener('click', async function() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-    const ok = await sendMessage(text);
-    if (ok) {
-      chatInput.value = '';
-    } else {
-      showToast('Gagal mengirim pesan', 'error');
-    }
-  });
+  // Ganti event btnSend dengan ini:
+btnSend.addEventListener('click', async function() {
+  const text = chatInput.value.trim();
+  if (!text) return;
 
-  chatInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      btnSend.click();
-    }
-  });
+  let replyData = null;
+  if (replyingTo) {
+    replyData = {
+      docId: replyingTo.docId,
+      username: replyingTo.username,
+      text: replyingTo.text
+    };
+  }
+
+  const ok = await sendMessage(text, replyData);
+  if (ok) {
+    chatInput.value = '';
+    cancelReply();
+  } else {
+    showToast('Gagal mengirim pesan', 'error');
+  }
+});
+
+// Enter untuk kirim (tetap sama)
+chatInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    btnSend.click();
+  }
+});
 
   // ---------- EVENT: EDIT PROFIL ----------
   // ---------- EVENT: EDIT PROFIL (pakai modal) ----------
