@@ -3678,7 +3678,7 @@ ul {
 .chat-card-fullscreen {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 220px); /* fallback */
+    height: calc(100dvh - 220px);   /* fallback */
     max-height: 620px;
     min-height: 380px;
     padding: 0 !important;
@@ -3687,19 +3687,16 @@ ul {
     transition: height 0.15s ease;
 }
 
-/* Pas keyboard muncul, pakai tinggi dari JS */
 .chat-card-fullscreen.keyboard-open {
     max-height: none;
     height: var(--chat-height, 100dvh);
 }
 
-/* Input wrapper always stick at bottom of flex container */
 .chat-input-wrapper {
     flex-shrink: 0;
     padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
 }
 
-/* Messages list flexes */
 .chat-card-fullscreen #messages-list {
     flex: 1 1 auto;
     min-height: 0;
@@ -3707,33 +3704,86 @@ ul {
 }
 
 /* Handle keyboard di Android — fix viewport */
+/* =========================================================
+   KEYBOARD DOCKING — chat card nempel persis di atas keyboard
+   ========================================================= */
 @media (max-width: 768px) {
-    /* Sembunyikan bottom-nav & footer pas keyboard buka */
-    body.keyboard-open #bottom-nav {
-        display: none !important;
+
+    /* Chat card jadi FIXED pas keyboard buka */
+    body.keyboard-open .chat-card-fullscreen.keyboard-open {
+        position: fixed !important;
+        top: 70px !important;          /* tepat di bawah header */
+        left: 0 !important;
+        right: 0 !important;
+        bottom: auto !important;
+        width: 100vw !important;
+        height: var(--chat-height, calc(100dvh - 70px)) !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
+        border-top: none !important;
+        z-index: 9999 !important;
+        overflow: hidden !important;
+        background: var(--bg-card);
     }
-    
+
+    /* Buang semua padding/margin dari parent biar gak ada gap */
+    body.keyboard-open #main-content,
+    body.keyboard-open #page-group,
+    body.keyboard-open #chat-container,
+    body.keyboard-open .page.active {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        max-height: none !important;
+    }
+
+    body.keyboard-open #main-content {
+        padding-top: 70px !important;
+        height: 100dvh !important;
+    }
+
+    /* Sembunyikan bottom nav & footer pas keyboard buka */
+    body.keyboard-open #bottom-nav,
     body.keyboard-open .footer-text {
         display: none !important;
     }
-    
-    /* Body jangan scroll */
+
+    /* Body dikunci biar gak bisa di-scroll */
     body.keyboard-open {
-        position: fixed;
-        width: 100%;
-        overflow: hidden;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
         padding-bottom: 0 !important;
     }
-    
-    /* Main content reset padding */
-    body.keyboard-open #main-content {
-        padding-top: 70px !important;
-        padding-bottom: 0 !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
-        overflow: hidden;
-        max-height: 100dvh;
+
+    /* Input wrapper flush ke keyboard */
+    body.keyboard-open .chat-card-fullscreen .chat-input-wrapper {
+        border-radius: 0 !important;
+        padding: 6px 10px max(6px, env(safe-area-inset-bottom)) !important;
+        border-top: 1px solid var(--border) !important;
     }
+
+    /* Messages list tetap flex, scroll sendiri */
+    body.keyboard-open .chat-card-fullscreen #messages-list {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        padding-bottom: 6px !important;
+        overscroll-behavior: contain;
+    }
+
+    /* Preview bar juga ikut */
+    body.keyboard-open .chat-card-fullscreen .media-preview-bar {
+        flex-shrink: 0 !important;
+    }
+}
     
     /* Chat card full screen tanpa gap */
     .chat-card-fullscreen.keyboard-open {
@@ -7850,12 +7900,15 @@ if (!hasInlineTimestamp) {
     menu.style.flexDirection = 'column';
     menu.style.gap = '4px';
 
-    const infoBtn = createMenuItem('Info (baca)', 'fa-solid fa-circle-info', 'var(--text)');
-    infoBtn.addEventListener('click', function() {
-      menu.remove();
-      showReadReceipts(docId);
-    });
-    menu.appendChild(infoBtn);
+    // Info baca — HANYA untuk pesan sendiri
+if (isMine) {
+  const infoBtn = createMenuItem('Info (baca)', 'fa-solid fa-circle-info', 'var(--text)');
+  infoBtn.addEventListener('click', function() {
+    menu.remove();
+    showReadReceipts(docId);
+  });
+  menu.appendChild(infoBtn);
+}
 
     if (isMine && canEdit) {
       const editBtn = createMenuItem('Edit pesan', 'fa-solid fa-pen', 'var(--text)');
@@ -8833,82 +8886,91 @@ btnSend.addEventListener('click', async function() {
 // ============================================================
 // KEYBOARD HANDLER — biar input nempel di atas keyboard Android
 // ============================================================
+// ============================================================
+// KEYBOARD HANDLER — chat input dempet keyboard (semua browser)
+// ============================================================
 (function initKeyboardHandler() {
-  const chatCard = document.getElementById('chat-card');
-  const chatInputEl2 = document.getElementById('chat-input');
-  if (!chatCard || !chatInputEl2) return;
+    const chatCard = document.getElementById('chat-card');
+    const chatInputEl2 = document.getElementById('chat-input');
+    if (!chatCard || !chatInputEl2) return;
 
-  // Cek dukungan VisualViewport API
-  if (!window.visualViewport) {
-    // Fallback: pakai focus/blur
+    function scrollMessagesToBottom() {
+        const messagesList = document.getElementById('messages-list');
+        if (messagesList) {
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+    }
+
+    const HEADER_H = 70; // tinggi #top-header
+
+    // ---------- FALLBACK untuk browser tanpa visualViewport ----------
+    if (!window.visualViewport) {
+        chatInputEl2.addEventListener('focus', function () {
+            document.body.classList.add('keyboard-open');
+            chatCard.classList.add('keyboard-open');
+            chatCard.style.setProperty('--chat-height', 'calc(100dvh - ' + HEADER_H + 'px)');
+            setTimeout(scrollMessagesToBottom, 200);
+        });
+        chatInputEl2.addEventListener('blur', function () {
+            document.body.classList.remove('keyboard-open');
+            chatCard.classList.remove('keyboard-open');
+            chatCard.style.removeProperty('--chat-height');
+        });
+        return;
+    }
+
+    // ---------- MODERN: pakai VisualViewport API ----------
+    const vv = window.visualViewport;
+    let initialHeight = vv.height;
+    let rafId = null;
+
+    function updateChatHeight() {
+        // Debounce pake rAF biar gak flicker
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(function () {
+            const keyboardHeight = initialHeight - vv.height;
+            const isKeyboardOpen = keyboardHeight > 120; // threshold
+
+            if (isKeyboardOpen) {
+                // tinggi yang tersedia dari bawah header sampai atas keyboard
+                const available = vv.height - HEADER_H;
+                chatCard.style.setProperty('--chat-height', Math.max(available, 220) + 'px');
+                chatCard.classList.add('keyboard-open');
+                document.body.classList.add('keyboard-open');
+
+                // Paksa halaman scroll ke atas biar header kelihatan
+                if (window.scrollY !== 0) window.scrollTo(0, 0);
+
+                // Scroll pesan ke bawah (double-tap timeout biar pasti)
+                setTimeout(scrollMessagesToBottom, 80);
+                setTimeout(scrollMessagesToBottom, 260);
+            } else {
+                chatCard.classList.remove('keyboard-open');
+                document.body.classList.remove('keyboard-open');
+                chatCard.style.removeProperty('--chat-height');
+            }
+        });
+    }
+
+    // Listener utama
+    vv.addEventListener('resize', updateChatHeight);
+    vv.addEventListener('scroll', updateChatHeight);
+
+    // Fokus ke input → panggil beberapa kali biar stabil
     chatInputEl2.addEventListener('focus', function () {
-      document.body.classList.add('keyboard-open');
-      chatCard.classList.add('keyboard-open');
-      setTimeout(scrollMessagesToBottom, 300);
+        // Reset baseline saat fokus (kadang initialHeight beda kalau rotasi)
+        initialHeight = Math.max(initialHeight, vv.height);
+        setTimeout(updateChatHeight, 50);
+        setTimeout(updateChatHeight, 200);
+        setTimeout(updateChatHeight, 450);
     });
+
     chatInputEl2.addEventListener('blur', function () {
-      document.body.classList.remove('keyboard-open');
-      chatCard.classList.remove('keyboard-open');
+        setTimeout(updateChatHeight, 120);
     });
-    return;
-  }
 
-  let initialHeight = window.visualViewport.height;
-
-  function updateChatHeight() {
-  const vv = window.visualViewport;
-  if (!vv) return;
-
-  const keyboardHeight = initialHeight - vv.height;
-  const isKeyboardOpen = keyboardHeight > 120; // threshold diturunin
-
-  if (isKeyboardOpen) {
-    // Hitung tinggi yang tersedia (dari header sampe keyboard)
-    // vv.height = tinggi viewport setelah keyboard muncul
-    // vv.offsetTop = scroll offset dari viewport
-    const availableHeight = vv.height;
-    
-    chatCard.style.setProperty('--chat-height', availableHeight + 'px');
-    chatCard.classList.add('keyboard-open');
-    document.body.classList.add('keyboard-open');
-
-    // Paksa scroll ke atas biar header gak ketutup
-    if (vv.offsetTop > 0) {
-      window.scrollTo(0, 0);
-    }
-
-    setTimeout(scrollMessagesToBottom, 100);
-  } else {
-    chatCard.classList.remove('keyboard-open');
-    document.body.classList.remove('keyboard-open');
-    chatCard.style.removeProperty('--chat-height');
-  }
-}
-  function scrollMessagesToBottom() {
-    const messagesList = document.getElementById('messages-list');
-    if (messagesList) {
-      messagesList.scrollTop = messagesList.scrollHeight;
-    }
-  }
-
-  // Listen ke viewport resize (pas keyboard buka/tutup)
-  window.visualViewport.addEventListener('resize', updateChatHeight);
-  window.visualViewport.addEventListener('scroll', updateChatHeight);
-
-  // Update saat fokus ke input
-  chatInputEl2.addEventListener('focus', function () {
-    setTimeout(updateChatHeight, 50);
-    setTimeout(updateChatHeight, 200); // double check
-    setTimeout(updateChatHeight, 500);
-  });
-
-  // Update saat blur
-  chatInputEl2.addEventListener('blur', function () {
-    setTimeout(updateChatHeight, 100);
-  });
-
-  // Initial call
-  updateChatHeight();
+    // Initial
+    updateChatHeight();
 })();
     </script>
 </body>
