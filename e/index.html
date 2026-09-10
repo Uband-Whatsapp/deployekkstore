@@ -3807,6 +3807,10 @@ ul {
         padding-bottom: 8px !important;
     }
 }
+body.keyboard-open .chat-card-fullscreen .chat-input-wrapper {
+    padding-bottom: 6px !important;   /* jangan pake env(safe-area-inset-bottom) */
+    border-radius: 0 !important;
+}
 </style>  
 </head>
 <body>
@@ -4584,8 +4588,20 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     <!-- Input file tersembunyi (bisa pilih kamera/galeri) -->
     <input type="file" id="file-input" accept="image/*,video/*" style="display:none;" multiple>
     
-    <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." 
-  style="flex:1; min-height:42px; max-height:120px; font-size:14px; padding:10px 16px; border-radius:22px; resize:none; box-sizing:border-box;"
+   <input 
+    type="text" 
+    id="chat-input" 
+    class="form-input" 
+    placeholder="Ketik pesan..." 
+    name="ekk-chat-msg-xyz"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="sentences"
+    spellcheck="false"
+    data-form-type="other"
+    inputmode="text"
+    enterkeyhint="send"
+    style="flex:1; min-height:42px; max-height:120px; font-size:14px; padding:10px 16px; border-radius:22px; resize:none; box-sizing:border-box;"
 >
     <!-- Voice recording indicator (hidden by default) -->
 <div class="voice-recording-bar" id="voice-recording-bar">
@@ -8925,32 +8941,30 @@ btnSend.addEventListener('click', async function() {
     let rafId = null;
 
     function updateChatHeight() {
-        // Debounce pake rAF biar gak flicker
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(function () {
-            const keyboardHeight = initialHeight - vv.height;
-            const isKeyboardOpen = keyboardHeight > 120; // threshold
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(function () {
+        const keyboardHeight = initialHeight - vv.height;
+        const isKeyboardOpen = keyboardHeight > 100;
 
-            if (isKeyboardOpen) {
-                // tinggi yang tersedia dari bawah header sampai atas keyboard
-                const available = vv.height - HEADER_H;
-                chatCard.style.setProperty('--chat-height', Math.max(available, 220) + 'px');
-                chatCard.classList.add('keyboard-open');
-                document.body.classList.add('keyboard-open');
+        if (isKeyboardOpen) {
+            // Hitung tinggi presisi: viewport height - header
+            // KUNCI: pakai vv.height langsung (bukan calc), biar bottom = atas keyboard
+            const available = vv.height - HEADER_H;
+            chatCard.style.setProperty('--chat-height', Math.max(available, 220) + 'px');
+            chatCard.classList.add('keyboard-open');
+            document.body.classList.add('keyboard-open');
 
-                // Paksa halaman scroll ke atas biar header kelihatan
-                if (window.scrollY !== 0) window.scrollTo(0, 0);
+            if (window.scrollY !== 0) window.scrollTo(0, 0);
 
-                // Scroll pesan ke bawah (double-tap timeout biar pasti)
-                setTimeout(scrollMessagesToBottom, 80);
-                setTimeout(scrollMessagesToBottom, 260);
-            } else {
-                chatCard.classList.remove('keyboard-open');
-                document.body.classList.remove('keyboard-open');
-                chatCard.style.removeProperty('--chat-height');
-            }
-        });
-    }
+            setTimeout(scrollMessagesToBottom, 80);
+            setTimeout(scrollMessagesToBottom, 260);
+        } else {
+            chatCard.classList.remove('keyboard-open');
+            document.body.classList.remove('keyboard-open');
+            chatCard.style.removeProperty('--chat-height');
+        }
+    });
+}
 
     // Listener utama
     vv.addEventListener('resize', updateChatHeight);
@@ -8971,6 +8985,39 @@ btnSend.addEventListener('click', async function() {
 
     // Initial
     updateChatHeight();
+})();
+// ============================================================
+// ANTI-AUTOFILL: cegah Chrome munculin suggestion bar di atas keyboard
+// ============================================================
+(function killAutofill() {
+    const chatInputEl3 = document.getElementById('chat-input');
+    if (!chatInputEl3) return;
+
+    // Paksa attribute yang lebih "galak" dari autocomplete="off"
+    chatInputEl3.setAttribute('autocomplete', 'new-password');
+    chatInputEl3.setAttribute('aria-autocomplete', 'none');
+    chatInputEl3.setAttribute('data-lpignore', 'true');   // buat LastPass
+    chatInputEl3.setAttribute('data-form-type', 'other');
+    chatInputEl3.setAttribute('data-bwignore', 'true');   // buat Bitwarden
+
+    // Workaround: Chrome sering nge-override autocomplete setelah fokus.
+    // Kita reset terus tiap kali difokus.
+    chatInputEl3.addEventListener('focus', function() {
+        this.setAttribute('autocomplete', 'new-password');
+        this.setAttribute('name', 'ekk-chat-msg-' + Date.now().toString(36));
+    });
+
+    // Trik paling ampuh: bikin input invisible dulu, baru attach ke form
+    // Chrome autofill nyari input bertipe "text/email/password" dengan name umum.
+    // Dengan name random + type="text" + autocomplete="new-password", bar hilang.
+    // Kalau masih muncul, tambahkan dummy input hidden di bawah:
+    const dummy = document.createElement('input');
+    dummy.type = 'text';
+    dummy.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;';
+    dummy.setAttribute('tabindex', '-1');
+    dummy.setAttribute('autocomplete', 'off');
+    dummy.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(dummy);
 })();
     </script>
 </body>
