@@ -7666,6 +7666,13 @@ async function uploadAvatarToCloudinary(file) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  // ✅ Paksa nama file unik biar URL Cloudinary selalu beda tiap upload
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const uniqueName = 'avatar_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  formData.append('public_id', uniqueName);
+  formData.append('format', ext);
+
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
     { method: 'POST', body: formData }
@@ -7675,6 +7682,7 @@ async function uploadAvatarToCloudinary(file) {
     throw new Error(errorData.error?.message || 'Upload gagal');
   }
   const data = await response.json();
+  console.log('[Cloudinary] Upload success:', data.secure_url);
   return data.secure_url;
 }
 // ============================================================
@@ -8341,25 +8349,27 @@ await db.collection('users').doc(uid).update({
       }
 
       // UPDATE SEMUA PESAN LAMA
-      const messagesSnapshot = await db.collection('messages')
-        .where('senderId', '==', uid)
-        .get();
+// UPDATE SEMUA PESAN LAMA
+const messagesSnapshot = await db.collection('messages')
+  .where('senderId', '==', uid)
+  .get();
 
-      if (!messagesSnapshot.empty) {
-        const batch = db.batch();
-        messagesSnapshot.forEach((doc) => {
-          batch.update(doc.ref, { avatar: newAvatarUrl });
-        });
-        await batch.commit();
-        console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
-      }
+if (!messagesSnapshot.empty) {
+  const batch = db.batch();
+  messagesSnapshot.forEach((doc) => {
+    batch.update(doc.ref, { avatar: newAvatarUrl });   // ← INI
+  });
+  await batch.commit();
+  console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
+}
 
       await db.collection('users').doc(uid).update({
-        avatar: newAvatarUrl,
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-        avatarChangeCount: firebase.firestore.FieldValue.increment(1),
-        avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
-      });
+  avatar: newAvatarUrl,
+  avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),  // ← TAMBAH
+  lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+  avatarChangeCount: firebase.firestore.FieldValue.increment(1),
+  avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+});
 
       return { success: true };
     } catch (error) {
@@ -8769,7 +8779,9 @@ avatarDiv.style.boxSizing = 'border-box';
 
 if (data.avatar) {
     const img = document.createElement('img');
-    img.src = data.avatar;
+    // ✅ Tambah cache buster berdasarkan timestamp dokumen
+    const cacheBuster = data.avatarUpdatedAt?.toMillis?.() || data.timestamp?.toMillis?.() || '1';
+    img.src = data.avatar + '?v=' + cacheBuster;
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
@@ -10479,7 +10491,8 @@ btnOpenSettings.addEventListener('click', function() {
     console.log('[Edit Save] currentUser.avatar:', currentUser.avatar);
 
     const usernameChanged = newUsername && newUsername !== currentUser.username;
-    const avatarChanged = newAvatarUrl && newAvatarUrl !== currentUser.avatar;
+// ✅ Force update kalau user pilih foto
+const avatarChanged = !!newAvatarUrl;
 
     console.log('[Edit Save] usernameChanged:', usernameChanged);
     console.log('[Edit Save] avatarChanged:', avatarChanged);
