@@ -3765,6 +3765,180 @@ ul {
     box-sizing: border-box;
     /* HAPUS transition */
 }
+/* =========================================================
+   EDIT PROFILE MODAL — CLEAN DESIGN
+========================================================= */
+.edit-profile-box {
+  max-width: 360px;
+  padding: 30px 22px 22px;
+  text-align: center;
+  position: relative;
+  border-radius: 20px;
+}
+
+.modal-close-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.modal-close-x:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.modal-close-x:active {
+  transform: scale(0.9);
+}
+
+.edit-profile-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.edit-profile-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  line-height: 1.45;
+}
+
+/* ---- Avatar picker ---- */
+.avatar-picker {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.avatar-preview {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  color: var(--text-muted);
+  overflow: hidden;
+  transition: border-color 0.25s ease;
+}
+
+.avatar-picker:hover .avatar-preview {
+  border-color: var(--accent);
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--bg-card);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+.avatar-picker:hover .avatar-edit-badge {
+  transform: scale(1.12);
+}
+
+/* ---- Field ---- */
+.edit-field-group {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.edit-field-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  min-height: 46px;
+}
+.edit-field-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.edit-field-input::placeholder {
+  color: var(--text-muted);
+}
+
+.edit-field-hint {
+  display: block;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 7px;
+  padding-left: 2px;
+}
+
+.edit-avatar-error {
+  display: block;
+  font-size: 10.5px;
+  color: var(--danger);
+  text-align: center;
+  margin-top: 6px;
+  min-height: 0;
+}
+.edit-avatar-error:empty {
+  display: none;
+}
+
+/* ---- Save button ---- */
+.edit-save-btn {
+  width: 100%;
+  margin-top: 22px;
+  min-height: 46px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Gear icon hover effect */
+#btn-open-settings:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+  transform: rotate(45deg);
+}
+#btn-open-settings:active {
+  transform: rotate(45deg) scale(0.9);
+}
+
 </style>  
 </head>
 <body>
@@ -4452,9 +4626,12 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 <div class="page" id="page-group">
   <div class="page-header">
     <h1><i class="fa-solid fa-users"></i> Grup Ekk Store</h1>
-    <p id="group-info">0 Member • Online 0</p>
-  </div>
-
+  <div class="page-header" style="margin-bottom:14px;">
+  <h1 style="font-size:19px;font-weight:700;letter-spacing:-0.03em;margin-bottom:2px;">
+    Ruang Ngobrol Buat Yang Galau -_-
+  </h1>
+  <p id="group-info" style="font-size:11px;color:var(--text-muted);">0 anggota · 0 sedang online</p>
+</div>
   <!-- Bagian untuk membuat profil (muncul jika belum punya akun) -->
   <div id="profile-setup" style="display: none;">
     <div class="card">
@@ -4509,20 +4686,26 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
   <!-- Bagian chat (muncul jika sudah punya profil) -->
   <div id="chat-container" style="display: none;">
     <!-- Profil user saat ini -->
-    <div class="card" style="margin-bottom: var(--space-4);">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <div id="my-avatar-placeholder" style="width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;color:var(--accent);">
-          ?
-        </div>
-        <div style="flex:1; min-width:0;">
-          <strong id="my-username-display" style="font-size:16px;">username</strong>
-          <span style="display:block;font-size:11px;color:var(--text-muted);">Online</span>
-        </div>
-        <button class="btn btn-outline btn-sm" id="btn-edit-profile">
-          <i class="fa-solid fa-pen"></i> Edit Profil
-        </button>
-      </div>
-    </div>
+    <!-- Header profil (cuma online status) -->
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding:0 2px;">
+  <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-muted);">
+    <span style="width:6px;height:6px;background:var(--success);border-radius:50%;box-shadow:0 0 0 3px rgba(45,212,191,0.15);"></span>
+    <span id="my-username-display" style="font-weight:600;color:var(--text-secondary);">username</span>
+  </div>
+  <button id="btn-open-settings" aria-label="Pengaturan" style="
+    width:34px;height:34px;border-radius:50%;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:all 0.25s ease;
+    flex-shrink:0;
+  ">
+    <i class="fa-solid fa-gear"></i>
+  </button>
+</div>
 
     <!-- Kotak chat -->
 <!-- Kotak chat dengan tombol attach -->
@@ -4610,46 +4793,51 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 </nav>
     <!-- ==================== MODALS ==================== -->
 <!-- MODAL EDIT PROFIL -->
-<!-- MODAL EDIT PROFIL (dengan upload avatar) -->
+<!-- MODAL EDIT PROFIL — CLEAN -->
 <div class="modal-overlay" id="edit-profile-modal">
-  <div class="modal-box" style="max-width:420px;">
-    <div class="modal-icon"><i class="fa-solid fa-user-pen"></i></div>
-    <h4>Edit Profil</h4>
-    <p>Ganti username atau foto profilmu.</p>
+  <div class="modal-box edit-profile-box">
 
-    <!-- GANTI USERNAME -->
-    <div class="form-group" style="text-align:left;">
-      <label class="form-label">Username Baru</label>
-      <input type="text" id="edit-username-input" class="form-input" placeholder="username baru">
-      <span class="form-hint" id="edit-username-hint">Maksimal 2x ganti per minggu.</span>
+    <!-- Close X -->
+    <button class="modal-close-x" id="edit-profile-cancel" aria-label="Tutup">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Title -->
+    <h4 class="edit-profile-title">Profil Kamu</h4>
+    <p class="edit-profile-sub">Ganti nama atau foto kapan aja</p>
+
+    <!-- Avatar picker -->
+    <label class="avatar-picker" for="edit-avatar-input">
+      <div id="edit-avatar-preview" class="avatar-preview">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div class="avatar-edit-badge">
+        <i class="fa-solid fa-camera"></i>
+      </div>
+      <input type="file" id="edit-avatar-input" accept="image/*" hidden>
+    </label>
+    <span class="edit-avatar-error" id="edit-avatar-error"></span>
+
+    <!-- Username field -->
+    <div class="edit-field-group">
+      <input
+        type="text"
+        id="edit-username-input"
+        class="edit-field-input"
+        placeholder="Username kamu"
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+      >
+      <span class="edit-field-hint" id="edit-username-hint">Bisa ganti 2x per minggu</span>
       <span class="form-error" id="edit-username-error"></span>
     </div>
 
-    <!-- GANTI AVATAR -->
-    <div class="form-group" style="text-align:left;">
-      <label class="form-label">Foto Profil</label>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div id="edit-avatar-preview" style="
-          width:64px;height:64px;border-radius:50%;
-          background:var(--bg-input);
-          display:flex;align-items:center;justify-content:center;
-          font-size:28px;color:var(--text-muted);
-          border:2px solid var(--border);
-          overflow:hidden;
-          flex-shrink:0;
-        ">
-          <i class="fa-solid fa-user"></i>
-        </div>
-        <input type="file" id="edit-avatar-input" accept="image/*" style="flex:1;min-width:120px;">
-      </div>
-      <span class="form-hint" id="edit-avatar-hint">Maksimal 2x ganti per minggu. Max 2MB.</span>
-      <span class="form-error" id="edit-avatar-error"></span>
-    </div>
+    <!-- Save button -->
+    <button class="btn btn-primary edit-save-btn" id="edit-profile-save">
+      Simpan Perubahan
+    </button>
 
-    <div class="modal-actions">
-      <button class="btn btn-outline" id="edit-profile-cancel">Batal</button>
-      <button class="btn btn-primary" id="edit-profile-save">Simpan</button>
-    </div>
   </div>
 </div>
 <!-- MODAL EDIT PESAN -->
@@ -8260,16 +8448,7 @@ function initChat() {
 
     // 2. Update tampilan username & avatar user
     if (myUsernameDisplay) myUsernameDisplay.textContent = currentUser.username;
-    if (myAvatarPlaceholder) {
-        if (currentUser.avatar) {
-            myAvatarPlaceholder.innerHTML =
-                `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-        } else {
-            myAvatarPlaceholder.textContent = (currentUser.username || '?')[0].toUpperCase();
-            myAvatarPlaceholder.style.background = 'var(--accent-soft)';
-            myAvatarPlaceholder.style.color = 'var(--accent)';
-        }
-    }
+    
 
     // 3. Set status online
     updateOnlineStatus(true);
@@ -8714,7 +8893,8 @@ btnSend.addEventListener('click', async function() {
   });
 
   // ---------- EVENT: EDIT PROFIL ----------
-  btnEditProfile.addEventListener('click', function() {
+  const btnOpenSettings = document.getElementById('btn-open-settings');
+btnOpenSettings.addEventListener('click', function() {
     const modal = document.getElementById('edit-profile-modal');
     const input = document.getElementById('edit-username-input');
     const errorEl = document.getElementById('edit-username-error');
@@ -8810,23 +8990,29 @@ btnSend.addEventListener('click', async function() {
         currentUser.avatar = newAvatarUrl;
       }
     }
+if (success) {
+  setCurrentUser(currentUser);
 
-    if (success) {
-      setCurrentUser(currentUser);
-      myUsernameDisplay.textContent = currentUser.username;
-      if (currentUser.avatar) {
-        myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-      } else {
-        myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
-        myAvatarPlaceholder.style.background = 'var(--accent-soft)';
-        myAvatarPlaceholder.style.color = 'var(--accent)';
-      }
-      showToast('Profil berhasil diupdate!', 'success');
-      document.getElementById('edit-profile-modal').classList.remove('active');
-      document.body.classList.remove('modal-open');
-      newAvatarUrl = null;
-      document.getElementById('edit-avatar-input').value = '';
+  // Update label username di header
+  const nameEl = document.getElementById('my-username-display');
+  if (nameEl) nameEl.textContent = currentUser.username;
+
+  // Update avatar di modal (biar kelihatan)
+  const previewEl = document.getElementById('edit-avatar-preview');
+  if (previewEl) {
+    if (currentUser.avatar) {
+      previewEl.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      previewEl.innerHTML = `<i class="fa-solid fa-user"></i>`;
     }
+  }
+
+  showToast('Profil berhasil diupdate!', 'success');
+  document.getElementById('edit-profile-modal').classList.remove('active');
+  document.body.classList.remove('modal-open');
+  newAvatarUrl = null;
+  document.getElementById('edit-avatar-input').value = '';
+}
 
     saveBtn.disabled = false;
     saveBtn.innerHTML = 'Simpan';
