@@ -7667,11 +7667,9 @@ async function uploadAvatarToCloudinary(file) {
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-  // ✅ Paksa nama file unik biar URL Cloudinary selalu beda tiap upload
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  // ✅ Cuma public_id yang diizinkan di unsigned upload
   const uniqueName = 'avatar_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   formData.append('public_id', uniqueName);
-  formData.append('format', ext);
 
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
