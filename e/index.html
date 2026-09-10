@@ -8285,51 +8285,57 @@ if (isMine) {
   }
 
   // ---------- SUBSCRIBE USERS ----------
-  function subscribeUsers() {
+  // ============================================================
+// SUBSCRIBE USERS — dengan heartbeat timeout (online akurat)
+// ============================================================
+let _lastUsersSnapshot = null;
+let _onlineRefreshInterval = null;
+
+function renderOnlineCount() {
+    if (!_lastUsersSnapshot) return;
+
+    const now = Date.now();
+    const TIMEOUT_MS = 30 * 1000;  // 30 detik
+
+    const total = _lastUsersSnapshot.size;
+
+    const online = _lastUsersSnapshot.docs.filter(doc => {
+        const data = doc.data();
+        if (data.isOnline !== true) return false;
+
+        // Ambil lastSeen dalam ms (handle Firestore Timestamp)
+        const lastSeen = data.lastSeen?.toMillis?.() 
+                      || data.lastSeen?.seconds * 1000 
+                      || 0;
+
+        // Kalau lastSeen > 30 detik lalu, anggap OFFLINE (safety net)
+        return (now - lastSeen) < TIMEOUT_MS;
+    }).length;
+
+    groupInfo.textContent = `${total} Member • Online ${online}`;
+}
+
+function subscribeUsers() {
+    // Bersihin listener lama
     if (usersUnsubscribe) {
-      usersUnsubscribe();
-      usersUnsubscribe = null;
+        usersUnsubscribe();
+        usersUnsubscribe = null;
     }
+    if (_onlineRefreshInterval) {
+        clearInterval(_onlineRefreshInterval);
+        _onlineRefreshInterval = null;
+    }
+
     usersUnsubscribe = db.collection('users').onSnapshot((snapshot) => {
-      const total = snapshot.size;
-      const online = snapshot.docs.filter(doc => doc.data().isOnline === true).length;
-      groupInfo.textContent = `${total} Member • Online ${online}`;
+        _lastUsersSnapshot = snapshot;
+        renderOnlineCount();
     }, (error) => {
-      console.error('Error listening users:', error);
+        console.error('Error listening users:', error);
     });
-  }
 
-  // ---------- INIT CHAT ----------
-  function initChat() {
-    profileSetup.style.display = 'none';
-    chatContainer.style.display = 'block';
-
-    myUsernameDisplay.textContent = currentUser.username;
-    if (currentUser.avatar) {
-      myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    } else {
-      myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
-      myAvatarPlaceholder.style.background = 'var(--accent-soft)';
-      myAvatarPlaceholder.style.color = 'var(--accent)';
-    }
-
-    subscribeMessages();
-    subscribeUsers();
-
-    if (statusInterval) clearInterval(statusInterval);
-    updateOnlineStatus(true);
-    statusInterval = setInterval(() => {
-      updateOnlineStatus(true);
-    }, 10000);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        updateOnlineStatus(false);
-      } else {
-        updateOnlineStatus(true);
-      }
-    });
-  }
+    // Refresh tiap 15 detik biar user yang "stuck online" otomatis ke-drop
+    _onlineRefreshInterval = setInterval(renderOnlineCount, 15000);
+}
 
   // ---------- CEK USER SAAT LOAD ----------
   async function checkUser() {
@@ -8986,6 +8992,30 @@ btnSend.addEventListener('click', async function() {
     // Initial
     updateChatHeight();
 })();
+
+// ============================================================
+// BEFOREUNLOAD — kirim status offline pas tab ditutup
+// ============================================================
+window.addEventListener('beforeunload', function () {
+    const uid = currentUser?.uid;
+    if (!uid) return;
+
+    const payload = JSON.stringify({ uid: uid, isOnline: false });
+
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+            '/api/update-status-beacon',
+            new Blob([payload], { type: 'application/json' })
+        );
+    } else {
+        fetch('/api/update-status', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+        }).catch(() => {});
+    }
+});
 // ============================================================
 // ANTI-AUTOFILL: cegah Chrome munculin suggestion bar di atas keyboard
 // ============================================================
