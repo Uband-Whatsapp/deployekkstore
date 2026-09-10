@@ -4737,6 +4737,12 @@ ul {
   -webkit-text-fill-color: transparent;
   max-width: 140px;
 }
+.group-username {
+  /* ... semua yang lama ... */
+  max-width: 140px;
+  width: auto !important;      /* ← TAMBAH */
+  display: inline-block !important;  /* ← TAMBAH */
+}
 
 .verified-badge {
   display: inline-flex;
@@ -5704,15 +5710,16 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 
     <!-- Username field -->
     <div class="edit-field-group">
-      <input
-        type="text"
-        id="edit-username-input"
-        class="edit-field-input"
-        placeholder="Username kamu"
-        autocomplete="off"
-        autocapitalize="none"
-        spellcheck="false"
-      >
+   <input
+  type="text"
+  id="edit-username-input"
+  class="edit-field-input"
+  placeholder="contoh: Ekk Store"
+  maxlength="10"
+  autocomplete="off"
+  autocapitalize="words"
+  spellcheck="false"
+>
       <span class="edit-field-hint" id="edit-username-hint">Bisa ganti 2x per minggu</span>
       <span class="form-error" id="edit-username-error"></span>
     </div>
@@ -9529,6 +9536,73 @@ function renderPendingMessage(p) {
   bubble.style.position = 'relative';
   bubble.style.overflow = 'hidden';
 
+  // ============================================================
+  // TEXT MESSAGE PENDING
+  // ============================================================
+  if (p.type === 'text') {
+    bubble.style.padding = '6px 12px';
+    bubble.style.wordBreak = 'break-word';
+    bubble.style.lineHeight = '1.4';
+    bubble.style.fontSize = '13px';
+    bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+    bubble.style.minWidth = '70px';
+
+    // Reply preview (kalo ada)
+    if (p.replyTo) {
+      const replyBox = document.createElement('div');
+      replyBox.style.padding = '3px 8px';
+      replyBox.style.marginBottom = '4px';
+      replyBox.style.borderRadius = '4px';
+      replyBox.style.fontSize = '10px';
+      replyBox.style.background = 'rgba(255,255,255,0.14)';
+      replyBox.style.borderLeft = '2px solid rgba(255,255,255,0.5)';
+      replyBox.style.lineHeight = '1.3';
+
+      const replyName = document.createElement('span');
+      replyName.style.fontWeight = '600';
+      replyName.textContent = (p.replyTo.username || 'unknown') + ': ';
+      replyBox.appendChild(replyName);
+
+      const replyText = document.createElement('span');
+      replyText.style.opacity = '0.85';
+      replyText.textContent = p.replyTo.text || '';
+      replyBox.appendChild(replyText);
+
+      bubble.appendChild(replyBox);
+    }
+
+    // Isi pesan
+    const txt = document.createElement('div');
+    txt.textContent = p.text || '';
+    txt.style.whiteSpace = 'pre-wrap';
+    txt.style.wordBreak = 'break-word';
+    bubble.appendChild(txt);
+
+    // Baris bawah: jam kecil
+    const metaRow = document.createElement('div');
+    metaRow.style.display = 'flex';
+    metaRow.style.justifyContent = 'flex-end';
+    metaRow.style.alignItems = 'center';
+    metaRow.style.gap = '4px';
+    metaRow.style.marginTop = '3px';
+    metaRow.style.fontSize = '9px';
+    metaRow.style.opacity = '0.75';
+    metaRow.style.lineHeight = '1';
+
+    const clock = document.createElement('i');
+    clock.className = 'fa-regular fa-clock';
+    metaRow.appendChild(clock);
+
+    bubble.appendChild(metaRow);
+
+    bubbleWrapper.appendChild(bubble);
+    div.appendChild(bubbleWrapper);
+    return div;
+  }
+
+  // ============================================================
+  // IMAGE / VIDEO PENDING
+  // ============================================================
   if (p.type === 'image' || p.type === 'video') {
     bubble.style.padding = '3px';
     const box = document.createElement('div');
@@ -10062,7 +10136,7 @@ if (chatInputEl) {
 // Init state tombol
 updateSendButtonVisibility();
 }
-  // ---------- EVENT: KIRIM PESAN ----------
+// ---------- EVENT: KIRIM PESAN (INSTANT PREVIEW) ----------
 btnSend.addEventListener('click', async function() {
   const text = chatInput.value.trim();
   const hasFiles = pendingFiles.length > 0;
@@ -10075,6 +10149,13 @@ btnSend.addEventListener('click', async function() {
     return;
   }
 
+  if (!text) return;
+  if (!currentUser) {
+    showToast('Buat profil dulu di halaman Grup', 'warning');
+    return;
+  }
+
+  // ---- Simpan reply data ----
   let replyData = null;
   if (replyingTo) {
     replyData = {
@@ -10084,13 +10165,69 @@ btnSend.addEventListener('click', async function() {
     };
   }
 
+  // ---- Generate ID unik untuk pending ----
+  const pid = 'pending_text_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+
+  // ============================================
+  // 1. INSTANT PREVIEW — langsung tampil
+  // ============================================
+  pendingMessages.push({
+    id: pid,
+    type: 'text',
+    text: text,
+    replyTo: replyData,
+    username: currentUser.username,
+    avatar: currentUser.avatar || '',
+    uploading: true
+  });
+
+  // Clear input & reply state
   chatInput.value = '';
   cancelReply();
   updateSendButtonVisibility();
 
-  const ok = await sendMessage(text, replyData);
-  if (!ok) {
-    showToast('Gagal mengirim pesan, coba lagi', 'error');
+  // Render instan
+  renderAllMessages();
+  setTimeout(() => {
+    if (messagesList) messagesList.scrollTop = messagesList.scrollHeight;
+  }, 40);
+
+  // ============================================
+  // 2. KIRIM KE BACKEND DI BACKGROUND
+  // ============================================
+  try {
+    const ok = await sendMessage(text, replyData);
+    if (!ok) {
+      showToast('Gagal mengirim pesan', 'error');
+    }
+  } catch (err) {
+    console.error('Send error:', err);
+    showToast('Gagal mengirim pesan', 'error');
+  } finally {
+    // Tunggu Firestore render pesan asli dulu (hindari flicker)
+    let waited = 0;
+    const waitAndRemove = () => {
+      // Cek apakah pesan udah muncul di Firestore
+      const found = lastDocsCache.some(doc => {
+        const d = doc.data();
+        return d.senderId === currentUser.uid
+            && d.text === text
+            && !d.isDeletedForAll;
+      });
+
+      if (found || waited >= 1500) {
+        const idx = pendingMessages.findIndex(p => p.id === pid);
+        if (idx !== -1) {
+          pendingMessages.splice(idx, 1);
+          renderAllMessages();
+        }
+        return;
+      }
+
+      waited += 100;
+      setTimeout(waitAndRemove, 100);
+    };
+    waitAndRemove();
   }
 });
   chatInput.addEventListener('keydown', function(e) {
@@ -10102,6 +10239,22 @@ btnSend.addEventListener('click', async function() {
 
   // ---------- EVENT: EDIT PROFIL ----------
   const btnOpenSettings = document.getElementById('btn-open-settings');
+// Normalize input edit username saat ngetik
+(function initEditUsernameInput() {
+  const el = document.getElementById('edit-username-input');
+  if (!el) return;
+
+  el.addEventListener('input', function() {
+    const raw = this.value;
+    const normalized = normalizeUsername(raw);
+    if (raw !== normalized && raw.length > 0 && !/\s$/.test(raw)) {
+      this.value = normalized;
+    }
+    // Clear error saat ngetik
+    const errEl = document.getElementById('edit-username-error');
+    if (errEl) errEl.classList.remove('visible');
+  });
+})();
 btnOpenSettings.addEventListener('click', function() {
     const modal = document.getElementById('edit-profile-modal');
     const input = document.getElementById('edit-username-input');
@@ -10152,20 +10305,28 @@ btnOpenSettings.addEventListener('click', function() {
       return;
     }
 
-    if (usernameChanged) {
-      if (!/^[a-z0-9_]+$/.test(newUsername)) {
-        errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
-        errorEl.classList.add('visible');
-        return;
-      }
-      const exists = await checkUsername(newUsername);
-      if (exists) {
-        errorEl.textContent = 'Username sudah dipakai';
-        errorEl.classList.add('visible');
-        return;
-      }
-    }
+    let normalizedNewUsername = newUsername;
 
+if (usernameChanged) {
+  // Normalize: trim + collapse spasi
+  normalizedNewUsername = normalizeUsername(newUsername);
+
+  // Validasi dengan rules yang sama kaya form registrasi
+  const validation = isValidUsername(normalizedNewUsername);
+  if (!validation.valid) {
+    errorEl.textContent = validation.msg;
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  // Cek username unik (case-insensitive)
+  const exists = await checkUsername(normalizedNewUsername);
+  if (exists) {
+    errorEl.textContent = 'Username sudah dipakai (huruf besar/kecil dianggap sama)';
+    errorEl.classList.add('visible');
+    return;
+  }
+}
     const saveBtn = document.getElementById('edit-profile-save');
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Menyimpan...';
@@ -10174,14 +10335,16 @@ btnOpenSettings.addEventListener('click', function() {
     let errorMsg = '';
 
     if (usernameChanged) {
-      const result = await updateUsername(currentUser.uid, newUsername);
+      if (usernameChanged) {
+  const result = await updateUsername(currentUser.uid, normalizedNewUsername);
       if (!result.success) {
         success = false;
         errorMsg = result.error;
         errorEl.textContent = errorMsg;
         errorEl.classList.add('visible');
       } else {
-        currentUser.username = newUsername;
+        } else {
+  currentUser.username = normalizedNewUsername;
       }
     }
 
