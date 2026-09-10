@@ -6265,23 +6265,30 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 
         // ---------- NAVIGATION ----------
         function navigateTo(page) {
-            currentPage = page;
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById('page-' + page);
-            if (targetPage) {
-                targetPage.classList.add('active');
-            }
-            document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
-                item.classList.toggle('active', item.dataset.page === page);
-            });
-            document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
-                item.classList.toggle('active', item.dataset.page === page);
-            });
-            if (page === 'history') renderHistory();
-            if (page === 'home') updateDashboardStats();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
+    currentPage = page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const targetPage = document.getElementById('page-' + page);
+    if (targetPage) {
+        targetPage.classList.add('active');
+    }
+    document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+    });
+    document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+    });
+    // Toggle chat-open class sesuai halaman
+const chatContainer = document.getElementById('chat-container');
+const isChatVisible = chatContainer && chatContainer.style.display !== 'none';
+if (page === 'group' && isChatVisible) {
+    document.body.classList.add('chat-open');
+} else {
+    document.body.classList.remove('chat-open');
+}
+    if (page === 'history') renderHistory();
+    if (page === 'home') updateDashboardStats();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
         document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
             item.addEventListener('click', function() {
                 navigateTo(this.dataset.page);
@@ -9788,7 +9795,7 @@ function renderPendingMessage(p) {
 function initChat() {
     if (profileSetup) profileSetup.style.display = 'none';
     if (chatContainer) chatContainer.style.display = 'flex';  // ← dari 'block' jadi 'flex'
-
+document.body.classList.add('chat-open');
     // 2. Update tampilan username & avatar user
     if (myUsernameDisplay) myUsernameDisplay.textContent = currentUser.username;
     
