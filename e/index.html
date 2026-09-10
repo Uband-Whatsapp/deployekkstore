@@ -3083,68 +3083,71 @@ ul {
 ========================================================= */
 
 /* Media bubble */
+/* =========================================================
+   MEDIA BUBBLE — compact version
+========================================================= */
 .msg-media {
   position: relative;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  max-width: 220px;
-  min-width: 150px;
-  margin: 4px 0;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  max-width: 200px;
+  min-width: 110px;
+  margin: 0;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .msg-media:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 .msg-media img,
 .msg-media video {
   display: block;
   width: 100%;
-  height: 200px;
+  height: 175px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 .msg-media::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 .msg-media .play-overlay {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 18px;
+  font-size: 17px;
   pointer-events: none;
   border: 2px solid rgba(255, 255, 255, 0.25);
   padding-left: 3px;
 }
 .msg-media .media-zoom-hint {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3154,6 +3157,63 @@ ul {
 }
 .msg-media:hover .media-zoom-hint {
   opacity: 1;
+}
+
+/* =========================================================
+   TIMESTAMP OVERLAY di dalam media
+========================================================= */
+.msg-media .media-timestamp {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+  font-family: var(--font-mono);
+}
+.msg-media .media-timestamp .read-check {
+  font-size: 10px;
+  color: #fff;
+  opacity: 0.9;
+  margin-left: 1px;
+  font-family: var(--font-ui);
+}
+
+/* =========================================================
+   BUBBLE MEDIA-ONLY — padding tipis biar media full
+========================================================= */
+.bubble-media-only {
+  padding: 3px !important;
+}
+.bubble-media-only .text-content:empty {
+  display: none;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .msg-media {
+    max-width: 180px;
+    min-width: 100px;
+  }
+  .msg-media img,
+  .msg-media video {
+    height: 150px;
+  }
+  .msg-media .media-timestamp {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
 }
 
 /* Lightbox */
@@ -3296,20 +3356,7 @@ ul {
   border-radius: 10px;
 }
 
-@media (max-width: 480px) {
-  .msg-media {
-    max-width: 180px;
-    min-width: 120px;
-  }
-  .msg-media img,
-  .msg-media video {
-    height: 160px;
-  }
-  .media-preview-item {
-    width: 60px;
-    height: 60px;
-  }
-}
+
 /* =========================================================
    ATTACHMENT BOTTOM SHEET
 ========================================================= */
@@ -7282,7 +7329,10 @@ document.addEventListener('keydown', function(e) {
     }
 
     const div = document.createElement('div');
-    div.className = 'message-item';
+div.className = 'message-item';
+if (isMine && !isSystem) {
+  div.classList.add('bubble-mine');
+}
     div.dataset.docId = doc.id;
     div.dataset.username = data.username || 'unknown';
     div.dataset.text = data.text || '';
@@ -7363,7 +7413,10 @@ document.addEventListener('keydown', function(e) {
       nameSpan.textContent = data.username || 'unknown';
       bubble.appendChild(nameSpan);
     }
-
+// Deteksi media-only untuk styling bubble khusus
+if (data.mediaUrl && (!data.text || !data.text.trim()) && !isDeletedForAll && !isDeletedForMe) {
+  bubble.classList.add('bubble-media-only');
+}
     const textSpan = document.createElement('div');
     textSpan.className = 'text-content';
     if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
@@ -7414,7 +7467,31 @@ document.addEventListener('keydown', function(e) {
   zoomHint.className = 'media-zoom-hint';
   zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
   mediaBox.appendChild(zoomHint);
+// === TAMBAHAN: Timestamp overlay di dalam media ===
+const timeOverlay = document.createElement('div');
+timeOverlay.className = 'media-timestamp';
 
+if (data.timestamp) {
+  const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+  timeOverlay.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Read status (✓ / ✓✓) di dalam overlay — hanya untuk pesan sendiri
+if (isMine && !isSystem && !isDeletedForAll) {
+  const readStatus = document.createElement('span');
+  readStatus.className = 'read-check';
+  const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
+  if (readCount > 0) {
+    readStatus.innerHTML = '✓✓';
+    readStatus.style.color = 'var(--success)';
+  } else {
+    readStatus.innerHTML = '✓';
+  }
+  timeOverlay.appendChild(readStatus);
+}
+
+mediaBox.appendChild(timeOverlay);
+// === END TAMBAHAN ===
   mediaBox.addEventListener('click', function(e) {
     e.stopPropagation();
     openLightbox(data.mediaUrl, data.mediaType, data.fileName);
@@ -7454,32 +7531,42 @@ document.addEventListener('keydown', function(e) {
   player.appendChild(waveform);
 
   const durEl = document.createElement('span');
-  durEl.className = 'audio-duration';
+durEl.className = 'audio-duration';
+
+// Format waktu
+function fmtTime(s) {
+  if (!isFinite(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+// Kalau ada durasi tersimpan di DB, pakai langsung
+if (data.duration && data.duration > 0) {
+  durEl.textContent = fmtTime(data.duration / 1000);
+} else {
   durEl.textContent = '0:00';
-  player.appendChild(durEl);
+}
+player.appendChild(durEl);
 
-  // Format waktu
-  function fmtTime(s) {
-    if (!isFinite(s)) return '0:00';
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return m + ':' + (sec < 10 ? '0' : '') + sec;
-  }
-
-  audio.addEventListener('loadedmetadata', function() {
+// Update dari metadata audio (paling akurat)
+audio.addEventListener('loadedmetadata', function() {
+  // Hanya override kalau tidak ada durasi tersimpan
+  if (!data.duration) {
     durEl.textContent = fmtTime(audio.duration);
-  });
+  }
+});
 
-  audio.addEventListener('timeupdate', function() {
-    if (audio.duration) {
-      const progress = audio.currentTime / audio.duration;
-      durEl.textContent = fmtTime(audio.currentTime);
-      const playedCount = Math.floor(progress * bars.length);
-      bars.forEach((b, i) => {
-        b.classList.toggle('played', i < playedCount);
-      });
-    }
-  });
+audio.addEventListener('timeupdate', function() {
+  if (audio.duration) {
+    const progress = audio.currentTime / audio.duration;
+    durEl.textContent = fmtTime(audio.currentTime);
+    const playedCount = Math.floor(progress * bars.length);
+    bars.forEach((b, i) => {
+      b.classList.toggle('played', i < playedCount);
+    });
+  }
+});
 
   audio.addEventListener('ended', function() {
     playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
@@ -7538,32 +7625,37 @@ document.addEventListener('keydown', function(e) {
   }
 }
 
-    const timeSpan = document.createElement('div');
-    timeSpan.style.fontSize = '8px';
-    timeSpan.style.opacity = '0.5';
-    timeSpan.style.marginTop = '2px';
-    timeSpan.style.textAlign = 'right';
-    if (data.timestamp) {
-      const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-      timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    }
-    bubble.appendChild(timeSpan);
+    // Timestamp hanya di luar kalau TIDAK ada media
+const hasMedia = !!data.mediaUrl && !isDeletedForAll && !isDeletedForMe;
 
-    if (isMine && !isSystem && !isDeletedForAll) {
-      const readStatus = document.createElement('span');
-      readStatus.style.fontSize = '10px';
-      readStatus.style.marginLeft = '4px';
-      readStatus.style.opacity = '0.6';
-      const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
-      if (readCount > 0) {
-        readStatus.innerHTML = '✓✓';
-        readStatus.style.color = 'var(--success)';
-      } else {
-        readStatus.innerHTML = '✓';
-        readStatus.style.color = 'var(--text-muted)';
-      }
-      timeSpan.appendChild(readStatus);
+if (!hasMedia) {
+  const timeSpan = document.createElement('div');
+  timeSpan.style.fontSize = '8px';
+  timeSpan.style.opacity = '0.5';
+  timeSpan.style.marginTop = '2px';
+  timeSpan.style.textAlign = 'right';
+  if (data.timestamp) {
+    const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  }
+  bubble.appendChild(timeSpan);
+
+  if (isMine && !isSystem && !isDeletedForAll) {
+    const readStatus = document.createElement('span');
+    readStatus.style.fontSize = '10px';
+    readStatus.style.marginLeft = '4px';
+    readStatus.style.opacity = '0.6';
+    const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
+    if (readCount > 0) {
+      readStatus.innerHTML = '✓✓';
+      readStatus.style.color = 'var(--success)';
+    } else {
+      readStatus.innerHTML = '✓';
+      readStatus.style.color = 'var(--text-muted)';
     }
+    timeSpan.appendChild(readStatus);
+  }
+}
 
     if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
       const replyContainer = document.createElement('div');
@@ -8232,7 +8324,6 @@ let recordTimerInterval = null;
 let recordCancelled = false;
 
 const btnVoice = document.getElementById('btn-voice');
-const btnSendEl = document.getElementById('btn-send');
 const voiceRecordingBar = document.getElementById('voice-recording-bar');
 const recordTimeEl = document.getElementById('record-time');
 const voiceCancelBtn = document.getElementById('voice-cancel-btn');
@@ -8298,8 +8389,16 @@ async function startRecording() {
     });
 
     mediaRecorder.start();
-    isRecording = true;
-    recordStartTime = Date.now();
+isRecording = true;
+recordStartTime = Date.now();
+
+// ← TAMBAH INI
+if (window._releaseWhileStarting) {
+  window._releaseWhileStarting = false;
+  setTimeout(() => {
+    if (isRecording) stopRecording(false);
+  }, 50);
+}
 
     // UI update
     btnVoice.classList.add('recording');
@@ -8391,11 +8490,22 @@ if (btnVoice) {
   };
 
   btnVoice.addEventListener('mousedown', onPressStart);
-  btnVoice.addEventListener('touchstart', onPressStart, { passive: false });
+btnVoice.addEventListener('touchstart', onPressStart, { passive: false });
 
-  document.addEventListener('mouseup', onPressEnd);
-  document.addEventListener('touchend', onPressEnd);
-}
+document.addEventListener('mouseup', function(e) {
+  if (window._voiceBtnPressed && !isRecording) {
+    window._releaseWhileStarting = true;
+  }
+  window._voiceBtnPressed = false;
+  onPressEnd(e);
+});
+document.addEventListener('touchend', function(e) {
+  if (window._voiceBtnPressed && !isRecording) {
+    window._releaseWhileStarting = true;
+  }
+  window._voiceBtnPressed = false;
+  onPressEnd(e);
+});
 
 // Tombol cancel
 if (voiceCancelBtn) {
