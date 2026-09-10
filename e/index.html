@@ -1,3 +1,4 @@
+woy ko JavaScript masih mati sih anj
 <!DOCTYPE html>
 <html lang="id" data-theme="dark">
 <head>
@@ -39,8 +40,6 @@
 --accent-hover: #fb923c;
 --accent-glow: rgba(249, 115, 22, 0.25);
 --accent-soft: #2a1e16;
---info: #f97316;
---info-soft: #2a1e16;
     --success: #2dd4bf;
     --success-soft: #0f2a26;
     --danger: #f87171;
@@ -4520,11 +4519,18 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 
         // ---------- HISTORY MANAGEMENT ----------
         function saveHistory(project, status, url, projectId, deploymentId) {
-            const now = new Date();
-            const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            let history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-            history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
+    const now = new Date();
+    const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    let history;
+    try {
+        history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+    } catch (e) {
+        console.warn('History corrupt, reset.');
+        localStorage.removeItem('ekk_deployHistory');
+        history = [];
+    }
+    history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
             history.unshift({
                 project: project,
                 status: status,
@@ -4542,14 +4548,24 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         }
 
         function escapeHTML(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
         function getHistory() {
-            return JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-        }
+    try {
+        return JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
+    } catch (e) {
+        console.warn('History corrupt, reset.');
+        localStorage.removeItem('ekk_deployHistory');
+        return [];
+    }
+}
 
         function renderHistory() {
             const historyList = document.getElementById('history-list');
@@ -4948,6 +4964,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
                     markDeployStepComplete('step-completed');
 
                  if (output) {
+    const safeUrl = escapeHTML(result.url);
     output.innerHTML = `
         <div class="deploy-success">
             <div class="deploy-success-header">
@@ -4965,11 +4982,11 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             </div>
             <div class="deploy-url-row">
                 <i class="fa-solid fa-link"></i>
-                <a href="${result.url}"
+                <a href="${safeUrl}"
                    target="_blank"
                    rel="noopener noreferrer"
                    class="deploy-url"
-                   id="deploy-url">${result.url}</a>
+                   id="deploy-url">${safeUrl}</a>
             </div>
             <div class="deploy-actions">
                 <button type="button"
@@ -5210,28 +5227,32 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         // =========================================================
         // JOIN REQUIREMENT
         // =========================================================
-        const joinButton = document.getElementById('btn-join-grup');
-        if (joinButton) {
-            joinButton.addEventListener('click', function() {
-                setJoinTimestamp();
-                updateModalStatus();
-                if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
-                    const project = window._pendingDeploy;
-                    window._pendingDeploy = null;
-                    const deployModal = document.getElementById('deploy-modal');
-                    if (deployModal) deployModal.classList.remove('active');
-                    document.body.classList.remove('modal-open');
-                    const deployBtn = document.getElementById('deploy-btn');
-                    isDeploying = true;
-                    deployState = DEPLOY_STATE.VALIDATING;
-                    if (deployBtn) {
-                        deployBtn.disabled = true;
-                        deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
-                    }
-                    performDeploy(project);
-                }
-            });
+       // =========================================================
+// JOIN REQUIREMENT
+// =========================================================
+const joinButton = document.getElementById('btn-join-grup');
+if (joinButton) {
+    joinButton.addEventListener('click', function() {
+        if (isDeploying) return;
+        setJoinTimestamp();
+        updateModalStatus();
+        if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
+            const project = window._pendingDeploy;
+            window._pendingDeploy = null;
+            const deployModal = document.getElementById('deploy-modal');
+            if (deployModal) deployModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            const deployBtn = document.getElementById('deploy-btn');
+            isDeploying = true;
+            deployState = DEPLOY_STATE.VALIDATING;
+            if (deployBtn) {
+                deployBtn.disabled = true;
+                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+            }
+            performDeploy(project);
         }
+    });
+}
 
         // =========================================================
         // NOTIFICATION REQUIREMENT
@@ -5555,17 +5576,17 @@ async function uploadMediaToCloudinary(file, folder = 'chat_media') {
   }
 }
 // ============================================================
-// EVENT: TOMBOL ATTACH (BUKA FILE PICKER)
+// EVENT: TOMBOL ATTACH (BUKA FILE PICKER) — FIXED
 // ============================================================
 const attachBtn = document.getElementById('btn-attach');
-const fileInput = document.getElementById('file-input');
+const chatFileInput = document.getElementById('file-input');
 
 attachBtn.addEventListener('click', function() {
-  fileInput.click();
+  chatFileInput.click();
 });
 
 // Event saat user pilih file (atau ambil foto/video dari kamera)
-fileInput.addEventListener('change', async function() {
+chatFileInput.addEventListener('change', async function() {
   const files = this.files;
   if (!files.length) return;
 
@@ -5724,7 +5745,9 @@ if (editAvatarInput) {
   });
 }
 
-// ---------- FIREBASE CONFIG & INISIALISASI ----------
+// ============================================================
+// FIREBASE CONFIG & INISIALISASI
+// ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyCesmK4pK1sv48Z9EkYDapH7XRf7BeOkA",
   authDomain: "deploy-ekkstore.firebaseapp.com",
@@ -5735,9 +5758,49 @@ const firebaseConfig = {
   measurementId: "G-667XX2R18N"
 };
 
+// ============================================================
+// VARIABEL GLOBAL UNTUK CHAT (dipakai di dalam & luar blok Firebase)
+// ============================================================
+let currentUser = null;
+
+// ============================================================
+// PERBAIKAN: CEK FIREBASE DENGAN RETURN AGAR TIDAK MATI TOTAL
+// ============================================================
 if (typeof firebase === 'undefined') {
   console.error('Firebase SDK belum di-load!');
+  console.warn('Fitur Grup tidak tersedia karena Firebase gagal dimuat.');
+  // Tampilkan pesan ke user (opsional)
+  const groupPage = document.getElementById('page-group');
+  if (groupPage) {
+    groupPage.innerHTML = `
+      <div class="page-header">
+        <h1><i class="fa-solid fa-users"></i> Grup Ekk Store</h1>
+        <p style="color: var(--danger);">Fitur grup tidak tersedia karena Firebase gagal dimuat.</p>
+        <p style="color: var(--text-muted); font-size: 13px;">Periksa koneksi internet atau coba refresh halaman.</p>
+      </div>
+    `;
+  }
+  // ✅ JANGAN LANJUTKAN EKSEKUSI KODE YANG BERGANTUNG PADA FIREBASE
+  // (fungsi lain seperti deploy, history, navigasi tetap berjalan)
+  // Kita hanya return dari blok ini, tapi karena ini di luar fungsi,
+  // kita gunakan flag atau kita bungkus dalam IIFE? 
+  // Cara paling aman: bungkus seluruh kode Firebase dalam fungsi dan panggil bersyarat.
+  // Namun karena kita sudah di sini, kita bisa gunakan throw atau return 
+  // tapi return tidak berlaku di scope global.
+  // Untuk menghentikan eksekusi kode selanjutnya, kita bisa gunakan 
+  // throw new Error() atau kita letakkan semua kode dependen di dalam else.
+  // Karena kita sudah di dalam else, maka kita tidak perlu return, 
+  // kita hanya perlu memastikan tidak ada kode di luar else yang dijalankan.
+  // TAPI di sini kita masih di dalam if, jadi kita harus menghentikan agar 
+  // tidak masuk ke else. Kita bisa gunakan return jika kita bungkus dalam fungsi.
+  // Karena kita tidak ingin mengubah struktur terlalu banyak, saya sarankan 
+  // untuk membungkus seluruh kode Firebase dalam fungsi dan panggil di sini.
+  // Tapi untuk solusi cepat, kita bisa gunakan label atau kita pindahkan 
+  // semua kode Firebase ke dalam fungsi.
+  // Saya akan berikan versi yang benar-benar aman di bawah.
+  // (Lihat alternatif di bawah)
 } else {
+  // Firebase tersedia, jalankan semua kode grup
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
@@ -5745,13 +5808,13 @@ if (typeof firebase === 'undefined') {
 
   // ---------- STATE ----------
   const GRP_STORAGE_KEY = 'ekk_group_user';
-  const UID_STORAGE_KEY = 'ekk_group_uid';
-  let currentUser = null;
-  let messagesUnsubscribe = null;
+const UID_STORAGE_KEY = 'ekk_group_uid';
+let messagesUnsubscribe = null;
   let usersUnsubscribe = null;
   let statusInterval = null;
-  let replyingTo = null; // Pindah ke sini (di luar renderMessage)
-let messagesObserver = null;
+  let replyingTo = null;
+  let messagesObserver = null;
+
   function getCurrentUser() {
     const data = localStorage.getItem(GRP_STORAGE_KEY);
     if (data) {
@@ -5837,1180 +5900,1078 @@ let messagesObserver = null;
     });
   }
 
-  // updateProfile langsung ke Firestore (tanpa API)
-// ============================================================
-// UPDATE PROFIL LANGSUNG KE FIRESTORE (TANPA API)
-// ============================================================
-// ============================================================
-// UPDATE USERNAME (dengan batasan 2x/minggu)
-// ============================================================
-// ============================================================
-// UPDATE USERNAME (dengan batasan 2x/minggu + update pesan lama)
-// ============================================================
-// ============================================================
-// UPDATE USERNAME (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
-// ============================================================
-async function updateUsername(uid, newUsername) {
-  try {
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (!userDoc.exists) {
-      return { success: false, error: 'User tidak ditemukan' };
-    }
-    const userData = userDoc.data();
+  // ============================================================
+  // UPDATE USERNAME (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
+  // ============================================================
+  async function updateUsername(uid, newUsername) {
+    try {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (!userDoc.exists) {
+        return { success: false, error: 'User tidak ditemukan' };
+      }
+      const userData = userDoc.data();
 
-    const now = Date.now();
-    const resetDate = userData.usernameChangeReset?.toMillis?.() || 0;
-    const count = userData.usernameChangeCount || 0;
+      const now = Date.now();
+      const resetDate = userData.usernameChangeReset?.toMillis?.() || 0;
+      const count = userData.usernameChangeCount || 0;
 
-    if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
+      if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
+        await db.collection('users').doc(uid).update({
+          usernameChangeCount: 0,
+          usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        const newDoc = await db.collection('users').doc(uid).get();
+        const newData = newDoc.data();
+        const newCount = newData.usernameChangeCount || 0;
+        if (newCount >= 2) {
+          const nextReset = newData.usernameChangeReset?.toMillis?.() || 0;
+          const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
+          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+          return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
+        }
+      } else {
+        if (count >= 2) {
+          const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
+          const nextDate = new Date(nextReset);
+          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+          return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
+        }
+      }
+
+      // Cek username unik
+      const snapshot = await db.collection('users').where('username', '==', newUsername).get();
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        if (doc.id !== uid) {
+          return { success: false, error: 'Username sudah dipakai oleh orang lain' };
+        }
+      }
+
+      // UPDATE SEMUA PESAN LAMA
+      const messagesSnapshot = await db.collection('messages')
+        .where('senderId', '==', uid)
+        .get();
+
+      if (!messagesSnapshot.empty) {
+        const batch = db.batch();
+        messagesSnapshot.forEach((doc) => {
+          batch.update(doc.ref, { username: newUsername });
+        });
+        await batch.commit();
+        console.log(`[updateUsername] Updated ${messagesSnapshot.size} messages`);
+      }
+
       await db.collection('users').doc(uid).update({
-        usernameChangeCount: 0,
+        username: newUsername,
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+        usernameChangeCount: firebase.firestore.FieldValue.increment(1),
         usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
       });
-      const newDoc = await db.collection('users').doc(uid).get();
-      const newData = newDoc.data();
-      const newCount = newData.usernameChangeCount || 0;
-      if (newCount >= 2) {
-        const nextReset = newData.usernameChangeReset?.toMillis?.() || 0;
-        const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
-        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
-      }
-    } else {
-      if (count >= 2) {
-        const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
-        const nextDate = new Date(nextReset);
-        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
-      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('[updateUsername] Error:', error);
+      return { success: false, error: error.message };
     }
-
-    // Cek username unik
-    const snapshot = await db.collection('users').where('username', '==', newUsername).get();
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      if (doc.id !== uid) {
-        return { success: false, error: 'Username sudah dipakai oleh orang lain' };
-      }
-    }
-
-    // ============================================================
-    // UPDATE SEMUA PESAN LAMA (biar username ikut berubah)
-    // ============================================================
-    const messagesSnapshot = await db.collection('messages')
-      .where('senderId', '==', uid)
-      .get();
-
-    if (!messagesSnapshot.empty) {
-      const batch = db.batch();
-      messagesSnapshot.forEach((doc) => {
-        batch.update(doc.ref, { username: newUsername });
-      });
-      await batch.commit();
-      console.log(`[updateUsername] Updated ${messagesSnapshot.size} messages`);
-    }
-
-    // Update username user
-    await db.collection('users').doc(uid).update({
-      username: newUsername,
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-      usernameChangeCount: firebase.firestore.FieldValue.increment(1),
-      usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('[updateUsername] Error:', error);
-    return { success: false, error: error.message };
   }
-}
 
-// ============================================================
-// UPDATE AVATAR (dengan batasan 2x/minggu)
-// ============================================================
-// ============================================================
-// UPDATE AVATAR (dengan batasan 2x/minggu + update pesan lama)
-// ============================================================
-// ============================================================
-// UPDATE AVATAR (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
-// ============================================================
-async function updateAvatar(uid, newAvatarUrl) {
-  try {
-    // Ambil data user
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (!userDoc.exists) {
-      return { success: false, error: 'User tidak ditemukan' };
-    }
-    const userData = userDoc.data();
+  // ============================================================
+  // UPDATE AVATAR (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
+  // ============================================================
+  async function updateAvatar(uid, newAvatarUrl) {
+    try {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (!userDoc.exists) {
+        return { success: false, error: 'User tidak ditemukan' };
+      }
+      const userData = userDoc.data();
 
-    // Cek batasan 2x/minggu
-    const now = Date.now();
-    const resetDate = userData.avatarChangeReset?.toMillis?.() || 0;
-    const count = userData.avatarChangeCount || 0;
+      const now = Date.now();
+      const resetDate = userData.avatarChangeReset?.toMillis?.() || 0;
+      const count = userData.avatarChangeCount || 0;
 
-    // Jika sudah melewati 7 hari, reset counter
-    if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
+      if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
+        await db.collection('users').doc(uid).update({
+          avatarChangeCount: 0,
+          avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        const newDoc = await db.collection('users').doc(uid).get();
+        const newData = newDoc.data();
+        const newCount = newData.avatarChangeCount || 0;
+        if (newCount >= 2) {
+          const nextReset = newData.avatarChangeReset?.toMillis?.() || 0;
+          const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
+          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+          return { 
+            success: false, 
+            error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
+          };
+        }
+      } else {
+        if (count >= 2) {
+          const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
+          const nextDate = new Date(nextReset);
+          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+          return { 
+            success: false, 
+            error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
+          };
+        }
+      }
+
+      // UPDATE SEMUA PESAN LAMA
+      const messagesSnapshot = await db.collection('messages')
+        .where('senderId', '==', uid)
+        .get();
+
+      if (!messagesSnapshot.empty) {
+        const batch = db.batch();
+        messagesSnapshot.forEach((doc) => {
+          batch.update(doc.ref, { avatar: newAvatarUrl });
+        });
+        await batch.commit();
+        console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
+      }
+
       await db.collection('users').doc(uid).update({
-        avatarChangeCount: 0,
+        avatar: newAvatarUrl,
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+        avatarChangeCount: firebase.firestore.FieldValue.increment(1),
         avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
       });
-      // Ambil ulang data setelah reset
-      const newDoc = await db.collection('users').doc(uid).get();
-      const newData = newDoc.data();
-      const newCount = newData.avatarChangeCount || 0;
-      if (newCount >= 2) {
-        const nextReset = newData.avatarChangeReset?.toMillis?.() || 0;
-        const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
-        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        return { 
-          success: false, 
-          error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
-        };
-      }
-    } else {
-      // Masih dalam periode 7 hari
-      if (count >= 2) {
-        const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
-        const nextDate = new Date(nextReset);
-        const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-        return { 
-          success: false, 
-          error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
-        };
-      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('[updateAvatar] Error:', error);
+      return { success: false, error: error.message };
     }
-
-    // ============================================================
-    // UPDATE SEMUA PESAN LAMA (biar avatar ikut berubah)
-    // ============================================================
-    const messagesSnapshot = await db.collection('messages')
-      .where('senderId', '==', uid)
-      .get();
-
-    if (!messagesSnapshot.empty) {
-      const batch = db.batch();
-      messagesSnapshot.forEach((doc) => {
-        batch.update(doc.ref, { avatar: newAvatarUrl });
-      });
-      await batch.commit();
-      console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
-    }
-
-    // Update avatar user + increment counter
-    await db.collection('users').doc(uid).update({
-      avatar: newAvatarUrl,
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-      avatarChangeCount: firebase.firestore.FieldValue.increment(1),
-      avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('[updateAvatar] Error:', error);
-    return { success: false, error: error.message };
   }
-}
+
   // ---------- FUNGSI REPLY ----------
   function startReply(docId, username, text) {
-  replyingTo = { docId, username, text };
-  const input = document.getElementById('chat-input');
-  input.focus();
-  input.placeholder = `Reply to ${username}...`;
-  input.style.borderColor = 'var(--accent)';
-  showToast(`Reply to ${username}`, 'info');
+    replyingTo = { docId, username, text };
+    const input = document.getElementById('chat-input');
+    input.focus();
+    input.placeholder = `Reply to ${username}...`;
+    input.style.borderColor = 'var(--accent)';
+    showToast(`Reply to ${username}`, 'info');
 
-  // ==========================================
-  // PERBAIKAN TOMBOL CANCEL (LEBIH RAPI)
-  // ==========================================
-  let cancelBtn = document.getElementById('cancel-reply-btn');
-  if (!cancelBtn) {
-    cancelBtn = document.createElement('button');
-    cancelBtn.id = 'cancel-reply-btn';
-    cancelBtn.innerHTML = '✕';
-    cancelBtn.style.width = '28px';
-    cancelBtn.style.height = '28px';
-    cancelBtn.style.minWidth = '28px';
-    cancelBtn.style.minHeight = '28px';
-    cancelBtn.style.background = 'var(--danger)';
-    cancelBtn.style.color = '#fff';
-    cancelBtn.style.border = 'none';
-    cancelBtn.style.borderRadius = '50%';
-    cancelBtn.style.fontSize = '14px';
-    cancelBtn.style.cursor = 'pointer';
-    cancelBtn.style.display = 'flex';
-    cancelBtn.style.alignItems = 'center';
-    cancelBtn.style.justifyContent = 'center';
-    cancelBtn.style.marginLeft = '6px';
-    cancelBtn.style.flexShrink = '0';
-    cancelBtn.style.transition = 'all 0.2s ease';
+    let cancelBtn = document.getElementById('cancel-reply-btn');
+    if (!cancelBtn) {
+      cancelBtn = document.createElement('button');
+      cancelBtn.id = 'cancel-reply-btn';
+      cancelBtn.innerHTML = '✕';
+      cancelBtn.style.width = '28px';
+      cancelBtn.style.height = '28px';
+      cancelBtn.style.minWidth = '28px';
+      cancelBtn.style.minHeight = '28px';
+      cancelBtn.style.background = 'var(--danger)';
+      cancelBtn.style.color = '#fff';
+      cancelBtn.style.border = 'none';
+      cancelBtn.style.borderRadius = '50%';
+      cancelBtn.style.fontSize = '14px';
+      cancelBtn.style.cursor = 'pointer';
+      cancelBtn.style.display = 'flex';
+      cancelBtn.style.alignItems = 'center';
+      cancelBtn.style.justifyContent = 'center';
+      cancelBtn.style.marginLeft = '6px';
+      cancelBtn.style.flexShrink = '0';
+      cancelBtn.style.transition = 'all 0.2s ease';
 
-    // Cari wrapper input (yang sudah kita buat dengan class .chat-input-wrapper)
-    let inputWrapper = input.parentElement;
-    if (!inputWrapper.classList.contains('chat-input-wrapper')) {
-      // Jika belum ada wrapper, buat wrapper baru
-      const wrapper = document.createElement('div');
-      wrapper.className = 'chat-input-wrapper';
-      wrapper.style.display = 'flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.gap = '6px';
-      wrapper.style.padding = '8px 12px';
-      wrapper.style.background = 'var(--bg-card)';
-      wrapper.style.borderTop = '1px solid var(--border)';
-      input.parentNode.insertBefore(wrapper, input);
-      wrapper.appendChild(input);
-      // Pindahkan tombol kirim ke dalam wrapper juga
+      let inputWrapper = input.parentElement;
+      if (!inputWrapper.classList.contains('chat-input-wrapper')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'chat-input-wrapper';
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.gap = '6px';
+        wrapper.style.padding = '8px 12px';
+        wrapper.style.background = 'var(--bg-card)';
+        wrapper.style.borderTop = '1px solid var(--border)';
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+        const sendBtn = document.getElementById('btn-send');
+        if (sendBtn) wrapper.appendChild(sendBtn);
+        inputWrapper = wrapper;
+      }
+
       const sendBtn = document.getElementById('btn-send');
-      if (sendBtn) wrapper.appendChild(sendBtn);
-      inputWrapper = wrapper;
-    }
+      if (sendBtn) {
+        inputWrapper.insertBefore(cancelBtn, sendBtn);
+      } else {
+        inputWrapper.appendChild(cancelBtn);
+      }
 
-    // Tambahkan cancel button sebelum tombol kirim
-    const sendBtn = document.getElementById('btn-send');
-    if (sendBtn) {
-      inputWrapper.insertBefore(cancelBtn, sendBtn);
-    } else {
-      inputWrapper.appendChild(cancelBtn);
+      cancelBtn.addEventListener('click', function() {
+        cancelReply();
+      });
     }
-
-    cancelBtn.addEventListener('click', function() {
-      cancelReply();
-    });
+    cancelBtn.style.display = 'flex';
   }
-  cancelBtn.style.display = 'flex';
-}
 
   function cancelReply() {
-  replyingTo = null;
-  const input = document.getElementById('chat-input');
-  input.placeholder = 'Ketik pesan...';
-  input.style.borderColor = 'var(--border)';
-  const cancelBtn = document.getElementById('cancel-reply-btn');
-  if (cancelBtn) cancelBtn.style.display = 'none';
-}
-// ============================================================
-// SWIPE TO REPLY (HANYA HORIZONTAL, TIDAK MENGGANGGU SCROLL)
-// ============================================================
-let swipeStartX = 0;
-let swipeStartY = 0;
-let swipeTargetElement = null;
-let swipeCurrentX = 0;
-let swipeCurrentY = 0;
-let isSwiping = false;
+    replyingTo = null;
+    const input = document.getElementById('chat-input');
+    input.placeholder = 'Ketik pesan...';
+    input.style.borderColor = 'var(--border)';
+    const cancelBtn = document.getElementById('cancel-reply-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
 
-const messagesContainer = document.getElementById('messages-list');
+  // ---------- SWIPE TO REPLY (Touch & Mouse) ----------
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeTargetElement = null;
+  let swipeCurrentX = 0;
+  let swipeCurrentY = 0;
+  let isSwiping = false;
 
-// Touch events untuk mobile
-messagesContainer.addEventListener('touchstart', function(e) {
-  const target = e.target.closest('.message-item');
-  if (!target) return;
-  if (target.classList.contains('system')) return;
-  
-  swipeTargetElement = target;
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
-  swipeCurrentX = swipeStartX;
-  swipeCurrentY = swipeStartY;
-  isSwiping = false;
-  target.style.transition = 'transform 0s';
-}, { passive: true });
+  const messagesContainer = document.getElementById('messages-list');
 
-messagesContainer.addEventListener('touchmove', function(e) {
-  if (!swipeTargetElement) return;
-  const touch = e.touches[0];
-  const deltaX = touch.clientX - swipeStartX;
-  const deltaY = touch.clientY - swipeStartY;
-  swipeCurrentX = touch.clientX;
-  swipeCurrentY = touch.clientY;
+  messagesContainer.addEventListener('touchstart', function(e) {
+    const target = e.target.closest('.message-item');
+    if (!target) return;
+    if (target.classList.contains('system')) return;
+    
+    swipeTargetElement = target;
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    swipeCurrentX = swipeStartX;
+    swipeCurrentY = swipeStartY;
+    isSwiping = false;
+    target.style.transition = 'transform 0s';
+  }, { passive: true });
 
-  // Jika gerakan lebih vertikal daripada horizontal, abaikan (biar scroll jalan)
-  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+  messagesContainer.addEventListener('touchmove', function(e) {
+    if (!swipeTargetElement) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - swipeStartX;
+    const deltaY = touch.clientY - swipeStartY;
+    swipeCurrentX = touch.clientX;
+    swipeCurrentY = touch.clientY;
+
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+      swipeTargetElement.style.transform = '';
+      swipeTargetElement.style.background = '';
+      return;
+    }
+
+    if (Math.abs(deltaX) > 10) {
+      isSwiping = true;
+      if (deltaX > 0) {
+        const translate = Math.min(deltaX, 80);
+        swipeTargetElement.style.transform = `translateX(${translate}px)`;
+        swipeTargetElement.style.background = 'rgba(249, 115, 22, 0.1)';
+        swipeTargetElement.style.borderRadius = '8px';
+      } else {
+        const translate = Math.max(deltaX, -80);
+        swipeTargetElement.style.transform = `translateX(${translate}px)`;
+        swipeTargetElement.style.background = 'rgba(248, 113, 113, 0.1)';
+        swipeTargetElement.style.borderRadius = '8px';
+      }
+    }
+  }, { passive: true });
+
+  messagesContainer.addEventListener('touchend', function(e) {
+    if (!swipeTargetElement) return;
+    
+    const deltaX = swipeCurrentX - swipeStartX;
+    const deltaY = swipeCurrentY - swipeStartY;
+    
+    swipeTargetElement.style.transition = 'transform 0.3s';
     swipeTargetElement.style.transform = '';
     swipeTargetElement.style.background = '';
-    return;
-  }
 
-  // Hanya proses jika gerakan horizontal
-  if (Math.abs(deltaX) > 10) {
-    isSwiping = true;
-    // Geser ke kanan (reply) dengan batas 80px
-    if (deltaX > 0) {
-      const translate = Math.min(deltaX, 80);
-      swipeTargetElement.style.transform = `translateX(${translate}px)`;
-      swipeTargetElement.style.background = 'rgba(249, 115, 22, 0.1)';
-      swipeTargetElement.style.borderRadius = '8px';
-    } else {
-      // Geser ke kiri (opsional, bisa untuk hapus nanti)
-      const translate = Math.max(deltaX, -80);
-      swipeTargetElement.style.transform = `translateX(${translate}px)`;
-      swipeTargetElement.style.background = 'rgba(248, 113, 113, 0.1)';
-      swipeTargetElement.style.borderRadius = '8px';
+    if (deltaX > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      const docId = swipeTargetElement.dataset.docId;
+      const username = swipeTargetElement.dataset.username;
+      const text = swipeTargetElement.dataset.text;
+      if (docId) {
+        startReply(docId, username, text);
+        if (navigator.vibrate) navigator.vibrate(10);
+      }
     }
-  }
-}, { passive: true });
 
-messagesContainer.addEventListener('touchend', function(e) {
-  if (!swipeTargetElement) return;
-  
-  const deltaX = swipeCurrentX - swipeStartX;
-  const deltaY = swipeCurrentY - swipeStartY;
-  
-  // Reset style
-  swipeTargetElement.style.transition = 'transform 0.3s';
-  swipeTargetElement.style.transform = '';
-  swipeTargetElement.style.background = '';
+    swipeTargetElement = null;
+    swipeCurrentX = 0;
+    swipeCurrentY = 0;
+    swipeStartX = 0;
+    swipeStartY = 0;
+    isSwiping = false;
+  }, { passive: true });
 
-  // Hanya reply jika swipe ke kanan melewati threshold 50px dan gerakan dominan horizontal
-  if (deltaX > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
-    const docId = swipeTargetElement.dataset.docId;
-    const username = swipeTargetElement.dataset.username;
-    const text = swipeTargetElement.dataset.text;
-    if (docId) {
-      startReply(docId, username, text);
-      if (navigator.vibrate) navigator.vibrate(10);
+  // Mouse events
+  let isDragging = false;
+  let mouseStartX = 0;
+  let mouseStartY = 0;
+  let mouseTarget = null;
+  let mouseCurrentX = 0;
+  let mouseCurrentY = 0;
+
+  messagesContainer.addEventListener('mousedown', function(e) {
+    const target = e.target.closest('.message-item');
+    if (!target) return;
+    if (target.classList.contains('system')) return;
+    isDragging = true;
+    mouseTarget = target;
+    mouseStartX = e.clientX;
+    mouseStartY = e.clientY;
+    mouseCurrentX = mouseStartX;
+    mouseCurrentY = mouseStartY;
+    target.style.transition = 'transform 0s';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging || !mouseTarget) return;
+    const deltaX = e.clientX - mouseStartX;
+    const deltaY = e.clientY - mouseStartY;
+    mouseCurrentX = e.clientX;
+    mouseCurrentY = e.clientY;
+
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+      mouseTarget.style.transform = '';
+      mouseTarget.style.background = '';
+      return;
     }
-  }
 
-  swipeTargetElement = null;
-  swipeCurrentX = 0;
-  swipeCurrentY = 0;
-  swipeStartX = 0;
-  swipeStartY = 0;
-  isSwiping = false;
-}, { passive: true });
+    if (Math.abs(deltaX) > 10) {
+      if (deltaX > 0) {
+        const translate = Math.min(deltaX, 80);
+        mouseTarget.style.transform = `translateX(${translate}px)`;
+        mouseTarget.style.background = 'rgba(249, 115, 22, 0.1)';
+        mouseTarget.style.borderRadius = '8px';
+      } else {
+        const translate = Math.max(deltaX, -80);
+        mouseTarget.style.transform = `translateX(${translate}px)`;
+        mouseTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+        mouseTarget.style.borderRadius = '8px';
+      }
+    }
+  });
 
-// Mouse events untuk desktop (drag)
-let isDragging = false;
-let mouseStartX = 0;
-let mouseStartY = 0;
-let mouseTarget = null;
-let mouseCurrentX = 0;
-let mouseCurrentY = 0;
-
-messagesContainer.addEventListener('mousedown', function(e) {
-  const target = e.target.closest('.message-item');
-  if (!target) return;
-  if (target.classList.contains('system')) return;
-  isDragging = true;
-  mouseTarget = target;
-  mouseStartX = e.clientX;
-  mouseStartY = e.clientY;
-  mouseCurrentX = mouseStartX;
-  mouseCurrentY = mouseStartY;
-  target.style.transition = 'transform 0s';
-});
-
-document.addEventListener('mousemove', function(e) {
-  if (!isDragging || !mouseTarget) return;
-  const deltaX = e.clientX - mouseStartX;
-  const deltaY = e.clientY - mouseStartY;
-  mouseCurrentX = e.clientX;
-  mouseCurrentY = e.clientY;
-
-  // Jika gerakan lebih vertikal, abaikan
-  if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+  document.addEventListener('mouseup', function(e) {
+    if (!isDragging || !mouseTarget) {
+      isDragging = false;
+      return;
+    }
+    const deltaX = mouseCurrentX - mouseStartX;
+    const deltaY = mouseCurrentY - mouseStartY;
+    
+    mouseTarget.style.transition = 'transform 0.3s';
     mouseTarget.style.transform = '';
     mouseTarget.style.background = '';
-    return;
-  }
 
-  if (Math.abs(deltaX) > 10) {
-    if (deltaX > 0) {
-      const translate = Math.min(deltaX, 80);
-      mouseTarget.style.transform = `translateX(${translate}px)`;
-      mouseTarget.style.background = 'rgba(249, 115, 22, 0.1)';
-      mouseTarget.style.borderRadius = '8px';
-    } else {
-      const translate = Math.max(deltaX, -80);
-      mouseTarget.style.transform = `translateX(${translate}px)`;
-      mouseTarget.style.background = 'rgba(248, 113, 113, 0.1)';
-      mouseTarget.style.borderRadius = '8px';
+    if (deltaX > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      const docId = mouseTarget.dataset.docId;
+      const username = mouseTarget.dataset.username;
+      const text = mouseTarget.dataset.text;
+      if (docId) {
+        startReply(docId, username, text);
+      }
     }
-  }
-});
-
-document.addEventListener('mouseup', function(e) {
-  if (!isDragging || !mouseTarget) {
     isDragging = false;
-    return;
-  }
-  const deltaX = mouseCurrentX - mouseStartX;
-  const deltaY = mouseCurrentY - mouseStartY;
-  
-  mouseTarget.style.transition = 'transform 0.3s';
-  mouseTarget.style.transform = '';
-  mouseTarget.style.background = '';
-
-  if (deltaX > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
-    const docId = mouseTarget.dataset.docId;
-    const username = mouseTarget.dataset.username;
-    const text = mouseTarget.dataset.text;
-    if (docId) {
-      startReply(docId, username, text);
-    }
-  }
-  isDragging = false;
-  mouseTarget = null;
-  mouseStartX = 0;
-  mouseStartY = 0;
-  mouseCurrentX = 0;
-  mouseCurrentY = 0;
-});
-  // ---------- RENDER PESAN (Gaya WhatsApp, sudah bersih) ----------
-  // ============================================================
-// RENDER PESAN (Gaya WhatsApp + Swipe to Reply)
-// ============================================================
-// ============================================================
-// RENDER PESAN (RAPI, TANPA ICON MENGGANGGU)
-// ============================================================
-// ============================================================
-// RENDER PESAN (DENGAN LONG PRESS MENU)
-// ============================================================
-// ============================================================
-// RENDER PESAN (LENGKAP: EDIT, HAPUS, INFO, READ RECEIPTS)
-// ============================================================
-// ============================================================
-// RENDER PESAN (PERBAIKAN TAMPILAN HAPUS)
-// ============================================================
-// ============================================================
-// RENDER PESAN (LENGKAP: EDIT, HAPUS, INFO, READ RECEIPTS, MEDIA)
-// ============================================================
-function renderMessage(doc) {
-  const data = doc.data();
-  const isMine = data.senderId === currentUser?.uid;
-  const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
-
-  // Cek status hapus
-  const isDeletedForMe = data.deletedFor && data.deletedFor.includes(currentUser?.uid);
-  const isDeletedForAll = data.isDeletedForAll === true;
-
-  // ============================================================
-  // TAMPILAN PESAN DIHAPUS
-  // ============================================================
-  let displayText = data.text || '';
-  let isDeletedMessage = false;
-
-  if (isDeletedForAll) {
-    displayText = '⦸ Pesan ini telah dihapus';
-    isDeletedMessage = true;
-  } else if (isDeletedForMe && isMine) {
-    displayText = '⦸ Anda menghapus pesan ini';
-    isDeletedMessage = true;
-  } else if (isDeletedForMe && !isMine) {
-    displayText = '⦸ Pesan ini telah dihapus';
-    isDeletedMessage = true;
-  }
-
-  const div = document.createElement('div');
-  div.className = 'message-item';
-  div.dataset.docId = doc.id;
-  div.dataset.username = data.username || 'unknown';
-  div.dataset.text = data.text || '';
-  div.style.display = 'flex';
-  div.style.marginBottom = '4px';
-  div.style.gap = '6px';
-  div.style.alignItems = 'flex-start';
-  div.style.transition = 'transform 0.2s';
-  div.style.touchAction = 'pan-y';
-  div.style.position = 'relative';
-
-  // ========== AVATAR ==========
-  const avatarDiv = document.createElement('div');
-  avatarDiv.style.width = '32px';
-  avatarDiv.style.height = '32px';
-  avatarDiv.style.minWidth = '32px';
-  avatarDiv.style.borderRadius = '50%';
-  avatarDiv.style.background = '#2a2a2e';
-  avatarDiv.style.display = 'flex';
-  avatarDiv.style.alignItems = 'center';
-  avatarDiv.style.justifyContent = 'center';
-  avatarDiv.style.fontSize = '12px';
-  avatarDiv.style.fontWeight = 'bold';
-  avatarDiv.style.color = '#fff';
-  avatarDiv.style.overflow = 'hidden';
-  avatarDiv.style.flexShrink = '0';
-  if (data.avatar) {
-    avatarDiv.innerHTML = `<img src="${data.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-  } else {
-    avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
-  }
-
-  // ========== BUBBLE ==========
-  const bubbleWrapper = document.createElement('div');
-  bubbleWrapper.style.flex = '1';
-  bubbleWrapper.style.maxWidth = '75%';
-  bubbleWrapper.style.display = 'flex';
-  bubbleWrapper.style.flexDirection = 'column';
-
-  const bubble = document.createElement('div');
-  bubble.style.padding = '6px 12px';
-  bubble.style.borderRadius = '12px';
-  bubble.style.wordBreak = 'break-word';
-  bubble.style.lineHeight = '1.4';
-  bubble.style.fontSize = '13px';
-  bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-  bubble.style.position = 'relative'; // untuk posisi tombol download
-
-  if (isMine) {
-    bubble.style.background = 'var(--accent)';
-    bubble.style.color = '#fff';
-    bubble.style.borderTopRightRadius = '4px';
-    bubbleWrapper.style.alignItems = 'flex-end';
-  } else if (isSystem) {
-    bubble.style.background = 'transparent';
-    bubble.style.color = 'var(--text-muted)';
-    bubble.style.textAlign = 'center';
-    bubble.style.fontSize = '11px';
-    bubble.style.padding = '2px 0';
-    bubble.style.boxShadow = 'none';
-    bubbleWrapper.style.alignItems = 'center';
-    bubbleWrapper.style.maxWidth = '100%';
-  } else {
-    bubble.style.background = 'var(--bg-input)';
-    bubble.style.color = 'var(--text)';
-    bubble.style.borderTopLeftRadius = '4px';
-  }
-
-  // Nama user (hanya untuk pesan orang lain)
-  if (!isSystem && !isMine) {
-    const nameSpan = document.createElement('div');
-    nameSpan.style.fontSize = '10px';
-    nameSpan.style.fontWeight = '600';
-    nameSpan.style.color = 'var(--accent)';
-    nameSpan.style.marginBottom = '1px';
-    nameSpan.textContent = data.username || 'unknown';
-    bubble.appendChild(nameSpan);
-  }
-
-  // ========== TEKS PESAN ==========
-  const textSpan = document.createElement('div');
-  textSpan.className = 'text-content';
-  if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
-    displayText = 'Anda bergabung ke grup';
-  }
-  textSpan.textContent = displayText;
-  bubble.appendChild(textSpan);
-
-  // Label "Diedit" jika pesan sudah diedit dan tidak dihapus
-  if (data.isEdited && !isDeletedForAll && !isDeletedForMe) {
-    const editedLabel = document.createElement('span');
-    editedLabel.style.fontSize = '9px';
-    editedLabel.style.opacity = '0.5';
-    editedLabel.style.marginLeft = '4px';
-    editedLabel.textContent = ' (diedit)';
-    textSpan.appendChild(editedLabel);
-  }
-
-  // ========== MEDIA (GAMBAR/VIDEO) ==========
-  if (data.mediaUrl && !isDeletedForAll && !isDeletedForMe) {
-    const mediaContainer = document.createElement('div');
-    mediaContainer.style.margin = '4px 0';
-    mediaContainer.style.maxWidth = '200px';
-    mediaContainer.style.borderRadius = '8px';
-    mediaContainer.style.overflow = 'hidden';
-    mediaContainer.style.position = 'relative';
-    mediaContainer.style.background = 'rgba(0,0,0,0.05)';
-
-    if (data.mediaType === 'image') {
-      const img = document.createElement('img');
-      img.src = data.mediaUrl;
-      img.style.width = '100%';
-      img.style.height = 'auto';
-      img.style.display = 'block';
-      img.style.borderRadius = '8px';
-      img.loading = 'lazy';
-      img.alt = data.fileName || 'Gambar';
-      // Klik gambar untuk memperbesar (opsional)
-      img.style.cursor = 'pointer';
-      img.addEventListener('click', function() {
-        window.open(data.mediaUrl, '_blank');
-      });
-      mediaContainer.appendChild(img);
-    } else if (data.mediaType === 'video') {
-      const video = document.createElement('video');
-      video.src = data.mediaUrl;
-      video.style.width = '100%';
-      video.style.height = 'auto';
-      video.controls = true;
-      video.preload = 'metadata';
-      video.playsInline = true;
-      video.style.borderRadius = '8px';
-      video.style.background = '#000';
-      mediaContainer.appendChild(video);
-    } else {
-      // File lainnya (link download)
-      const link = document.createElement('a');
-      link.href = data.mediaUrl;
-      link.target = '_blank';
-      link.style.color = 'var(--accent)';
-      link.textContent = `📎 ${data.fileName || 'File'}`;
-      mediaContainer.appendChild(link);
-    }
-
-    // Tombol download (untuk gambar & video)
-    if (data.mediaType === 'image' || data.mediaType === 'video') {
-      const downloadBtn = document.createElement('button');
-      downloadBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
-      downloadBtn.style.position = 'absolute';
-      downloadBtn.style.bottom = '6px';
-      downloadBtn.style.right = '6px';
-      downloadBtn.style.background = 'rgba(0,0,0,0.65)';
-      downloadBtn.style.color = '#fff';
-      downloadBtn.style.border = 'none';
-      downloadBtn.style.borderRadius = '6px';
-      downloadBtn.style.padding = '4px 8px';
-      downloadBtn.style.fontSize = '12px';
-      downloadBtn.style.cursor = 'pointer';
-      downloadBtn.style.opacity = '0.8';
-      downloadBtn.style.transition = 'opacity 0.2s, transform 0.2s';
-      downloadBtn.style.backdropFilter = 'blur(2px)';
-      downloadBtn.title = 'Download';
-      downloadBtn.addEventListener('mouseenter', function() { this.style.opacity = '1'; this.style.transform = 'scale(1.05)'; });
-      downloadBtn.addEventListener('mouseleave', function() { this.style.opacity = '0.8'; this.style.transform = 'scale(1)'; });
-      downloadBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        // Download file
-        const a = document.createElement('a');
-        a.href = data.mediaUrl;
-        a.download = data.fileName || (data.mediaType === 'image' ? 'gambar.jpg' : 'video.mp4');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showToast('Mengunduh...', 'success');
-      });
-      mediaContainer.appendChild(downloadBtn);
-    }
-
-    // Sisipkan media container setelah teks
-    const textEl = bubble.querySelector('.text-content');
-    if (textEl) {
-      bubble.insertBefore(mediaContainer, textEl.nextSibling);
-    } else {
-      bubble.prepend(mediaContainer);
-    }
-  }
-
-  // ========== WAKTU ==========
-  const timeSpan = document.createElement('div');
-  timeSpan.style.fontSize = '8px';
-  timeSpan.style.opacity = '0.5';
-  timeSpan.style.marginTop = '2px';
-  timeSpan.style.textAlign = 'right';
-  if (data.timestamp) {
-    const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  }
-  bubble.appendChild(timeSpan);
-
-  // ========== READ RECEIPT (Centang) ==========
-  if (isMine && !isSystem && !isDeletedForAll) {
-    const readStatus = document.createElement('span');
-    readStatus.style.fontSize = '10px';
-    readStatus.style.marginLeft = '4px';
-    readStatus.style.opacity = '0.6';
-    const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
-    if (readCount > 0) {
-      readStatus.innerHTML = '✓✓';
-      readStatus.style.color = 'var(--success)';
-    } else {
-      readStatus.innerHTML = '✓';
-      readStatus.style.color = 'var(--text-muted)';
-    }
-    timeSpan.appendChild(readStatus);
-  }
-
-  // ========== REPLY PESAN ==========
-  if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
-    const replyContainer = document.createElement('div');
-    replyContainer.style.padding = '2px 8px';
-    replyContainer.style.marginBottom = '3px';
-    replyContainer.style.borderRadius = '4px';
-    replyContainer.style.fontSize = '10px';
-    replyContainer.style.opacity = '0.7';
-    replyContainer.style.borderLeft = '2px solid var(--accent)';
-    if (isMine) {
-      replyContainer.style.background = 'rgba(255,255,255,0.08)';
-    } else {
-      replyContainer.style.background = 'var(--bg-hover)';
-    }
-    const replyName = document.createElement('span');
-    replyName.style.fontWeight = '600';
-    replyName.textContent = data.replyTo.username || 'unknown';
-    replyContainer.appendChild(replyName);
-    const replyText = document.createElement('span');
-    replyText.textContent = ': ' + (data.replyTo.text || '');
-    replyContainer.appendChild(replyText);
-    bubble.prepend(replyContainer);
-  }
-
-  // ========== SUSUN LAYOUT ==========
-  if (isSystem) {
-    div.style.justifyContent = 'center';
-    div.appendChild(bubble);
-  } else if (isMine) {
-    div.style.flexDirection = 'row-reverse';
-    div.appendChild(avatarDiv);
-    bubbleWrapper.appendChild(bubble);
-    div.appendChild(bubbleWrapper);
-  } else {
-    div.appendChild(avatarDiv);
-    bubbleWrapper.appendChild(bubble);
-    div.appendChild(bubbleWrapper);
-  }
-
-  // ========== LONG PRESS / RIGHT CLICK MENU ==========
-  if (!isSystem && !isDeletedForAll) {
-    let longPressTimer = null;
-
-    const showMenu = (e) => {
-      e.preventDefault();
-      const now = Date.now();
-      const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
-      const canEdit = (now - msgTime) < 60 * 60 * 1000; // 1 jam
-      showMessageMenu(doc.id, data.senderId, data.username, data.text, isMine, canEdit, data.isEdited);
-    };
-
-    // Touch: long press (mobile)
-    div.addEventListener('touchstart', function(e) {
-      longPressTimer = setTimeout(() => {
-        showMenu(e);
-      }, 600);
-    });
-
-    div.addEventListener('touchmove', function() {
-      clearTimeout(longPressTimer);
-    });
-
-    div.addEventListener('touchend', function() {
-      clearTimeout(longPressTimer);
-    });
-
-    // Mouse: right click (desktop)
-    div.addEventListener('contextmenu', function(e) {
-      showMenu(e);
-    });
-
-    // Double click (opsional)
-    div.addEventListener('dblclick', function(e) {
-      showMenu(e);
-    });
-  }
-
-  return div;
-}
-// ============================================================
-// MENU PESAN (INFO, EDIT, HAPUS)
-// ============================================================
-function showMessageMenu(docId, senderId, username, text, isMine, canEdit, isEdited) {
-  // Hapus menu lama jika ada
-  const oldMenu = document.getElementById('message-menu');
-  if (oldMenu) oldMenu.remove();
-
-  const menu = document.createElement('div');
-  menu.id = 'message-menu';
-  menu.style.position = 'fixed';
-  menu.style.bottom = '80px';
-  menu.style.left = '50%';
-  menu.style.transform = 'translateX(-50%)';
-  menu.style.background = 'var(--bg-card)';
-  menu.style.border = '1px solid var(--border)';
-  menu.style.borderRadius = '12px';
-  menu.style.padding = '8px';
-  menu.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
-  menu.style.zIndex = '99999';
-  menu.style.minWidth = '200px';
-  menu.style.display = 'flex';
-  menu.style.flexDirection = 'column';
-  menu.style.gap = '4px';
-
-  // Tombol Info (selalu ada)
-  const infoBtn = createMenuItem('Info (baca)', 'fa-solid fa-circle-info', 'var(--text)');
-  infoBtn.addEventListener('click', function() {
-    menu.remove();
-    showReadReceipts(docId);
+    mouseTarget = null;
+    mouseStartX = 0;
+    mouseStartY = 0;
+    mouseCurrentX = 0;
+    mouseCurrentY = 0;
   });
-  menu.appendChild(infoBtn);
 
-  // Tombol Edit (hanya untuk pesan sendiri, jika masih dalam 1 jam dan belum diedit? Boleh diedit berkali-kali asal masih <1 jam)
-  if (isMine && canEdit) {
-    const editBtn = createMenuItem('Edit pesan', 'fa-solid fa-pen', 'var(--text)');
-    editBtn.addEventListener('click', function() {
-      menu.remove();
-      editMessage(docId, text);
-    });
-    menu.appendChild(editBtn);
-  } else if (isMine && !canEdit) {
-    const editBtn = createMenuItem('Edit pesan (tidak tersedia)', 'fa-solid fa-pen', 'var(--text-muted)');
-    editBtn.style.opacity = '0.5';
-    editBtn.style.cursor = 'not-allowed';
-    menu.appendChild(editBtn);
-  }
-
-  // Tombol Hapus untuk diri sendiri (selalu ada untuk semua pesan)
-  const deleteMeBtn = createMenuItem('Hapus untuk saya', 'fa-solid fa-trash-can', 'var(--danger)');
-  deleteMeBtn.addEventListener('click', function() {
-    menu.remove();
-    deleteMessageForMe(docId);
-  });
-  menu.appendChild(deleteMeBtn);
-
-  // Tombol Hapus untuk semua (hanya untuk pesan sendiri)
-  if (isMine) {
-    const deleteAllBtn = createMenuItem('Hapus untuk semua', 'fa-solid fa-trash-can', 'var(--danger)');
-    deleteAllBtn.addEventListener('click', function() {
-      menu.remove();
-      deleteMessageForAll(docId);
-    });
-    menu.appendChild(deleteAllBtn);
-  }
-
-  // Tombol Tutup
-  const closeBtn = createMenuItem('Tutup', 'fa-solid fa-xmark', 'var(--text-muted)');
-  closeBtn.style.borderTop = '1px solid var(--border)';
-  closeBtn.addEventListener('click', function() { menu.remove(); });
-  menu.appendChild(closeBtn);
-
-  document.body.appendChild(menu);
-
-  // Klik di luar menu untuk menutup
-  setTimeout(() => {
-    document.addEventListener('click', function closeMenu(e) {
-      if (!menu.contains(e.target)) {
-        menu.remove();
-        document.removeEventListener('click', closeMenu);
-      }
-    });
-  }, 100);
-
-  function createMenuItem(label, icon, color) {
-    const btn = document.createElement('button');
-    btn.innerHTML = `<i class="${icon}"></i> ${label}`;
-    btn.style.padding = '10px 16px';
-    btn.style.background = 'transparent';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '8px';
-    btn.style.color = color;
-    btn.style.fontSize = '14px';
-    btn.style.cursor = 'pointer';
-    btn.style.display = 'flex';
-    btn.style.alignItems = 'center';
-    btn.style.gap = '10px';
-    btn.style.width = '100%';
-    btn.style.textAlign = 'left';
-    btn.addEventListener('mouseenter', function() { this.style.background = 'var(--bg-hover)'; });
-    btn.addEventListener('mouseleave', function() { this.style.background = 'transparent'; });
-    return btn;
-  }
-}
-// ============================================================
-// SHOW READ RECEIPTS (INFO + TIMESTAMP)
-// ============================================================
-async function showReadReceipts(docId) {
-  try {
-    const doc = await db.collection('messages').doc(docId).get();
-    if (!doc.exists) return;
+  // ---------- RENDER PESAN (LENGKAP) ----------
+  function renderMessage(doc) {
     const data = doc.data();
-    const readBy = data.readBy || {};
-    const userIds = Object.keys(readBy);
+    const isMine = data.senderId === currentUser?.uid;
+    const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
 
-    // Ambil data user yang sudah baca + timestamp
-    const readUsers = [];
-    for (const uid of userIds) {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        const username = userDoc.data().username || uid;
-        const timestamp = readBy[uid];
-        const time = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-        const timeStr = time.toLocaleString('id-ID', {
-          day: '2-digit', month: 'short', year: 'numeric',
-          hour: '2-digit', minute: '2-digit'
+    const isDeletedForMe = data.deletedFor && data.deletedFor.includes(currentUser?.uid);
+    const isDeletedForAll = data.isDeletedForAll === true;
+
+    let displayText = data.text || '';
+    let isDeletedMessage = false;
+
+    if (isDeletedForAll) {
+      displayText = '⦸ Pesan ini telah dihapus';
+      isDeletedMessage = true;
+    } else if (isDeletedForMe && isMine) {
+      displayText = '⦸ Anda menghapus pesan ini';
+      isDeletedMessage = true;
+    } else if (isDeletedForMe && !isMine) {
+      displayText = '⦸ Pesan ini telah dihapus';
+      isDeletedMessage = true;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'message-item';
+    div.dataset.docId = doc.id;
+    div.dataset.username = data.username || 'unknown';
+    div.dataset.text = data.text || '';
+    div.style.display = 'flex';
+    div.style.marginBottom = '4px';
+    div.style.gap = '6px';
+    div.style.alignItems = 'flex-start';
+    div.style.transition = 'transform 0.2s';
+    div.style.touchAction = 'pan-y';
+    div.style.position = 'relative';
+
+    const avatarDiv = document.createElement('div');
+    avatarDiv.style.width = '32px';
+    avatarDiv.style.height = '32px';
+    avatarDiv.style.minWidth = '32px';
+    avatarDiv.style.borderRadius = '50%';
+    avatarDiv.style.background = '#2a2a2e';
+    avatarDiv.style.display = 'flex';
+    avatarDiv.style.alignItems = 'center';
+    avatarDiv.style.justifyContent = 'center';
+    avatarDiv.style.fontSize = '12px';
+    avatarDiv.style.fontWeight = 'bold';
+    avatarDiv.style.color = '#fff';
+    avatarDiv.style.overflow = 'hidden';
+    avatarDiv.style.flexShrink = '0';
+    if (data.avatar) {
+    const img = document.createElement('img');
+    img.src = data.avatar;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    avatarDiv.appendChild(img);
+} else {
+    avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+}
+
+    const bubbleWrapper = document.createElement('div');
+    bubbleWrapper.style.flex = '1';
+    bubbleWrapper.style.maxWidth = '75%';
+    bubbleWrapper.style.display = 'flex';
+    bubbleWrapper.style.flexDirection = 'column';
+
+    const bubble = document.createElement('div');
+    bubble.style.padding = '6px 12px';
+    bubble.style.borderRadius = '12px';
+    bubble.style.wordBreak = 'break-word';
+    bubble.style.lineHeight = '1.4';
+    bubble.style.fontSize = '13px';
+    bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+    bubble.style.position = 'relative';
+
+    if (isMine) {
+      bubble.style.background = 'var(--accent)';
+      bubble.style.color = '#fff';
+      bubble.style.borderTopRightRadius = '4px';
+      bubbleWrapper.style.alignItems = 'flex-end';
+    } else if (isSystem) {
+      bubble.style.background = 'transparent';
+      bubble.style.color = 'var(--text-muted)';
+      bubble.style.textAlign = 'center';
+      bubble.style.fontSize = '11px';
+      bubble.style.padding = '2px 0';
+      bubble.style.boxShadow = 'none';
+      bubbleWrapper.style.alignItems = 'center';
+      bubbleWrapper.style.maxWidth = '100%';
+    } else {
+      bubble.style.background = 'var(--bg-input)';
+      bubble.style.color = 'var(--text)';
+      bubble.style.borderTopLeftRadius = '4px';
+    }
+
+    if (!isSystem && !isMine) {
+      const nameSpan = document.createElement('div');
+      nameSpan.style.fontSize = '10px';
+      nameSpan.style.fontWeight = '600';
+      nameSpan.style.color = 'var(--accent)';
+      nameSpan.style.marginBottom = '1px';
+      nameSpan.textContent = data.username || 'unknown';
+      bubble.appendChild(nameSpan);
+    }
+
+    const textSpan = document.createElement('div');
+    textSpan.className = 'text-content';
+    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+      displayText = 'Anda bergabung ke grup';
+    }
+    textSpan.textContent = displayText;
+    bubble.appendChild(textSpan);
+
+    if (data.isEdited && !isDeletedForAll && !isDeletedForMe) {
+      const editedLabel = document.createElement('span');
+      editedLabel.style.fontSize = '9px';
+      editedLabel.style.opacity = '0.5';
+      editedLabel.style.marginLeft = '4px';
+      editedLabel.textContent = ' (diedit)';
+      textSpan.appendChild(editedLabel);
+    }
+
+    if (data.mediaUrl && !isDeletedForAll && !isDeletedForMe) {
+      const mediaContainer = document.createElement('div');
+      mediaContainer.style.margin = '4px 0';
+      mediaContainer.style.maxWidth = '200px';
+      mediaContainer.style.borderRadius = '8px';
+      mediaContainer.style.overflow = 'hidden';
+      mediaContainer.style.position = 'relative';
+      mediaContainer.style.background = 'rgba(0,0,0,0.05)';
+
+      if (data.mediaType === 'image') {
+        const img = document.createElement('img');
+        img.src = data.mediaUrl;
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+        img.style.borderRadius = '8px';
+        img.loading = 'lazy';
+        img.alt = data.fileName || 'Gambar';
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', function() {
+          window.open(data.mediaUrl, '_blank');
         });
-        readUsers.push({ username, time: timeStr });
+        mediaContainer.appendChild(img);
+      } else if (data.mediaType === 'video') {
+        const video = document.createElement('video');
+        video.src = data.mediaUrl;
+        video.style.width = '100%';
+        video.style.height = 'auto';
+        video.controls = true;
+        video.preload = 'metadata';
+        video.playsInline = true;
+        video.style.borderRadius = '8px';
+        video.style.background = '#000';
+        mediaContainer.appendChild(video);
+      } else {
+        const link = document.createElement('a');
+        link.href = data.mediaUrl;
+        link.target = '_blank';
+        link.style.color = 'var(--accent)';
+        link.textContent = `📎 ${data.fileName || 'File'}`;
+        mediaContainer.appendChild(link);
+      }
+
+      if (data.mediaType === 'image' || data.mediaType === 'video') {
+        const downloadBtn = document.createElement('button');
+        downloadBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
+        downloadBtn.style.position = 'absolute';
+        downloadBtn.style.bottom = '6px';
+        downloadBtn.style.right = '6px';
+        downloadBtn.style.background = 'rgba(0,0,0,0.65)';
+        downloadBtn.style.color = '#fff';
+        downloadBtn.style.border = 'none';
+        downloadBtn.style.borderRadius = '6px';
+        downloadBtn.style.padding = '4px 8px';
+        downloadBtn.style.fontSize = '12px';
+        downloadBtn.style.cursor = 'pointer';
+        downloadBtn.style.opacity = '0.8';
+        downloadBtn.style.transition = 'opacity 0.2s, transform 0.2s';
+        downloadBtn.style.backdropFilter = 'blur(2px)';
+        downloadBtn.title = 'Download';
+        downloadBtn.addEventListener('mouseenter', function() { this.style.opacity = '1'; this.style.transform = 'scale(1.05)'; });
+        downloadBtn.addEventListener('mouseleave', function() { this.style.opacity = '0.8'; this.style.transform = 'scale(1)'; });
+        downloadBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const a = document.createElement('a');
+          a.href = data.mediaUrl;
+          a.download = data.fileName || (data.mediaType === 'image' ? 'gambar.jpg' : 'video.mp4');
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showToast('Mengunduh...', 'success');
+        });
+        mediaContainer.appendChild(downloadBtn);
+      }
+
+      const textEl = bubble.querySelector('.text-content');
+      if (textEl) {
+        bubble.insertBefore(mediaContainer, textEl.nextSibling);
+      } else {
+        bubble.prepend(mediaContainer);
       }
     }
 
-    // Tampilkan modal
-    const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.background = 'rgba(0,0,0,0.6)';
-    modal.style.backdropFilter = 'blur(4px)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '100000';
-    modal.style.padding = '20px';
+    const timeSpan = document.createElement('div');
+    timeSpan.style.fontSize = '8px';
+    timeSpan.style.opacity = '0.5';
+    timeSpan.style.marginTop = '2px';
+    timeSpan.style.textAlign = 'right';
+    if (data.timestamp) {
+      const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+      timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }
+    bubble.appendChild(timeSpan);
 
-    const box = document.createElement('div');
-    box.style.background = 'var(--bg-card)';
-    box.style.border = '1px solid var(--border)';
-    box.style.borderRadius = '16px';
-    box.style.padding = '24px';
-    box.style.maxWidth = '400px';
-    box.style.width = '100%';
-    box.style.maxHeight = '70vh';
-    box.style.overflowY = 'auto';
-    box.style.textAlign = 'center';
+    if (isMine && !isSystem && !isDeletedForAll) {
+      const readStatus = document.createElement('span');
+      readStatus.style.fontSize = '10px';
+      readStatus.style.marginLeft = '4px';
+      readStatus.style.opacity = '0.6';
+      const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
+      if (readCount > 0) {
+        readStatus.innerHTML = '✓✓';
+        readStatus.style.color = 'var(--success)';
+      } else {
+        readStatus.innerHTML = '✓';
+        readStatus.style.color = 'var(--text-muted)';
+      }
+      timeSpan.appendChild(readStatus);
+    }
 
-    let content = `<h4 style="margin-bottom:16px;font-size:18px;color:var(--text);">
-      <i class="fa-solid fa-eye" style="color:var(--success);"></i> Telah Membaca
-    </h4>`;
+    if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
+      const replyContainer = document.createElement('div');
+      replyContainer.style.padding = '2px 8px';
+      replyContainer.style.marginBottom = '3px';
+      replyContainer.style.borderRadius = '4px';
+      replyContainer.style.fontSize = '10px';
+      replyContainer.style.opacity = '0.7';
+      replyContainer.style.borderLeft = '2px solid var(--accent)';
+      if (isMine) {
+        replyContainer.style.background = 'rgba(255,255,255,0.08)';
+      } else {
+        replyContainer.style.background = 'var(--bg-hover)';
+      }
+      const replyName = document.createElement('span');
+      replyName.style.fontWeight = '600';
+      replyName.textContent = data.replyTo.username || 'unknown';
+      replyContainer.appendChild(replyName);
+      const replyText = document.createElement('span');
+      replyText.textContent = ': ' + (data.replyTo.text || '');
+      replyContainer.appendChild(replyText);
+      bubble.prepend(replyContainer);
+    }
 
-    if (readUsers.length === 0) {
-      content += '<p style="color:var(--text-muted);">Belum ada yang membaca</p>';
+    if (isSystem) {
+      div.style.justifyContent = 'center';
+      div.appendChild(bubble);
+    } else if (isMine) {
+      div.style.flexDirection = 'row-reverse';
+      div.appendChild(avatarDiv);
+      bubbleWrapper.appendChild(bubble);
+      div.appendChild(bubbleWrapper);
     } else {
-      readUsers.forEach(u => {
-        content += `
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);color:var(--text);">
-            <span>${u.username}</span>
-            <span style="font-size:11px;color:var(--text-muted);">${u.time}</span>
-          </div>
-        `;
+      div.appendChild(avatarDiv);
+      bubbleWrapper.appendChild(bubble);
+      div.appendChild(bubbleWrapper);
+    }
+
+    // Long press / right click menu
+    if (!isSystem && !isDeletedForAll) {
+      let longPressTimer = null;
+
+      const showMenu = (e) => {
+        e.preventDefault();
+        const now = Date.now();
+        const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
+        const canEdit = (now - msgTime) < 60 * 60 * 1000;
+        showMessageMenu(doc.id, data.senderId, data.username, data.text, isMine, canEdit, data.isEdited);
+      };
+
+      div.addEventListener('touchstart', function(e) {
+        longPressTimer = setTimeout(() => {
+          showMenu(e);
+        }, 600);
+      });
+
+      div.addEventListener('touchmove', function() {
+        clearTimeout(longPressTimer);
+      });
+
+      div.addEventListener('touchend', function() {
+        clearTimeout(longPressTimer);
+      });
+
+      div.addEventListener('contextmenu', function(e) {
+        showMenu(e);
+      });
+
+      div.addEventListener('dblclick', function(e) {
+        showMenu(e);
       });
     }
 
-    content += `<button class="btn btn-primary" style="margin-top:16px;width:100%;" onclick="this.closest('div[style]').parentElement.remove()">Tutup</button>`;
-    box.innerHTML = content;
-    modal.appendChild(box);
+    return div;
+  }
 
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) modal.remove();
+  // ---------- MENU PESAN ----------
+  function showMessageMenu(docId, senderId, username, text, isMine, canEdit, isEdited) {
+    const oldMenu = document.getElementById('message-menu');
+    if (oldMenu) oldMenu.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'message-menu';
+    menu.style.position = 'fixed';
+    menu.style.bottom = '80px';
+    menu.style.left = '50%';
+    menu.style.transform = 'translateX(-50%)';
+    menu.style.background = 'var(--bg-card)';
+    menu.style.border = '1px solid var(--border)';
+    menu.style.borderRadius = '12px';
+    menu.style.padding = '8px';
+    menu.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+    menu.style.zIndex = '99999';
+    menu.style.minWidth = '200px';
+    menu.style.display = 'flex';
+    menu.style.flexDirection = 'column';
+    menu.style.gap = '4px';
+
+    const infoBtn = createMenuItem('Info (baca)', 'fa-solid fa-circle-info', 'var(--text)');
+    infoBtn.addEventListener('click', function() {
+      menu.remove();
+      showReadReceipts(docId);
     });
-    document.body.appendChild(modal);
-  } catch (error) {
-    console.error('Error showReadReceipts:', error);
-    showToast('Gagal mengambil data baca', 'error');
+    menu.appendChild(infoBtn);
+
+    if (isMine && canEdit) {
+      const editBtn = createMenuItem('Edit pesan', 'fa-solid fa-pen', 'var(--text)');
+      editBtn.addEventListener('click', function() {
+        menu.remove();
+        editMessage(docId, text);
+      });
+      menu.appendChild(editBtn);
+    } else if (isMine && !canEdit) {
+      const editBtn = createMenuItem('Edit pesan (tidak tersedia)', 'fa-solid fa-pen', 'var(--text-muted)');
+      editBtn.style.opacity = '0.5';
+      editBtn.style.cursor = 'not-allowed';
+      menu.appendChild(editBtn);
+    }
+
+    const deleteMeBtn = createMenuItem('Hapus untuk saya', 'fa-solid fa-trash-can', 'var(--danger)');
+    deleteMeBtn.addEventListener('click', function() {
+      menu.remove();
+      deleteMessageForMe(docId);
+    });
+    menu.appendChild(deleteMeBtn);
+
+    if (isMine) {
+      const deleteAllBtn = createMenuItem('Hapus untuk semua', 'fa-solid fa-trash-can', 'var(--danger)');
+      deleteAllBtn.addEventListener('click', function() {
+        menu.remove();
+        deleteMessageForAll(docId);
+      });
+      menu.appendChild(deleteAllBtn);
+    }
+
+    const closeBtn = createMenuItem('Tutup', 'fa-solid fa-xmark', 'var(--text-muted)');
+    closeBtn.style.borderTop = '1px solid var(--border)';
+    closeBtn.addEventListener('click', function() { menu.remove(); });
+    menu.appendChild(closeBtn);
+
+    document.body.appendChild(menu);
+
+    setTimeout(() => {
+      document.addEventListener('click', function closeMenu(e) {
+        if (!menu.contains(e.target)) {
+          menu.remove();
+          document.removeEventListener('click', closeMenu);
+        }
+      });
+    }, 100);
+
+    function createMenuItem(label, icon, color) {
+      const btn = document.createElement('button');
+      btn.innerHTML = `<i class="${icon}"></i> ${label}`;
+      btn.style.padding = '10px 16px';
+      btn.style.background = 'transparent';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '8px';
+      btn.style.color = color;
+      btn.style.fontSize = '14px';
+      btn.style.cursor = 'pointer';
+      btn.style.display = 'flex';
+      btn.style.alignItems = 'center';
+      btn.style.gap = '10px';
+      btn.style.width = '100%';
+      btn.style.textAlign = 'left';
+      btn.addEventListener('mouseenter', function() { this.style.background = 'var(--bg-hover)'; });
+      btn.addEventListener('mouseleave', function() { this.style.background = 'transparent'; });
+      return btn;
+    }
   }
-}
-// ============================================================
-// EDIT PESAN (DENGAN MODAL CUSTOM)
-// ============================================================
-let editingMessageId = null;
-let editingMessageOldText = '';
 
-function editMessage(docId, oldText) {
-  editingMessageId = docId;
-  editingMessageOldText = oldText;
+  // ---------- SHOW READ RECEIPTS ----------
+  async function showReadReceipts(docId) {
+    try {
+      const doc = await db.collection('messages').doc(docId).get();
+      if (!doc.exists) return;
+      const data = doc.data();
+      const readBy = data.readBy || {};
+      const userIds = Object.keys(readBy);
 
-  const modal = document.getElementById('edit-message-modal');
-  const input = document.getElementById('edit-message-input');
-  const errorEl = document.getElementById('edit-message-error');
+      const readUsers = [];
+      for (const uid of userIds) {
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (userDoc.exists) {
+          const username = userDoc.data().username || uid;
+          const timestamp = readBy[uid];
+          const time = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+          const timeStr = time.toLocaleString('id-ID', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          });
+          readUsers.push({ username, time: timeStr });
+        }
+      }
 
-  input.value = oldText;
-  errorEl.classList.remove('visible');
-  modal.classList.add('active');
-  document.body.classList.add('modal-open');
-  setTimeout(() => input.focus(), 100);
-}
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.background = 'rgba(0,0,0,0.6)';
+      modal.style.backdropFilter = 'blur(4px)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '100000';
+      modal.style.padding = '20px';
 
-// Event: Batal edit
-document.getElementById('edit-message-cancel').addEventListener('click', function() {
-  document.getElementById('edit-message-modal').classList.remove('active');
-  document.body.classList.remove('modal-open');
-  editingMessageId = null;
-  editingMessageOldText = '';
-});
+      const box = document.createElement('div');
+      box.style.background = 'var(--bg-card)';
+      box.style.border = '1px solid var(--border)';
+      box.style.borderRadius = '16px';
+      box.style.padding = '24px';
+      box.style.maxWidth = '400px';
+      box.style.width = '100%';
+      box.style.maxHeight = '70vh';
+      box.style.overflowY = 'auto';
+      box.style.textAlign = 'center';
 
-// Event: Simpan edit
-document.getElementById('edit-message-save').addEventListener('click', async function() {
-  const input = document.getElementById('edit-message-input');
-  const errorEl = document.getElementById('edit-message-error');
-  const newText = input.value.trim();
+      let content = `<h4 style="margin-bottom:16px;font-size:18px;color:var(--text);">
+        <i class="fa-solid fa-eye" style="color:var(--success);"></i> Telah Membaca
+      </h4>`;
 
-  if (!newText) {
-    errorEl.textContent = 'Pesan tidak boleh kosong';
-    errorEl.classList.add('visible');
-    return;
+      if (readUsers.length === 0) {
+        content += '<p style="color:var(--text-muted);">Belum ada yang membaca</p>';
+      } else {
+        readUsers.forEach(u => {
+          content += `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);color:var(--text);">
+        <span>${escapeHTML(u.username)}</span>
+        <span style="font-size:11px;color:var(--text-muted);">${escapeHTML(u.time)}</span>
+    </div>
+          `;
+        });
+      }
+
+      content += `<button class="btn btn-primary" style="margin-top:16px;width:100%;" onclick="this.closest('div[style]').parentElement.remove()">Tutup</button>`;
+      box.innerHTML = content;
+      modal.appendChild(box);
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
+      });
+      document.body.appendChild(modal);
+    } catch (error) {
+      console.error('Error showReadReceipts:', error);
+      showToast('Gagal mengambil data baca', 'error');
+    }
   }
 
-  if (newText === editingMessageOldText) {
+  // ---------- EDIT PESAN ----------
+  let editingMessageId = null;
+  let editingMessageOldText = '';
+
+  function editMessage(docId, oldText) {
+    editingMessageId = docId;
+    editingMessageOldText = oldText;
+
+    const modal = document.getElementById('edit-message-modal');
+    const input = document.getElementById('edit-message-input');
+    const errorEl = document.getElementById('edit-message-error');
+
+    input.value = oldText;
+    errorEl.classList.remove('visible');
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+    setTimeout(() => input.focus(), 100);
+  }
+
+  document.getElementById('edit-message-cancel').addEventListener('click', function() {
     document.getElementById('edit-message-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
     editingMessageId = null;
     editingMessageOldText = '';
-    return;
-  }
+  });
 
-  try {
-    // Cek apakah masih dalam 1 jam
-    const doc = await db.collection('messages').doc(editingMessageId).get();
-    if (!doc.exists) {
-      showToast('Pesan tidak ditemukan', 'error');
-      return;
-    }
-    const data = doc.data();
-    const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
-    const now = Date.now();
-    if (now - msgTime > 60 * 60 * 1000) {
-      errorEl.textContent = 'Waktu edit sudah habis (1 jam)';
+  document.getElementById('edit-message-save').addEventListener('click', async function() {
+    const input = document.getElementById('edit-message-input');
+    const errorEl = document.getElementById('edit-message-error');
+    const newText = input.value.trim();
+
+    if (!newText) {
+      errorEl.textContent = 'Pesan tidak boleh kosong';
       errorEl.classList.add('visible');
       return;
     }
 
-    // Update pesan
-    await db.collection('messages').doc(editingMessageId).update({
-      text: newText,
-      isEdited: true,
-      editedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    showToast('Pesan berhasil diedit', 'success');
-    document.getElementById('edit-message-modal').classList.remove('active');
-    document.body.classList.remove('modal-open');
-    editingMessageId = null;
-    editingMessageOldText = '';
-  } catch (error) {
-    console.error('Error editMessage:', error);
-    errorEl.textContent = 'Gagal mengedit pesan';
-    errorEl.classList.add('visible');
-  }
-});
-
-// Enter untuk submit di modal edit
-document.getElementById('edit-message-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    document.getElementById('edit-message-save').click();
-  }
-});
-// ============================================================
-// DELETE MESSAGE FOR ME (HAPUS UNTUK DIRI SENDIRI)
-// ============================================================
-async function deleteMessageForMe(docId) {
-  try {
-    const uid = currentUser?.uid;
-    if (!uid) {
-      showToast('Anda belum login', 'error');
+    if (newText === editingMessageOldText) {
+      document.getElementById('edit-message-modal').classList.remove('active');
+      document.body.classList.remove('modal-open');
+      editingMessageId = null;
+      editingMessageOldText = '';
       return;
     }
 
-    const doc = await db.collection('messages').doc(docId).get();
-    if (!doc.exists) return;
-    const data = doc.data();
-
-    if (data.isDeletedForAll) {
-      showToast('Pesan sudah dihapus untuk semua', 'info');
-      return;
-    }
-
-    const deletedFor = data.deletedFor || [];
-    if (!deletedFor.includes(uid)) {
-      deletedFor.push(uid);
-    }
-
-    await db.collection('messages').doc(docId).update({
-      deletedFor: deletedFor
-    });
-
-    showToast('Pesan dihapus untuk Anda', 'success');
-  } catch (error) {
-    console.error('Error deleteMessageForMe:', error);
-    showToast('Gagal menghapus pesan', 'error');
-  }
-}
-
-// ============================================================
-// DELETE MESSAGE FOR ALL (HAPUS UNTUK SEMUA)
-// ============================================================
-async function deleteMessageForAll(docId) {
-  try {
-    const confirm = await showConfirmModal(
-      'Hapus untuk semua?',
-      'Pesan akan dihapus untuk semua anggota grup. Lanjutkan?',
-      'Hapus'
-    );
-    if (!confirm) return;
-
-    // Update pesan menjadi dihapus untuk semua, tapi tetap pertahankan timestamp kirim asli
-    await db.collection('messages').doc(docId).update({
-      isDeletedForAll: true,
-      text: 'Pesan ini telah dihapus',
-      replyTo: null
-      // timestamp tetap tidak diubah
-    });
-
-    showToast('Pesan dihapus untuk semua', 'success');
-  } catch (error) {
-    console.error('Error deleteMessageForAll:', error);
-    showToast('Gagal menghapus pesan', 'error');
-  }
-}
-// ============================================================
-// MARK MESSAGE AS READ (OTOMATIS)
-// ============================================================
-async function markMessageAsRead(docId) {
-  const uid = currentUser?.uid;
-  if (!uid) return;
-
-  try {
-    const doc = await db.collection('messages').doc(docId).get();
-    if (!doc.exists) return;
-    const data = doc.data();
-
-    if (data.senderId === uid) return; // jangan tandai pesan sendiri
-    if (data.isDeletedForAll) return;
-
-    const readBy = data.readBy || {};
-    if (readBy[uid]) return; // sudah dibaca
-
-    readBy[uid] = firebase.firestore.FieldValue.serverTimestamp();
-    await db.collection('messages').doc(docId).update({
-      readBy: readBy
-    });
-  } catch (error) {
-    console.error('Error marking message as read:', error);
-  }
-}
-
-// Observer untuk mendeteksi pesan yang masuk viewport (dengan cleanup)
-function observeMessages() {
-  // Hapus observer lama jika ada
-  if (messagesObserver) {
-    messagesObserver.disconnect();
-    messagesObserver = null;
-  }
-
-  messagesObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        const docId = el.dataset.docId;
-        if (docId) {
-          markMessageAsRead(docId);
-        }
+    try {
+      const doc = await db.collection('messages').doc(editingMessageId).get();
+      if (!doc.exists) {
+        showToast('Pesan tidak ditemukan', 'error');
+        return;
       }
-    });
-  }, { threshold: 0.5 });
+      const data = doc.data();
+      const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
+      const now = Date.now();
+      if (now - msgTime > 60 * 60 * 1000) {
+        errorEl.textContent = 'Waktu edit sudah habis (1 jam)';
+        errorEl.classList.add('visible');
+        return;
+      }
 
-  document.querySelectorAll('.message-item').forEach(el => {
-    messagesObserver.observe(el);
+      await db.collection('messages').doc(editingMessageId).update({
+        text: newText,
+        isEdited: true,
+        editedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      showToast('Pesan berhasil diedit', 'success');
+      document.getElementById('edit-message-modal').classList.remove('active');
+      document.body.classList.remove('modal-open');
+      editingMessageId = null;
+      editingMessageOldText = '';
+    } catch (error) {
+      console.error('Error editMessage:', error);
+      errorEl.textContent = 'Gagal mengedit pesan';
+      errorEl.classList.add('visible');
+    }
   });
-}
-  // ---------- SUBSCRIBE MESSAGES (hanya 10 pesan terakhir) ----------
-function subscribeMessages() {
-  if (messagesUnsubscribe) {
-    messagesUnsubscribe();
-    messagesUnsubscribe = null;
+
+  document.getElementById('edit-message-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById('edit-message-save').click();
+    }
+  });
+
+  // ---------- DELETE MESSAGE ----------
+  async function deleteMessageForMe(docId) {
+    try {
+      const uid = currentUser?.uid;
+      if (!uid) {
+        showToast('Anda belum login', 'error');
+        return;
+      }
+
+      const doc = await db.collection('messages').doc(docId).get();
+      if (!doc.exists) return;
+      const data = doc.data();
+
+      if (data.isDeletedForAll) {
+        showToast('Pesan sudah dihapus untuk semua', 'info');
+        return;
+      }
+
+      const deletedFor = data.deletedFor || [];
+      if (!deletedFor.includes(uid)) {
+        deletedFor.push(uid);
+      }
+
+      await db.collection('messages').doc(docId).update({
+        deletedFor: deletedFor
+      });
+
+      showToast('Pesan dihapus untuk Anda', 'success');
+    } catch (error) {
+      console.error('Error deleteMessageForMe:', error);
+      showToast('Gagal menghapus pesan', 'error');
+    }
   }
 
-  messagesUnsubscribe = db.collection('messages')
-    .orderBy('timestamp', 'asc')
-    .limitToLast(10)
-    .onSnapshot((snapshot) => {
-      messagesList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const el = renderMessage(doc);
-        messagesList.appendChild(el);
-      });
-      messagesList.scrollTop = messagesList.scrollHeight;
+  async function deleteMessageForAll(docId) {
+    try {
+      const confirm = await showConfirmModal(
+        'Hapus untuk semua?',
+        'Pesan akan dihapus untuk semua anggota grup. Lanjutkan?',
+        'Hapus'
+      );
+      if (!confirm) return;
 
-      // ========== TAMBAHKAN INI ==========
-      observeMessages(); // tandai pesan yang terlihat sudah dibaca
-    }, (error) => {
-      console.error('Error listening messages:', error);
+      await db.collection('messages').doc(docId).update({
+        isDeletedForAll: true,
+        text: 'Pesan ini telah dihapus',
+        replyTo: null
+      });
+
+      showToast('Pesan dihapus untuk semua', 'success');
+    } catch (error) {
+      console.error('Error deleteMessageForAll:', error);
+      showToast('Gagal menghapus pesan', 'error');
+    }
+  }
+
+  // ---------- MARK AS READ ----------
+  async function markMessageAsRead(docId) {
+    const uid = currentUser?.uid;
+    if (!uid) return;
+
+    try {
+      const doc = await db.collection('messages').doc(docId).get();
+      if (!doc.exists) return;
+      const data = doc.data();
+
+      if (data.senderId === uid) return;
+      if (data.isDeletedForAll) return;
+
+      const readBy = data.readBy || {};
+      if (readBy[uid]) return;
+
+      readBy[uid] = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('messages').doc(docId).update({
+        readBy: readBy
+      });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
+  }
+
+  function observeMessages() {
+    if (messagesObserver) {
+      messagesObserver.disconnect();
+      messagesObserver = null;
+    }
+
+    messagesObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const docId = el.dataset.docId;
+          if (docId) {
+            markMessageAsRead(docId);
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.message-item').forEach(el => {
+      messagesObserver.observe(el);
     });
-}
+  }
+
+  // ---------- SUBSCRIBE MESSAGES ----------
+  function subscribeMessages() {
+    if (messagesUnsubscribe) {
+      messagesUnsubscribe();
+      messagesUnsubscribe = null;
+    }
+
+    messagesUnsubscribe = db.collection('messages')
+      .orderBy('timestamp', 'asc')
+      .limitToLast(10)
+      .onSnapshot((snapshot) => {
+        messagesList.innerHTML = '';
+        snapshot.forEach(doc => {
+          const el = renderMessage(doc);
+          messagesList.appendChild(el);
+        });
+        messagesList.scrollTop = messagesList.scrollHeight;
+        observeMessages();
+      }, (error) => {
+        console.error('Error listening messages:', error);
+      });
+  }
+
   // ---------- SUBSCRIBE USERS ----------
   function subscribeUsers() {
     if (usersUnsubscribe) {
@@ -7061,119 +7022,111 @@ function subscribeMessages() {
   // ---------- CEK USER SAAT LOAD ----------
   async function checkUser() {
     const uid = getOrCreateUid();
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists) {
-      const data = userDoc.data();
-      currentUser = {
-        uid: uid,
-        username: data.username,
-        avatar: data.avatar || ''
-      };
-      setCurrentUser(currentUser);
-      initChat();
-    } else {
-      profileSetup.style.display = 'block';
-      chatContainer.style.display = 'none';
-      if (messagesUnsubscribe) messagesUnsubscribe();
-      if (usersUnsubscribe) usersUnsubscribe();
-      if (statusInterval) clearInterval(statusInterval);
+    let userDoc;
+    try {
+        userDoc = await db.collection('users').doc(uid).get();
+    } catch (e) {
+        console.error('[checkUser] Firestore error:', e);
+        if (profileSetup) profileSetup.style.display = 'block';
+        if (chatContainer) chatContainer.style.display = 'none';
+        return;
     }
-  }
+    if (userDoc.exists) {
+        const data = userDoc.data();
+        currentUser = {
+            uid: uid,
+            username: data.username,
+            avatar: data.avatar || ''
+        };
+        setCurrentUser(currentUser);
+        initChat();
+    } else {
+        profileSetup.style.display = 'block';
+        chatContainer.style.display = 'none';
+        if (messagesUnsubscribe) messagesUnsubscribe();
+        if (usersUnsubscribe) usersUnsubscribe();
+        if (statusInterval) clearInterval(statusInterval);
+    }
+}
 
   // ---------- EVENT: BUAT PROFIL ----------
-  btnCreateProfile.addEventListener('click', async function() {
-    const username = newUsernameInput.value.trim();
-    const errorEl = document.getElementById('username-error');
+btnCreateProfile.addEventListener('click', async function() {
+  const username = newUsernameInput.value.trim();
+  const errorEl = document.getElementById('username-error');
 
-    if (!username) {
-      errorEl.textContent = 'Username tidak boleh kosong';
-      errorEl.classList.add('visible');
-      return;
-    }
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
-      errorEl.classList.add('visible');
-      return;
-    }
-
-    btnCreateProfile.disabled = true;
-    btnCreateProfile.innerHTML = `
-      <span class="gate-spinner" style="
-        width:18px;height:18px;
-        border-color:rgba(255,255,255,0.3);
-        border-top-color:#fff;
-        display:inline-block;
-      "></span> Memproses...
-    `;
-    errorEl.classList.remove('visible');
-
-    try {
-      const exists = await checkUsername(username);
-      if (exists) {
-        errorEl.textContent = 'Username sudah dipakai, coba yang lain';
-        errorEl.classList.add('visible');
-        btnCreateProfile.disabled = false;
-        btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
-        return;
-      }
-
-      const uid = getOrCreateUid();
-      const avatarUrl = uploadedAvatarUrl || '';
-      const success = await createProfile(uid, username, avatarUrl);
-
-      if (success) {
-        currentUser = { uid, username, avatar: avatarUrl };
-        setCurrentUser(currentUser);
-        showToast('Selamat datang di grup! 🎉', 'success');
-        initChat();
-      } else {
-        errorEl.textContent = 'Gagal membuat profil, coba lagi';
-        errorEl.classList.add('visible');
-        btnCreateProfile.disabled = false;
-        btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
-      }
-    } catch (err) {
-      console.error('Error saat membuat profil:', err);
-      errorEl.textContent = 'Terjadi error: ' + err.message;
-      errorEl.classList.add('visible');
-      btnCreateProfile.disabled = false;
-      btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
-    }
-  });
-
-  // ---------- EVENT: KIRIM PESAN ----------
-  // ============================================================
-// EVENT: KIRIM PESAN (LANGSUNG, TANPA JEDA)
-// ============================================================
-btnSend.addEventListener('click', async function() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-
-  // Simpan data reply jika ada
-  let replyData = null;
-  if (replyingTo) {
-    replyData = {
-      docId: replyingTo.docId,
-      username: replyingTo.username,
-      text: replyingTo.text
-    };
+  if (!username) {
+    errorEl.textContent = 'Username tidak boleh kosong';
+    errorEl.classList.add('visible');
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+    errorEl.classList.add('visible');
+    return;
   }
 
-  // ==========================================
-  // LANGSUNG KOSONGKAN INPUT & BATAL REPLY
-  // ==========================================
-  chatInput.value = '';
-  cancelReply(); // batalkan reply agar tidak tersisa
+  btnCreateProfile.disabled = true;
+  btnCreateProfile.innerHTML = `<span class="gate-spinner" style="
+    width:18px;height:18px;
+    border-color:rgba(255,255,255,0.3);
+    border-top-color:#fff;
+    display:inline-block;
+  "></span> Memproses...`;
+  errorEl.classList.remove('visible');
 
-  // Kirim pesan di latar belakang (tanpa nunggu UI)
-  const ok = await sendMessage(text, replyData);
-  if (!ok) {
-    // Kalau gagal, kasih tahu user (tapi teks sudah hilang)
-    showToast('Gagal mengirim pesan, coba lagi', 'error');
-    // Opsional: kembalikan teks ke input kalau mau
-    // chatInput.value = text;
+  try {
+    const exists = await checkUsername(username);
+    if (exists) {
+      errorEl.textContent = 'Username sudah dipakai, coba yang lain';
+      errorEl.classList.add('visible');
+      return;
+    }
+
+    const uid = getOrCreateUid();
+    const avatarUrl = uploadedAvatarUrl || '';
+    const success = await createProfile(uid, username, avatarUrl);
+
+    if (success) {
+      currentUser = { uid, username, avatar: avatarUrl };
+      setCurrentUser(currentUser);
+      showToast('Selamat datang di grup! 🎉', 'success');
+      initChat();
+    } else {
+      errorEl.textContent = 'Gagal membuat profil, coba lagi';
+      errorEl.classList.add('visible');
+    }
+  } catch (err) {
+    console.error('Error saat membuat profil:', err);
+    errorEl.textContent = 'Terjadi error: ' + err.message;
+    errorEl.classList.add('visible');
+  } finally {
+    btnCreateProfile.disabled = false;
+    btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
   }
 });
+
+  // ---------- EVENT: KIRIM PESAN ----------
+  btnSend.addEventListener('click', async function() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    let replyData = null;
+    if (replyingTo) {
+      replyData = {
+        docId: replyingTo.docId,
+        username: replyingTo.username,
+        text: replyingTo.text
+      };
+    }
+
+    chatInput.value = '';
+    cancelReply();
+
+    const ok = await sendMessage(text, replyData);
+    if (!ok) {
+      showToast('Gagal mengirim pesan, coba lagi', 'error');
+    }
+  });
 
   chatInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -7184,141 +7137,123 @@ btnSend.addEventListener('click', async function() {
 
   // ---------- EVENT: EDIT PROFIL ----------
   btnEditProfile.addEventListener('click', function() {
-  const modal = document.getElementById('edit-profile-modal');
-  const input = document.getElementById('edit-username-input');
-  const errorEl = document.getElementById('edit-username-error');
-  const avatarPreview = document.getElementById('edit-avatar-preview');
-  const avatarError = document.getElementById('edit-avatar-error');
+    const modal = document.getElementById('edit-profile-modal');
+    const input = document.getElementById('edit-username-input');
+    const errorEl = document.getElementById('edit-username-error');
+    const avatarPreview = document.getElementById('edit-avatar-preview');
+    const avatarError = document.getElementById('edit-avatar-error');
 
-  input.value = currentUser.username;
-  errorEl.classList.remove('visible');
-  avatarError.classList.remove('visible');
+    input.value = currentUser.username;
+    errorEl.classList.remove('visible');
+    avatarError.classList.remove('visible');
 
-  if (currentUser.avatar) {
-    avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-  } else {
-    avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
-  }
+    if (currentUser.avatar) {
+      avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
+    }
 
-  // ==========================================
-  // INI 3 BARIS YANG HARUS ADA (RESET STATE)
-  // ==========================================
-  newAvatarUrl = null;
-  document.getElementById('edit-avatar-input').value = '';
-  // ==========================================
+    newAvatarUrl = null;
+    document.getElementById('edit-avatar-input').value = '';
 
-  modal.classList.add('active');
-  document.body.classList.add('modal-open');
-  setTimeout(() => input.focus(), 100);
-});
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+    setTimeout(() => input.focus(), 100);
+  });
 
   document.getElementById('edit-profile-cancel').addEventListener('click', function() {
     document.getElementById('edit-profile-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
   });
 
-  // ============================================================
-// EVENT: EDIT PROFIL (Simpan)
-// ============================================================
-// ============================================================
-// EVENT: EDIT PROFIL (Simpan) - DENGAN HANDLING BATAS
-// ============================================================
-document.getElementById('edit-profile-save').addEventListener('click', async function() {
-  const input = document.getElementById('edit-username-input');
-  const errorEl = document.getElementById('edit-username-error');
-  const newUsername = input.value.trim();
+  document.getElementById('edit-profile-save').addEventListener('click', async function() {
+    const input = document.getElementById('edit-username-input');
+    const errorEl = document.getElementById('edit-username-error');
+    const newUsername = input.value.trim();
 
-  console.log('[Edit Save] newAvatarUrl:', newAvatarUrl);
-  console.log('[Edit Save] currentUser.avatar:', currentUser.avatar);
+    console.log('[Edit Save] newAvatarUrl:', newAvatarUrl);
+    console.log('[Edit Save] currentUser.avatar:', currentUser.avatar);
 
-  const usernameChanged = newUsername && newUsername !== currentUser.username;
-  const avatarChanged = newAvatarUrl && newAvatarUrl !== currentUser.avatar;
+    const usernameChanged = newUsername && newUsername !== currentUser.username;
+    const avatarChanged = newAvatarUrl && newAvatarUrl !== currentUser.avatar;
 
-  console.log('[Edit Save] usernameChanged:', usernameChanged);
-  console.log('[Edit Save] avatarChanged:', avatarChanged);
+    console.log('[Edit Save] usernameChanged:', usernameChanged);
+    console.log('[Edit Save] avatarChanged:', avatarChanged);
 
-  if (!usernameChanged && !avatarChanged) {
-    document.getElementById('edit-profile-modal').classList.remove('active');
-    document.body.classList.remove('modal-open');
-    return;
-  }
-
-  // Validasi username jika diubah
-  if (usernameChanged) {
-    if (!/^[a-z0-9_]+$/.test(newUsername)) {
-      errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
-      errorEl.classList.add('visible');
+    if (!usernameChanged && !avatarChanged) {
+      document.getElementById('edit-profile-modal').classList.remove('active');
+      document.body.classList.remove('modal-open');
       return;
     }
-    const exists = await checkUsername(newUsername);
-    if (exists) {
-      errorEl.textContent = 'Username sudah dipakai';
-      errorEl.classList.add('visible');
-      return;
+
+    if (usernameChanged) {
+      if (!/^[a-z0-9_]+$/.test(newUsername)) {
+        errorEl.textContent = 'Hanya huruf kecil, angka, underscore';
+        errorEl.classList.add('visible');
+        return;
+      }
+      const exists = await checkUsername(newUsername);
+      if (exists) {
+        errorEl.textContent = 'Username sudah dipakai';
+        errorEl.classList.add('visible');
+        return;
+      }
     }
-  }
 
-  // Disable tombol simpan
-  const saveBtn = document.getElementById('edit-profile-save');
-  saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Menyimpan...';
+    const saveBtn = document.getElementById('edit-profile-save');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Menyimpan...';
 
-  let success = true;
-  let errorMsg = '';
+    let success = true;
+    let errorMsg = '';
 
-  // Update username jika berubah
-  if (usernameChanged) {
-    const result = await updateUsername(currentUser.uid, newUsername);
-    if (!result.success) {
-      success = false;
-      errorMsg = result.error;
-      errorEl.textContent = errorMsg;
-      errorEl.classList.add('visible');
-    } else {
-      currentUser.username = newUsername;
+    if (usernameChanged) {
+      const result = await updateUsername(currentUser.uid, newUsername);
+      if (!result.success) {
+        success = false;
+        errorMsg = result.error;
+        errorEl.textContent = errorMsg;
+        errorEl.classList.add('visible');
+      } else {
+        currentUser.username = newUsername;
+      }
     }
-  }
 
-  // Update avatar jika berubah
-  if (avatarChanged && success) {
-    const result = await updateAvatar(currentUser.uid, newAvatarUrl);
-    if (!result.success) {
-      success = false;
-      errorMsg = result.error;
-      const avatarErrorEl = document.getElementById('edit-avatar-error');
-      avatarErrorEl.textContent = errorMsg;
-      avatarErrorEl.classList.add('visible');
-      showToast(errorMsg, 'error');
-    } else {
-      currentUser.avatar = newAvatarUrl;
+    if (avatarChanged && success) {
+      const result = await updateAvatar(currentUser.uid, newAvatarUrl);
+      if (!result.success) {
+        success = false;
+        errorMsg = result.error;
+        const avatarErrorEl = document.getElementById('edit-avatar-error');
+        avatarErrorEl.textContent = errorMsg;
+        avatarErrorEl.classList.add('visible');
+        showToast(errorMsg, 'error');
+      } else {
+        currentUser.avatar = newAvatarUrl;
+      }
     }
-  }
 
-  // Jika semua berhasil
-  if (success) {
-    setCurrentUser(currentUser);
-    myUsernameDisplay.textContent = currentUser.username;
-    if (currentUser.avatar) {
-      myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    } else {
-      myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
-      myAvatarPlaceholder.style.background = 'var(--accent-soft)';
-      myAvatarPlaceholder.style.color = 'var(--accent)';
+    if (success) {
+      setCurrentUser(currentUser);
+      myUsernameDisplay.textContent = currentUser.username;
+      if (currentUser.avatar) {
+        myAvatarPlaceholder.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        myAvatarPlaceholder.textContent = currentUser.username[0].toUpperCase();
+        myAvatarPlaceholder.style.background = 'var(--accent-soft)';
+        myAvatarPlaceholder.style.color = 'var(--accent)';
+      }
+      showToast('Profil berhasil diupdate!', 'success');
+      document.getElementById('edit-profile-modal').classList.remove('active');
+      document.body.classList.remove('modal-open');
+      newAvatarUrl = null;
+      document.getElementById('edit-avatar-input').value = '';
     }
-    showToast('Profil berhasil diupdate!', 'success');
-    document.getElementById('edit-profile-modal').classList.remove('active');
-    document.body.classList.remove('modal-open');
-    // Reset state
-    newAvatarUrl = null;
-    document.getElementById('edit-avatar-input').value = '';
-  } else {
-    // Jika gagal, jangan tutup modal
-    // Error sudah ditampilkan di masing-masing field
-  }
 
-  saveBtn.disabled = false;
-  saveBtn.innerHTML = 'Simpan';
-});
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = 'Simpan';
+  });
+
   // ---------- VALIDASI USERNAME REAL-TIME ----------
   newUsernameInput.addEventListener('input', async function() {
     const val = this.value.trim();
@@ -7362,7 +7297,7 @@ document.getElementById('edit-profile-save').addEventListener('click', async fun
     console.error('Firebase tidak terinisialisasi');
   }
 
-} // akhir if firebase
+} // akhir else (firebase tersedia)
 
     </script>
 </body>
