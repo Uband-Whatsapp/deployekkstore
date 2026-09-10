@@ -3078,7 +3078,238 @@ ul {
         box-shadow: 0 0 0 6px rgba(45, 212, 191, 0);
     }
 }
+/* =========================================================
+   MEDIA BUBBLE + LIGHTBOX + PREVIEW
+========================================================= */
 
+/* Media bubble */
+.msg-media {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  max-width: 220px;
+  min-width: 150px;
+  margin: 4px 0;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.msg-media:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.msg-media img,
+.msg-media video {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.msg-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.msg-media .play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  pointer-events: none;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  padding-left: 3px;
+}
+.msg-media .media-zoom-hint {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.msg-media:hover .media-zoom-hint {
+  opacity: 1;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 20px;
+}
+.lightbox-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.lightbox-content {
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lightbox-overlay.active .lightbox-content {
+  transform: scale(1);
+}
+.lightbox-content img,
+.lightbox-content video {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+/* Preview file sebelum kirim */
+.media-preview-bar {
+  display: none;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-hover);
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+.media-preview-bar.visible {
+  display: flex;
+}
+.media-preview-item {
+  position: relative;
+  flex: 0 0 auto;
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  transition: all 0.2s ease;
+}
+.media-preview-item:hover {
+  border-color: var(--accent);
+}
+.media-preview-item img,
+.media-preview-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.media-preview-item .preview-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+}
+.media-preview-item .preview-remove:hover {
+  background: var(--danger);
+  transform: scale(1.15);
+}
+.media-preview-item .preview-video-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+.media-preview-bar::-webkit-scrollbar {
+  height: 4px;
+}
+.media-preview-bar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+  .msg-media {
+    max-width: 180px;
+    min-width: 120px;
+  }
+  .msg-media img,
+  .msg-media video {
+    height: 160px;
+  }
+  .media-preview-item {
+    width: 60px;
+    height: 60px;
+  }
+}
 </style>  
 </head>
 <body>
@@ -3845,6 +4076,8 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     <!-- Pesan akan di-render di sini -->
   </div>
   <!-- ======== INPUT CHAT + ATTACH ======== -->
+<!-- Preview file sebelum kirim -->
+<div id="media-preview-bar" class="media-preview-bar"></div>
   <div class="chat-input-wrapper" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--bg-card); border-top:1px solid var(--border);">
     <!-- Tombol lampirkan file -->
     <button id="btn-attach" style="min-width:40px; min-height:40px; background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:8px; transition:background 0.2s;" 
@@ -4055,6 +4288,14 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         </div>
     </div>
     <div id="toast"></div>
+
+    <!-- Lightbox untuk foto/video fullscreen -->
+    <div class="lightbox-overlay" id="lightbox-overlay">
+      <button class="lightbox-close" id="lightbox-close" aria-label="Tutup">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="lightbox-content" id="lightbox-content"></div>
+    </div>
 </body>
 
     <script>
@@ -5726,64 +5967,143 @@ attachBtn.addEventListener('click', function() {
   chatFileInput.click();
 });
 
-// Event saat user pilih file (atau ambil foto/video dari kamera)
-chatFileInput.addEventListener('change', async function() {
+// ============================================================
+// PREVIEW QUEUE — pilih file, tampil preview, kirim pas klik Send
+// ============================================================
+let pendingFiles = [];   // Array { file, previewUrl, type }
+
+function renderPreviewBar() {
+  const bar = document.getElementById('media-preview-bar');
+  if (!bar) return;
+
+  bar.innerHTML = '';
+
+  if (pendingFiles.length === 0) {
+    bar.classList.remove('visible');
+    return;
+  }
+
+  bar.classList.add('visible');
+
+  pendingFiles.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.className = 'media-preview-item';
+
+    if (item.type === 'image') {
+      const img = document.createElement('img');
+      img.src = item.previewUrl;
+      img.alt = 'preview';
+      div.appendChild(img);
+    } else if (item.type === 'video') {
+      const video = document.createElement('video');
+      video.src = item.previewUrl;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      div.appendChild(video);
+
+      const badge = document.createElement('span');
+      badge.className = 'preview-video-badge';
+      badge.innerHTML = '<i class="fa-solid fa-video"></i>';
+      div.appendChild(badge);
+    }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'preview-remove';
+    removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    removeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      URL.revokeObjectURL(item.previewUrl);
+      pendingFiles.splice(index, 1);
+      renderPreviewBar();
+    });
+    div.appendChild(removeBtn);
+
+    bar.appendChild(div);
+  });
+}
+
+chatFileInput.addEventListener('change', function() {
   const files = this.files;
   if (!files.length) return;
 
-  // Tampilkan loading
-  showToast(`Mengupload ${files.length} file...`, 'info');
-  this.disabled = true;
-  attachBtn.disabled = true;
+  for (const file of files) {
+    if (file.size > 20 * 1024 * 1024) {
+      showToast(`${file.name} terlalu besar (maks 20MB)`, 'error');
+      continue;
+    }
+
+    let type = 'file';
+    if (file.type.startsWith('image/')) type = 'image';
+    else if (file.type.startsWith('video/')) type = 'video';
+
+    const previewUrl = URL.createObjectURL(file);
+    pendingFiles.push({ file, previewUrl, type });
+  }
+
+  this.value = '';
+  renderPreviewBar();
+});
+
+// ============================================================
+// KIRIM MEDIA SETELAH PREVIEW
+// ============================================================
+async function sendPendingMedia(text = '') {
+  if (pendingFiles.length === 0) return;
+  if (!currentUser) {
+    showToast('Buat profil dulu di halaman Grup', 'warning');
+    return;
+  }
+
+  const filesToSend = [...pendingFiles];
+  pendingFiles = [];
+  renderPreviewBar();
+  chatInput.value = '';
+  cancelReply();
+
+  showToast(`Mengupload ${filesToSend.length} file...`, 'info');
+
+  const btnSendEl = document.getElementById('btn-send');
+  if (btnSendEl) btnSendEl.disabled = true;
 
   try {
-    for (const file of files) {
-      // Validasi ukuran (maks 20MB)
-      if (file.size > 20 * 1024 * 1024) {
-        showToast(`File ${file.name} terlalu besar (maks 20MB)`, 'error');
-        continue;
-      }
+    for (let i = 0; i < filesToSend.length; i++) {
+      const item = filesToSend[i];
+      try {
+        const mediaUrl = await uploadMediaToCloudinary(item.file);
 
-      // Upload ke Cloudinary
-      const mediaUrl = await uploadMediaToCloudinary(file);
+        const payload = {
+          uid: currentUser.uid,
+          username: currentUser.username,
+          avatar: currentUser.avatar || '',
+          text: (i === 0 && text) ? text : '',
+          mediaUrl: mediaUrl,
+          mediaType: item.type,
+          fileName: item.file.name,
+          fileSize: item.file.size
+        };
 
-      // Tentukan tipe media
-      let mediaType = 'file';
-      if (file.type.startsWith('image/')) mediaType = 'image';
-      else if (file.type.startsWith('video/')) mediaType = 'video';
+        const res = await fetch('/api/send-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
 
-      // Kirim pesan media ke server
-      const payload = {
-        uid: currentUser.uid,
-        username: currentUser.username,
-        avatar: currentUser.avatar || '',
-        text: '',
-        mediaUrl: mediaUrl,
-        mediaType: mediaType,
-        fileName: file.name,
-        fileSize: file.size
-      };
-
-      const res = await fetch('/api/send-message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        showToast(`Gagal mengirim ${file.name}`, 'error');
+        if (!res.ok) {
+          showToast(`Gagal kirim ${item.file.name}`, 'error');
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        showToast(`Gagal upload ${item.file.name}`, 'error');
+      } finally {
+        URL.revokeObjectURL(item.previewUrl);
       }
     }
     showToast('File berhasil dikirim!', 'success');
-  } catch (error) {
-    console.error('Upload error:', error);
-    showToast('Gagal upload file: ' + error.message, 'error');
   } finally {
-    this.value = '';
-    this.disabled = false;
-    attachBtn.disabled = false;
+    if (btnSendEl) btnSendEl.disabled = false;
   }
-});
+}
 // ============================================================
 // EVENT: UPLOAD AVATAR (Form Buat Profil)
 // ============================================================
@@ -6417,7 +6737,67 @@ let messagesUnsubscribe = null;
     mouseCurrentX = 0;
     mouseCurrentY = 0;
   });
+// ============================================================
+// LIGHTBOX — foto/video fullscreen
+// ============================================================
+function openLightbox(url, type, fileName) {
+  const overlay = document.getElementById('lightbox-overlay');
+  const content = document.getElementById('lightbox-content');
+  if (!overlay || !content) return;
 
+  content.innerHTML = '';
+
+  if (type === 'image') {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = fileName || 'Gambar';
+    content.appendChild(img);
+  } else if (type === 'video') {
+    const video = document.createElement('video');
+    video.src = url;
+    video.controls = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    content.appendChild(video);
+  }
+
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const overlay = document.getElementById('lightbox-overlay');
+  const content = document.getElementById('lightbox-content');
+  if (!overlay || !content) return;
+
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+
+  const video = content.querySelector('video');
+  if (video) {
+    video.pause();
+    video.src = '';
+  }
+
+  setTimeout(() => {
+    if (!overlay.classList.contains('active')) {
+      content.innerHTML = '';
+    }
+  }, 300);
+}
+
+// Event listener lightbox
+const lightboxClose = document.getElementById('lightbox-close');
+const lightboxOverlay = document.getElementById('lightbox-overlay');
+if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+if (lightboxOverlay) {
+  lightboxOverlay.addEventListener('click', function(e) {
+    if (e.target === lightboxOverlay) closeLightbox();
+  });
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
   // ---------- RENDER PESAN (LENGKAP) ----------
   function renderMessage(doc) {
     const data = doc.data();
@@ -6542,87 +6922,69 @@ let messagesUnsubscribe = null;
     }
 
     if (data.mediaUrl && !isDeletedForAll && !isDeletedForMe) {
-      const mediaContainer = document.createElement('div');
-      mediaContainer.style.margin = '4px 0';
-      mediaContainer.style.maxWidth = '200px';
-      mediaContainer.style.borderRadius = '8px';
-      mediaContainer.style.overflow = 'hidden';
-      mediaContainer.style.position = 'relative';
-      mediaContainer.style.background = 'rgba(0,0,0,0.05)';
+  const mediaContainer = document.createElement('div');
+  mediaContainer.style.margin = '4px 0';
+  mediaContainer.style.maxWidth = '220px';
 
-      if (data.mediaType === 'image') {
-        const img = document.createElement('img');
-        img.src = data.mediaUrl;
-        img.style.width = '100%';
-        img.style.height = 'auto';
-        img.style.display = 'block';
-        img.style.borderRadius = '8px';
-        img.loading = 'lazy';
-        img.alt = data.fileName || 'Gambar';
-        img.style.cursor = 'pointer';
-        img.addEventListener('click', function() {
-          window.open(data.mediaUrl, '_blank');
-        });
-        mediaContainer.appendChild(img);
-      } else if (data.mediaType === 'video') {
-        const video = document.createElement('video');
-        video.src = data.mediaUrl;
-        video.style.width = '100%';
-        video.style.height = 'auto';
-        video.controls = true;
-        video.preload = 'metadata';
-        video.playsInline = true;
-        video.style.borderRadius = '8px';
-        video.style.background = '#000';
-        mediaContainer.appendChild(video);
-      } else {
-        const link = document.createElement('a');
-        link.href = data.mediaUrl;
-        link.target = '_blank';
-        link.style.color = 'var(--accent)';
-        link.textContent = `📎 ${data.fileName || 'File'}`;
-        mediaContainer.appendChild(link);
-      }
+  if (data.mediaType === 'image' || data.mediaType === 'video') {
+    // Media box dengan bingkai keren
+    const mediaBox = document.createElement('div');
+    mediaBox.className = 'msg-media';
 
-      if (data.mediaType === 'image' || data.mediaType === 'video') {
-        const downloadBtn = document.createElement('button');
-        downloadBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
-        downloadBtn.style.position = 'absolute';
-        downloadBtn.style.bottom = '6px';
-        downloadBtn.style.right = '6px';
-        downloadBtn.style.background = 'rgba(0,0,0,0.65)';
-        downloadBtn.style.color = '#fff';
-        downloadBtn.style.border = 'none';
-        downloadBtn.style.borderRadius = '6px';
-        downloadBtn.style.padding = '4px 8px';
-        downloadBtn.style.fontSize = '12px';
-        downloadBtn.style.cursor = 'pointer';
-        downloadBtn.style.opacity = '0.8';
-        downloadBtn.style.transition = 'opacity 0.2s, transform 0.2s';
-        downloadBtn.style.backdropFilter = 'blur(2px)';
-        downloadBtn.title = 'Download';
-        downloadBtn.addEventListener('mouseenter', function() { this.style.opacity = '1'; this.style.transform = 'scale(1.05)'; });
-        downloadBtn.addEventListener('mouseleave', function() { this.style.opacity = '0.8'; this.style.transform = 'scale(1)'; });
-        downloadBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          const a = document.createElement('a');
-          a.href = data.mediaUrl;
-          a.download = data.fileName || (data.mediaType === 'image' ? 'gambar.jpg' : 'video.mp4');
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          showToast('Mengunduh...', 'success');
-        });
-        mediaContainer.appendChild(downloadBtn);
-      }
+    if (data.mediaType === 'image') {
+      const img = document.createElement('img');
+      img.src = data.mediaUrl;
+      img.alt = data.fileName || 'Gambar';
+      img.loading = 'lazy';
+      mediaBox.appendChild(img);
+    } else {
+      const video = document.createElement('video');
+      video.src = data.mediaUrl;
+      video.preload = 'metadata';
+      video.playsInline = true;
+      video.muted = true;
+      mediaBox.appendChild(video);
 
-      const textEl = bubble.querySelector('.text-content');
-      if (textEl) {
-        bubble.insertBefore(mediaContainer, textEl.nextSibling);
-      } else {
-        bubble.prepend(mediaContainer);
-      }
+      const playOverlay = document.createElement('div');
+      playOverlay.className = 'play-overlay';
+      playOverlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+      mediaBox.appendChild(playOverlay);
     }
+
+    // Hint zoom (ikon expand kecil di pojok)
+    const zoomHint = document.createElement('div');
+    zoomHint.className = 'media-zoom-hint';
+    zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
+    mediaBox.appendChild(zoomHint);
+
+    // Klik → buka lightbox
+    mediaBox.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openLightbox(data.mediaUrl, data.mediaType, data.fileName);
+    });
+
+    mediaContainer.appendChild(mediaBox);
+  } else {
+    // Non-media (file dokumen)
+    const link = document.createElement('a');
+    link.href = data.mediaUrl;
+    link.target = '_blank';
+    link.style.color = 'var(--accent)';
+    link.style.padding = '6px 10px';
+    link.style.background = 'rgba(0,0,0,0.2)';
+    link.style.borderRadius = '8px';
+    link.style.display = 'inline-block';
+    link.textContent = `📎 ${data.fileName || 'File'}`;
+    mediaContainer.appendChild(link);
+  }
+
+  const textEl = bubble.querySelector('.text-content');
+  if (textEl) {
+    bubble.insertBefore(mediaContainer, textEl.nextSibling);
+  } else {
+    bubble.prepend(mediaContainer);
+  }
+}
 
     const timeSpan = document.createElement('div');
     timeSpan.style.fontSize = '8px';
@@ -6675,18 +7037,19 @@ let messagesUnsubscribe = null;
     }
 
     if (isSystem) {
-      div.style.justifyContent = 'center';
-      div.appendChild(bubble);
-    } else if (isMine) {
-      div.style.flexDirection = 'row-reverse';
-      div.appendChild(avatarDiv);
-      bubbleWrapper.appendChild(bubble);
-      div.appendChild(bubbleWrapper);
-    } else {
-      div.appendChild(avatarDiv);
-      bubbleWrapper.appendChild(bubble);
-      div.appendChild(bubbleWrapper);
-    }
+  div.style.justifyContent = 'center';
+  div.appendChild(bubble);
+} else if (isMine) {
+  // Pesan sendiri: TIDAK ada avatar, bubble di kanan
+  div.style.justifyContent = 'flex-end';
+  bubbleWrapper.appendChild(bubble);
+  div.appendChild(bubbleWrapper);
+} else {
+  // Pesan orang lain: ADA avatar di kiri
+  div.appendChild(avatarDiv);
+  bubbleWrapper.appendChild(bubble);
+  div.appendChild(bubbleWrapper);
+}
 
     // Long press / right click menu
     if (!isSystem && !isDeletedForAll) {
@@ -7247,28 +7610,37 @@ btnCreateProfile.addEventListener('click', async function() {
 });
 
   // ---------- EVENT: KIRIM PESAN ----------
-  btnSend.addEventListener('click', async function() {
-    const text = chatInput.value.trim();
-    if (!text) return;
+  // ---------- EVENT: KIRIM PESAN ----------
+btnSend.addEventListener('click', async function() {
+  const text = chatInput.value.trim();
+  const hasFiles = pendingFiles.length > 0;
 
-    let replyData = null;
-    if (replyingTo) {
-      replyData = {
-        docId: replyingTo.docId,
-        username: replyingTo.username,
-        text: replyingTo.text
-      };
-    }
+  if (!text && !hasFiles) return;
 
-    chatInput.value = '';
-    cancelReply();
+  if (hasFiles) {
+    // Ada file yang menunggu → kirim media dulu
+    await sendPendingMedia(text);
+    return;
+  }
 
-    const ok = await sendMessage(text, replyData);
-    if (!ok) {
-      showToast('Gagal mengirim pesan, coba lagi', 'error');
-    }
-  });
+  // Kalau gak ada file, kirim text biasa
+  let replyData = null;
+  if (replyingTo) {
+    replyData = {
+      docId: replyingTo.docId,
+      username: replyingTo.username,
+      text: replyingTo.text
+    };
+  }
 
+  chatInput.value = '';
+  cancelReply();
+
+  const ok = await sendMessage(text, replyData);
+  if (!ok) {
+    showToast('Gagal mengirim pesan, coba lagi', 'error');
+  }
+});
   chatInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
