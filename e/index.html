@@ -6044,66 +6044,6 @@ chatFileInput.addEventListener('change', function() {
   this.value = '';
   renderPreviewBar();
 });
-
-// ============================================================
-// KIRIM MEDIA SETELAH PREVIEW
-// ============================================================
-async function sendPendingMedia(text = '') {
-  if (pendingFiles.length === 0) return;
-  if (!currentUser) {
-    showToast('Buat profil dulu di halaman Grup', 'warning');
-    return;
-  }
-
-  const filesToSend = [...pendingFiles];
-  pendingFiles = [];
-  renderPreviewBar();
-  chatInput.value = '';
-  cancelReply();
-
-  showToast(`Mengupload ${filesToSend.length} file...`, 'info');
-
-  const btnSendEl = document.getElementById('btn-send');
-  if (btnSendEl) btnSendEl.disabled = true;
-
-  try {
-    for (let i = 0; i < filesToSend.length; i++) {
-      const item = filesToSend[i];
-      try {
-        const mediaUrl = await uploadMediaToCloudinary(item.file);
-
-        const payload = {
-          uid: currentUser.uid,
-          username: currentUser.username,
-          avatar: currentUser.avatar || '',
-          text: (i === 0 && text) ? text : '',
-          mediaUrl: mediaUrl,
-          mediaType: item.type,
-          fileName: item.file.name,
-          fileSize: item.file.size
-        };
-
-        const res = await fetch('/api/send-message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          showToast(`Gagal kirim ${item.file.name}`, 'error');
-        }
-      } catch (err) {
-        console.error('Upload error:', err);
-        showToast(`Gagal upload ${item.file.name}`, 'error');
-      } finally {
-        URL.revokeObjectURL(item.previewUrl);
-      }
-    }
-    showToast('File berhasil dikirim!', 'success');
-  } finally {
-    if (btnSendEl) btnSendEl.disabled = false;
-  }
-}
 // ============================================================
 // EVENT: UPLOAD AVATAR (Form Buat Profil)
 // ============================================================
@@ -7608,8 +7548,63 @@ btnCreateProfile.addEventListener('click', async function() {
     btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
   }
 });
+// ---------- KIRIM MEDIA SETELAH PREVIEW ----------
+async function sendPendingMedia(text = '') {
+  if (pendingFiles.length === 0) return;
+  if (!currentUser) {
+    showToast('Buat profil dulu di halaman Grup', 'warning');
+    return;
+  }
 
-  // ---------- EVENT: KIRIM PESAN ----------
+  const filesToSend = [...pendingFiles];
+  pendingFiles = [];
+  renderPreviewBar();
+  chatInput.value = '';
+  cancelReply();
+
+  showToast(`Mengupload ${filesToSend.length} file...`, 'info');
+
+  btnSend.disabled = true;
+
+  try {
+    for (let i = 0; i < filesToSend.length; i++) {
+      const item = filesToSend[i];
+      try {
+        const mediaUrl = await uploadMediaToCloudinary(item.file);
+
+        const payload = {
+          uid: currentUser.uid,
+          username: currentUser.username,
+          avatar: currentUser.avatar || '',
+          text: (i === 0 && text) ? text : '',
+          mediaUrl: mediaUrl,
+          mediaType: item.type,
+          fileName: item.file.name,
+          fileSize: item.file.size
+        };
+
+        const res = await fetch('/api/send-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          showToast(`Gagal kirim ${item.file.name}`, 'error');
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        showToast(`Gagal upload ${item.file.name}`, 'error');
+      } finally {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+    }
+    showToast('File berhasil dikirim!', 'success');
+  } finally {
+    btnSend.disabled = false;
+  }
+}
+
   // ---------- EVENT: KIRIM PESAN ----------
 btnSend.addEventListener('click', async function() {
   const text = chatInput.value.trim();
