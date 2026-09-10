@@ -4445,7 +4445,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
       <i class="fa-solid fa-paperclip"></i>
     </button>
     <!-- Input file tersembunyi (bisa pilih kamera/galeri) -->
-    <input type="file" id="file-input" accept="image/*,video/*" capture style="display:none;" multiple>
+    <input type="file" id="file-input" accept="image/*,video/*" style="display:none;" multiple>
     
     <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:44px; font-size:14px; padding:8px 12px; border-radius:8px;">
     <!-- Voice recording indicator (hidden by default) -->
@@ -6399,6 +6399,7 @@ async function uploadMediaToCloudinary(file, folder = 'chat_media') {
 // ============================================================
 const attachBtn = document.getElementById('btn-attach');
 const chatFileInput = document.getElementById('file-input');
+let pendingFiles = [];   // State file yang menunggu dikirim
 
 // ============================================================
 // ATTACH MENU — buka bottom sheet, bukan langsung file picker
@@ -6467,6 +6468,7 @@ if (fileInputDocument) {
         continue;
       }
       pendingFiles.push({
+         // ← dideklarasikan belakangan
         file,
         previewUrl: URL.createObjectURL(file),
         type: 'document'
@@ -6509,7 +6511,7 @@ if (fileInputCamera) {
 // ============================================================
 // PREVIEW QUEUE — pilih file, tampil preview, kirim pas klik Send
 // ============================================================
-let pendingFiles = [];   // Array { file, previewUrl, type }
+   // Array { file, previewUrl, type }
 
 function renderPreviewBar() {
   const bar = document.getElementById('media-preview-bar');
@@ -7626,9 +7628,13 @@ audio.addEventListener('timeupdate', function() {
 }
 
     // Timestamp hanya di luar kalau TIDAK ada media
-const hasMedia = !!data.mediaUrl && !isDeletedForAll && !isDeletedForMe;
+// Timestamp overlay HANYA untuk image/video
+const hasInlineTimestamp = data.mediaUrl && 
+  (data.mediaType === 'image' || data.mediaType === 'video') && 
+  !isDeletedForAll && 
+  !isDeletedForMe;
 
-if (!hasMedia) {
+if (!hasInlineTimestamp) {
   const timeSpan = document.createElement('div');
   timeSpan.style.fontSize = '8px';
   timeSpan.style.opacity = '0.5';
@@ -8480,9 +8486,10 @@ async function sendVoiceNote(blob, durationMs) {
 if (btnVoice) {
   // Support touch & mouse
   const onPressStart = function(e) {
-    e.preventDefault();
-    startRecording();
-  };
+  e.preventDefault();
+  window._voiceBtnPressed = true;   // ← TAMBAH BARIS INI
+  startRecording();
+};
   const onPressEnd = function(e) {
     if (!isRecording) return;
     e.preventDefault();
