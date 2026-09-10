@@ -3310,6 +3310,319 @@ ul {
     height: 60px;
   }
 }
+/* =========================================================
+   ATTACHMENT BOTTOM SHEET
+========================================================= */
+.attach-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  display: flex;
+  align-items: flex-end;
+}
+.attach-menu-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.attach-menu-sheet {
+  width: 100%;
+  background: #1f2c34;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+.attach-menu-overlay.active .attach-menu-sheet {
+  transform: translateY(0);
+}
+.attach-menu-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.2);
+  margin: 0 auto 16px;
+}
+.attach-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+  margin-bottom: 20px;
+}
+.attach-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 0;
+  font-family: inherit;
+}
+.attach-option-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+  transition: transform 0.15s ease;
+}
+.attach-option:active .attach-option-icon {
+  transform: scale(0.9);
+}
+.attach-option-label {
+  font-size: 11px;
+  color: #8696a0;
+  text-align: center;
+  line-height: 1.2;
+}
+.attach-opt-doc     { background: #7f66ff; }
+.attach-opt-gallery { background: #007bfc; }
+.attach-opt-camera  { background: #ff2e74; }
+.attach-opt-location{ background: #00a884; }
+.attach-opt-contact { background: #00a884; }
+.attach-opt-poll    { background: #ffbc38; }
+.attach-opt-event   { background: #ff2e74; }
+.attach-opt-doodle  { background: #f59e0b; }
+
+.attach-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.attach-camera-btn {
+  flex: 0 0 auto;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #2a3942;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 9px;
+  font-family: inherit;
+}
+.attach-camera-btn i {
+  font-size: 22px;
+}
+.attach-camera-btn:active {
+  transform: scale(0.94);
+}
+.attach-recent {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  min-width: 0;
+  padding: 3px 0;
+}
+.attach-recent::-webkit-scrollbar {
+  display: none;
+}
+.attach-recent-empty {
+  width: 100%;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8696a0;
+  font-size: 11px;
+  gap: 6px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px dashed rgba(255,255,255,0.08);
+}
+.attach-recent-item {
+  width: 62px;
+  height: 62px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2a3942;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s ease;
+}
+.attach-recent-item.selected {
+  border-color: var(--accent);
+}
+.attach-recent-item img,
+.attach-recent-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* =========================================================
+   VOICE NOTE RECORDING
+========================================================= */
+.voice-btn {
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.voice-btn:active {
+  transform: scale(0.94);
+}
+.voice-btn.recording {
+  background: #ff2e74;
+  animation: voicePulse 1.3s infinite;
+}
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 46, 116, 0.55); }
+  50%      { box-shadow: 0 0 0 12px rgba(255, 46, 116, 0); }
+}
+
+.voice-recording-bar {
+  display: none;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--bg-input);
+  border-radius: 22px;
+  height: 44px;
+  min-width: 0;
+}
+.voice-recording-bar.visible {
+  display: flex;
+}
+.voice-recording-bar .record-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff2e74;
+  flex-shrink: 0;
+  animation: voicePulse 1s infinite;
+}
+.voice-recording-bar .record-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+.voice-recording-bar .record-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.voice-cancel-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 46, 116, 0.15);
+  color: #ff2e74;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  flex-shrink: 0;
+  padding: 0;
+}
+.voice-cancel-btn:active {
+  background: rgba(255, 46, 116, 0.35);
+}
+
+/* =========================================================
+   AUDIO PLAYER (bubble di chat)
+========================================================= */
+.audio-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 2px;
+  min-width: 190px;
+  max-width: 240px;
+}
+.audio-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: inherit;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+.audio-play-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+}
+.audio-waveform {
+  flex: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 70px;
+  cursor: pointer;
+}
+.audio-waveform .wave-bar {
+  width: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+.audio-waveform .wave-bar.played {
+  opacity: 1;
+}
+.audio-duration {
+  font-size: 10.5px;
+  opacity: 0.75;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
+/* Kalau pesan sendiri, audio button lebih cerah */
+.message-item.bubble-mine .audio-play-btn {
+  background: rgba(255, 255, 255, 0.28);
+}
 </style>  
 </head>
 <body>
@@ -4088,9 +4401,28 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     <input type="file" id="file-input" accept="image/*,video/*" capture style="display:none;" multiple>
     
     <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:44px; font-size:14px; padding:8px 12px; border-radius:8px;">
-    <button class="btn btn-primary" id="btn-send" style="min-width:48px; min-height:44px; font-size:18px; padding:0 16px; border-radius:8px;">
-      <i class="fa-solid fa-paper-plane"></i>
-    </button>
+    <!-- Voice recording indicator (hidden by default) -->
+<div class="voice-recording-bar" id="voice-recording-bar">
+  <span class="record-dot"></span>
+  <span class="record-time" id="record-time">0:00</span>
+  <span class="record-hint">
+    <i class="fa-solid fa-chevron-left"></i>
+    Geser untuk batal
+  </span>
+  <button class="voice-cancel-btn" id="voice-cancel-btn" title="Batal">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+</div>
+
+<!-- Tombol Mic (muncul kalau chat kosong) -->
+<button class="voice-btn" id="btn-voice" title="Rekam suara">
+  <i class="fa-solid fa-microphone"></i>
+</button>
+
+<!-- Tombol Send (muncul kalau ada text / file) -->
+<button class="btn btn-primary" id="btn-send" style="min-width:48px; min-height:44px; font-size:18px; padding:0 16px; border-radius:8px; display: none;">
+  <i class="fa-solid fa-paper-plane"></i>
+</button>
   </div>
 </div>
   </div>
@@ -4287,6 +4619,64 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             </div>
         </div>
     </div>
+<!-- Attachment Bottom Sheet -->
+<div class="attach-menu-overlay" id="attach-menu-overlay">
+  <div class="attach-menu-sheet">
+    <div class="attach-menu-handle"></div>
+
+    <div class="attach-options">
+      <button class="attach-option" data-attach="document">
+        <div class="attach-option-icon attach-opt-doc"><i class="fa-solid fa-file-lines"></i></div>
+        <span class="attach-option-label">Dokumen</span>
+      </button>
+      <button class="attach-option" data-attach="gallery">
+        <div class="attach-option-icon attach-opt-gallery"><i class="fa-solid fa-image"></i></div>
+        <span class="attach-option-label">Galeri</span>
+      </button>
+      <button class="attach-option" data-attach="camera">
+        <div class="attach-option-icon attach-opt-camera"><i class="fa-solid fa-camera"></i></div>
+        <span class="attach-option-label">Kamera</span>
+      </button>
+      <button class="attach-option" data-attach="location">
+        <div class="attach-option-icon attach-opt-location"><i class="fa-solid fa-location-dot"></i></div>
+        <span class="attach-option-label">Lokasi</span>
+      </button>
+      <button class="attach-option" data-attach="contact">
+        <div class="attach-option-icon attach-opt-contact"><i class="fa-solid fa-user"></i></div>
+        <span class="attach-option-label">Kontak</span>
+      </button>
+      <button class="attach-option" data-attach="poll">
+        <div class="attach-option-icon attach-opt-poll"><i class="fa-solid fa-chart-simple"></i></div>
+        <span class="attach-option-label">Polling</span>
+      </button>
+      <button class="attach-option" data-attach="event">
+        <div class="attach-option-icon attach-opt-event"><i class="fa-solid fa-calendar-days"></i></div>
+        <span class="attach-option-label">Acara</span>
+      </button>
+      <button class="attach-option" data-attach="doodle">
+        <div class="attach-option-icon attach-opt-doodle"><i class="fa-solid fa-paintbrush"></i></div>
+        <span class="attach-option-label">Doodle</span>
+      </button>
+    </div>
+
+    <div class="attach-bottom">
+      <button class="attach-camera-btn" id="attach-camera-btn">
+        <i class="fa-solid fa-camera"></i>
+        <span>Kamera</span>
+      </button>
+      <div class="attach-recent" id="attach-recent">
+        <div class="attach-recent-empty">
+          <i class="fa-solid fa-image"></i>
+          Foto terbaru akan muncul di sini
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- File input tambahan untuk dokumen & kamera -->
+<input type="file" id="file-input-document" accept="*/*" style="display:none;" multiple>
+<input type="file" id="file-input-camera" accept="image/*,video/*" capture="environment" style="display:none;">
     <div id="toast"></div>
 
     <!-- Lightbox untuk foto/video fullscreen -->
@@ -5963,9 +6353,111 @@ async function uploadMediaToCloudinary(file, folder = 'chat_media') {
 const attachBtn = document.getElementById('btn-attach');
 const chatFileInput = document.getElementById('file-input');
 
-attachBtn.addEventListener('click', function() {
-  chatFileInput.click();
+// ============================================================
+// ATTACH MENU — buka bottom sheet, bukan langsung file picker
+// ============================================================
+const attachMenuOverlay = document.getElementById('attach-menu-overlay');
+
+function openAttachMenu() {
+  attachMenuOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAttachMenu() {
+  attachMenuOverlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+attachBtn.addEventListener('click', openAttachMenu);
+
+// Tutup menu kalau klik overlay gelap
+attachMenuOverlay.addEventListener('click', function(e) {
+  if (e.target === attachMenuOverlay) closeAttachMenu();
 });
+
+// Handler tiap opsi di menu attach
+document.querySelectorAll('.attach-option').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const action = this.dataset.attach;
+
+    if (action === 'document') {
+      document.getElementById('file-input-document').click();
+      closeAttachMenu();
+    } else if (action === 'gallery') {
+      chatFileInput.click();  // pakai input yang sudah ada
+      closeAttachMenu();
+    } else if (action === 'camera') {
+      document.getElementById('file-input-camera').click();
+      closeAttachMenu();
+    } else {
+      // Lokasi, Kontak, Polling, Acara, Doodle → belum fungsional
+      showToast(`${this.querySelector('.attach-option-label').textContent} belum tersedia`, 'info');
+    }
+  });
+});
+
+// Tombol kamera besar di bagian bawah sheet
+const attachCameraBtn = document.getElementById('attach-camera-btn');
+if (attachCameraBtn) {
+  attachCameraBtn.addEventListener('click', function() {
+    document.getElementById('file-input-camera').click();
+    closeAttachMenu();
+  });
+}
+
+// ============================================================
+// File input DOKUMEN
+// ============================================================
+const fileInputDocument = document.getElementById('file-input-document');
+if (fileInputDocument) {
+  fileInputDocument.addEventListener('change', function() {
+    const files = this.files;
+    if (!files.length) return;
+
+    for (const file of files) {
+      if (file.size > 50 * 1024 * 1024) {
+        showToast(`${file.name} terlalu besar (maks 50MB)`, 'error');
+        continue;
+      }
+      pendingFiles.push({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        type: 'document'
+      });
+    }
+    this.value = '';
+    renderPreviewBar();
+  });
+}
+
+// ============================================================
+// File input KAMERA (langsung foto/video dari kamera)
+// ============================================================
+const fileInputCamera = document.getElementById('file-input-camera');
+if (fileInputCamera) {
+  fileInputCamera.addEventListener('change', function() {
+    const files = this.files;
+    if (!files.length) return;
+
+    for (const file of files) {
+      if (file.size > 20 * 1024 * 1024) {
+        showToast(`${file.name} terlalu besar (maks 20MB)`, 'error');
+        continue;
+      }
+      let type = 'file';
+      if (file.type.startsWith('image/')) type = 'image';
+      else if (file.type.startsWith('video/')) type = 'video';
+
+      pendingFiles.push({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        type
+      });
+    }
+    this.value = '';
+    renderPreviewBar();
+  });
+}
 
 // ============================================================
 // PREVIEW QUEUE — pilih file, tampil preview, kirim pas klik Send
@@ -5980,6 +6472,7 @@ function renderPreviewBar() {
 
   if (pendingFiles.length === 0) {
     bar.classList.remove('visible');
+    updateSendButtonVisibility();
     return;
   }
 
@@ -6006,6 +6499,11 @@ function renderPreviewBar() {
       badge.className = 'preview-video-badge';
       badge.innerHTML = '<i class="fa-solid fa-video"></i>';
       div.appendChild(badge);
+    } else if (item.type === 'audio') {
+      div.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--accent);font-size:22px;"><i class="fa-solid fa-microphone"></i></div>';
+    } else {
+      // Dokumen / file lain
+      div.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--accent);font-size:22px;"><i class="fa-solid fa-file-lines"></i></div>';
     }
 
     const removeBtn = document.createElement('button');
@@ -6021,6 +6519,26 @@ function renderPreviewBar() {
 
     bar.appendChild(div);
   });
+
+  updateSendButtonVisibility();
+}
+
+// Toggle tombol Send vs Mic berdasarkan isi chat
+function updateSendButtonVisibility() {
+  const btnSend = document.getElementById('btn-send');
+  const btnVoice = document.getElementById('btn-voice');
+  if (!btnSend || !btnVoice) return;
+
+  const hasText = (document.getElementById('chat-input')?.value || '').trim().length > 0;
+  const hasFiles = pendingFiles.length > 0;
+
+  if (hasText || hasFiles) {
+    btnSend.style.display = 'flex';
+    btnVoice.style.display = 'none';
+  } else {
+    btnSend.style.display = 'none';
+    btnVoice.style.display = 'flex';
+  }
 }
 
 chatFileInput.addEventListener('change', function() {
@@ -6036,6 +6554,7 @@ chatFileInput.addEventListener('change', function() {
     let type = 'file';
     if (file.type.startsWith('image/')) type = 'image';
     else if (file.type.startsWith('video/')) type = 'video';
+    else if (file.type.startsWith('audio/')) type = 'audio';
 
     const previewUrl = URL.createObjectURL(file);
     pendingFiles.push({ file, previewUrl, type });
@@ -6043,6 +6562,7 @@ chatFileInput.addEventListener('change', function() {
 
   this.value = '';
   renderPreviewBar();
+  updateSendButtonVisibility();
 });
 // ============================================================
 // EVENT: UPLOAD AVATAR (Form Buat Profil)
@@ -6867,56 +7387,148 @@ document.addEventListener('keydown', function(e) {
   mediaContainer.style.maxWidth = '220px';
 
   if (data.mediaType === 'image' || data.mediaType === 'video') {
-    // Media box dengan bingkai keren
-    const mediaBox = document.createElement('div');
-    mediaBox.className = 'msg-media';
+  const mediaBox = document.createElement('div');
+  mediaBox.className = 'msg-media';
 
-    if (data.mediaType === 'image') {
-      const img = document.createElement('img');
-      img.src = data.mediaUrl;
-      img.alt = data.fileName || 'Gambar';
-      img.loading = 'lazy';
-      mediaBox.appendChild(img);
-    } else {
-      const video = document.createElement('video');
-      video.src = data.mediaUrl;
-      video.preload = 'metadata';
-      video.playsInline = true;
-      video.muted = true;
-      mediaBox.appendChild(video);
-
-      const playOverlay = document.createElement('div');
-      playOverlay.className = 'play-overlay';
-      playOverlay.innerHTML = '<i class="fa-solid fa-play"></i>';
-      mediaBox.appendChild(playOverlay);
-    }
-
-    // Hint zoom (ikon expand kecil di pojok)
-    const zoomHint = document.createElement('div');
-    zoomHint.className = 'media-zoom-hint';
-    zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
-    mediaBox.appendChild(zoomHint);
-
-    // Klik → buka lightbox
-    mediaBox.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openLightbox(data.mediaUrl, data.mediaType, data.fileName);
-    });
-
-    mediaContainer.appendChild(mediaBox);
+  if (data.mediaType === 'image') {
+    const img = document.createElement('img');
+    img.src = data.mediaUrl;
+    img.alt = data.fileName || 'Gambar';
+    img.loading = 'lazy';
+    mediaBox.appendChild(img);
   } else {
-    // Non-media (file dokumen)
-    const link = document.createElement('a');
-    link.href = data.mediaUrl;
-    link.target = '_blank';
-    link.style.color = 'var(--accent)';
-    link.style.padding = '6px 10px';
-    link.style.background = 'rgba(0,0,0,0.2)';
-    link.style.borderRadius = '8px';
-    link.style.display = 'inline-block';
-    link.textContent = `📎 ${data.fileName || 'File'}`;
-    mediaContainer.appendChild(link);
+    const video = document.createElement('video');
+    video.src = data.mediaUrl;
+    video.preload = 'metadata';
+    video.playsInline = true;
+    video.muted = true;
+    mediaBox.appendChild(video);
+
+    const playOverlay = document.createElement('div');
+    playOverlay.className = 'play-overlay';
+    playOverlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+    mediaBox.appendChild(playOverlay);
   }
+
+  const zoomHint = document.createElement('div');
+  zoomHint.className = 'media-zoom-hint';
+  zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
+  mediaBox.appendChild(zoomHint);
+
+  mediaBox.addEventListener('click', function(e) {
+    e.stopPropagation();
+    openLightbox(data.mediaUrl, data.mediaType, data.fileName);
+  });
+
+  mediaContainer.appendChild(mediaBox);
+
+} else if (data.mediaType === 'audio') {
+  // === AUDIO PLAYER ===
+  const player = document.createElement('div');
+  player.className = 'audio-player';
+
+  const audio = document.createElement('audio');
+  audio.src = data.mediaUrl;
+  audio.preload = 'metadata';
+  audio.style.display = 'none';
+  player.appendChild(audio);
+
+  const playBtn = document.createElement('button');
+  playBtn.className = 'audio-play-btn';
+  playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+  player.appendChild(playBtn);
+
+  const waveform = document.createElement('div');
+  waveform.className = 'audio-waveform';
+  // Fake waveform bars (random height)
+  const barCount = 30;
+  const bars = [];
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('span');
+    bar.className = 'wave-bar';
+    const h = 6 + Math.floor(Math.random() * 14);
+    bar.style.height = h + 'px';
+    waveform.appendChild(bar);
+    bars.push(bar);
+  }
+  player.appendChild(waveform);
+
+  const durEl = document.createElement('span');
+  durEl.className = 'audio-duration';
+  durEl.textContent = '0:00';
+  player.appendChild(durEl);
+
+  // Format waktu
+  function fmtTime(s) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  audio.addEventListener('loadedmetadata', function() {
+    durEl.textContent = fmtTime(audio.duration);
+  });
+
+  audio.addEventListener('timeupdate', function() {
+    if (audio.duration) {
+      const progress = audio.currentTime / audio.duration;
+      durEl.textContent = fmtTime(audio.currentTime);
+      const playedCount = Math.floor(progress * bars.length);
+      bars.forEach((b, i) => {
+        b.classList.toggle('played', i < playedCount);
+      });
+    }
+  });
+
+  audio.addEventListener('ended', function() {
+    playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+    bars.forEach(b => b.classList.remove('played'));
+    durEl.textContent = fmtTime(audio.duration);
+  });
+
+  playBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (audio.paused) {
+      // Pause audio lain dulu
+      document.querySelectorAll('audio').forEach(a => {
+        if (a !== audio) { a.pause(); a.currentTime = 0; }
+      });
+      audio.play();
+      playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    } else {
+      audio.pause();
+      playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+    }
+  });
+
+  waveform.addEventListener('click', function(e) {
+    if (!audio.duration) return;
+    const rect = waveform.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const pct = Math.max(0, Math.min(1, x / rect.width));
+    audio.currentTime = pct * audio.duration;
+  });
+
+  mediaContainer.appendChild(player);
+
+} else {
+  // Dokumen / file lain
+  const link = document.createElement('a');
+  link.href = data.mediaUrl;
+  link.target = '_blank';
+  link.style.color = 'inherit';
+  link.style.textDecoration = 'none';
+  link.style.padding = '8px 10px';
+  link.style.background = 'rgba(0,0,0,0.15)';
+  link.style.borderRadius = '8px';
+  link.style.display = 'flex';
+  link.style.alignItems = 'center';
+  link.style.gap = '8px';
+  link.style.fontSize = '12px';
+  link.innerHTML = `<i class="fa-solid fa-file-lines" style="font-size:20px;"></i><span style="flex:1;word-break:break-all;">${escapeHTML(data.fileName || 'File')}</span>`;
+  mediaContainer.appendChild(link);
+}
 
   const textEl = bubble.querySelector('.text-content');
   if (textEl) {
@@ -7572,16 +8184,21 @@ async function sendPendingMedia(text = '') {
       try {
         const mediaUrl = await uploadMediaToCloudinary(item.file);
 
-        const payload = {
-          uid: currentUser.uid,
-          username: currentUser.username,
-          avatar: currentUser.avatar || '',
-          text: (i === 0 && text) ? text : '',
-          mediaUrl: mediaUrl,
-          mediaType: item.type,
-          fileName: item.file.name,
-          fileSize: item.file.size
-        };
+        // Normalisasi tipe untuk backend
+let mediaType = item.type;
+if (mediaType === 'document') mediaType = 'file';
+if (mediaType === 'audio') mediaType = 'audio';
+
+const payload = {
+  uid: currentUser.uid,
+  username: currentUser.username,
+  avatar: currentUser.avatar || '',
+  text: (i === 0 && text) ? text : '',
+  mediaUrl: mediaUrl,
+  mediaType: mediaType,
+  fileName: item.file.name,
+  fileSize: item.file.size
+};
 
         const res = await fetch('/api/send-message', {
           method: 'POST',
@@ -7604,7 +8221,197 @@ async function sendPendingMedia(text = '') {
     btnSend.disabled = false;
   }
 }
+// ============================================================
+// VOICE NOTE RECORDING
+// ============================================================
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let recordStartTime = 0;
+let recordTimerInterval = null;
+let recordCancelled = false;
 
+const btnVoice = document.getElementById('btn-voice');
+const btnSendEl = document.getElementById('btn-send');
+const voiceRecordingBar = document.getElementById('voice-recording-bar');
+const recordTimeEl = document.getElementById('record-time');
+const voiceCancelBtn = document.getElementById('voice-cancel-btn');
+const chatInputEl = document.getElementById('chat-input');
+
+function formatRecordTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+async function startRecording() {
+  if (!currentUser) {
+    showToast('Buat profil dulu di halaman Grup', 'warning');
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Browser tidak mendukung perekaman suara', 'error');
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    // Pilih mime type yang didukung
+    let mimeType = '';
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+    for (const t of candidates) {
+      if (MediaRecorder.isTypeSupported(t)) { mimeType = t; break; }
+    }
+
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    audioChunks = [];
+    recordCancelled = false;
+
+    mediaRecorder.addEventListener('dataavailable', function(e) {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    });
+
+    mediaRecorder.addEventListener('stop', async function() {
+      // Matikan track mic
+      stream.getTracks().forEach(t => t.stop());
+
+      if (recordCancelled) {
+        audioChunks = [];
+        return;
+      }
+
+      const durationMs = Date.now() - recordStartTime;
+
+      if (durationMs < 1000) {
+        showToast('Rekaman terlalu pendek', 'warning');
+        audioChunks = [];
+        return;
+      }
+
+      const blobType = mediaRecorder.mimeType || 'audio/webm';
+      const audioBlob = new Blob(audioChunks, { type: blobType });
+      audioChunks = [];
+
+      await sendVoiceNote(audioBlob, durationMs);
+    });
+
+    mediaRecorder.start();
+    isRecording = true;
+    recordStartTime = Date.now();
+
+    // UI update
+    btnVoice.classList.add('recording');
+    voiceRecordingBar.classList.add('visible');
+    chatInputEl.style.display = 'none';
+    btnVoice.style.display = 'none';
+
+    recordTimerInterval = setInterval(() => {
+      recordTimeEl.textContent = formatRecordTime(Date.now() - recordStartTime);
+    }, 200);
+
+  } catch (err) {
+    console.error('Mic error:', err);
+    showToast('Gagal akses mic: ' + (err.message || 'error'), 'error');
+    isRecording = false;
+  }
+}
+
+function stopRecording(cancelled) {
+  if (!isRecording || !mediaRecorder) return;
+  recordCancelled = !!cancelled;
+  try { mediaRecorder.stop(); } catch (e) {}
+
+  isRecording = false;
+  if (recordTimerInterval) {
+    clearInterval(recordTimerInterval);
+    recordTimerInterval = null;
+  }
+
+  // Reset UI
+  btnVoice.classList.remove('recording');
+  voiceRecordingBar.classList.remove('visible');
+  chatInputEl.style.display = '';
+  recordTimeEl.textContent = '0:00';
+  updateSendButtonVisibility();
+}
+
+async function sendVoiceNote(blob, durationMs) {
+  if (!currentUser) return;
+  try {
+    // Bikin File object biar bisa dipakai uploadMediaToCloudinary
+    const ext = blob.type.includes('mp4') ? 'm4a' : 'webm';
+    const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: blob.type });
+
+    showToast('Mengirim pesan suara...', 'info');
+
+    const mediaUrl = await uploadMediaToCloudinary(file);
+
+    const payload = {
+      uid: currentUser.uid,
+      username: currentUser.username,
+      avatar: currentUser.avatar || '',
+      text: '',
+      mediaUrl: mediaUrl,
+      mediaType: 'audio',
+      fileName: file.name,
+      fileSize: file.size,
+      duration: durationMs
+    };
+
+    const res = await fetch('/api/send-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      showToast('Gagal kirim pesan suara', 'error');
+    } else {
+      showToast('Pesan suara terkirim', 'success');
+    }
+  } catch (err) {
+    console.error('Voice send error:', err);
+    showToast('Gagal mengirim: ' + err.message, 'error');
+  }
+}
+
+// --- Event listener tombol mic ---
+if (btnVoice) {
+  // Support touch & mouse
+  const onPressStart = function(e) {
+    e.preventDefault();
+    startRecording();
+  };
+  const onPressEnd = function(e) {
+    if (!isRecording) return;
+    e.preventDefault();
+    stopRecording(false);
+  };
+
+  btnVoice.addEventListener('mousedown', onPressStart);
+  btnVoice.addEventListener('touchstart', onPressStart, { passive: false });
+
+  document.addEventListener('mouseup', onPressEnd);
+  document.addEventListener('touchend', onPressEnd);
+}
+
+// Tombol cancel
+if (voiceCancelBtn) {
+  voiceCancelBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (isRecording) stopRecording(true);
+  });
+}
+
+// Toggle Send vs Mic saat ngetik
+if (chatInputEl) {
+  chatInputEl.addEventListener('input', updateSendButtonVisibility);
+}
+
+// Init state tombol
+updateSendButtonVisibility();
   // ---------- EVENT: KIRIM PESAN ----------
 btnSend.addEventListener('click', async function() {
   const text = chatInput.value.trim();
@@ -7613,12 +8420,11 @@ btnSend.addEventListener('click', async function() {
   if (!text && !hasFiles) return;
 
   if (hasFiles) {
-    // Ada file yang menunggu → kirim media dulu
     await sendPendingMedia(text);
+    updateSendButtonVisibility();
     return;
   }
 
-  // Kalau gak ada file, kirim text biasa
   let replyData = null;
   if (replyingTo) {
     replyData = {
@@ -7630,6 +8436,7 @@ btnSend.addEventListener('click', async function() {
 
   chatInput.value = '';
   cancelReply();
+  updateSendButtonVisibility();
 
   const ok = await sendMessage(text, replyData);
   if (!ok) {
