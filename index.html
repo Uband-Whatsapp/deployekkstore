@@ -10416,8 +10416,11 @@ btnSend.addEventListener('click', async function() {
     }, 2000);
   }
 });
-  chatInput.addEventListener('keydown', function(e) {
-}
+chatInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    btnSend.click();
+  }
 });
   // ---------- EVENT: EDIT PROFIL ----------
   const btnOpenSettings = document.getElementById('btn-open-settings');
