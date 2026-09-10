@@ -4834,15 +4834,18 @@ ul {
 @media (max-width: 1023px) {
 
     /* Saat chat aktif, main-content jadi flex column full-height */
-    body.chat-open #main-content {
-        height: 100dvh;
-        max-height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-sizing: border-box;
-    }
+body.chat-open #main-content {
+    height: 100dvh;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
 
+    /* KUNCI: rapetkan padding saat chat aktif */
+    padding-top: calc(70px + 8px) !important;
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom)) !important;
+}
     /* Halaman grup jadi flex child yang ngisi sisa */
     body.chat-open #page-group.active {
         display: flex;
