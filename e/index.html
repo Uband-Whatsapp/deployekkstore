@@ -9004,7 +9004,7 @@ window.addEventListener('beforeunload', function () {
 
     if (navigator.sendBeacon) {
         navigator.sendBeacon(
-            '/api/update-status-beacon',
+            '/api/update-status',
             new Blob([payload], { type: 'application/json' })
         );
     } else {
@@ -9018,7 +9018,7 @@ window.addEventListener('beforeunload', function () {
 });
 // ============================================================
 // ANTI-AUTOFILL: cegah Chrome munculin suggestion bar di atas keyboard
-// ===========================================================
+// ============================================================
 (function killAutofill() {
     const chatInputEl3 = document.getElementById('chat-input');
     if (!chatInputEl3) return;
