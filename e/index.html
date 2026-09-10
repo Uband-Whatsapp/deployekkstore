@@ -4502,73 +4502,82 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     const notifBtn    = document.getElementById('btn-aktifkan-notif');
 
     // ---------- JOIN GROUP ----------
-    if (join) {
-        grupItem.classList.add('done');
-        grupStatus.textContent = 'Berhasil';
-        grupStatus.className = 'req-status done';
-        if (grupBtn) {
-            grupBtn.style.pointerEvents = 'none';
-            grupBtn.innerHTML = '<i class="fa-solid fa-check"></i> Terhubung';
-            grupBtn.removeAttribute('href');
-        }
-    } else {
-        grupItem.classList.remove('done');
-        grupStatus.textContent = 'Belum';
-        grupStatus.className = 'req-status';
-        if (grupBtn) {
-            grupBtn.style.pointerEvents = '';
-            grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
-            if (!grupBtn.hasAttribute('href')) {
-                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4');
-            }
+    // ---------- JOIN GROUP ----------
+if (join) {
+    grupItem.classList.add('done');
+    grupStatus.textContent = 'Berhasil';
+    grupStatus.className = 'req-status done';
+    if (grupBtn) {
+        grupBtn.style.display = 'none';   // ← sembunyikan tombol
+    }
+} else {
+    grupItem.classList.remove('done');
+    grupStatus.textContent = 'Belum';
+    grupStatus.className = 'req-status';
+    if (grupBtn) {
+        grupBtn.style.display = '';   // ← TAMBAH INI
+        grupBtn.style.pointerEvents = '';
+        grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
+        if (!grupBtn.hasAttribute('href')) {
+            grupBtn.setAttribute('href', 'https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4');
         }
     }
+}
 
     // ---------- NOTIFIKASI ----------
-    if (notif) {
-        notifItem.classList.add('done');
-        notifStatus.textContent = 'Berhasil';
-        notifStatus.className = 'req-status done';
-        if (notifBtn) {
-            notifBtn.style.pointerEvents = 'none';
-            notifBtn.innerHTML = '<i class="fa-solid fa-check"></i> Aktif';
-        }
-    } else {
-        notifItem.classList.remove('done');
-        notifStatus.textContent = 'Belum';
-        notifStatus.className = 'req-status';
-        if (notifBtn) {
-            notifBtn.style.pointerEvents = '';
-            notifBtn.innerHTML = '<i class="fa-solid fa-bell"></i> Aktifkan';
-        }
+    // ---------- NOTIFIKASI ----------
+if (notif) {
+    notifItem.classList.add('done');
+    notifStatus.textContent = 'Berhasil';
+    notifStatus.className = 'req-status done';
+    if (notifBtn) {
+        notifBtn.style.display = 'none';   // ← sembunyikan tombol
     }
+} else {
+    notifItem.classList.remove('done');
+    notifStatus.textContent = 'Belum';
+    notifStatus.className = 'req-status';
+    if (notifBtn) {
+        notifBtn.style.display = '';   // ← TAMBAH INI
+        notifBtn.style.pointerEvents = '';
+        notifBtn.innerHTML = '<i class="fa-solid fa-bell"></i> Aktifkan';
+    }
+}
 
-    // ---------- AUTO-CLOSE + AUTO-DEPLOY ----------
-    if (join && notif && window._pendingDeploy && !isDeploying) {
+    // ---------- AUTO-CLOSE (WAJIB JALAN kalau 2 syarat OK) ----------
+    if (join && notif && !isDeploying) {
+        // Cegah double-trigger
+        if (window._autoCloseTimer) return;
+        window._autoCloseTimer = true;
+
         // Delay 800ms biar user lihat kedua item status "Berhasil" dulu
         setTimeout(() => {
+            window._autoCloseTimer = false;
+
             // Re-verify kondisi masih valid
-            if (!isJoinValid() || !getNotifStatus() || !window._pendingDeploy || isDeploying) return;
+            if (!isJoinValid() || !getNotifStatus()) return;
 
-            const project = window._pendingDeploy;
-            window._pendingDeploy = null;
-
-            // Tutup modal
+            // Tutup modal — SELALU, gak peduli ada pending atau enggak
             const deployModal = document.getElementById('deploy-modal');
             if (deployModal) deployModal.classList.remove('active');
             document.body.classList.remove('modal-open');
 
-            showToast('Syarat terpenuhi, memulai deploy...', 'success');
+            // Kalau ada deploy yang tertunda, baru jalankan
+            if (window._pendingDeploy && !isDeploying) {
+                const project = window._pendingDeploy;
+                window._pendingDeploy = null;
 
-            // Mulai deploy
-            const deployBtn = document.getElementById('deploy-btn');
-            isDeploying = true;
-            deployState = DEPLOY_STATE.VALIDATING;
-            if (deployBtn) {
-                deployBtn.disabled = true;
-                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+                showToast('Syarat terpenuhi, memulai deploy...', 'success');
+
+                const deployBtn = document.getElementById('deploy-btn');
+                isDeploying = true;
+                deployState = DEPLOY_STATE.VALIDATING;
+                if (deployBtn) {
+                    deployBtn.disabled = true;
+                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+                }
+                performDeploy(project);
             }
-            performDeploy(project);
         }, 800);
     }
 }
@@ -5323,14 +5332,11 @@ if (joinButton) {
         const grupItem = document.getElementById('req-grup');
         const grupStatus = document.getElementById('req-grup-status');
         if (grupItem && grupStatus) {
-            grupItem.classList.add('done');
-            grupStatus.textContent = 'Berhasil';
-            grupStatus.className = 'req-status done';
-            this.style.pointerEvents = 'none';
-            this.innerHTML = '<i class="fa-solid fa-check"></i> Terhubung';
-            this.removeAttribute('href');
-        }
-
+    grupItem.classList.add('done');
+    grupStatus.textContent = 'Berhasil';
+    grupStatus.className = 'req-status done';
+    this.style.display = 'none';   // ← langsung sembunyikan tombol
+}
         showToast('Kembali ke halaman ini setelah bergabung', 'info');
         // ❌ JANGAN panggil updateModalStatus di sini
         // ✅ Biar visibilitychange yang handle pas user balik dari WhatsApp
