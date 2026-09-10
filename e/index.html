@@ -4609,7 +4609,218 @@ ul {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
+/* =========================================================
+   USERNAME HINT ROW — hint + counter
+========================================================= */
+.username-hint-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
 
+.username-hint-row .form-hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.username-counter {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.username-counter.warn {
+  color: var(--warning);
+  border-color: rgba(251, 191, 36, 0.3);
+  background: var(--warning-soft);
+}
+
+.username-counter.full {
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.3);
+  background: var(--danger-soft);
+}
+
+.username-counter.available {
+  color: var(--success);
+  border-color: rgba(45, 212, 191, 0.3);
+  background: var(--success-soft);
+}
+/* =========================================================
+   GROUP HEADER — OPSI A (Status Pill)
+========================================================= */
+.group-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.06), rgba(249, 115, 22, 0.02));
+  border: 1px solid rgba(249, 115, 22, 0.12);
+  border-radius: 14px;
+}
+
+.group-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* --- Baris username --- */
+.group-username-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.live-pulse {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.live-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #2dd4bf;
+  animation: livePulseRing 1.8s ease-out infinite;
+}
+
+@keyframes livePulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.group-username {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+  background: linear-gradient(135deg, #ffffff 30%, #fb923c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  max-width: 140px;
+}
+
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff;
+  font-size: 7px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
+}
+
+/* --- Baris member info --- */
+.group-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.group-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.group-meta-pill i {
+  font-size: 9px;
+  color: var(--accent);
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.group-meta-pill #group-info {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Gear button --- */
+.group-settings-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.group-settings-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+  transform: rotate(45deg);
+}
+
+.group-settings-btn:active {
+  transform: rotate(45deg) scale(0.9);
+}
 </style>  
 </head>
 <body>
@@ -4739,7 +4950,6 @@ ul {
                 </div>
             </div>
 </nav>
-</main>   <!-- ← TAMBAH INI -->
         <!-- Main Content -->
         <main id="main-content">
             <!-- ==================== PAGE: HOME ==================== -->
@@ -5307,21 +5517,24 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         <h3 style="margin:0;">Buat Profil untuk Bergabung</h3>
       </div>
 
-      <!-- FORM USERNAME -->
-      <div class="form-group">
-        <label class="form-label">Pilih Username</label>
-        <div class="username-wrapper">
-  <input type="text" id="new-username" class="form-input username-input" 
-         placeholder="pilih username..."
-         autocomplete="off"
-         autocapitalize="none"
-         spellcheck="false">
-  <span id="username-check-icon" class="username-status-icon"></span>
+<!-- FORM USERNAME -->
+<div class="form-group">
+  <label class="form-label">Pilih Username</label>
+  <div class="username-wrapper">
+    <input type="text" id="new-username" class="form-input username-input" 
+           placeholder="contoh: Ekk Store"
+           maxlength="10"
+           autocomplete="off"
+           autocapitalize="words"
+           spellcheck="false">
+    <span id="username-check-icon" class="username-status-icon"></span>
+  </div>
+  <div class="username-hint-row">
+    <span class="form-hint" id="username-hint">Huruf besar/kecil, angka, spasi · 3-10 karakter</span>
+    <span class="username-counter" id="username-counter">0/10</span>
+  </div>
+  <span class="form-error" id="username-error"></span>
 </div>
-        <span class="form-hint" id="username-hint">Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.</span>
-        <span class="form-error" id="username-error"></span>
-      </div>
-
       <!-- UPLOAD AVATAR -->
       <div class="form-group">
         <label class="form-label">Foto Profil (opsional)</label>
@@ -5358,8 +5571,19 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     <!-- Header profil (cuma online status) -->
 <div class="group-header-bar">
   <div class="group-header-info">
-    <div class="group-username" id="my-username-display">username</div>
-    <div class="group-meta" id="group-info">0 anggota · 0 online</div>
+    <div class="group-username-row">
+      <span class="live-pulse"></span>
+      <span class="group-username" id="my-username-display">username</span>
+      <span class="verified-badge">
+        <i class="fa-solid fa-check"></i>
+      </span>
+    </div>
+    <div class="group-meta-row">
+      <span class="group-meta-pill">
+        <i class="fa-solid fa-users"></i>
+        <span id="group-info">0 anggota · 0 online</span>
+      </span>
+    </div>
   </div>
   <button id="btn-open-settings" class="group-settings-btn" aria-label="Pengaturan">
     <i class="fa-solid fa-gear"></i>
@@ -5425,10 +5649,11 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 </div>
   </div>
 </div>
+
 <!-- ==================== AKHIR PAGE: GROUP ==================== -->
+</main>
 
 <nav id="bottom-nav" aria-label="Navigasi Mobile">
-
 <button class="bottom-nav-item active" data-page="home">
 <i class="fa-solid fa-house-user"></i>
     <span class="nav-label">Beranda</span>
@@ -7831,19 +8056,37 @@ let messagesUnsubscribe = null;
 
   // ---------- FUNGSI API ----------
   async function checkUsername(username) {
-    const res = await fetch(`/api/check-username?username=${encodeURIComponent(username)}`);
-    const data = await res.json();
-    return data.exists;
+  try {
+    const lower = username.toLowerCase();
+    // Cek di field usernameLower (case-insensitive)
+    const snap = await db.collection('users')
+      .where('usernameLower', '==', lower)
+      .limit(1)
+      .get();
+    return !snap.empty;
+  } catch (e) {
+    console.error('[checkUsername] Error:', e);
+    return false;
   }
+}
 
-  async function createProfile(uid, username, avatar) {
-    const res = await fetch('/api/create-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid, username, avatar: avatar || '' })
+async function createProfile(uid, username, avatar) {
+  try {
+    await db.collection('users').doc(uid).set({
+      uid: uid,
+      username: username,                // ← asli (buat display)
+      usernameLower: username.toLowerCase(),  // ← buat cek unique
+      avatar: avatar || '',
+      isOnline: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     });
-    return res.ok;
+    return true;
+  } catch (e) {
+    console.error('[createProfile] Error:', e);
+    return false;
   }
+}
 
   async function sendMessage(text, replyTo = null) {
     if (!currentUser) return false;
@@ -7912,13 +8155,17 @@ let messagesUnsubscribe = null;
       }
 
       // Cek username unik
-      const snapshot = await db.collection('users').where('username', '==', newUsername).get();
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        if (doc.id !== uid) {
-          return { success: false, error: 'Username sudah dipakai oleh orang lain' };
-        }
-      }
+      // Cek username unik (case-insensitive)
+const snapshot = await db.collection('users')
+  .where('usernameLower', '==', newUsername.toLowerCase())
+  .limit(1)
+  .get();
+if (!snapshot.empty) {
+  const doc = snapshot.docs[0];
+  if (doc.id !== uid) {
+    return { success: false, error: 'Username sudah dipakai, Silahkan gunakan username lain' };
+  }
+}
 
       // UPDATE SEMUA PESAN LAMA
       const messagesSnapshot = await db.collection('messages')
@@ -7934,12 +8181,13 @@ let messagesUnsubscribe = null;
         console.log(`[updateUsername] Updated ${messagesSnapshot.size} messages`);
       }
 
-      await db.collection('users').doc(uid).update({
-        username: newUsername,
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-        usernameChangeCount: firebase.firestore.FieldValue.increment(1),
-        usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
-      });
+await db.collection('users').doc(uid).update({
+  username: newUsername,
+  usernameLower: newUsername.toLowerCase(),
+  lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+  usernameChangeCount: firebase.firestore.FieldValue.increment(1),
+  usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+});
 
       return { success: true };
     } catch (error) {
@@ -9979,34 +10227,64 @@ if (success) {
   });
 
   // ---------- VALIDASI USERNAME REAL-TIME ----------
-  newUsernameInput.addEventListener('input', async function() {
-  const val = this.value.trim().toLowerCase();
-  this.value = val;
+  // ============================================================
+// HELPER: Normalize & Validate Username
+// ============================================================
+function normalizeUsername(val) {
+  // Trim leading/trailing + collapse multiple spaces jadi 1
+  return val.replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
+}
+
+function isValidUsername(val) {
+  if (!val || val.length === 0) return { valid: false, msg: 'Username tidak boleh kosong' };
+  if (val.length < 3) return { valid: false, msg: 'Minimal 3 karakter' };
+  if (val.length > 10) return { valid: false, msg: 'Maksimal 10 karakter' };
+  if (!/^[a-zA-Z0-9 ]+$/.test(val)) return { valid: false, msg: 'Hanya huruf, angka, dan spasi' };
+  if (/\s{2,}/.test(val)) return { valid: false, msg: 'Tidak boleh 2 spasi berturut-turut' };
+  if (/^\s|\s$/.test(val)) return { valid: false, msg: 'Tidak boleh diawali/diakhiri spasi' };
+  return { valid: true };
+}
+
+// ============================================================
+// VALIDASI USERNAME REAL-TIME
+// ============================================================
+newUsernameInput.addEventListener('input', async function() {
+  const raw = this.value;
+  const normalized = normalizeUsername(raw);
+
+  // Kalo ada spasi berlebih, replace value-nya langsung (UX)
+  if (raw !== normalized && raw.length > 0 && !/\s$/.test(raw)) {
+    this.value = normalized;
+  }
+
+  const val = this.value;
   const errorEl = document.getElementById('username-error');
   const hintEl = document.getElementById('username-hint');
   const checkIcon = document.getElementById('username-check-icon');
+  const counter = document.getElementById('username-counter');
 
-  // Reset
+  // Update counter
+  const len = val.length;
+  counter.textContent = len + '/10';
+  counter.className = 'username-counter';
+  if (len === 10) counter.classList.add('full');
+  else if (len >= 8) counter.classList.add('warn');
+
+  // Reset icon & error
   checkIcon.className = 'username-status-icon';
   checkIcon.innerHTML = '';
 
   if (!val) {
     errorEl.classList.remove('visible');
-    hintEl.textContent = 'Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.';
+    hintEl.textContent = 'Huruf besar/kecil, angka, spasi · 3-10 karakter';
     hintEl.style.color = '';
     return;
   }
 
-  if (val.length < 3) {
-    errorEl.textContent = 'Minimal 3 karakter';
-    errorEl.classList.add('visible');
-    checkIcon.classList.add('taken');
-    checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
-    return;
-  }
-
-  if (!/^[a-z0-9_]+$/.test(val)) {
-    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+  // Validasi format
+  const result = isValidUsername(val);
+  if (!result.valid) {
+    errorEl.textContent = result.msg;
     errorEl.classList.add('visible');
     checkIcon.classList.add('taken');
     checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
@@ -10023,21 +10301,23 @@ if (success) {
     try {
       const exists = await checkUsername(val);
       if (exists) {
-        errorEl.textContent = 'Username sudah dipakai';
+        errorEl.textContent = 'Username sudah dipakai (huruf besar/kecil dianggap sama)';
         errorEl.classList.add('visible');
         checkIcon.className = 'username-status-icon taken';
         checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+        counter.classList.add('full');
       } else {
         errorEl.classList.remove('visible');
         checkIcon.className = 'username-status-icon available';
         checkIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
         hintEl.textContent = 'Username tersedia!';
         hintEl.style.color = 'var(--success)';
+        counter.classList.add('available');
       }
     } catch (e) {
       checkIcon.innerHTML = '';
     }
-  }, 250);  // ← dari 500 jadi 250
+  }, 150);  // ← dari 250 jadi 150 = LEBIH CEPET
 });
 
   // ---------- JALANKAN ----------
