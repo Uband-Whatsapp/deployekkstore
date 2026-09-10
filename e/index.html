@@ -4486,6 +4486,9 @@ ul {
 /* =========================================================
    GROUP HEADER — 1 baris compact (tinggi = gear button)
 ========================================================= */
+/* =========================================================
+   GROUP HEADER — 2 baris kiri + gear kanan
+========================================================= */
 .group-header-bar {
   display: flex;
   align-items: center;
@@ -4493,12 +4496,14 @@ ul {
   gap: 12px;
   margin-bottom: 12px;
   padding: 2px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .group-header-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
   flex: 1;
 }
@@ -4508,26 +4513,30 @@ ul {
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.02em;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  display: block;
 }
 
 .group-meta {
   font-size: 11px;
   font-weight: 400;
   color: var(--text-muted);
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  display: block;
 }
 
 .group-settings-btn {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -4553,15 +4562,15 @@ ul {
   transform: rotate(45deg) scale(0.9);
 }
 
-/* Mobile: username lebih pendek */
-@media (max-width: 400px) {
+/* ❌ HAPUS MEDIA QUERY INI — bikin username ke-truncate */
+/* @media (max-width: 400px) {
   .group-username {
     max-width: 80px;
   }
   .group-header-info {
     font-size: 11px;
   }
-}
+} */
 /* Tombol close di Info Baca */
 .read-receipt-close {
   width: 30px;
@@ -5287,6 +5296,10 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             <!-- ==================== PAGE: GROUP ==================== -->
 
   <!-- Bagian untuk membuat profil (muncul jika belum punya akun) -->
+<!-- ==================== PAGE: GROUP ==================== -->
+<div class="page" id="page-group">
+
+  <!-- Bagian untuk membuat profil -->
   <div id="profile-setup" style="display: none;">
     <div class="card">
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4);">
@@ -5344,15 +5357,10 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     <!-- Profil user saat ini -->
     <!-- Header profil (cuma online status) -->
 <div class="group-header-bar">
-  <!-- Kiri: dot + username + separator + member info -->
   <div class="group-header-info">
-    <span class="live-dot"></span>
-    <span id="my-username-display" class="group-username">username</span>
-    <span class="group-divider">·</span>
-    <span id="group-info" class="group-meta">0 anggota</span>
+    <div class="group-username" id="my-username-display">username</div>
+    <div class="group-meta" id="group-info">0 anggota · 0 online</div>
   </div>
-
-  <!-- Kanan: gear button (34px) -->
   <button id="btn-open-settings" class="group-settings-btn" aria-label="Pengaturan">
     <i class="fa-solid fa-gear"></i>
   </button>
