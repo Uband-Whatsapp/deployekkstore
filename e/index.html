@@ -3670,6 +3670,67 @@ ul {
 .message-item.bubble-mine .audio-play-btn {
   background: rgba(255, 255, 255, 0.28);
 }
+/* =========================================================
+   CHAT CONTAINER — fullscreen mode biar input nempel keyboard
+========================================================= */
+
+/* Card chat jadi full height & flex */
+.chat-card-fullscreen {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 220px); /* fallback */
+    max-height: 620px;
+    min-height: 380px;
+    padding: 0 !important;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: height 0.15s ease;
+}
+
+/* Pas keyboard muncul, pakai tinggi dari JS */
+.chat-card-fullscreen.keyboard-open {
+    max-height: none;
+    height: var(--chat-height, 100dvh);
+}
+
+/* Input wrapper always stick at bottom of flex container */
+.chat-input-wrapper {
+    flex-shrink: 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+}
+
+/* Messages list flexes */
+.chat-card-fullscreen #messages-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overscroll-behavior: contain;
+}
+
+/* Handle keyboard di Android — fix viewport */
+@media (max-width: 768px) {
+    body.keyboard-open {
+        /* Cegah body scroll pas keyboard buka */
+        position: fixed;
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .chat-card-fullscreen {
+        height: calc(100dvh - 200px);
+        max-height: none;
+    }
+    
+    .chat-card-fullscreen.keyboard-open {
+        height: var(--chat-height, calc(100dvh - 60px));
+    }
+    
+    /* Kalo keyboard kebuka, chat jadi full screen banget */
+    body.keyboard-open #main-content {
+        padding-top: 70px !important;
+        padding-bottom: 0 !important;
+        overflow: hidden;
+    }
+}
 </style>  
 </head>
 <body>
@@ -4431,23 +4492,25 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 
     <!-- Kotak chat -->
 <!-- Kotak chat dengan tombol attach -->
-<div class="card" style="padding:0; display: flex; flex-direction: column; height: 480px; overflow:hidden;">
+<div class="card chat-card-fullscreen" id="chat-card">
   <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-3); display: flex; flex-direction: column; gap: 4px;">
     <!-- Pesan akan di-render di sini -->
   </div>
   <!-- ======== INPUT CHAT + ATTACH ======== -->
 <!-- Preview file sebelum kirim -->
 <div id="media-preview-bar" class="media-preview-bar"></div>
-  <div class="chat-input-wrapper" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--bg-card); border-top:1px solid var(--border);">
+  <div class="chat-input-wrapper" style="display:flex; align-items:flex-end; gap:6px; padding:8px 10px; background:var(--bg-card); border-top:1px solid var(--border);">
     <!-- Tombol lampirkan file -->
-    <button id="btn-attach" style="min-width:40px; min-height:40px; background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:8px; transition:background 0.2s;" 
-            onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
-      <i class="fa-solid fa-paperclip"></i>
-    </button>
+    <button id="btn-attach" style="min-width:40px; width:40px; height:44px; background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background 0.2s; flex-shrink:0;" 
+        onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+  <i class="fa-solid fa-paperclip"></i>
+</button>
     <!-- Input file tersembunyi (bisa pilih kamera/galeri) -->
     <input type="file" id="file-input" accept="image/*,video/*" style="display:none;" multiple>
     
-    <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." style="flex:1; min-height:44px; font-size:14px; padding:8px 12px; border-radius:8px;">
+    <input type="text" id="chat-input" class="form-input" placeholder="Ketik pesan..." 
+  style="flex:1; min-height:42px; max-height:120px; font-size:14px; padding:10px 16px; border-radius:22px; resize:none; box-sizing:border-box;"
+>
     <!-- Voice recording indicator (hidden by default) -->
 <div class="voice-recording-bar" id="voice-recording-bar">
   <span class="record-dot"></span>
@@ -4467,7 +4530,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
 </button>
 
 <!-- Tombol Send (muncul kalau ada text / file) -->
-<button class="btn btn-primary" id="btn-send" style="min-width:48px; min-height:44px; font-size:18px; padding:0 16px; border-radius:8px; display: none;">
+<button class="btn btn-primary" id="btn-send" style="min-width:44px; width:44px; height:44px; padding:0; font-size:18px; border-radius:50%; display: none; align-items:center; justify-content:center; flex-shrink:0;">
   <i class="fa-solid fa-paper-plane"></i>
 </button>
   </div>
@@ -8194,15 +8257,25 @@ if (!hasInlineTimestamp) {
         };
         setCurrentUser(currentUser);
         initChat();
-    } else {
-        profileSetup.style.display = 'block';
-        chatContainer.style.display = 'none';
-        if (messagesUnsubscribe) messagesUnsubscribe();
-        if (usersUnsubscribe) usersUnsubscribe();
-        if (statusInterval) clearInterval(statusInterval);
-    }
+   } else {
+  profileSetup.style.display = 'block';
+  chatContainer.style.display = 'none';
+  
+  // Cuma unsubscribe messages — user belum join, gak perlu dengerin chat
+  if (messagesUnsubscribe) {
+    messagesUnsubscribe();
+    messagesUnsubscribe = null;
+  }
+  if (statusInterval) {
+    clearInterval(statusInterval);
+    statusInterval = null;
+  }
+  
+  // ✅ TETAP subscribe users biar total member & online keliatan
+  // (subscribeUsers otomatis unsubscribe yang lama kalau ada)
+  subscribeUsers();
 }
-
+}
   // ---------- EVENT: BUAT PROFIL ----------
 btnCreateProfile.addEventListener('click', async function() {
   const username = newUsernameInput.value.trim();
@@ -8731,7 +8804,79 @@ btnSend.addEventListener('click', async function() {
   }
 
 } // akhir else (firebase tersedia)
+// ============================================================
+// KEYBOARD HANDLER — biar input nempel di atas keyboard Android
+// ============================================================
+(function initKeyboardHandler() {
+  const chatCard = document.getElementById('chat-card');
+  const chatInputEl2 = document.getElementById('chat-input');
+  if (!chatCard || !chatInputEl2) return;
 
+  // Cek dukungan VisualViewport API
+  if (!window.visualViewport) {
+    // Fallback: pakai focus/blur
+    chatInputEl2.addEventListener('focus', function () {
+      document.body.classList.add('keyboard-open');
+      chatCard.classList.add('keyboard-open');
+      setTimeout(scrollMessagesToBottom, 300);
+    });
+    chatInputEl2.addEventListener('blur', function () {
+      document.body.classList.remove('keyboard-open');
+      chatCard.classList.remove('keyboard-open');
+    });
+    return;
+  }
+
+  let initialHeight = window.visualViewport.height;
+
+  function updateChatHeight() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const keyboardHeight = initialHeight - vv.height;
+    const isKeyboardOpen = keyboardHeight > 150; // threshold 150px
+
+    if (isKeyboardOpen) {
+      // Set tinggi chat = tinggi visual viewport
+      chatCard.style.setProperty('--chat-height', vv.height + 'px');
+      chatCard.classList.add('keyboard-open');
+      document.body.classList.add('keyboard-open');
+
+      // Scroll ke pesan paling bawah biar user liat chat terbaru
+      setTimeout(scrollMessagesToBottom, 100);
+    } else {
+      chatCard.classList.remove('keyboard-open');
+      document.body.classList.remove('keyboard-open');
+      chatCard.style.removeProperty('--chat-height');
+    }
+  }
+
+  function scrollMessagesToBottom() {
+    const messagesList = document.getElementById('messages-list');
+    if (messagesList) {
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
+  }
+
+  // Listen ke viewport resize (pas keyboard buka/tutup)
+  window.visualViewport.addEventListener('resize', updateChatHeight);
+  window.visualViewport.addEventListener('scroll', updateChatHeight);
+
+  // Update saat fokus ke input
+  chatInputEl2.addEventListener('focus', function () {
+    setTimeout(updateChatHeight, 50);
+    setTimeout(updateChatHeight, 200); // double check
+    setTimeout(updateChatHeight, 500);
+  });
+
+  // Update saat blur
+  chatInputEl2.addEventListener('blur', function () {
+    setTimeout(updateChatHeight, 100);
+  });
+
+  // Initial call
+  updateChatHeight();
+})();
     </script>
 </body>
 </html>
