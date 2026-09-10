@@ -9827,16 +9827,14 @@ function initChat() {
 }
   // ---------- EVENT: BUAT PROFIL ----------
 btnCreateProfile.addEventListener('click', async function() {
-  const username = newUsernameInput.value.trim();
+  const rawUsername = newUsernameInput.value;
+  const username = normalizeUsername(rawUsername);  // trim + collapse spasi
   const errorEl = document.getElementById('username-error');
 
-  if (!username) {
-    errorEl.textContent = 'Username tidak boleh kosong';
-    errorEl.classList.add('visible');
-    return;
-  }
-  if (!/^[a-z0-9_]+$/.test(username)) {
-    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+  // Pakai fungsi yang SAMA dengan validasi real-time
+  const validation = isValidUsername(username);
+  if (!validation.valid) {
+    errorEl.textContent = validation.msg;
     errorEl.classList.add('visible');
     return;
   }
