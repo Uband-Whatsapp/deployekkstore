@@ -8298,7 +8298,62 @@ if (isMine) {
         console.error('Error listening users:', error);
     });
 }
+// ---------- INIT CHAT (dipanggil saat user sudah punya profil) ----------
+function initChat() {
+    // 1. Tampilkan chat, sembunyikan form profil
+    if (profileSetup) profileSetup.style.display = 'none';
+    if (chatContainer) chatContainer.style.display = 'block';
 
+    // 2. Update tampilan username & avatar user
+    if (myUsernameDisplay) myUsernameDisplay.textContent = currentUser.username;
+    if (myAvatarPlaceholder) {
+        if (currentUser.avatar) {
+            myAvatarPlaceholder.innerHTML =
+                `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+            myAvatarPlaceholder.textContent = (currentUser.username || '?')[0].toUpperCase();
+            myAvatarPlaceholder.style.background = 'var(--accent-soft)';
+            myAvatarPlaceholder.style.color = 'var(--accent)';
+        }
+    }
+
+    // 3. Set status online
+    updateOnlineStatus(true);
+
+    // 4. Subscribe messages & users
+    subscribeMessages();
+    subscribeUsers();
+
+    // 5. Heartbeat online tiap 30 detik
+    if (statusInterval) clearInterval(statusInterval);
+    statusInterval = setInterval(() => {
+        if (currentUser) updateOnlineStatus(true);
+    }, 30000);
+
+    // 6. Handler visibility (offline saat tab disembunyikan)
+    if (!window._groupVisHandler) {
+        window._groupVisHandler = true;
+
+        document.addEventListener('visibilitychange', function () {
+            if (!currentUser) return;
+            updateOnlineStatus(!document.hidden);
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (!currentUser) return;
+            const payload = JSON.stringify({ uid: currentUser.uid, isOnline: false });
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/update-status', new Blob([payload], { type: 'application/json' }));
+            }
+        });
+    }
+
+    // 7. Load pesan & fokus input
+    setTimeout(() => {
+        const ml = document.getElementById('messages-list');
+        if (ml) ml.scrollTop = ml.scrollHeight;
+    }, 300);
+}
   // ---------- CEK USER SAAT LOAD ----------
   async function checkUser() {
     const uid = getOrCreateUid();
