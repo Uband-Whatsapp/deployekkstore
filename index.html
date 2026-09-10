@@ -8750,30 +8750,40 @@ if (isMine && !isSystem) {
     div.style.position = 'relative';
 
     const avatarDiv = document.createElement('div');
-    avatarDiv.style.width = '32px';
-    avatarDiv.style.height = '32px';
-    avatarDiv.style.minWidth = '32px';
-    avatarDiv.style.borderRadius = '50%';
-    avatarDiv.style.background = '#2a2a2e';
-    avatarDiv.style.display = 'flex';
-    avatarDiv.style.alignItems = 'center';
-    avatarDiv.style.justifyContent = 'center';
-    avatarDiv.style.fontSize = '12px';
-    avatarDiv.style.fontWeight = 'bold';
-    avatarDiv.style.color = '#fff';
-    avatarDiv.style.overflow = 'hidden';
-    avatarDiv.style.flexShrink = '0';
-    if (data.avatar) {
+avatarDiv.style.width = '32px';
+avatarDiv.style.height = '32px';
+avatarDiv.style.minWidth = '32px';
+avatarDiv.style.maxWidth = '32px';
+avatarDiv.style.borderRadius = '50%';
+avatarDiv.style.background = '#2a2a2e';
+avatarDiv.style.display = 'flex';
+avatarDiv.style.alignItems = 'center';
+avatarDiv.style.justifyContent = 'center';
+avatarDiv.style.fontSize = '14px';
+avatarDiv.style.fontWeight = 'bold';
+avatarDiv.style.color = '#fff';
+avatarDiv.style.overflow = 'hidden';
+avatarDiv.style.flexShrink = '0';
+avatarDiv.style.lineHeight = '1';
+avatarDiv.style.boxSizing = 'border-box';
+
+if (data.avatar) {
     const img = document.createElement('img');
     img.src = data.avatar;
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
+    img.style.display = 'block';
+    img.style.borderRadius = '50%';
+    img.onerror = function() {
+        // fallback ke huruf kalau gambar gagal load
+        avatarDiv.innerHTML = '';
+        avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+    };
     avatarDiv.appendChild(img);
 } else {
     avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
 }
-
     const bubbleWrapper = document.createElement('div');
     bubbleWrapper.style.flex = '1';
     bubbleWrapper.style.maxWidth = '75%';
@@ -9642,6 +9652,7 @@ function subscribeMessages() {
 }
 
 // ---------- RENDER SEMUA (Firestore + Pending) ----------
+
 function renderAllMessages() {
   messagesList.innerHTML = '';
 
@@ -9651,8 +9662,47 @@ function renderAllMessages() {
     messagesList.appendChild(el);
   });
 
-  // Render pesan pending (belum selesai upload)
+  // Render pesan pending — TAPI skip kalau udah muncul di Firestore
   pendingMessages.forEach(p => {
+    // Cek duplikat untuk pesan TEXT
+    if (p.type === 'text' && currentUser) {
+      const alreadyInFirestore = lastDocsCache.some(doc => {
+        const d = doc.data();
+        if (d.senderId !== currentUser.uid) return false;
+        if (d.text !== p.text) return false;
+        if (d.isDeletedForAll) return false;
+
+        // Cek timestamp < 60 detik (biar cuma match pesan baru)
+        const msgTime = d.timestamp?.toMillis?.() || 0;
+        if (msgTime && Math.abs(Date.now() - msgTime) > 60000) return false;
+
+        return true;
+      });
+
+      if (alreadyInFirestore) {
+        // Pesan udah ada di Firestore → hapus dari pending, skip render
+        return;
+      }
+    }
+
+    // Cek duplikat untuk MEDIA (image/video/audio/file)
+    if ((p.type === 'image' || p.type === 'video' || p.type === 'audio' || p.type === 'file' || p.type === 'document') && currentUser) {
+      const alreadyInFirestore = lastDocsCache.some(doc => {
+        const d = doc.data();
+        if (d.senderId !== currentUser.uid) return false;
+        if (d.fileName !== p.fileName) return false;
+
+        const msgTime = d.timestamp?.toMillis?.() || 0;
+        if (msgTime && Math.abs(Date.now() - msgTime) > 120000) return false; // 2 menit untuk media (upload lebih lama)
+
+        return true;
+      });
+
+      if (alreadyInFirestore) {
+        return;
+      }
+    }
+
     const el = renderPendingMessage(p);
     messagesList.appendChild(el);
   });
@@ -9662,7 +9712,6 @@ function renderAllMessages() {
     messagesList.scrollTop = messagesList.scrollHeight;
   });
 }
-
 // ---------- RENDER PESAN PENDING ----------
 function renderPendingMessage(p) {
   const div = document.createElement('div');
@@ -10357,32 +10406,15 @@ btnSend.addEventListener('click', async function() {
     console.error('Send error:', err);
     showToast('Gagal mengirim pesan', 'error');
   } finally {
-    // Tunggu Firestore render pesan asli dulu (hindari flicker)
-    let waited = 0;
-    const waitAndRemove = () => {
-      // Cek apakah pesan udah muncul di Firestore
-      const found = lastDocsCache.some(doc => {
-        const d = doc.data();
-        return d.senderId === currentUser.uid
-            && d.text === text
-            && !d.isDeletedForAll;
-      });
-
-      if (found || waited >= 1500) {
-        const idx = pendingMessages.findIndex(p => p.id === pid);
-        if (idx !== -1) {
-          pendingMessages.splice(idx, 1);
-          renderAllMessages();
-        }
-        return;
+    // Hapus pending setelah 2 detik — kalau Firestore lebih cepat, renderAllMessages() sudah skip otomatis
+    setTimeout(() => {
+      const idx = pendingMessages.findIndex(p => p.id === pid);
+      if (idx !== -1) {
+        pendingMessages.splice(idx, 1);
+        renderAllMessages();
       }
-
-      waited += 100;
-      setTimeout(waitAndRemove, 100);
-    };
-    waitAndRemove();
-  }
-});
+    }, 2000);
+}
   chatInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -10420,10 +10452,10 @@ btnOpenSettings.addEventListener('click', function() {
     avatarError.classList.remove('visible');
 
     if (currentUser.avatar) {
-      avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    } else {
-      avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
-    }
+  avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-user\\'></i>';">`;
+} else {
+  avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
+}
 
     newAvatarUrl = null;
     document.getElementById('edit-avatar-input').value = '';
@@ -10563,6 +10595,12 @@ function isValidUsername(val) {
 // ============================================================
 // VALIDASI USERNAME REAL-TIME
 // ============================================================
+// Helper untuk reset hint ke default
+function resetUsernameHint(hintEl) {
+  hintEl.textContent = 'Huruf besar/kecil, angka, spasi · 3-10 karakter';
+  hintEl.style.color = '';
+}
+
 newUsernameInput.addEventListener('input', async function() {
   const raw = this.value;
   const normalized = normalizeUsername(raw);
@@ -10585,14 +10623,14 @@ newUsernameInput.addEventListener('input', async function() {
   if (len === 10) counter.classList.add('full');
   else if (len >= 8) counter.classList.add('warn');
 
-  // Reset icon & error
+  // Reset icon & error & hint (WAJIB!)
   checkIcon.className = 'username-status-icon';
   checkIcon.innerHTML = '';
+  errorEl.classList.remove('visible');
+  resetUsernameHint(hintEl);   // ← KUNCI FIX-NYA
 
   if (!val) {
-    errorEl.classList.remove('visible');
-    hintEl.textContent = 'Huruf besar/kecil, angka, spasi · 3-10 karakter';
-    hintEl.style.color = '';
+    // Kosong: cukup reset semua
     return;
   }
 
@@ -10603,25 +10641,36 @@ newUsernameInput.addEventListener('input', async function() {
     errorEl.classList.add('visible');
     checkIcon.classList.add('taken');
     checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
-    return;
+    return;   // hint tetap default
   }
 
-  errorEl.classList.remove('visible');
-
-  // Loading spinner
+  // Format valid → loading spinner di icon, hint tetap default
   checkIcon.innerHTML = '<div class="mini-spinner"></div>';
 
+  // Cancel pending request sebelumnya
   clearTimeout(this._timeout);
+  const currentVal = val;   // ← simpan nilai saat ini buat cek nanti
+
   this._timeout = setTimeout(async () => {
+    // Cegah race condition: kalau user udah ngetik lagi, skip
+    if (newUsernameInput.value !== currentVal) return;
+
     try {
-      const exists = await checkUsername(val);
+      const exists = await checkUsername(currentVal);
+
+      // Cek LAGI setelah await — siapa tau user udah ngetik lagi
+      if (newUsernameInput.value !== currentVal) return;
+
       if (exists) {
+        // TAKEN → set error, hint HARUS default
         errorEl.textContent = 'Username sudah dipakai (huruf besar/kecil dianggap sama)';
         errorEl.classList.add('visible');
         checkIcon.className = 'username-status-icon taken';
         checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
         counter.classList.add('full');
+        resetUsernameHint(hintEl);   // ← pastikan hint balik default
       } else {
+        // AVAILABLE → set hint hijau
         errorEl.classList.remove('visible');
         checkIcon.className = 'username-status-icon available';
         checkIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
@@ -10632,7 +10681,7 @@ newUsernameInput.addEventListener('input', async function() {
     } catch (e) {
       checkIcon.innerHTML = '';
     }
-  }, 150);  // ← dari 250 jadi 150 = LEBIH CEPET
+  }, 150);
 });
 
   // ---------- JALANKAN ----------
