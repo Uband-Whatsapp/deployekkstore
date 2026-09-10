@@ -7078,14 +7078,12 @@ document.querySelectorAll('.attach-option').forEach(function(btn) {
       document.getElementById('file-input-document').click();
       closeAttachMenu();
     } else if (action === 'gallery') {
-      chatFileInput.click();  // pakai input yang sudah ada
+      chatFileInput.click();
       closeAttachMenu();
     } else if (action === 'camera') {
-  closeAttachMenu();
-  openInAppCamera();  // ← Pakai kamera in-app, bukan file input
-}
+      closeAttachMenu();
+      openInAppCamera();
     } else {
-      // Lokasi, Kontak, Polling, Acara, Doodle → belum fungsional
       showToast(`${this.querySelector('.attach-option-label').textContent} belum tersedia`, 'info');
     }
   });
