@@ -4254,6 +4254,235 @@ ul {
   text-align: center;
   padding: 20px;
 }
+/* =========================================================
+   USERNAME INPUT + STATUS ICON (clean, no emoji)
+========================================================= */
+.username-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.username-wrapper .username-input {
+  padding-right: 42px;
+}
+
+.username-status-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.username-status-icon .mini-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.username-status-icon.available {
+  color: var(--success);
+}
+
+.username-status-icon.taken {
+  color: var(--danger);
+}
+
+/* =========================================================
+   READ RECEIPT MODAL — clean & rapi
+========================================================= */
+.read-receipt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.read-receipt-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.read-receipt-sheet {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-card);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 8px 0 max(20px, env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-top: 1px solid var(--border);
+}
+
+.read-receipt-overlay.active .read-receipt-sheet {
+  transform: translateY(0);
+}
+
+.read-receipt-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-light);
+  margin: 6px auto 4px;
+  flex-shrink: 0;
+}
+
+.read-receipt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.read-receipt-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.read-receipt-title-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--success-soft);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.read-receipt-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: var(--bg-input);
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.read-receipt-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 8px;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+.read-receipt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.read-receipt-item:hover {
+  background: var(--bg-hover);
+}
+
+.read-receipt-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border);
+}
+
+.read-receipt-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.read-receipt-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.read-receipt-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.read-receipt-time {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.read-receipt-time i {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.read-receipt-empty {
+  text-align: center;
+  padding: 36px 20px;
+  color: var(--text-muted);
+}
+
+.read-receipt-empty i {
+  font-size: 34px;
+  opacity: 0.25;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.read-receipt-empty p {
+  font-size: 12.5px;
+  margin: 0;
+}
 </style>  
 </head>
 <body>
@@ -4939,11 +5168,9 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             <!-- ==================== PAGE: GROUP ==================== -->
             <!-- ==================== PAGE: GROUP ==================== -->
 <div class="page" id="page-group">
-<div class="page-header" style="margin-bottom:14px;">
-  <h1 style="font-size:19px;font-weight:700;letter-spacing:-0.03em;margin-bottom:2px;">
-    Ruang Ngobrol Buat Yang Galau -_-
-  </h1>
-  <p id="group-info" style="font-size:11px;color:var(--text-muted);">0 anggota · 0 sedang online</p>
+<div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-muted);padding:0 2px 10px;">
+  <span style="width:6px;height:6px;background:var(--success);border-radius:50%;box-shadow:0 0 0 3px rgba(45,212,191,0.15);"></span>
+  <span id="group-info">0 anggota · 0 sedang online</span>
 </div>
   <!-- Bagian untuk membuat profil (muncul jika belum punya akun) -->
   <div id="profile-setup" style="display: none;">
@@ -4956,12 +5183,14 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
       <!-- FORM USERNAME -->
       <div class="form-group">
         <label class="form-label">Pilih Username</label>
-        <div style="position:relative;">
-          <input type="text" id="new-username" class="form-input" 
-                 placeholder="contoh: ekkstore" autocomplete="off"
-                 style="padding-right:40px;">
-          <span id="username-check-icon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
-        </div>
+        <div class="username-wrapper">
+  <input type="text" id="new-username" class="form-input username-input" 
+         placeholder="pilih username..."
+         autocomplete="off"
+         autocapitalize="none"
+         spellcheck="false">
+  <span id="username-check-icon" class="username-status-icon"></span>
+</div>
         <span class="form-hint" id="username-hint">Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.</span>
         <span class="form-error" id="username-error"></span>
       </div>
@@ -5120,15 +5349,15 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     <p class="edit-profile-sub">Ganti nama atau foto kapan aja</p>
 
     <!-- Avatar picker -->
-    <label class="avatar-picker" for="edit-avatar-input">
-      <div id="edit-avatar-preview" class="avatar-preview">
-        <i class="fa-solid fa-user"></i>
-      </div>
-      <div class="avatar-edit-badge">
-        <i class="fa-solid fa-camera"></i>
-      </div>
-      <input type="file" id="edit-avatar-input" accept="image/*" hidden>
-    </label>
+    <div class="avatar-picker" id="edit-avatar-clickable" role="button" tabindex="0">
+  <div id="edit-avatar-preview" class="avatar-preview">
+    <i class="fa-solid fa-user"></i>
+  </div>
+  <div class="avatar-edit-badge">
+    <i class="fa-solid fa-camera"></i>
+  </div>
+</div>
+<input type="file" id="edit-avatar-input" accept="image/*" style="display:none;">
     <span class="edit-avatar-error" id="edit-avatar-error"></span>
 
     <!-- Username field -->
@@ -7310,6 +7539,19 @@ if (avatarInput) {
 // EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL (DENGAN LOG)
 // ============================================================
 const editAvatarInput = document.getElementById('edit-avatar-input');
+// Handler untuk klik avatar picker (ganti dari label for)
+const editAvatarClickable = document.getElementById('edit-avatar-clickable');
+if (editAvatarClickable && editAvatarInput) {
+  editAvatarClickable.addEventListener('click', function() {
+    editAvatarInput.click();
+  });
+  editAvatarClickable.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      editAvatarInput.click();
+    }
+  });
+}
 const editAvatarPreview = document.getElementById('edit-avatar-preview');
 const editAvatarError = document.getElementById('edit-avatar-error');
 let newAvatarUrl = null;
@@ -8536,83 +8778,107 @@ if (isMine) {
 
   // ---------- SHOW READ RECEIPTS ----------
   async function showReadReceipts(docId) {
-    try {
-      const doc = await db.collection('messages').doc(docId).get();
-      if (!doc.exists) return;
-      const data = doc.data();
-      const readBy = data.readBy || {};
-      const userIds = Object.keys(readBy);
+  try {
+    const doc = await db.collection('messages').doc(docId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+    const readBy = data.readBy || {};
+    const userIds = Object.keys(readBy);
 
-      const readUsers = [];
-      for (const uid of userIds) {
+    // Fetch semua user yang baca
+    const readUsers = [];
+    for (const uid of userIds) {
+      try {
         const userDoc = await db.collection('users').doc(uid).get();
         if (userDoc.exists) {
-          const username = userDoc.data().username || uid;
-          const timestamp = readBy[uid];
-          const time = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+          const udata = userDoc.data();
+          const ts = readBy[uid];
+          const time = ts?.toDate ? ts.toDate() : new Date(ts);
           const timeStr = time.toLocaleString('id-ID', {
-            day: '2-digit', month: 'short', year: 'numeric',
+            day: '2-digit', month: 'short',
             hour: '2-digit', minute: '2-digit'
           });
-          readUsers.push({ username, time: timeStr });
+          readUsers.push({
+            username: udata.username || uid,
+            avatar: udata.avatar || '',
+            time: timeStr
+          });
         }
-      }
-
-      const modal = document.createElement('div');
-      modal.style.position = 'fixed';
-      modal.style.top = '0';
-      modal.style.left = '0';
-      modal.style.width = '100%';
-      modal.style.height = '100%';
-      modal.style.background = 'rgba(0,0,0,0.6)';
-      modal.style.backdropFilter = 'blur(4px)';
-      modal.style.display = 'flex';
-      modal.style.alignItems = 'center';
-      modal.style.justifyContent = 'center';
-      modal.style.zIndex = '100000';
-      modal.style.padding = '20px';
-
-      const box = document.createElement('div');
-      box.style.background = 'var(--bg-card)';
-      box.style.border = '1px solid var(--border)';
-      box.style.borderRadius = '16px';
-      box.style.padding = '24px';
-      box.style.maxWidth = '400px';
-      box.style.width = '100%';
-      box.style.maxHeight = '70vh';
-      box.style.overflowY = 'auto';
-      box.style.textAlign = 'center';
-
-      let content = `<h4 style="margin-bottom:16px;font-size:18px;color:var(--text);">
-        <i class="fa-solid fa-eye" style="color:var(--success);"></i> Telah Membaca
-      </h4>`;
-
-      if (readUsers.length === 0) {
-        content += '<p style="color:var(--text-muted);">Belum ada yang membaca</p>';
-      } else {
-        readUsers.forEach(u => {
-          content += `
-    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);color:var(--text);">
-        <span>${escapeHTML(u.username)}</span>
-        <span style="font-size:11px;color:var(--text-muted);">${escapeHTML(u.time)}</span>
-    </div>
-          `;
-        });
-      }
-
-      content += `<button class="btn btn-primary" style="margin-top:16px;width:100%;" onclick="this.closest('div[style]').parentElement.remove()">Tutup</button>`;
-      box.innerHTML = content;
-      modal.appendChild(box);
-
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) modal.remove();
-      });
-      document.body.appendChild(modal);
-    } catch (error) {
-      console.error('Error showReadReceipts:', error);
-      showToast('Gagal mengambil data baca', 'error');
+      } catch (e) {}
     }
+
+    // Build overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'read-receipt-overlay';
+
+    let listHTML = '';
+    if (readUsers.length === 0) {
+      listHTML = `
+        <div class="read-receipt-empty">
+          <i class="fa-regular fa-eye-slash"></i>
+          <p>Belum ada yang membaca pesan ini</p>
+        </div>
+      `;
+    } else {
+      listHTML = readUsers.map(u => {
+        const initial = (u.username || '?')[0].toUpperCase();
+        const avatarHTML = u.avatar
+          ? `<img src="${escapeHTML(u.avatar)}" alt="">`
+          : initial;
+        return `
+          <div class="read-receipt-item">
+            <div class="read-receipt-avatar">${avatarHTML}</div>
+            <div class="read-receipt-info">
+              <div class="read-receipt-name">${escapeHTML(u.username)}</div>
+              <div class="read-receipt-time">
+                <i class="fa-regular fa-clock"></i>
+                ${escapeHTML(u.time)}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    overlay.innerHTML = `
+      <div class="read-receipt-sheet">
+        <div class="read-receipt-handle"></div>
+        <div class="read-receipt-header">
+          <div class="read-receipt-title">
+            <div class="read-receipt-title-icon">
+              <i class="fa-solid fa-check-double"></i>
+            </div>
+            <span>Info Baca</span>
+          </div>
+          <span class="read-receipt-count">${readUsers.length} orang</span>
+        </div>
+        <div class="read-receipt-list">
+          ${listHTML}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Animasi masuk
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+    });
+
+    // Close handler
+    function closeReceipt() {
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.remove(), 300);
+    }
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeReceipt();
+    });
+  } catch (error) {
+    console.error('Error showReadReceipts:', error);
+    showToast('Gagal mengambil data baca', 'error');
   }
+}
 
   // ---------- EDIT PESAN ----------
   let editingMessageId = null;
@@ -9567,39 +9833,65 @@ if (success) {
 
   // ---------- VALIDASI USERNAME REAL-TIME ----------
   newUsernameInput.addEventListener('input', async function() {
-    const val = this.value.trim();
-    const errorEl = document.getElementById('username-error');
-    const hintEl = document.getElementById('username-hint');
-    const checkIcon = document.getElementById('username-check-icon');
+  const val = this.value.trim().toLowerCase();
+  this.value = val;
+  const errorEl = document.getElementById('username-error');
+  const hintEl = document.getElementById('username-hint');
+  const checkIcon = document.getElementById('username-check-icon');
 
-    if (val.length < 3) {
-      errorEl.textContent = 'Minimal 3 karakter';
-      errorEl.classList.add('visible');
-      checkIcon.innerHTML = '❌';
-      return;
-    }
-    if (!/^[a-z0-9_]+$/.test(val)) {
-      errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
-      errorEl.classList.add('visible');
-      checkIcon.innerHTML = '❌';
-      return;
-    }
+  // Reset
+  checkIcon.className = 'username-status-icon';
+  checkIcon.innerHTML = '';
 
-    clearTimeout(this._timeout);
-    this._timeout = setTimeout(async () => {
+  if (!val) {
+    errorEl.classList.remove('visible');
+    hintEl.textContent = 'Huruf kecil, angka, dan underscore (_). Minimal 3 karakter.';
+    hintEl.style.color = '';
+    return;
+  }
+
+  if (val.length < 3) {
+    errorEl.textContent = 'Minimal 3 karakter';
+    errorEl.classList.add('visible');
+    checkIcon.classList.add('taken');
+    checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+    return;
+  }
+
+  if (!/^[a-z0-9_]+$/.test(val)) {
+    errorEl.textContent = 'Hanya huruf kecil, angka, dan underscore';
+    errorEl.classList.add('visible');
+    checkIcon.classList.add('taken');
+    checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+    return;
+  }
+
+  errorEl.classList.remove('visible');
+
+  // Loading spinner
+  checkIcon.innerHTML = '<div class="mini-spinner"></div>';
+
+  clearTimeout(this._timeout);
+  this._timeout = setTimeout(async () => {
+    try {
       const exists = await checkUsername(val);
       if (exists) {
         errorEl.textContent = 'Username sudah dipakai';
         errorEl.classList.add('visible');
-        checkIcon.innerHTML = '❌';
+        checkIcon.className = 'username-status-icon taken';
+        checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
       } else {
         errorEl.classList.remove('visible');
-        checkIcon.innerHTML = '✅';
+        checkIcon.className = 'username-status-icon available';
+        checkIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
         hintEl.textContent = 'Username tersedia!';
         hintEl.style.color = 'var(--success)';
       }
-    }, 500);
-  });
+    } catch (e) {
+      checkIcon.innerHTML = '';
+    }
+  }, 250);  // ← dari 500 jadi 250
+});
 
   // ---------- JALANKAN ----------
   if (db) {
@@ -9826,16 +10118,25 @@ async function capturePhoto() {
 
     closeInAppCamera();
 
-    // Langsung kirim pakai flow instant preview
-    const previewUrl = URL.createObjectURL(blob);
-    pendingFiles.push({
-      file,
-      previewUrl,
-      type: 'image'
-    });
-    await sendPendingMedia('');
-  }, 'image/jpeg', 0.9);
+  // Masuk ke preview bar dulu (kayak dari galeri)
+  const previewUrl = URL.createObjectURL(blob);
+  pendingFiles.push({
+    file,
+    previewUrl,
+    type: 'image'
+  });
+  renderPreviewBar();
+  updateSendButtonVisibility();
+
+  // Auto focus ke input biar user tinggal ketik / kirim
+  setTimeout(() => {
+    const input = document.getElementById('chat-input');
+    if (input) input.focus();
+  }, 200);
+}, 'image/jpeg', 0.9);
 }
+
+
 
 // ---------- Mulai Rekam Video ----------
 function startVideoRecording() {
@@ -9858,24 +10159,29 @@ function startVideoRecording() {
     });
 
     recorder.addEventListener('stop', () => {
-      const blobType = recorder.mimeType || 'video/webm';
-      const blob = new Blob(inAppCamera.recordedChunks, { type: blobType });
-      inAppCamera.recordedChunks = [];
-      const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
-      const file = new File([blob], `video_${Date.now()}.${ext}`, { type: blobType });
+  const blobType = recorder.mimeType || 'video/webm';
+  const blob = new Blob(inAppCamera.recordedChunks, { type: blobType });
+  inAppCamera.recordedChunks = [];
+  const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
+  const file = new File([blob], `video_${Date.now()}.${ext}`, { type: blobType });
 
-      closeInAppCamera();
+  closeInAppCamera();
 
-      // Kirim pakai instant preview
-      const previewUrl = URL.createObjectURL(blob);
-      pendingFiles.push({
-        file,
-        previewUrl,
-        type: 'video'
-      });
-      sendPendingMedia('');
-    });
+  // Masuk ke preview bar dulu
+  const previewUrl = URL.createObjectURL(blob);
+  pendingFiles.push({
+    file,
+    previewUrl,
+    type: 'video'
+  });
+  renderPreviewBar();
+  updateSendButtonVisibility();
 
+  setTimeout(() => {
+    const input = document.getElementById('chat-input');
+    if (input) input.focus();
+  }, 200);
+});
     recorder.start();
     inAppCamera.isRecordingVideo = true;
     inAppCamera.recordStartTime = Date.now();
