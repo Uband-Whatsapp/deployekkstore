@@ -3044,6 +3044,40 @@ ul {
     border: 1px solid rgba(45, 212, 191, 0.35) !important;
     cursor: default;
 }
+/* === Badge "Berhasil" Premium === */
+#deploy-modal .req-status.done {
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(45, 212, 191, 0.06));
+    color: var(--success);
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 4px 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.5);
+    animation: badgeSuccessPulse 2s infinite;
+}
+#deploy-modal .req-status.done i {
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    background: var(--success);
+    color: #0a0a0b;
+    border-radius: 50%;
+    font-weight: 900;
+}
+@keyframes badgeSuccessPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(45, 212, 191, 0);
+    }
+}
 
 </style>  
 </head>
@@ -4505,7 +4539,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
     // ---------- JOIN GROUP ----------
 if (join) {
     grupItem.classList.add('done');
-    grupStatus.textContent = 'Berhasil';
+    grupStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
     grupStatus.className = 'req-status done';
     if (grupBtn) {
         grupBtn.style.display = 'none';   // ← sembunyikan tombol
@@ -4528,7 +4562,7 @@ if (join) {
     // ---------- NOTIFIKASI ----------
 if (notif) {
     notifItem.classList.add('done');
-    notifStatus.textContent = 'Berhasil';
+    notifStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
     notifStatus.className = 'req-status done';
     if (notifBtn) {
         notifBtn.style.display = 'none';   // ← sembunyikan tombol
@@ -5333,7 +5367,7 @@ if (joinButton) {
         const grupStatus = document.getElementById('req-grup-status');
         if (grupItem && grupStatus) {
     grupItem.classList.add('done');
-    grupStatus.textContent = 'Berhasil';
+    grupStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
     grupStatus.className = 'req-status done';
     this.style.display = 'none';   // ← langsung sembunyikan tombol
 }
