@@ -4827,6 +4827,52 @@ ul {
 .group-settings-btn:active {
   transform: rotate(45deg) scale(0.9);
 }
+/* =========================================================
+   CHAT FULL-HEIGHT — Konsisten di semua HP (keyboard tutup)
+   Keyboard-open mode tetap di-handle JS, TIDAK diubah
+========================================================= */
+@media (max-width: 1023px) {
+
+    /* Saat chat aktif, main-content jadi flex column full-height */
+    body.chat-open #main-content {
+        height: 100dvh;
+        max-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    /* Halaman grup jadi flex child yang ngisi sisa */
+    body.chat-open #page-group.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Chat container jadi flex column juga */
+    body.chat-open #chat-container {
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Group header jangan mengecil */
+    body.chat-open .group-header-bar {
+        flex-shrink: 0;
+    }
+
+    /* Chat card: ngisi SEMUA sisa ruang yang ada */
+    body.chat-open .chat-card-fullscreen {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+}
 </style>  
 </head>
 <body>
@@ -9740,9 +9786,8 @@ function renderPendingMessage(p) {
 }
 // ---------- INIT CHAT (dipanggil saat user sudah punya profil) ----------
 function initChat() {
-    // 1. Tampilkan chat, sembunyikan form profil
     if (profileSetup) profileSetup.style.display = 'none';
-    if (chatContainer) chatContainer.style.display = 'block';
+    if (chatContainer) chatContainer.style.display = 'flex';  // ← dari 'block' jadi 'flex'
 
     // 2. Update tampilan username & avatar user
     if (myUsernameDisplay) myUsernameDisplay.textContent = currentUser.username;
@@ -9809,6 +9854,7 @@ function initChat() {
    } else {
   profileSetup.style.display = 'block';
   chatContainer.style.display = 'none';
+  document.body.classList.remove('chat-open');   // ← TAMBAH INI
   
   // Cuma unsubscribe messages — user belum join, gak perlu dengerin chat
   if (messagesUnsubscribe) {
