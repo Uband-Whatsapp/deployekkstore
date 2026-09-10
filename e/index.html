@@ -4483,6 +4483,143 @@ ul {
   font-size: 12.5px;
   margin: 0;
 }
+/* =========================================================
+   GROUP HEADER — 1 baris compact (tinggi = gear button)
+========================================================= */
+.group-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 0 2px;
+  min-height: 34px;
+  height: 34px;
+}
+
+.group-header-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  font-size: 11.5px;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.group-header-info .live-dot {
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+  flex-shrink: 0;
+}
+
+.group-username {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.group-divider {
+  color: var(--text-muted);
+  opacity: 0.5;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.group-meta {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  flex-shrink: 1;
+}
+
+.group-settings-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.group-settings-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+  transform: rotate(45deg);
+}
+
+.group-settings-btn:active {
+  transform: rotate(45deg) scale(0.9);
+}
+
+/* Mobile: username lebih pendek */
+@media (max-width: 400px) {
+  .group-username {
+    max-width: 80px;
+  }
+  .group-header-info {
+    font-size: 11px;
+  }
+}
+/* Tombol close di Info Baca */
+.read-receipt-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.read-receipt-close:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.read-receipt-close:active {
+  transform: scale(0.9);
+}
+
+/* Container overlay — biar klik di luar kena */
+.read-receipt-overlay {
+  z-index: 999999 !important;
+}
+
+/* List scrollable */
+.read-receipt-list {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
 </style>  
 </head>
 <body>
@@ -5229,22 +5366,17 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
   <div id="chat-container" style="display: none;">
     <!-- Profil user saat ini -->
     <!-- Header profil (cuma online status) -->
-<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding:0 2px;">
-  <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-muted);">
-    <span style="width:6px;height:6px;background:var(--success);border-radius:50%;box-shadow:0 0 0 3px rgba(45,212,191,0.15);"></span>
-    <span id="my-username-display" style="font-weight:600;color:var(--text-secondary);">username</span>
+<div class="group-header-bar">
+  <!-- Kiri: dot + username + separator + member info -->
+  <div class="group-header-info">
+    <span class="live-dot"></span>
+    <span id="my-username-display" class="group-username">username</span>
+    <span class="group-divider">·</span>
+    <span id="group-info" class="group-meta">0 anggota</span>
   </div>
-  <button id="btn-open-settings" aria-label="Pengaturan" style="
-    width:34px;height:34px;border-radius:50%;
-    background:var(--bg-input);
-    border:1px solid var(--border);
-    color:var(--text-secondary);
-    font-size:14px;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-    transition:all 0.25s ease;
-    flex-shrink:0;
-  ">
+
+  <!-- Kanan: gear button (34px) -->
+  <button id="btn-open-settings" class="group-settings-btn" aria-label="Pengaturan">
     <i class="fa-solid fa-gear"></i>
   </button>
 </div>
@@ -8850,7 +8982,12 @@ if (isMine) {
             </div>
             <span>Info Baca</span>
           </div>
-          <span class="read-receipt-count">${readUsers.length} orang</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="read-receipt-count">${readUsers.length} orang</span>
+            <button class="read-receipt-close" aria-label="Tutup">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
         </div>
         <div class="read-receipt-list">
           ${listHTML}
@@ -8866,14 +9003,39 @@ if (isMine) {
     });
 
     // Close handler
+    let isClosed = false;
     function closeReceipt() {
+      if (isClosed) return;
+      isClosed = true;
       overlay.classList.remove('active');
-      setTimeout(() => overlay.remove(), 300);
+      setTimeout(() => {
+        if (overlay.parentNode) overlay.remove();
+      }, 300);
     }
 
+    // Tombol close
+    const closeBtn = overlay.querySelector('.read-receipt-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeReceipt();
+      });
+    }
+
+    // Tap di area gelap (luar sheet) → close
     overlay.addEventListener('click', function(e) {
       if (e.target === overlay) closeReceipt();
     });
+
+    // ESC keyboard
+    const escHandler = function(e) {
+      if (e.key === 'Escape') {
+        closeReceipt();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+
   } catch (error) {
     console.error('Error showReadReceipts:', error);
     showToast('Gagal mengambil data baca', 'error');
@@ -9206,7 +9368,7 @@ function renderPendingMessage(p) {
     usersUnsubscribe = db.collection('users').onSnapshot((snapshot) => {
         const total = snapshot.size;
         const online = snapshot.docs.filter(doc => doc.data().isOnline === true).length;
-        groupInfo.textContent = `${total} Member • Online ${online}`;
+        groupInfo.textContent = `${total} anggota · ${online} online`;
     }, (error) => {
         console.error('Error listening users:', error);
     });
