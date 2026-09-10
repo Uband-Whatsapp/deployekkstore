@@ -3024,6 +3024,27 @@ ul {
   margin: 8px 0;
   border-left: 3px solid var(--warning);
 }
+/* === State DONE untuk requirement === */
+.requirement-item.done {
+    border-color: rgba(45, 212, 191, 0.4);
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.07), var(--bg-input));
+    transition: all 0.4s ease;
+}
+.requirement-item.done .req-icon {
+    background: rgba(45, 212, 191, 0.14);
+    color: var(--success);
+    transition: all 0.3s ease;
+}
+.requirement-item.done .req-label {
+    color: var(--success);
+}
+.requirement-item.done .req-btn {
+    background: var(--success-soft) !important;
+    color: var(--success) !important;
+    border: 1px solid rgba(45, 212, 191, 0.35) !important;
+    cursor: default;
+}
+
 </style>  
 </head>
 <body>
@@ -4469,27 +4490,88 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         }
 
         function updateModalStatus() {
-            const join = isJoinValid();
-            const notif = getNotifStatus();
-            const grupItem = document.getElementById('req-grup');
-            const grupStatus = document.getElementById('req-grup-status');
-            if (join) {
-                grupItem.classList.add('hidden');
-            } else {
-                grupItem.classList.remove('hidden');
-                grupStatus.textContent = 'Belum';
-                grupStatus.className = 'req-status';
-            }
-            const notifItem = document.getElementById('req-notif');
-            const notifStatus = document.getElementById('req-notif-status');
-            if (notif) {
-                notifItem.classList.add('hidden');
-            } else {
-                notifItem.classList.remove('hidden');
-                notifStatus.textContent = 'Belum';
-                notifStatus.className = 'req-status';
+    const join = isJoinValid();
+    const notif = getNotifStatus();
+
+    const grupItem   = document.getElementById('req-grup');
+    const grupStatus = document.getElementById('req-grup-status');
+    const grupBtn    = document.getElementById('btn-join-grup');
+
+    const notifItem   = document.getElementById('req-notif');
+    const notifStatus = document.getElementById('req-notif-status');
+    const notifBtn    = document.getElementById('btn-aktifkan-notif');
+
+    // ---------- JOIN GROUP ----------
+    if (join) {
+        grupItem.classList.add('done');
+        grupStatus.textContent = 'Berhasil';
+        grupStatus.className = 'req-status done';
+        if (grupBtn) {
+            grupBtn.style.pointerEvents = 'none';
+            grupBtn.innerHTML = '<i class="fa-solid fa-check"></i> Terhubung';
+            grupBtn.removeAttribute('href');
+        }
+    } else {
+        grupItem.classList.remove('done');
+        grupStatus.textContent = 'Belum';
+        grupStatus.className = 'req-status';
+        if (grupBtn) {
+            grupBtn.style.pointerEvents = '';
+            grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
+            if (!grupBtn.hasAttribute('href')) {
+                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4');
             }
         }
+    }
+
+    // ---------- NOTIFIKASI ----------
+    if (notif) {
+        notifItem.classList.add('done');
+        notifStatus.textContent = 'Berhasil';
+        notifStatus.className = 'req-status done';
+        if (notifBtn) {
+            notifBtn.style.pointerEvents = 'none';
+            notifBtn.innerHTML = '<i class="fa-solid fa-check"></i> Aktif';
+        }
+    } else {
+        notifItem.classList.remove('done');
+        notifStatus.textContent = 'Belum';
+        notifStatus.className = 'req-status';
+        if (notifBtn) {
+            notifBtn.style.pointerEvents = '';
+            notifBtn.innerHTML = '<i class="fa-solid fa-bell"></i> Aktifkan';
+        }
+    }
+
+    // ---------- AUTO-CLOSE + AUTO-DEPLOY ----------
+    if (join && notif && window._pendingDeploy && !isDeploying) {
+        // Delay 800ms biar user lihat kedua item status "Berhasil" dulu
+        setTimeout(() => {
+            // Re-verify kondisi masih valid
+            if (!isJoinValid() || !getNotifStatus() || !window._pendingDeploy || isDeploying) return;
+
+            const project = window._pendingDeploy;
+            window._pendingDeploy = null;
+
+            // Tutup modal
+            const deployModal = document.getElementById('deploy-modal');
+            if (deployModal) deployModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+
+            showToast('Syarat terpenuhi, memulai deploy...', 'success');
+
+            // Mulai deploy
+            const deployBtn = document.getElementById('deploy-btn');
+            isDeploying = true;
+            deployState = DEPLOY_STATE.VALIDATING;
+            if (deployBtn) {
+                deployBtn.disabled = true;
+                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+            }
+            performDeploy(project);
+        }, 800);
+    }
+}
 
         // ---------- PROJECT OWNER (API) ----------
         async function getProjectOwner(projectName) {
@@ -4803,12 +4885,13 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
         }
 
         function resetDeployButton() {
-            const deployBtn = document.getElementById('deploy-btn');
-            if (!deployBtn) return;
-            deployBtn.disabled = false;
-            deployBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
-            deployState = DEPLOY_STATE.IDLE;
-        }
+    const deployBtn = document.getElementById('deploy-btn');
+    if (!deployBtn) return;
+    deployBtn.disabled = false;
+    deployBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+    deployState = DEPLOY_STATE.IDLE;
+    isDeploying = false;   // ← TAMBAH BARIS INI
+}
 
         // ---------- PROJECT NAME VALIDATION ----------
         const projectInput = document.getElementById('project');
@@ -5223,86 +5306,105 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             deployButtonElement.addEventListener('click', deploy);
         }
 
-        // =========================================================
-        // JOIN REQUIREMENT
-        // =========================================================
-       // =========================================================
-// JOIN REQUIREMENT
+
+
+
+// JOIN REQUIREMENT — klik gabung
 // =========================================================
 const joinButton = document.getElementById('btn-join-grup');
 if (joinButton) {
-    joinButton.addEventListener('click', function() {
+    joinButton.addEventListener('click', function () {
         if (isDeploying) return;
+
+        // Tandai timestamp join
         setJoinTimestamp();
-        updateModalStatus();
-        if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
-            const project = window._pendingDeploy;
-            window._pendingDeploy = null;
-            const deployModal = document.getElementById('deploy-modal');
-            if (deployModal) deployModal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            const deployBtn = document.getElementById('deploy-btn');
-            isDeploying = true;
-            deployState = DEPLOY_STATE.VALIDATING;
-            if (deployBtn) {
-                deployBtn.disabled = true;
-                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+
+        // Update UI lokal — item grup langsung hijau "Berhasil"
+        const grupItem = document.getElementById('req-grup');
+        const grupStatus = document.getElementById('req-grup-status');
+        if (grupItem && grupStatus) {
+            grupItem.classList.add('done');
+            grupStatus.textContent = 'Berhasil';
+            grupStatus.className = 'req-status done';
+            this.style.pointerEvents = 'none';
+            this.innerHTML = '<i class="fa-solid fa-check"></i> Terhubung';
+            this.removeAttribute('href');
+        }
+
+        showToast('Kembali ke halaman ini setelah bergabung', 'info');
+        // ❌ JANGAN panggil updateModalStatus di sini
+        // ✅ Biar visibilitychange yang handle pas user balik dari WhatsApp
+    });
+}
+// =========================================================
+// NOTIFIKASI — klik aktifkan, langsung trigger popup
+// =========================================================
+const notificationButton = document.getElementById('btn-aktifkan-notif');
+if (notificationButton) {
+    notificationButton.addEventListener('click', async function () {
+        if (isDeploying) return;
+
+        // Cek dukungan browser
+        if (!('Notification' in window)) {
+            showToast('Browser tidak mendukung notifikasi', 'error');
+            return;
+        }
+
+        // Kalau sudah granted, langsung update
+        if (Notification.permission === 'granted') {
+            updateModalStatus();
+            return;
+        }
+
+        // Kalau diblokir permanen, kasih tahu user
+        if (Notification.permission === 'denied') {
+            showToast('Notifikasi diblokir. Buka pengaturan situs di browser untuk mengizinkan.', 'warning');
+            return;
+        }
+
+        // Status loading di tombol
+        const originalHTML = notificationButton.innerHTML;
+        notificationButton.style.pointerEvents = 'none';
+        notificationButton.innerHTML = '<span class="gate-spinner" style="width:12px;height:12px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Meminta...';
+
+        try {
+            // Trigger popup izin browser
+            const permission = await Notification.requestPermission();
+
+            if (permission === 'granted') {
+                showToast('Notifikasi berhasil diaktifkan!', 'success');
+                // Register service worker + push subscription (kalau didukung)
+                try { await registerPushNotification(); } catch (e) { console.warn('Register push:', e); }
+                // Update UI — item langsung "Berhasil"
+                updateModalStatus();
+            } else if (permission === 'denied') {
+                showToast('Notifikasi ditolak', 'warning');
+                notificationButton.style.pointerEvents = '';
+                notificationButton.innerHTML = originalHTML;
+            } else {
+                // default (user nutup popup)
+                notificationButton.style.pointerEvents = '';
+                notificationButton.innerHTML = originalHTML;
             }
-            performDeploy(project);
+        } catch (err) {
+            console.warn('Notification request error:', err);
+            notificationButton.style.pointerEvents = '';
+            notificationButton.innerHTML = originalHTML;
         }
     });
 }
 
         // =========================================================
-        // NOTIFICATION REQUIREMENT
-        // =========================================================
-        const notificationButton = document.getElementById('btn-aktifkan-notif');
-        if (notificationButton) {
-            notificationButton.addEventListener('click', function() {
-                registerPushNotification().then(function() {
-                    updateModalStatus();
-                    if (isJoinValid() && getNotifStatus() && window._pendingDeploy) {
-                        const project = window._pendingDeploy;
-                        window._pendingDeploy = null;
-                        const deployModal = document.getElementById('deploy-modal');
-                        if (deployModal) deployModal.classList.remove('active');
-                        document.body.classList.remove('modal-open');
-                        const deployBtn = document.getElementById('deploy-btn');
-                        isDeploying = true;
-                        deployState = DEPLOY_STATE.VALIDATING;
-                        if (deployBtn) {
-                            deployBtn.disabled = true;
-                            deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
-                        }
-                        performDeploy(project);
-                    }
-                });
-            });
-        }
-
-        // =========================================================
         // VISIBILITY CHANGE
         // =========================================================
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                updateModalStatus();
-                if (isJoinValid() && getNotifStatus() && window._pendingDeploy && !isDeploying) {
-                    const project = window._pendingDeploy;
-                    window._pendingDeploy = null;
-                    const deployModal = document.getElementById('deploy-modal');
-                    if (deployModal) deployModal.classList.remove('active');
-                    document.body.classList.remove('modal-open');
-                    const deployBtn = document.getElementById('deploy-btn');
-                    isDeploying = true;
-                    deployState = DEPLOY_STATE.VALIDATING;
-                    if (deployBtn) {
-                        deployBtn.disabled = true;
-                        deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
-                    }
-                    performDeploy(project);
-                }
-            }
-        });
+        // =========================================================
+// VISIBILITY CHANGE — cukup re-check, updateModalStatus yang handle auto-deploy
+// =========================================================
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        updateModalStatus();
+    }
+});
 
         // =========================================================
         // TRACKING SYSTEM
