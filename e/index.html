@@ -9471,22 +9471,80 @@ if (isMine) {
   }
 
   // ---------- SUBSCRIBE MESSAGES ----------
-  function subscribeMessages() {
+  // ── State untuk initial load ──
+let initialLoadDone = false;
+let firstLoadTime = null;
+
+// ---------- SUBSCRIBE MESSAGES ----------
+function subscribeMessages() {
+  // Bersihkan listener lama
   if (messagesUnsubscribe) {
     messagesUnsubscribe();
     messagesUnsubscribe = null;
   }
 
-  messagesUnsubscribe = db.collection('messages')
+  // Kalau udah pernah load → tinggal listen dari titik awal
+  if (initialLoadDone && firstLoadTime) {
+    messagesUnsubscribe = db.collection('messages')
+      .orderBy('timestamp', 'asc')
+      .startAt(firstLoadTime)
+      .onSnapshot((snapshot) => {
+        lastDocsCache = [];
+        snapshot.forEach(doc => lastDocsCache.push(doc));
+        renderAllMessages();
+        observeMessages();
+      }, (error) => {
+        console.error('Error listening messages:', error);
+      });
+    return;
+  }
+
+  // ── INITIAL LOAD: ambil 10 pesan TERAKHIR saja ──
+  db.collection('messages')
     .orderBy('timestamp', 'asc')
-    .limitToLast(50)
-    .onSnapshot((snapshot) => {
+    .limitToLast(10)
+    .get()
+    .then((snapshot) => {
       lastDocsCache = [];
       snapshot.forEach(doc => lastDocsCache.push(doc));
+
+      // Simpan timestamp pesan paling tua dari 10 terakhir
+      // → jadi titik awal listener realtime
+      if (lastDocsCache.length > 0) {
+        firstLoadTime = lastDocsCache[0].data().timestamp;
+      }
+
       renderAllMessages();
       observeMessages();
-    }, (error) => {
-      console.error('Error listening messages:', error);
+      initialLoadDone = true;
+
+      // ── Subscribe realtime mulai dari titik itu ──
+      // Semua pesan baru (setelah 10 terakhir tadi) akan otomatis nambah,
+      // TIDAK ada yang kehapus dari UI walau user kirim ratusan pesan
+      messagesUnsubscribe = db.collection('messages')
+        .orderBy('timestamp', 'asc')
+        .startAt(firstLoadTime || new Date(0))
+        .onSnapshot((snap) => {
+          lastDocsCache = [];
+          snap.forEach(doc => lastDocsCache.push(doc));
+          renderAllMessages();
+          observeMessages();
+        }, (error) => {
+          console.error('Error listening messages:', error);
+        });
+    })
+    .catch((err) => {
+      console.error('Error initial load messages:', err);
+      // Fallback: kalau gagal, pakai cara lama
+      messagesUnsubscribe = db.collection('messages')
+        .orderBy('timestamp', 'asc')
+        .limitToLast(10)
+        .onSnapshot((snapshot) => {
+          lastDocsCache = [];
+          snapshot.forEach(doc => lastDocsCache.push(doc));
+          renderAllMessages();
+          observeMessages();
+        });
     });
 }
 
