@@ -4908,6 +4908,156 @@ ul {
         max-height: none !important;
     }
 }
+/* =========================================================
+   DELETED MESSAGE — SVG icon (bukan emoji)
+========================================================= */
+.deleted-msg-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-style: italic;
+  opacity: 0.75;
+  line-height: 1.35;
+}
+
+.deleted-msg-text svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* =========================================================
+   BUBBLE TIMESTAMP — pojok kanan bawah
+========================================================= */
+.bubble-timestamp {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  font-size: 10px;
+  opacity: 0.6;
+  line-height: 1;
+  font-family: var(--font-ui);
+}
+
+.bubble-timestamp .read-check {
+  font-size: 10px;
+  margin-left: 2px;
+}
+/* =========================================================
+   PENDING MESSAGE — Enhanced Loading UX
+========================================================= */
+
+/* Shimmer overlay untuk media loading */
+.message-item.pending .pending-media-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: pendingShimmer 1.6s linear infinite;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 10px;
+}
+
+@keyframes pendingShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Progress bar di bawah pending media */
+.message-item.pending .pending-media-box::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  animation: pendingBar 1.4s ease-in-out infinite;
+  z-index: 5;
+  border-radius: 0 0 10px 10px;
+  opacity: 0.9;
+}
+
+@keyframes pendingBar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* Fade-in animasi untuk pesan baru muncul */
+.message-item {
+  animation: msgFadeIn 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Sent checkmark animation (✓ → ✓✓) */
+.bubble-timestamp .read-check {
+  display: inline-block;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.bubble-timestamp .read-check.read-double {
+  color: var(--success) !important;
+  animation: checkPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0.6); opacity: 0.5; }
+  60%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Voice note pending — shimmer bar */
+.message-item.pending .pending-simple {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(249, 115, 22, 0.9),
+    rgba(234, 88, 12, 0.9)
+  ) !important;
+}
+
+.message-item.pending .pending-simple::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: pendingSlide 1.8s ease-in-out infinite;
+}
+
+@keyframes pendingSlide {
+  0%   { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Clock pending kecil di pojok - lebih clean */
+.message-item.pending .pending-clock {
+  font-size: 9px;
+  padding: 2px 6px;
+  opacity: 0.85;
+}
 </style>  
 </head>
 <body>
@@ -6195,7 +6345,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
                 btnConfirm.style.pointerEvents = 'none';
                 showVerify('loading', 'Sistem sedang memverifikasi status follow kamu. Tunggu sebentar...');
                 setTimeout(function () {
-                    if (followClickCount >= 2) {
+                    if (followClickCount >= 1) {
                         showVerify('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan...');
                         updateStep(3);
                         btnConfirm.style.visibility = 'hidden';
@@ -6227,14 +6377,15 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
                 console.log('[GATE] WhatsApp click:', followClickCount);
             });
 
-            document.addEventListener('visibilitychange', function () {
-                if (document.hidden && waitingForWhatsApp) {
-                    waitingForWhatsApp = false;
-                    if (!hasClickedFollowOnce) {
-                        hasClickedFollowOnce = true;
-                        enableConfirm();
-                    }
-                    if (followClickCount >= 2 && confirmAttempts >= 1 && !gateRemoved) {
+           
+                document.addEventListener('visibilitychange', function () {
+    if (document.hidden && waitingForWhatsApp) {
+        waitingForWhatsApp = false;
+        if (!hasClickedFollowOnce) {
+            hasClickedFollowOnce = true;
+            enableConfirm();
+        }
+        if (followClickCount >= 1 && confirmAttempts >= 1 && !gateRemoved) {
                         hideVerify();
                         btnConfirm.textContent = 'Coba Lagi';
                         btnConfirm.disabled = false;
@@ -8377,17 +8528,26 @@ if (!snapshot.empty) {
 
       // UPDATE SEMUA PESAN LAMA
       const messagesSnapshot = await db.collection('messages')
-        .where('senderId', '==', uid)
-        .get();
+  .where('senderId', '==', uid)
+  .get();
 
-      if (!messagesSnapshot.empty) {
-        const batch = db.batch();
-        messagesSnapshot.forEach((doc) => {
-          batch.update(doc.ref, { username: newUsername });
-        });
-        await batch.commit();
-        console.log(`[updateUsername] Updated ${messagesSnapshot.size} messages`);
-      }
+if (!messagesSnapshot.empty) {
+  const docs = messagesSnapshot.docs;
+  const CHUNK_SIZE = 400;   // aman di bawah limit 500
+  let totalUpdated = 0;
+  
+  for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
+    const chunk = docs.slice(i, i + CHUNK_SIZE);
+    const batch = db.batch();
+    chunk.forEach((doc) => {
+      batch.update(doc.ref, { username: newUsername });  // avatar: newAvatarUrl
+    });
+    await batch.commit();
+    totalUpdated += chunk.length;
+  }
+  
+  console.log(`[updateUsername] Updated ${totalUpdated} messages in ${Math.ceil(docs.length/CHUNK_SIZE)} batches`);
+}
 
 await db.collection('users').doc(uid).update({
   username: newUsername,
@@ -8820,6 +8980,24 @@ function closeLightbox() {
     }
   });
 })();
+// ============================================================
+// DELETED MESSAGE — render pakai SVG icon (anti copy-paste)
+// ============================================================
+function getDeletedMessageHTML(type) {
+  const svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+  
+  let label;
+  // Pengirim lihat "Anda menghapus pesan ini" 
+  //   → baik hapus untuk diri sendiri MAUPUN hapus untuk semua
+  // Orang lain lihat "Pesan ini telah dihapus"
+  if (type === 'for-me-mine' || type === 'for-all-mine') {
+    label = 'Anda menghapus pesan ini';
+  } else {
+    label = 'Pesan ini telah dihapus';
+  }
+  
+  return '<span class="deleted-msg-text">' + svg + '<span>' + label + '</span></span>';
+}
   // ---------- RENDER PESAN (LENGKAP) ----------
   function renderMessage(doc) {
     const data = doc.data();
@@ -8830,18 +9008,22 @@ function closeLightbox() {
     const isDeletedForAll = data.isDeletedForAll === true;
 
     let displayText = data.text || '';
-    let isDeletedMessage = false;
+let isDeletedMessage = false;
+let deletedMessageType = null;
 
-    if (isDeletedForAll) {
-      displayText = '⦸ Pesan ini telah dihapus';
-      isDeletedMessage = true;
-    } else if (isDeletedForMe && isMine) {
-      displayText = '⦸ Anda menghapus pesan ini';
-      isDeletedMessage = true;
-    } else if (isDeletedForMe && !isMine) {
-      displayText = '⦸ Pesan ini telah dihapus';
-      isDeletedMessage = true;
-    }
+if (isDeletedForAll) {
+  deletedMessageType = isMine ? 'for-all-mine' : 'for-all-other';
+  displayText = '';
+  isDeletedMessage = true;
+} else if (isDeletedForMe && isMine) {
+  deletedMessageType = 'for-me-mine';
+  displayText = '';
+  isDeletedMessage = true;
+} else if (isDeletedForMe && !isMine) {
+  deletedMessageType = 'for-me-other';
+  displayText = '';
+  isDeletedMessage = true;
+}
 
     const div = document.createElement('div');
 div.className = 'message-item';
@@ -8944,22 +9126,31 @@ if (data.avatar) {
 if (data.mediaUrl && (!data.text || !data.text.trim()) && !isDeletedForAll && !isDeletedForMe) {
   bubble.classList.add('bubble-media-only');
 }
-    const textSpan = document.createElement('div');
-    textSpan.className = 'text-content';
-    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
-      displayText = 'Anda bergabung ke grup';
-    }
-    textSpan.textContent = displayText;
-    bubble.appendChild(textSpan);
+    // ---- Siapkan textSpan (belum di-append) ----
+const textSpan = document.createElement('div');
+textSpan.className = 'text-content';
 
-    if (data.isEdited && !isDeletedForAll && !isDeletedForMe) {
-      const editedLabel = document.createElement('span');
-      editedLabel.style.fontSize = '9px';
-      editedLabel.style.opacity = '0.5';
-      editedLabel.style.marginLeft = '4px';
-      editedLabel.textContent = ' (diedit)';
-      textSpan.appendChild(editedLabel);
-    }
+let finalText = displayText;
+if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+  finalText = 'Anda bergabung ke grup';
+}
+
+if (isDeletedMessage) {
+  // Pakai icon SVG + teks baru
+  textSpan.innerHTML = getDeletedMessageHTML(deletedMessageType);
+} else if (finalText) {
+  textSpan.textContent = finalText;
+}
+
+if (data.isEdited && !isDeletedForAll && !isDeletedForMe && finalText) {
+  const editedLabel = document.createElement('span');
+  editedLabel.style.fontSize = '9px';
+  editedLabel.style.opacity = '0.5';
+  editedLabel.style.marginLeft = '4px';
+  editedLabel.textContent = ' (diedit)';
+  textSpan.appendChild(editedLabel);
+}
+// ❌ textSpan TIDAK di-append di sini — nanti setelah media
 
     if (data.mediaUrl && !isDeletedForAll && !isDeletedForMe) {
   const mediaContainer = document.createElement('div');
@@ -8994,31 +9185,6 @@ if (data.mediaUrl && (!data.text || !data.text.trim()) && !isDeletedForAll && !i
   zoomHint.className = 'media-zoom-hint';
   zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
   mediaBox.appendChild(zoomHint);
-// === TAMBAHAN: Timestamp overlay di dalam media ===
-const timeOverlay = document.createElement('div');
-timeOverlay.className = 'media-timestamp';
-
-if (data.timestamp) {
-  const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-  timeOverlay.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-}
-
-// Read status (✓ / ✓✓) di dalam overlay — hanya untuk pesan sendiri
-if (isMine && !isSystem && !isDeletedForAll) {
-  const readStatus = document.createElement('span');
-  readStatus.className = 'read-check';
-  const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
-  if (readCount > 0) {
-    readStatus.innerHTML = '✓✓';
-    readStatus.style.color = 'var(--success)';
-  } else {
-    readStatus.innerHTML = '✓';
-  }
-  timeOverlay.appendChild(readStatus);
-}
-
-mediaBox.appendChild(timeOverlay);
-// === END TAMBAHAN ===
   mediaBox.addEventListener('click', function(e) {
     e.stopPropagation();
     openLightbox(data.mediaUrl, data.mediaType, data.fileName);
@@ -9144,49 +9310,43 @@ audio.addEventListener('timeupdate', function() {
   mediaContainer.appendChild(link);
 }
 
-  const textEl = bubble.querySelector('.text-content');
-  if (textEl) {
-    bubble.insertBefore(mediaContainer, textEl.nextSibling);
-  } else {
-    bubble.prepend(mediaContainer);
-  }
+  // ✅ Media di-append DULU (di atas)
+  bubble.appendChild(mediaContainer);
 }
 
-    // Timestamp hanya di luar kalau TIDAK ada media
-// Timestamp overlay HANYA untuk image/video
-const hasInlineTimestamp = data.mediaUrl && 
-  (data.mediaType === 'image' || data.mediaType === 'video') && 
-  !isDeletedForAll && 
-  !isDeletedForMe;
-
-if (!hasInlineTimestamp) {
+// ✅ Text (caption) di-append SETELAH media
+if (finalText || isDeletedMessage) {
+  bubble.appendChild(textSpan);
+}
+// Timestamp SELALU di bawah bubble, rata kanan
+if (data.timestamp || isMine) {
   const timeSpan = document.createElement('div');
-  timeSpan.style.fontSize = '8px';
-  timeSpan.style.opacity = '0.5';
-  timeSpan.style.marginTop = '2px';
-  timeSpan.style.textAlign = 'right';
+  timeSpan.className = 'bubble-timestamp';
+
   if (data.timestamp) {
     const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    timeSpan.appendChild(document.createTextNode(timeStr));
   }
-  bubble.appendChild(timeSpan);
 
   if (isMine && !isSystem && !isDeletedForAll) {
     const readStatus = document.createElement('span');
-    readStatus.style.fontSize = '10px';
-    readStatus.style.marginLeft = '4px';
-    readStatus.style.opacity = '0.6';
+    readStatus.className = 'read-check';
     const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
     if (readCount > 0) {
-      readStatus.innerHTML = '✓✓';
-      readStatus.style.color = 'var(--success)';
-    } else {
-      readStatus.innerHTML = '✓';
-      readStatus.style.color = 'var(--text-muted)';
-    }
+  readStatus.innerHTML = '✓✓';
+  readStatus.style.color = 'var(--success)';
+  readStatus.classList.add('read-double');
+} else {
+  readStatus.innerHTML = '✓';
+  readStatus.style.color = 'var(--text-muted)';
+}
     timeSpan.appendChild(readStatus);
   }
+
+  bubble.appendChild(timeSpan);
 }
+    
 
     if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
       const replyContainer = document.createElement('div');
@@ -9691,6 +9851,7 @@ let initialLoadDone = false;
 let firstLoadTime = null;
 
 // ---------- SUBSCRIBE MESSAGES ----------
+// ---------- SUBSCRIBE MESSAGES (FIXED) ----------
 function subscribeMessages() {
   // Bersihkan listener lama
   if (messagesUnsubscribe) {
@@ -9698,62 +9859,81 @@ function subscribeMessages() {
     messagesUnsubscribe = null;
   }
 
-  // Kalau udah pernah load → tinggal listen dari titik awal
+  // Kalau udah pernah load → langsung reconnect realtime
   if (initialLoadDone && firstLoadTime) {
+    console.log('[Chat] Reconnect from firstLoadTime:', firstLoadTime);
     messagesUnsubscribe = db.collection('messages')
       .orderBy('timestamp', 'asc')
       .startAt(firstLoadTime)
       .onSnapshot((snapshot) => {
+        console.log('[Chat] Realtime snapshot:', snapshot.size, 'messages');
         lastDocsCache = [];
         snapshot.forEach(doc => lastDocsCache.push(doc));
         renderAllMessages();
         observeMessages();
       }, (error) => {
-        console.error('Error listening messages:', error);
+        console.error('[Chat] Realtime error:', error);
       });
     return;
   }
 
-  // ── INITIAL LOAD: ambil 10 pesan TERAKHIR saja ──
+  // ── INITIAL LOAD: ambil 10 pesan TERAKHIR ──
   db.collection('messages')
     .orderBy('timestamp', 'asc')
     .limitToLast(10)
     .get()
     .then((snapshot) => {
+      console.log('[Chat] Initial load:', snapshot.size, 'messages');
+      
       lastDocsCache = [];
       snapshot.forEach(doc => lastDocsCache.push(doc));
 
-      // Simpan timestamp pesan paling tua dari 10 terakhir
-      // → jadi titik awal listener realtime
       if (lastDocsCache.length > 0) {
-        firstLoadTime = lastDocsCache[0].data().timestamp;
+        const oldestDoc = lastDocsCache[0].data();
+        firstLoadTime = oldestDoc.timestamp;
+        console.log('[Chat] firstLoadTime set:', firstLoadTime);
+      } else {
+        console.log('[Chat] No messages yet');
+        firstLoadTime = null;
       }
 
       renderAllMessages();
       observeMessages();
       initialLoadDone = true;
 
-      // ── Subscribe realtime mulai dari titik itu ──
-      // Semua pesan baru (setelah 10 terakhir tadi) akan otomatis nambah,
-      // TIDAK ada yang kehapus dari UI walau user kirim ratusan pesan
+      // ── Realtime listener dari titik pertama ──
+      // Ini yang ambil SEMUA pesan dari titik itu (10 awal + semua baru)
       messagesUnsubscribe = db.collection('messages')
         .orderBy('timestamp', 'asc')
         .startAt(firstLoadTime || new Date(0))
         .onSnapshot((snap) => {
+          console.log('[Chat] Realtime snapshot (unlimited):', snap.size, 'messages');
           lastDocsCache = [];
           snap.forEach(doc => lastDocsCache.push(doc));
           renderAllMessages();
           observeMessages();
         }, (error) => {
-          console.error('Error listening messages:', error);
+          console.error('[Chat] Realtime failed:', error);
+          
+          // ── FALLBACK: kalau startAt gagal, ambil 200 terakhir ──
+          console.log('[Chat] Fallback to limitToLast(200)');
+          messagesUnsubscribe = db.collection('messages')
+            .orderBy('timestamp', 'asc')
+            .limitToLast(200)
+            .onSnapshot((snap) => {
+              lastDocsCache = [];
+              snap.forEach(doc => lastDocsCache.push(doc));
+              renderAllMessages();
+              observeMessages();
+            });
         });
     })
     .catch((err) => {
-      console.error('Error initial load messages:', err);
-      // Fallback: kalau gagal, pakai cara lama
+      console.error('[Chat] Initial load failed:', err);
+      // Fallback langsung ke limitToLast
       messagesUnsubscribe = db.collection('messages')
         .orderBy('timestamp', 'asc')
-        .limitToLast(10)
+        .limitToLast(200)
         .onSnapshot((snapshot) => {
           lastDocsCache = [];
           snapshot.forEach(doc => lastDocsCache.push(doc));
@@ -9762,7 +9942,6 @@ function subscribeMessages() {
         });
     });
 }
-
 // ---------- RENDER SEMUA (Firestore + Pending) ----------
 
 function renderAllMessages() {
@@ -11182,4 +11361,4 @@ function stopVideoRecording() {
 })();
     </script>
 </body>
-</html>p
+</html>
