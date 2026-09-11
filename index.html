@@ -6036,7 +6036,6 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
       </button>
       <div class="lightbox-content" id="lightbox-content"></div>
     </div>
-</body>
 
     <script>
         (function () {
@@ -6609,60 +6608,8 @@ if (notif) {
     }
 }
 
-        // ---------- PROJECT OWNER (API) ----------
-        async function getProjectOwner(projectName) {
-            try {
-                const res = await fetch('/api/owner?project=' + encodeURIComponent(projectName));
-                const data = await res.json();
-                return data.ownerId || null;
-            } catch (e) { return null; }
-        }
-
-        async function setProjectOwner(projectName) {
-            await fetch('/api/owner', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ project: projectName, ownerId: CURRENT_USER_ID })
-            });
-        }
-
-        async function removeProjectOwner(projectName) {
-            await fetch('/api/owner', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ project: projectName })
-            });
-        }
-
         // ---------- HISTORY MANAGEMENT ----------
-        function saveHistory(project, status, url, projectId, deploymentId) {
-    const now = new Date();
-    const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    let history;
-    try {
-        history = JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-    } catch (e) {
-        console.warn('History corrupt, reset.');
-        localStorage.removeItem('ekk_deployHistory');
-        history = [];
-    }
-    history = history.filter(item => item.project.toLowerCase() !== project.toLowerCase());
-            history.unshift({
-                project: project,
-                status: status,
-                date: date,
-                time: time,
-                url: url || '',
-                projectId: projectId || '',
-                deploymentId: deploymentId || '',
-                ownerId: CURRENT_USER_ID
-            });
-            if (history.length > 20) history.pop();
-            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
-            renderHistory();
-            updateDashboardStats();
-        }
+        
 
         function escapeHTML(str) {
     if (str === null || str === undefined) return '';
@@ -6674,16 +6621,7 @@ if (notif) {
         .replace(/'/g, '&#39;');
 }
 
-        function getHistory() {
-    try {
-        return JSON.parse(localStorage.getItem('ekk_deployHistory')) || [];
-    } catch (e) {
-        console.warn('History corrupt, reset.');
-        localStorage.removeItem('ekk_deployHistory');
-        return [];
-    }
-}
-
+        
         function renderHistory() {
             const historyList = document.getElementById('history-list');
             const history = getHistory();
@@ -6781,47 +6719,196 @@ if (notif) {
                 }).join('');
             }
         }
+// ============================================================
+// PROJECT STORE — Firestore (pengganti localStorage)
+// ============================================================
+function getDb() {
+  if (!window._db) {
+    console.warn('[ProjectStore] Firestore belum siap');
+    return null;
+  }
+  return window._db;
+}
 
-        async function deleteHistoryItem(index) {
-            const history = getHistory();
-            if (index < 0 || index >= history.length) return;
-            const item = history[index];
-            const confirmed = await showConfirmModal(
-                'Hapus Project?',
-                'Project "' + item.project + '" akan dihapus dari Vercel dan riwayat lokal.\nWebsite akan mati.\n\nLanjutkan?',
-                'Hapus'
-            );
-            if (!confirmed) return;
-            if (item.projectId && item.ownerId === CURRENT_USER_ID) {
-                try {
-                    const response = await fetch('/api/delete-project', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ projectId: item.projectId, ownerId: CURRENT_USER_ID })
-                    });
-                    const result = await response.json();
-                    if (!response.ok) {
-                        showToast('Gagal hapus dari Vercel: ' + (result.error || 'Error'), 'warning');
-                    } else {
-                        showToast('Project berhasil dihapus dari Vercel', 'success');
-                    }
-                } catch (err) {
-                    console.error('Gagal hapus project:', err);
-                    showToast('Gagal menghubungi server', 'warning');
-                }
-            }
-            try {
-                await removeProjectOwner(item.project);
-            } catch (e) {
-                console.warn('Gagal hapus pemilik:', e);
-            }
-            history.splice(index, 1);
-            localStorage.setItem('ekk_deployHistory', JSON.stringify(history));
-            renderHistory();
-            updateDashboardStats();
-            showToast('Project dihapus dari riwayat', 'success');
-        }
+function getMyUid() {
+  return CURRENT_USER_ID;
+}
 
+// ---------- SAVE HISTORY (create atau update) ----------
+async function saveHistory(project, status, url, projectId, deploymentId) {
+  const db = getDb();
+  if (!db) return false;
+
+  const uid = getMyUid();
+  const projectName = (project || '').toLowerCase().trim();
+
+  try {
+    // Cek apakah doc sudah ada untuk user ini
+    const snap = await db.collection('projects')
+      .where('ownerUid', '==', uid)
+      .where('projectName', '==', projectName)
+      .limit(1)
+      .get();
+
+    const payload = {
+      projectName: projectName,
+      ownerUid: uid,
+      url: url || '',
+      status: status,
+      projectId: projectId || '',
+      deploymentId: deploymentId || '',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!snap.empty) {
+      // Update doc yang sudah ada
+      await snap.docs[0].ref.update(payload);
+      console.log('[saveHistory] Updated:', projectName);
+    } else {
+      // Bikin doc baru
+      payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('projects').add(payload);
+      console.log('[saveHistory] Created:', projectName);
+    }
+    return true;
+  } catch (e) {
+    console.error('[saveHistory] Error:', e);
+    return false;
+  }
+}
+
+// ---------- CACHE + LISTENER ----------
+let _historyCache = [];
+let _historyUnsubscribe = null;
+
+function startHistoryListener() {
+  const db = getDb();
+  if (!db) {
+    console.warn('[History] DB belum siap');
+    return;
+  }
+
+  if (_historyUnsubscribe) _historyUnsubscribe();
+
+  const uid = getMyUid();
+  console.log('[History] Listening for uid:', uid);
+
+  _historyUnsubscribe = db.collection('projects')
+    .where('ownerUid', '==', uid)
+    .onSnapshot(snap => {
+      console.log('[History] Snapshot received:', snap.size, 'items');
+      _historyCache = snap.docs
+        .map(doc => {
+          const d = doc.data();
+          const ts = d.createdAt?.toDate?.() || new Date();
+          return {
+            id: doc.id,
+            project: d.projectName || '',
+            status: d.status || 'unknown',
+            url: d.url || '',
+            projectId: d.projectId || '',
+            deploymentId: d.deploymentId || '',
+            ownerId: d.ownerUid || '',
+            date: ts.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+            time: ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            _ts: ts.getTime()
+          };
+        })
+        .sort((a, b) => b._ts - a._ts)
+        .slice(0, 50);
+
+      // Update UI
+      if (typeof renderHistory === 'function') renderHistory();
+      if (typeof updateDashboardStats === 'function') updateDashboardStats();
+    }, err => {
+      console.error('[History] Listener error:', err);
+    });
+}
+
+// ---------- GET (dari cache, sinkron) ----------
+function getHistory() {
+  return _historyCache;
+}
+
+// ---------- CEK KETERSEDIAAN PROJECT ----------
+async function checkProjectAvailability(projectName) {
+  const db = getDb();
+  if (!db) return { available: false, owned: false, error: 'DB not ready' };
+
+  const uid = getMyUid();
+  const name = (projectName || '').toLowerCase().trim();
+
+  try {
+    const snap = await db.collection('projects')
+      .where('projectName', '==', name)
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
+      return { available: true, owned: false };
+    }
+
+    const data = snap.docs[0].data();
+    return {
+      available: false,
+      owned: data.ownerUid === uid,
+      existing: data
+    };
+  } catch (e) {
+    console.error('[checkProjectAvailability] Error:', e);
+    return { available: false, owned: false, error: e.message };
+  }
+}
+
+// ---------- HAPUS HISTORY ----------
+async function deleteHistoryItem(index) {
+  const history = getHistory();
+  if (index < 0 || index >= history.length) return;
+
+  const item = history[index];
+  const confirmed = await showConfirmModal(
+    'Hapus Project?',
+    'Project "' + item.project + '" akan dihapus dari Vercel dan database.\nWebsite akan mati.\n\nLanjutkan?',
+    'Hapus'
+  );
+  if (!confirmed) return;
+
+  const db = getDb();
+  if (!db) return;
+  const uid = getMyUid();
+
+  // Hapus dari Vercel dulu
+  if (item.projectId) {
+    try {
+      const response = await fetch('/api/delete-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: item.projectId, ownerId: uid })
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        showToast('Gagal hapus Vercel: ' + (result.error || 'Error'), 'warning');
+      } else {
+        showToast('Project dihapus dari Vercel', 'success');
+      }
+    } catch (err) {
+      console.error('[delete] Vercel error:', err);
+      showToast('Gagal menghubungi server', 'warning');
+    }
+  }
+
+  // Hapus dari Firestore
+  try {
+    if (item.id) {
+      await db.collection('projects').doc(item.id).delete();
+      showToast('Project dihapus', 'success');
+    }
+  } catch (e) {
+    console.error('[delete] Firestore error:', e);
+    showToast('Gagal hapus dari database', 'error');
+  }
+}
+        
         function copyURL(url) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(() => {
@@ -7127,10 +7214,10 @@ if (notif) {
                     showToast('Project berhasil dideploy!', 'success');
 
                     const projectId = result.projectId || result.id || '';
-                    const deploymentId = result.deploymentId || '';
-                    saveHistory(project, 'success', result.url, projectId, deploymentId);
+const deploymentId = result.deploymentId || '';
+await saveHistory(project, 'success', result.url, projectId, deploymentId);
 
-                    await setProjectOwner(project);
+// ← setProjectOwner HAPUS, udah nggak perlu
 
                     deployCompleted = true;
 
@@ -7187,7 +7274,7 @@ if (notif) {
                     if (output) {
                         output.textContent = 'Gagal deploy: ' + (result.error || 'Error tidak diketahui');
                     }
-                    saveHistory(project, 'failed', '', '', '');
+await saveHistory(project, 'failed', '', '', '');
                     showToast('Deployment gagal', 'error');
                 }
             } catch (err) {
@@ -7197,7 +7284,7 @@ if (notif) {
                 if (output) {
                     output.textContent = 'Gagal menghubungi server: ' + err.message;
                 }
-                saveHistory(project, 'failed', '', '', '');
+               await saveHistory(project, 'failed', '', '', '');
                 showToast('Gagal menghubungi server', 'error');
             } finally {
                 // Pastikan tombol selalu kembali normal
@@ -7303,12 +7390,13 @@ if (notif) {
             }
 
             // Check owner
-            const ownerId = await getProjectOwner(project);
-            if (ownerId && ownerId !== CURRENT_USER_ID) {
-                if (output) output.textContent = 'Project "' + project + '" sudah digunakan oleh pengguna lain. Silakan gunakan nama yang berbeda.';
-                showToast('Nama project sudah dipakai', 'error');
-                return;
-            }
+            // Check owner via Firestore
+const check = await checkProjectAvailability(project);
+if (!check.available && !check.owned) {
+    if (output) output.textContent = 'Project "' + project + '" sudah digunakan. Pilih nama lain.';
+    showToast('Nama project sudah dipakai', 'error');
+    return;
+}
 
             // Check requirements
             const join = isJoinValid();
@@ -7649,7 +7737,17 @@ document.addEventListener('visibilitychange', function() {
         } else {
             window.addEventListener('load', registerPushNotification);
         }
-
+// Start history listener
+if (window._db) {
+  startHistoryListener();
+} else {
+  // Kalau Firestore belum siap (mungkin karena blok else belum jalan)
+  // Coba lagi setelah 1 detik
+  setTimeout(() => {
+    if (window._db) startHistoryListener();
+    else console.warn('[History] Firestore tidak tersedia, history tidak akan muncul');
+  }, 1000);
+}
         console.log('EKK STORE 3.2 — Premium Deployment Platform');
         console.log('User ID tersimpan privat');
 // ============================================================
@@ -8109,10 +8207,11 @@ if (typeof firebase === 'undefined') {
     firebase.initializeApp(firebaseConfig);
   }
   const db = firebase.firestore();
+  window._db = db;  // ← TAMBAH BARIS INI
 
   // ---------- STATE ----------
   const GRP_STORAGE_KEY = 'ekk_group_user';
-const UID_STORAGE_KEY = 'ekk_group_uid';
+const UID_STORAGE_KEY = 'ekk_userId';  // samain
 let messagesUnsubscribe = null;
   let usersUnsubscribe = null;
   let statusInterval = null;
@@ -8133,13 +8232,16 @@ let messagesUnsubscribe = null;
   }
 
   function getOrCreateUid() {
-    let uid = localStorage.getItem(UID_STORAGE_KEY);
+    // Pakai SATU sumber uid: CURRENT_USER_ID
+    let uid = localStorage.getItem('ekk_userId');
     if (!uid) {
       uid = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-      localStorage.setItem(UID_STORAGE_KEY, uid);
+      localStorage.setItem('ekk_userId', uid);
     }
+    // Sync ke grup uid biar konsisten
+    localStorage.setItem('ekk_group_uid', uid);
     return uid;
-  }
+}
 
   const savedUser = getCurrentUser();
   if (savedUser) {
@@ -11080,4 +11182,4 @@ function stopVideoRecording() {
 })();
     </script>
 </body>
-</html>
+</html>p
