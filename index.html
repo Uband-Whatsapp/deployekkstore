@@ -8218,11 +8218,22 @@ if (avatarInput) {
       return;
     }
     avatarError.classList.remove('visible');
+
+    // Preview lokal
     const reader = new FileReader();
     reader.onload = function(e) {
       avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(file);
+
+    // Disable tombol join sementara upload
+    const joinBtn = document.getElementById('btn-create-profile');
+    const originalBtnHTML = joinBtn.innerHTML;
+    if (joinBtn) {
+      joinBtn.disabled = true;
+      joinBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Upload foto...';
+    }
+
     try {
       showToast('Mengupload foto...', 'info');
       const url = await uploadAvatarToCloudinary(file);
@@ -8233,19 +8244,14 @@ if (avatarInput) {
       avatarError.classList.add('visible');
       avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
       uploadedAvatarUrl = '';
+    } finally {
+      if (joinBtn) {
+        joinBtn.disabled = false;
+        joinBtn.innerHTML = originalBtnHTML;
+      }
     }
   });
 }
-
-// ============================================================
-// EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL
-// ============================================================
-// ============================================================
-// EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL
-// ============================================================
-// ============================================================
-// EVENT: UPLOAD AVATAR DI MODAL EDIT PROFIL (DENGAN LOG)
-// ============================================================
 const editAvatarInput = document.getElementById('edit-avatar-input');
 // Handler untuk klik avatar picker (ganti dari label for)
 const editAvatarClickable = document.getElementById('edit-avatar-clickable');
@@ -8439,7 +8445,6 @@ let messagesUnsubscribe = null;
     return false;
   }
 }
-
 async function createProfile(uid, username, avatar) {
   try {
     await db.collection('users').doc(uid).set({
@@ -8448,6 +8453,7 @@ async function createProfile(uid, username, avatar) {
       usernameLower: username.toLowerCase(),
       avatar: avatar || '',
       avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      avatarUpdatedAtMs: Date.now(),
       isOnline: true,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
@@ -8459,10 +8465,11 @@ async function createProfile(uid, username, avatar) {
   }
 }
 
+
   async function sendMessage(text, replyTo = null) {
   if (!currentUser) return false;
 
-  // ✅ FORCE FETCH avatar dari Firestore, biar gak pernah kosong
+  // ✅ Ambil avatar TERBARU dari Firestore, jangan percaya state lokal
   let avatarToSend = currentUser.avatar || '';
   let usernameToSend = currentUser.username || '';
   try {
@@ -8471,15 +8478,13 @@ async function createProfile(uid, username, avatar) {
       const udata = userDoc.data();
       if (udata.avatar) {
         avatarToSend = udata.avatar;
-        currentUser.avatar = udata.avatar; // Update state lokal
-        setCurrentUser(currentUser);       // Sync ke localStorage
+        currentUser.avatar = udata.avatar;
+        setCurrentUser(currentUser);
       }
-      if (udata.username) {
-        usernameToSend = udata.username;
-      }
+      if (udata.username) usernameToSend = udata.username;
     }
   } catch (e) {
-    console.warn('[sendMessage] Gagal fetch user doc, pakai avatar lokal:', e);
+    console.warn('[sendMessage] Fallback ke avatar lokal:', e);
   }
 
   const payload = {
@@ -9131,12 +9136,51 @@ if (window._userAvatarCache[senderId]) {
     // ✅ Prioritas avatarUpdatedAtMs (angka plain) > avatarUpdatedAt (Timestamp)
     avatarTsToUse = cached.avatarUpdatedAtMs || cached.avatarUpdatedAt || null;
 }
-
 // ✅ FALLBACK ke data pesan kalau cache kosong
 if (!avatarToUse) {
     avatarToUse = data.avatar || '';
     avatarTsToUse = data.avatarUpdatedAt || null;
 }
+
+// ✅ FALLBACK TERAKHIR: fetch dari Firestore user doc kalau masih kosong
+if (!avatarToUse && senderId && !isSystem && typeof db !== 'undefined') {
+    db.collection('users').doc(senderId).get().then(userDoc => {
+        if (userDoc.exists) {
+            const udata = userDoc.data();
+            const fetchedAvatar = udata.avatar || '';
+            const fetchedUsername = udata.username || usernameToUse;
+            
+            window._userAvatarCache[senderId] = {
+                username: fetchedUsername,
+                avatar: fetchedAvatar,
+                avatarUpdatedAt: udata.avatarUpdatedAt || null,
+                avatarUpdatedAtMs: udata.avatarUpdatedAtMs || null
+            };
+            
+            if (fetchedAvatar) {
+                const bust = udata.avatarUpdatedAtMs || Date.now();
+                const cleanUrl = fetchedAvatar.split('?')[0];
+                
+                avatarDiv.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = cleanUrl + '?v=' + bust;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.display = 'block';
+                img.style.borderRadius = '50%';
+                img.onerror = function() {
+                    avatarDiv.innerHTML = '';
+                    avatarDiv.textContent = (fetchedUsername || '?')[0].toUpperCase();
+                };
+                avatarDiv.appendChild(img);
+            }
+        }
+    }).catch(err => {
+        console.warn('[renderMessage] Fetch user error:', err);
+    });
+}
+
 // ✅ FALLBACK TERAKHIR: kalau masih kosong, fetch dari Firestore user doc
 if (!avatarToUse && senderId && !isSystem && typeof db !== 'undefined') {
     db.collection('users').doc(senderId).get().then(userDoc => {
@@ -10414,14 +10458,25 @@ document.body.classList.remove('chat-open');  // ← TAMBAH INI
   // ---------- EVENT: BUAT PROFIL ----------
 btnCreateProfile.addEventListener('click', async function() {
   const rawUsername = newUsernameInput.value;
-  const username = normalizeUsername(rawUsername);  // trim + collapse spasi
+  const username = normalizeUsername(rawUsername);
   const errorEl = document.getElementById('username-error');
 
-  // Pakai fungsi yang SAMA dengan validasi real-time
   const validation = isValidUsername(username);
   if (!validation.valid) {
     errorEl.textContent = validation.msg;
     errorEl.classList.add('visible');
+    return;
+  }
+
+  // ✅ CEK: kalau user pilih foto tapi upload belum selesai/gagal, block
+  const avatarInputEl = document.getElementById('avatar-input');
+  if (avatarInputEl && avatarInputEl.files[0] && !uploadedAvatarUrl) {
+    const avErr = document.getElementById('avatar-error');
+    if (avErr) {
+      avErr.textContent = 'Foto masih diupload atau gagal. Coba pilih lagi.';
+      avErr.classList.add('visible');
+    }
+    showToast('Tunggu upload foto selesai dulu', 'warning');
     return;
   }
 
