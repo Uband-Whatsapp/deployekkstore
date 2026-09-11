@@ -8636,11 +8636,14 @@ if (!messagesSnapshot.empty) {
 }      
       await db.collection('users').doc(uid).update({
   avatar: newAvatarUrl,
-  avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),  // ← TAMBAH
+  avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
   avatarChangeCount: firebase.firestore.FieldValue.increment(1),
   avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
 });
+
+      // ✅ Tunggu sampai Firestore sync lokal, baru return
+      await db.collection('users').doc(uid).get({ source: 'server' });
 
       return { success: true };
     } catch (error) {
@@ -10876,18 +10879,34 @@ if (usernameChanged) {
     }
 
     if (avatarChanged && success) {
-      const result = await updateAvatar(currentUser.uid, newAvatarUrl);
-      if (!result.success) {
-        success = false;
-        errorMsg = result.error;
-        const avatarErrorEl = document.getElementById('edit-avatar-error');
-        avatarErrorEl.textContent = errorMsg;
-        avatarErrorEl.classList.add('visible');
-        showToast(errorMsg, 'error');
-      } else {
-        currentUser.avatar = newAvatarUrl;
-      }
-    }
+  const result = await updateAvatar(currentUser.uid, newAvatarUrl);
+  if (!result.success) {
+    success = false;
+    errorMsg = result.error;
+    const avatarErrorEl = document.getElementById('edit-avatar-error');
+    avatarErrorEl.textContent = errorMsg;
+    avatarErrorEl.classList.add('visible');
+    showToast(errorMsg, 'error');
+  } else {
+    currentUser.avatar = newAvatarUrl;
+
+    // ✅ FORCE UPDATE CACHE LOKAL + RE-RENDER (fix cache lama)
+    const nowMs = Date.now();
+    window._userAvatarCache[currentUser.uid] = {
+      username: currentUser.username,
+      avatar: newAvatarUrl,
+      avatarUpdatedAt: { toMillis: () => nowMs }
+    };
+
+    try {
+      if (typeof subscribeUsers === 'function') subscribeUsers();
+    } catch (e) { console.warn('Refresh users:', e); }
+
+    try {
+      if (typeof renderAllMessages === 'function') renderAllMessages();
+    } catch (e) { console.warn('Force render:', e); }
+  }
+}
 if (success) {
   setCurrentUser(currentUser);
 
