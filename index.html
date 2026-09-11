@@ -8525,31 +8525,7 @@ async function createProfile(uid, username, avatar) {
       const userData = userDoc.data();
 
       const now = Date.now();
-      const resetDate = userData.usernameChangeReset?.toMillis?.() || 0;
-      const count = userData.usernameChangeCount || 0;
-
-      if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
-        await db.collection('users').doc(uid).update({
-          usernameChangeCount: 0,
-          usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        const newDoc = await db.collection('users').doc(uid).get();
-        const newData = newDoc.data();
-        const newCount = newData.usernameChangeCount || 0;
-        if (newCount >= 2) {
-          const nextReset = newData.usernameChangeReset?.toMillis?.() || 0;
-          const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
-          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-          return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
-        }
-      } else {
-        if (count >= 2) {
-          const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
-          const nextDate = new Date(nextReset);
-          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-          return { success: false, error: `Batas ganti username (2x/minggu) sudah habis. Tunggu ${dateStr}.` };
-        }
-      }
+      
 
       // Cek username unik
       // Cek username unik (case-insensitive)
@@ -8596,9 +8572,7 @@ if (!messagesSnapshot.empty) {
 await db.collection('users').doc(uid).update({
   username: newUsername,
   usernameLower: newUsername.toLowerCase(),
-  lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-  usernameChangeCount: firebase.firestore.FieldValue.increment(1),
-  usernameChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+  lastSeen: firebase.firestore.FieldValue.serverTimestamp()
 });
 
       return { success: true };
@@ -8619,38 +8593,7 @@ await db.collection('users').doc(uid).update({
       }
       const userData = userDoc.data();
 
-      const now = Date.now();
-      const resetDate = userData.avatarChangeReset?.toMillis?.() || 0;
-      const count = userData.avatarChangeCount || 0;
-
-      if (now - resetDate > 7 * 24 * 60 * 60 * 1000) {
-        await db.collection('users').doc(uid).update({
-          avatarChangeCount: 0,
-          avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        const newDoc = await db.collection('users').doc(uid).get();
-        const newData = newDoc.data();
-        const newCount = newData.avatarChangeCount || 0;
-        if (newCount >= 2) {
-          const nextReset = newData.avatarChangeReset?.toMillis?.() || 0;
-          const nextDate = new Date(nextReset + 7 * 24 * 60 * 60 * 1000);
-          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-          return { 
-            success: false, 
-            error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
-          };
-        }
-      } else {
-        if (count >= 2) {
-          const nextReset = resetDate + 7 * 24 * 60 * 60 * 1000;
-          const nextDate = new Date(nextReset);
-          const dateStr = nextDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-          return { 
-            success: false, 
-            error: `Batas ganti foto (2x/minggu) sudah habis. Tunggu ${dateStr}.` 
-          };
-        }
-      }
+    
 // UPDATE SEMUA PESAN LAMA (chunked, biar ga kena limit 500)
 // Coba 'senderId' dulu, kalau kosong coba 'uid'
 
@@ -8685,9 +8628,7 @@ await db.collection('users').doc(uid).update({
   avatar: newAvatarUrl,
   avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   avatarUpdatedAtMs: Date.now(),
-  lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-  avatarChangeCount: firebase.firestore.FieldValue.increment(1)
-  // ❌ avatarChangeReset JANGAN di-update di sini — biarin reset tanggal aslinya
+  lastSeen: firebase.firestore.FieldValue.serverTimestamp()
 });
       // ✅ Tunggu sampai Firestore sync lokal, baru return
       await db.collection('users').doc(uid).get({ source: 'server' });
