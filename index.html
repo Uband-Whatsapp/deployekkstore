@@ -8684,10 +8684,10 @@ if (!messagesSnapshot.empty) {
 await db.collection('users').doc(uid).update({
   avatar: newAvatarUrl,
   avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  avatarUpdatedAtMs: Date.now(),   // ← TAMBAH INI (angka plain)
+  avatarUpdatedAtMs: Date.now(),
   lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-  avatarChangeCount: firebase.firestore.FieldValue.increment(1),
-  avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
+  avatarChangeCount: firebase.firestore.FieldValue.increment(1)
+  // ❌ avatarChangeReset JANGAN di-update di sini — biarin reset tanggal aslinya
 });
       // ✅ Tunggu sampai Firestore sync lokal, baru return
       await db.collection('users').doc(uid).get({ source: 'server' });
@@ -9182,45 +9182,7 @@ if (!avatarToUse && senderId && !isSystem && typeof db !== 'undefined') {
 }
 
 // ✅ FALLBACK TERAKHIR: kalau masih kosong, fetch dari Firestore user doc
-if (!avatarToUse && senderId && !isSystem && typeof db !== 'undefined') {
-    db.collection('users').doc(senderId).get().then(userDoc => {
-        if (userDoc.exists) {
-            const udata = userDoc.data();
-            const fetchedAvatar = udata.avatar || '';
-            const fetchedUsername = udata.username || usernameToUse;
-            
-            // Update cache biar next render langsung pakai
-            window._userAvatarCache[senderId] = {
-                username: fetchedUsername,
-                avatar: fetchedAvatar,
-                avatarUpdatedAt: udata.avatarUpdatedAt || null,
-                avatarUpdatedAtMs: udata.avatarUpdatedAtMs || null
-            };
-            
-            // Update DOM langsung (gak perlu re-render)
-            if (fetchedAvatar) {
-                const bust = udata.avatarUpdatedAtMs || Date.now();
-                const cleanUrl = fetchedAvatar.split('?')[0];
-                
-                avatarDiv.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = cleanUrl + '?v=' + bust;
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'cover';
-                img.style.display = 'block';
-                img.style.borderRadius = '50%';
-                img.onerror = function() {
-                    avatarDiv.innerHTML = '';
-                    avatarDiv.textContent = (fetchedUsername || '?')[0].toUpperCase();
-                };
-                avatarDiv.appendChild(img);
-            }
-        }
-    }).catch(err => {
-        console.warn('[renderMessage] Fetch user doc error:', err);
-    });
-}
+
 if (avatarToUse) {
     const img = document.createElement('img');
     
