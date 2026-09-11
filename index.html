@@ -7972,6 +7972,7 @@ const chatFileInput = document.getElementById('file-input');
 let pendingFiles = [];
 let pendingMessages = [];   // ← TAMBAH INI — untuk instant preview
 let lastDocsCache = [];     // ← TAMBAH INI — cache Firestore docs
+window._userAvatarCache = {};  // ← cache avatar user (uid → {username, avatar})
 
 // ============================================================
 // ATTACH MENU — buka bottom sheet, bukan langsung file picker
@@ -8433,9 +8434,10 @@ async function createProfile(uid, username, avatar) {
   try {
     await db.collection('users').doc(uid).set({
       uid: uid,
-      username: username,                // ← asli (buat display)
-      usernameLower: username.toLowerCase(),  // ← buat cek unique
+      username: username,
+      usernameLower: username.toLowerCase(),
       avatar: avatar || '',
+      avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       isOnline: true,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
@@ -8607,22 +8609,31 @@ await db.collection('users').doc(uid).update({
           };
         }
       }
-
-      // UPDATE SEMUA PESAN LAMA
-// UPDATE SEMUA PESAN LAMA
+// UPDATE SEMUA PESAN LAMA (chunked, biar ga kena limit 500)
 const messagesSnapshot = await db.collection('messages')
   .where('senderId', '==', uid)
   .get();
 
 if (!messagesSnapshot.empty) {
-  const batch = db.batch();
-  messagesSnapshot.forEach((doc) => {
-    batch.update(doc.ref, { avatar: newAvatarUrl });   // ← INI
-  });
-  await batch.commit();
-  console.log(`[updateAvatar] Updated ${messagesSnapshot.size} messages`);
-}
-
+  const docs = messagesSnapshot.docs;
+  const CHUNK_SIZE = 400;
+  let totalUpdated = 0;
+  
+  for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
+    const chunk = docs.slice(i, i + CHUNK_SIZE);
+    const batch = db.batch();
+    chunk.forEach((doc) => {
+      batch.update(doc.ref, { 
+        avatar: newAvatarUrl,
+        avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    await batch.commit();
+    totalUpdated += chunk.length;
+  }
+  
+  console.log(`[updateAvatar] Updated ${totalUpdated} messages in ${Math.ceil(docs.length/CHUNK_SIZE)} batches`);
+}      
       await db.collection('users').doc(uid).update({
   avatar: newAvatarUrl,
   avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),  // ← TAMBAH
@@ -9059,24 +9070,47 @@ avatarDiv.style.flexShrink = '0';
 avatarDiv.style.lineHeight = '1';
 avatarDiv.style.boxSizing = 'border-box';
 
-if (data.avatar) {
+// ✅ FALLBACK: kalau data.avatar kosong, coba dari cache
+let avatarToUse = '';
+let usernameToUse = data.username || 'unknown';
+let avatarTsToUse = null;
+
+// ✅ CACHE PERTAMA (paling update)
+if (window._userAvatarCache[data.senderId]) {
+    const cached = window._userAvatarCache[data.senderId];
+    avatarToUse = cached.avatar || '';
+    if (cached.username) usernameToUse = cached.username;
+    avatarTsToUse = cached.avatarUpdatedAt || null;
+}
+
+// ✅ FALLBACK ke data pesan kalau cache kosong
+if (!avatarToUse) {
+    avatarToUse = data.avatar || '';
+    avatarTsToUse = data.avatarUpdatedAt || null;
+}
+
+if (avatarToUse) {
     const img = document.createElement('img');
-    // ✅ Tambah cache buster berdasarkan timestamp dokumen
-    const cacheBuster = data.avatarUpdatedAt?.toMillis?.() || data.timestamp?.toMillis?.() || '1';
-    img.src = data.avatar + '?v=' + cacheBuster;
+    const cacheBuster = avatarTsToUse?.toMillis?.() 
+                     || data.timestamp?.toMillis?.() 
+                     || Date.now();
+    
+    // ✅ STRIP query param lama dulu, baru tambah cache buster
+    const cleanUrl = avatarToUse.split('?')[0];
+    img.src = cleanUrl + '?v=' + cacheBuster;
+    
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover';
     img.style.display = 'block';
     img.style.borderRadius = '50%';
     img.onerror = function() {
-        // fallback ke huruf kalau gambar gagal load
         avatarDiv.innerHTML = '';
-        avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+        avatarDiv.textContent = (usernameToUse || '?')[0].toUpperCase();
     };
     avatarDiv.appendChild(img);
 } else {
-    avatarDiv.textContent = (data.username || '?')[0].toUpperCase();
+    avatarDiv.textContent = (usernameToUse || '?')[0].toUpperCase();
 }
     const bubbleWrapper = document.createElement('div');
     bubbleWrapper.style.flex = '1';
@@ -10158,15 +10192,32 @@ function renderPendingMessage(p) {
 }
 
   // ---------- SUBSCRIBE USERS ----------
-  function subscribeUsers() {
+function subscribeUsers() {
     if (usersUnsubscribe) {
         usersUnsubscribe();
         usersUnsubscribe = null;
     }
     usersUnsubscribe = db.collection('users').onSnapshot((snapshot) => {
         const total = snapshot.size;
-        const online = snapshot.docs.filter(doc => doc.data().isOnline === true).length;
+        let online = 0;
+        
+        // Update avatar cache untuk semua user
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            if (d.isOnline === true) online++;
+            window._userAvatarCache[doc.id] = {
+                username: d.username || '',
+                avatar: d.avatar || '',
+                avatarUpdatedAt: d.avatarUpdatedAt || null
+            };
+        });
+        
         groupInfo.textContent = `${total} anggota · ${online} online`;
+        
+        // Re-render chat biar avatar terbaru muncul
+        if (typeof renderAllMessages === 'function' && typeof initialLoadDone !== 'undefined' && initialLoadDone) {
+            renderAllMessages();
+        }
     }, (error) => {
         console.error('Error listening users:', error);
     });
