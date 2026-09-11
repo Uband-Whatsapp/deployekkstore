@@ -8654,14 +8654,15 @@ if (!messagesSnapshot.empty) {
   
   console.log(`[updateAvatar] Updated ${totalUpdated} messages in ${Math.ceil(docs.length/CHUNK_SIZE)} batches`);
 }      
-      await db.collection('users').doc(uid).update({
+      
+await db.collection('users').doc(uid).update({
   avatar: newAvatarUrl,
   avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  avatarUpdatedAtMs: Date.now(),   // ← TAMBAH INI (angka plain)
   lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
   avatarChangeCount: firebase.firestore.FieldValue.increment(1),
   avatarChangeReset: firebase.firestore.FieldValue.serverTimestamp()
 });
-
       // ✅ Tunggu sampai Firestore sync lokal, baru return
       await db.collection('users').doc(uid).get({ source: 'server' });
 
@@ -9106,7 +9107,8 @@ if (window._userAvatarCache[senderId]) {
     const cached = window._userAvatarCache[senderId];
     avatarToUse = cached.avatar || '';
     if (cached.username) usernameToUse = cached.username;
-    avatarTsToUse = cached.avatarUpdatedAt || null;
+    // ✅ Prioritas avatarUpdatedAtMs (angka plain) > avatarUpdatedAt (Timestamp)
+    avatarTsToUse = cached.avatarUpdatedAtMs || cached.avatarUpdatedAt || null;
 }
 
 // ✅ FALLBACK ke data pesan kalau cache kosong
@@ -9117,9 +9119,14 @@ if (!avatarToUse) {
 
 if (avatarToUse) {
     const img = document.createElement('img');
-    const cacheBuster = avatarTsToUse?.toMillis?.() 
-                     || data.timestamp?.toMillis?.() 
-                     || Date.now();
+    
+    // ✅ PRIORITAS: cache buster dari user doc (paling update)
+    // Kalau gak ada, pakai Date.now() — SELALU FRESH
+    let cacheBuster = avatarTsToUse?.toMillis?.() || avatarTsToUse;
+    if (!cacheBuster || cacheBuster < 1000000000) {
+        // Kalau cacheBuster gak valid (null, 0, atau kecil), pakai waktu sekarang
+        cacheBuster = Date.now();
+    }
     
     // ✅ STRIP query param lama dulu, baru tambah cache buster
     const cleanUrl = avatarToUse.split('?')[0];
@@ -10229,14 +10236,15 @@ function subscribeUsers() {
         
         // Update avatar cache untuk semua user
         snapshot.forEach(doc => {
-            const d = doc.data();
-            if (d.isOnline === true) online++;
-            window._userAvatarCache[doc.id] = {
-                username: d.username || '',
-                avatar: d.avatar || '',
-                avatarUpdatedAt: d.avatarUpdatedAt || null
-            };
-        });
+    const d = doc.data();
+    if (d.isOnline === true) online++;
+    window._userAvatarCache[doc.id] = {
+        username: d.username || '',
+        avatar: d.avatar || '',
+        avatarUpdatedAt: d.avatarUpdatedAt || null,
+        avatarUpdatedAtMs: d.avatarUpdatedAtMs || null   // ← TAMBAH INI
+    };
+});
         
         groupInfo.textContent = `${total} anggota · ${online} online`;
         
@@ -10917,13 +10925,14 @@ if (usernameChanged) {
   } else {
     currentUser.avatar = newAvatarUrl;
 
-    // ✅ FORCE UPDATE CACHE LOKAL + RE-RENDER (fix cache lama)
-    const nowMs = Date.now();
-    window._userAvatarCache[currentUser.uid] = {
-      username: currentUser.username,
-      avatar: newAvatarUrl,
-      avatarUpdatedAt: { toMillis: () => nowMs }
-    };
+// ✅ FORCE UPDATE CACHE LOKAL + RE-RENDER (fix cache lama)
+const nowMs = Date.now();
+window._userAvatarCache[currentUser.uid] = {
+  username: currentUser.username,
+  avatar: newAvatarUrl,
+  avatarUpdatedAt: { toMillis: () => nowMs },
+  avatarUpdatedAtMs: nowMs   // ← TAMBAH INI
+};
 
     try {
       if (typeof subscribeUsers === 'function') subscribeUsers();
@@ -10941,11 +10950,13 @@ if (success) {
   const nameEl = document.getElementById('my-username-display');
   if (nameEl) nameEl.textContent = currentUser.username;
 
-  // Update avatar di modal (biar kelihatan)
+  // Update avatar di modal (biar kelihatan) — PAKAI CACHE BUSTER
   const previewEl = document.getElementById('edit-avatar-preview');
   if (previewEl) {
     if (currentUser.avatar) {
-      previewEl.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      const bust = Date.now();
+      const cleanUrl = currentUser.avatar.split('?')[0];
+      previewEl.innerHTML = `<img src="${cleanUrl}?v=${bust}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else {
       previewEl.innerHTML = `<i class="fa-solid fa-user"></i>`;
     }
