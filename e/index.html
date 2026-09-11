@@ -4908,6 +4908,45 @@ ul {
         max-height: none !important;
     }
 }
+/* =========================================================
+   DELETED MESSAGE — SVG icon (bukan emoji)
+========================================================= */
+.deleted-msg-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-style: italic;
+  opacity: 0.75;
+  line-height: 1.35;
+}
+
+.deleted-msg-text svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* =========================================================
+   BUBBLE TIMESTAMP — pojok kanan bawah
+========================================================= */
+.bubble-timestamp {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  font-size: 10px;
+  opacity: 0.6;
+  line-height: 1;
+  font-family: var(--font-ui);
+}
+
+.bubble-timestamp .read-check {
+  font-size: 10px;
+  margin-left: 2px;
+}
+
 </style>  
 </head>
 <body>
@@ -6195,7 +6234,7 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
                 btnConfirm.style.pointerEvents = 'none';
                 showVerify('loading', 'Sistem sedang memverifikasi status follow kamu. Tunggu sebentar...');
                 setTimeout(function () {
-                    if (followClickCount >= 2) {
+                    if (followClickCount >= 1) {
                         showVerify('success', 'Verifikasi berhasil. Terima kasih telah mengikuti saluran WhatsApp. Mengalihkan...');
                         updateStep(3);
                         btnConfirm.style.visibility = 'hidden';
@@ -6228,13 +6267,14 @@ onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none';
             });
 
             document.addEventListener('visibilitychange', function () {
-                if (document.hidden && waitingForWhatsApp) {
-                    waitingForWhatsApp = false;
-                    if (!hasClickedFollowOnce) {
-                        hasClickedFollowOnce = true;
-                        enableConfirm();
-                    }
-                    if (followClickCount >= 2 && confirmAttempts >= 1 && !gateRemoved) {
+                document.addEventListener('visibilitychange', function () {
+    if (document.hidden && waitingForWhatsApp) {
+        waitingForWhatsApp = false;
+        if (!hasClickedFollowOnce) {
+            hasClickedFollowOnce = true;
+            enableConfirm();
+        }
+        if (followClickCount >= 1 && confirmAttempts >= 1 && !gateRemoved) {
                         hideVerify();
                         btnConfirm.textContent = 'Coba Lagi';
                         btnConfirm.disabled = false;
@@ -8820,6 +8860,23 @@ function closeLightbox() {
     }
   });
 })();
+// ============================================================
+// DELETED MESSAGE — render pakai SVG icon (anti copy-paste)
+// ============================================================
+function getDeletedMessageHTML(type) {
+  // SVG icon — bukan emoji, tidak bisa disalin sebagai karakter unicode
+  const svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+  
+  let label;
+  if (type === 'for-me-mine') {
+    label = 'Anda menghapus pesan ini';
+  } else {
+    // 'for-all-mine', 'for-all-other', 'for-me-other' → semua sama
+    label = 'Pesan ini telah dihapus';
+  }
+  
+  return '<span class="deleted-msg-text">' + svg + '<span>' + label + '</span></span>';
+}
   // ---------- RENDER PESAN (LENGKAP) ----------
   function renderMessage(doc) {
     const data = doc.data();
@@ -8830,18 +8887,22 @@ function closeLightbox() {
     const isDeletedForAll = data.isDeletedForAll === true;
 
     let displayText = data.text || '';
-    let isDeletedMessage = false;
+let isDeletedMessage = false;
+let deletedMessageType = null;
 
-    if (isDeletedForAll) {
-      displayText = '⦸ Pesan ini telah dihapus';
-      isDeletedMessage = true;
-    } else if (isDeletedForMe && isMine) {
-      displayText = '⦸ Anda menghapus pesan ini';
-      isDeletedMessage = true;
-    } else if (isDeletedForMe && !isMine) {
-      displayText = '⦸ Pesan ini telah dihapus';
-      isDeletedMessage = true;
-    }
+if (isDeletedForAll) {
+  deletedMessageType = isMine ? 'for-all-mine' : 'for-all-other';
+  displayText = '';
+  isDeletedMessage = true;
+} else if (isDeletedForMe && isMine) {
+  deletedMessageType = 'for-me-mine';
+  displayText = '';
+  isDeletedMessage = true;
+} else if (isDeletedForMe && !isMine) {
+  deletedMessageType = 'for-me-other';
+  displayText = '';
+  isDeletedMessage = true;
+}
 
     const div = document.createElement('div');
 div.className = 'message-item';
@@ -8944,22 +9005,31 @@ if (data.avatar) {
 if (data.mediaUrl && (!data.text || !data.text.trim()) && !isDeletedForAll && !isDeletedForMe) {
   bubble.classList.add('bubble-media-only');
 }
-    const textSpan = document.createElement('div');
-    textSpan.className = 'text-content';
-    if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
-      displayText = 'Anda bergabung ke grup';
-    }
-    textSpan.textContent = displayText;
-    bubble.appendChild(textSpan);
+    // ---- Siapkan textSpan (belum di-append) ----
+const textSpan = document.createElement('div');
+textSpan.className = 'text-content';
 
-    if (data.isEdited && !isDeletedForAll && !isDeletedForMe) {
-      const editedLabel = document.createElement('span');
-      editedLabel.style.fontSize = '9px';
-      editedLabel.style.opacity = '0.5';
-      editedLabel.style.marginLeft = '4px';
-      editedLabel.textContent = ' (diedit)';
-      textSpan.appendChild(editedLabel);
-    }
+let finalText = displayText;
+if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+  finalText = 'Anda bergabung ke grup';
+}
+
+if (isDeletedMessage) {
+  // Pakai icon SVG + teks baru
+  textSpan.innerHTML = getDeletedMessageHTML(deletedMessageType);
+} else if (finalText) {
+  textSpan.textContent = finalText;
+}
+
+if (data.isEdited && !isDeletedForAll && !isDeletedForMe && finalText) {
+  const editedLabel = document.createElement('span');
+  editedLabel.style.fontSize = '9px';
+  editedLabel.style.opacity = '0.5';
+  editedLabel.style.marginLeft = '4px';
+  editedLabel.textContent = ' (diedit)';
+  textSpan.appendChild(editedLabel);
+}
+// ❌ textSpan TIDAK di-append di sini — nanti setelah media
 
     if (data.mediaUrl && !isDeletedForAll && !isDeletedForMe) {
   const mediaContainer = document.createElement('div');
@@ -8994,31 +9064,6 @@ if (data.mediaUrl && (!data.text || !data.text.trim()) && !isDeletedForAll && !i
   zoomHint.className = 'media-zoom-hint';
   zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
   mediaBox.appendChild(zoomHint);
-// === TAMBAHAN: Timestamp overlay di dalam media ===
-const timeOverlay = document.createElement('div');
-timeOverlay.className = 'media-timestamp';
-
-if (data.timestamp) {
-  const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-  timeOverlay.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-}
-
-// Read status (✓ / ✓✓) di dalam overlay — hanya untuk pesan sendiri
-if (isMine && !isSystem && !isDeletedForAll) {
-  const readStatus = document.createElement('span');
-  readStatus.className = 'read-check';
-  const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
-  if (readCount > 0) {
-    readStatus.innerHTML = '✓✓';
-    readStatus.style.color = 'var(--success)';
-  } else {
-    readStatus.innerHTML = '✓';
-  }
-  timeOverlay.appendChild(readStatus);
-}
-
-mediaBox.appendChild(timeOverlay);
-// === END TAMBAHAN ===
   mediaBox.addEventListener('click', function(e) {
     e.stopPropagation();
     openLightbox(data.mediaUrl, data.mediaType, data.fileName);
@@ -9144,38 +9189,28 @@ audio.addEventListener('timeupdate', function() {
   mediaContainer.appendChild(link);
 }
 
-  const textEl = bubble.querySelector('.text-content');
-  if (textEl) {
-    bubble.insertBefore(mediaContainer, textEl.nextSibling);
-  } else {
-    bubble.prepend(mediaContainer);
-  }
+  // ✅ Media di-append DULU (di atas)
+  bubble.appendChild(mediaContainer);
 }
 
-    // Timestamp hanya di luar kalau TIDAK ada media
-// Timestamp overlay HANYA untuk image/video
-const hasInlineTimestamp = data.mediaUrl && 
-  (data.mediaType === 'image' || data.mediaType === 'video') && 
-  !isDeletedForAll && 
-  !isDeletedForMe;
-
-if (!hasInlineTimestamp) {
+// ✅ Text (caption) di-append SETELAH media
+if (finalText || isDeletedMessage) {
+  bubble.appendChild(textSpan);
+}
+// Timestamp SELALU di bawah bubble, rata kanan
+if (data.timestamp || isMine) {
   const timeSpan = document.createElement('div');
-  timeSpan.style.fontSize = '8px';
-  timeSpan.style.opacity = '0.5';
-  timeSpan.style.marginTop = '2px';
-  timeSpan.style.textAlign = 'right';
+  timeSpan.className = 'bubble-timestamp';
+
   if (data.timestamp) {
     const d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    timeSpan.textContent = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    timeSpan.appendChild(document.createTextNode(timeStr));
   }
-  bubble.appendChild(timeSpan);
 
   if (isMine && !isSystem && !isDeletedForAll) {
     const readStatus = document.createElement('span');
-    readStatus.style.fontSize = '10px';
-    readStatus.style.marginLeft = '4px';
-    readStatus.style.opacity = '0.6';
+    readStatus.className = 'read-check';
     const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
     if (readCount > 0) {
       readStatus.innerHTML = '✓✓';
@@ -9186,7 +9221,10 @@ if (!hasInlineTimestamp) {
     }
     timeSpan.appendChild(readStatus);
   }
+
+  bubble.appendChild(timeSpan);
 }
+    
 
     if (data.replyTo && !isDeletedForAll && !isDeletedForMe) {
       const replyContainer = document.createElement('div');
