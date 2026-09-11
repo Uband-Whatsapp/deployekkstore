@@ -6772,9 +6772,8 @@ if (notif) {
         .replace(/'/g, '&#39;');
 }
 
-        
+        const historyList = document.getElementById('history-list');
         function renderHistory() {
-            const historyList = document.getElementById('history-list');
             const history = getHistory();
             let filtered = [...history];
             if (historyFilter !== 'all') {
@@ -6818,17 +6817,27 @@ if (notif) {
                     '<div class="history-actions">' +
                     statusBadge +
                     (item.url ?
-                        '<button class="history-action-btn" onclick="copyURL(\'' + escapeHTML(item.url).replace(/'/g, "\\'") + '\')" title="Salin Link" aria-label="Salin Link"><i class="fa-solid fa-copy"></i></button>' :
+                        '<button class="history-action-btn" data-action="copy" data-url="' + escapeHTML(item.url) + '" title="Salin Link" aria-label="Salin Link"><i class="fa-solid fa-copy"></i></button>' :
                         '') +
                     (item.url ?
                         '<a class="history-action-btn" href="' + escapeHTML(item.url) + '" target="_blank" title="Buka Website" aria-label="Buka Website"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>' :
                         '') +
-                    '<button class="history-action-btn danger" onclick="deleteHistoryItem(' + realIndex + ')" title="Hapus" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>' +
+                    '<button class="history-action-btn danger" data-action="delete" data-index="' + realIndex + '" title="Hapus" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>' +
                     '</div>' +
                     '</div>';
             }).join('');
         }
-
+// Event delegation — pengganti onclick inline
+historyList.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    
+    if (btn.dataset.action === 'copy') {
+        copyURL(btn.dataset.url);
+    } else if (btn.dataset.action === 'delete') {
+        deleteHistoryItem(parseInt(btn.dataset.index));
+    }
+});
         function updateDashboardStats() {
             const history = getHistory();
             const total = history.length;
@@ -7883,11 +7892,15 @@ document.addEventListener('visibilitychange', function() {
         renderHistory();
         updateDashboardStats();
 
-        if (document.readyState === 'complete') {
-            registerPushNotification();
-        } else {
-            window.addEventListener('load', registerPushNotification);
-        }
+        // ❌ JANGAN auto-request notifikasi — browser modern blokir
+// Cukup register SW kalau user SUDAH pernah izinin sebelumnya
+if ('Notification' in window && Notification.permission === 'granted') {
+    if (document.readyState === 'complete') {
+        registerPushNotification();
+    } else {
+        window.addEventListener('load', registerPushNotification);
+    }
+}
 // Start history listener
 if (window._db) {
   startHistoryListener();
@@ -7915,10 +7928,7 @@ async function uploadAvatarToCloudinary(file) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-  // ✅ Cuma public_id yang diizinkan di unsigned upload
-  const uniqueName = 'avatar_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-  formData.append('public_id', uniqueName);
+  // ❌ HAPUS baris public_id — biarin Cloudinary yang generate sendiri
 
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -8529,9 +8539,15 @@ if (!snapshot.empty) {
 }
 
       // UPDATE SEMUA PESAN LAMA
-      const messagesSnapshot = await db.collection('messages')
-  .where('senderId', '==', uid)
-  .get();
+      let messagesSnapshot = await db.collection('messages')
+.where('senderId', '==', uid)
+.get();
+
+if (messagesSnapshot.empty) {
+  messagesSnapshot = await db.collection('messages')
+    .where('uid', '==', uid)
+    .get();
+}
 
 if (!messagesSnapshot.empty) {
   const docs = messagesSnapshot.docs;
@@ -8610,9 +8626,13 @@ await db.collection('users').doc(uid).update({
         }
       }
 // UPDATE SEMUA PESAN LAMA (chunked, biar ga kena limit 500)
+// Coba 'senderId' dulu, kalau kosong coba 'uid'
+
 const messagesSnapshot = await db.collection('messages')
   .where('senderId', '==', uid)
   .get();
+
+console.log('[updateAvatar] Pesan ditemukan:', messagesSnapshot.size);
 
 if (!messagesSnapshot.empty) {
   const docs = messagesSnapshot.docs;
@@ -9013,10 +9033,13 @@ function getDeletedMessageHTML(type) {
   return '<span class="deleted-msg-text">' + svg + '<span>' + label + '</span></span>';
 }
   // ---------- RENDER PESAN (LENGKAP) ----------
-  function renderMessage(doc) {
+function renderMessage(doc) {
     const data = doc.data();
-    const isMine = data.senderId === currentUser?.uid;
-    const isSystem = data.type === 'join' || data.type === 'leave' || data.senderId === 'system';
+    const senderId = data.senderId || data.uid || data.sender || '';
+    const isMine = senderId === currentUser?.uid;
+    const isSystem = data.type === 'join' || data.type === 'leave' || senderId === 'system';
+
+    console.log('[Render] senderId:', senderId, '| isMine:', isMine, '| cacheHit:', !!window._userAvatarCache[senderId]);
 
     const isDeletedForMe = data.deletedFor && data.deletedFor.includes(currentUser?.uid);
     const isDeletedForAll = data.isDeletedForAll === true;
@@ -9079,8 +9102,8 @@ let usernameToUse = data.username || 'unknown';
 let avatarTsToUse = null;
 
 // ✅ CACHE PERTAMA (paling update)
-if (window._userAvatarCache[data.senderId]) {
-    const cached = window._userAvatarCache[data.senderId];
+if (window._userAvatarCache[senderId]) {
+    const cached = window._userAvatarCache[senderId];
     avatarToUse = cached.avatar || '';
     if (cached.username) usernameToUse = cached.username;
     avatarTsToUse = cached.avatarUpdatedAt || null;
@@ -9168,7 +9191,7 @@ const textSpan = document.createElement('div');
 textSpan.className = 'text-content';
 
 let finalText = displayText;
-if (isSystem && data.senderId === currentUser?.uid && data.type === 'join') {
+if (isSystem && senderId === currentUser?.uid && data.type === 'join') {
   finalText = 'Anda bergabung ke grup';
 }
 
@@ -10228,7 +10251,11 @@ function subscribeUsers() {
 // ---------- INIT CHAT (dipanggil saat user sudah punya profil) ----------
 function initChat() {
     if (profileSetup) profileSetup.style.display = 'none';
-    if (chatContainer) chatContainer.style.display = 'flex';
+    if (chatContainer) {
+        chatContainer.style.display = 'flex';
+        chatContainer.style.flexDirection = 'column';   // ← TAMBAH INI
+        chatContainer.style.gap = '12px';               // ← TAMBAH INI (opsional, biar rapi)
+    }
 
     document.documentElement.classList.add('chat-open');
     document.body.classList.add('chat-open');
