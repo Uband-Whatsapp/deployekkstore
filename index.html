@@ -8517,128 +8517,110 @@ async function createProfile(uid, username, avatar) {
   // UPDATE USERNAME (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
   // ============================================================
   async function updateUsername(uid, newUsername) {
-    try {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (!userDoc.exists) {
-        return { success: false, error: 'User tidak ditemukan' };
-      }
-      const userData = userDoc.data();
-
-      const now = Date.now();
-      
-
-      // Cek username unik
-      // Cek username unik (case-insensitive)
-const snapshot = await db.collection('users')
-  .where('usernameLower', '==', newUsername.toLowerCase())
-  .limit(1)
-  .get();
-if (!snapshot.empty) {
-  const doc = snapshot.docs[0];
-  if (doc.id !== uid) {
-    return { success: false, error: 'Username sudah dipakai, Silahkan gunakan username lain' };
-  }
-}
-
-      // UPDATE SEMUA PESAN LAMA
-      let messagesSnapshot = await db.collection('messages')
-.where('senderId', '==', uid)
-.get();
-
-if (messagesSnapshot.empty) {
-  messagesSnapshot = await db.collection('messages')
-    .where('uid', '==', uid)
-    .get();
-}
-
-if (!messagesSnapshot.empty) {
-  const docs = messagesSnapshot.docs;
-  const CHUNK_SIZE = 400;   // aman di bawah limit 500
-  let totalUpdated = 0;
-  
-  for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
-    const chunk = docs.slice(i, i + CHUNK_SIZE);
-    const batch = db.batch();
-    chunk.forEach((doc) => {
-      batch.update(doc.ref, { username: newUsername });  // avatar: newAvatarUrl
-    });
-    await batch.commit();
-    totalUpdated += chunk.length;
-  }
-  
-  console.log(`[updateUsername] Updated ${totalUpdated} messages in ${Math.ceil(docs.length/CHUNK_SIZE)} batches`);
-}
-
-await db.collection('users').doc(uid).update({
-  username: newUsername,
-  usernameLower: newUsername.toLowerCase(),
-  lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-});
-
-      return { success: true };
-    } catch (error) {
-      console.error('[updateUsername] Error:', error);
-      return { success: false, error: error.message };
+  try {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return { success: false, error: 'User tidak ditemukan' };
     }
+
+    // Cek username unik (case-insensitive)
+    const snapshot = await db.collection('users')
+      .where('usernameLower', '==', newUsername.toLowerCase())
+      .limit(1)
+      .get();
+
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      if (doc.id !== uid) {
+        return { success: false, error: 'Username sudah dipakai, silakan gunakan username lain' };
+      }
+    }
+
+    // UPDATE SEMUA PESAN LAMA
+    let messagesSnapshot = await db.collection('messages')
+      .where('senderId', '==', uid)
+      .get();
+
+    if (messagesSnapshot.empty) {
+      messagesSnapshot = await db.collection('messages')
+        .where('uid', '==', uid)
+        .get();
+    }
+
+    if (!messagesSnapshot.empty) {
+      const docs = messagesSnapshot.docs;
+      const CHUNK_SIZE = 400;
+      for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
+        const chunk = docs.slice(i, i + CHUNK_SIZE);
+        const batch = db.batch();
+        chunk.forEach((doc) => {
+          batch.update(doc.ref, { username: newUsername });
+        });
+        await batch.commit();
+      }
+    }
+
+    // UPDATE USER DOC — TANPA LIMIT
+    await db.collection('users').doc(uid).update({
+      username: newUsername,
+      usernameLower: newUsername.toLowerCase(),
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updateUsername] Error:', error);
+    return { success: false, error: error.message };
   }
+}
 
   // ============================================================
   // UPDATE AVATAR (BATASAN 2x/MINGGU + UPDATE PESAN LAMA)
   // ============================================================
   async function updateAvatar(uid, newAvatarUrl) {
-    try {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (!userDoc.exists) {
-        return { success: false, error: 'User tidak ditemukan' };
-      }
-      const userData = userDoc.data();
-
-    
-// UPDATE SEMUA PESAN LAMA (chunked, biar ga kena limit 500)
-// Coba 'senderId' dulu, kalau kosong coba 'uid'
-
-const messagesSnapshot = await db.collection('messages')
-  .where('senderId', '==', uid)
-  .get();
-
-console.log('[updateAvatar] Pesan ditemukan:', messagesSnapshot.size);
-
-if (!messagesSnapshot.empty) {
-  const docs = messagesSnapshot.docs;
-  const CHUNK_SIZE = 400;
-  let totalUpdated = 0;
-  
-  for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
-    const chunk = docs.slice(i, i + CHUNK_SIZE);
-    const batch = db.batch();
-    chunk.forEach((doc) => {
-      batch.update(doc.ref, { 
-        avatar: newAvatarUrl,
-        avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    });
-    await batch.commit();
-    totalUpdated += chunk.length;
-  }
-  
-  console.log(`[updateAvatar] Updated ${totalUpdated} messages in ${Math.ceil(docs.length/CHUNK_SIZE)} batches`);
-}      
-      
-await db.collection('users').doc(uid).update({
-  avatar: newAvatarUrl,
-  avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  avatarUpdatedAtMs: Date.now(),
-  lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-});
-      // ✅ Tunggu sampai Firestore sync lokal, baru return
-      await db.collection('users').doc(uid).get({ source: 'server' });
-
-      return { success: true };
-    } catch (error) {
-      console.error('[updateAvatar] Error:', error);
-      return { success: false, error: error.message };
+  try {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return { success: false, error: 'User tidak ditemukan' };
     }
+
+    // UPDATE SEMUA PESAN LAMA
+    const messagesSnapshot = await db.collection('messages')
+      .where('senderId', '==', uid)
+      .get();
+
+    if (!messagesSnapshot.empty) {
+      const docs = messagesSnapshot.docs;
+      const CHUNK_SIZE = 400;
+      for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
+        const chunk = docs.slice(i, i + CHUNK_SIZE);
+        const batch = db.batch();
+        chunk.forEach((doc) => {
+          batch.update(doc.ref, {
+            avatar: newAvatarUrl,
+            avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+        await batch.commit();
+      }
+    }
+
+    // UPDATE USER DOC — TANPA LIMIT
+    await db.collection('users').doc(uid).update({
+      avatar: newAvatarUrl,
+      avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      avatarUpdatedAtMs: Date.now(),
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await db.collection('users').doc(uid).get({ source: 'server' });
+
+    return { success: true };
+  } catch (error) {
+    console.error('[updateAvatar] Error:', error);
+    return { success: false, error: error.message };
   }
+}
 
   // ---------- FUNGSI REPLY ----------
   function startReply(docId, username, text) {
