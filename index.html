@@ -7924,11 +7924,22 @@ const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
 const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
 let uploadedAvatarUrl = '';
 
-async function uploadAvatarToCloudinary(file) {
+// 🔥 State upload (buat disable tombol)
+window._avatarUploadState = {
+  setup: false,    // upload di form registrasi
+  edit: false      // upload di modal edit profil
+};
+async function uploadAvatarToCloudinary(file, uid) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  // ❌ HAPUS baris public_id — biarin Cloudinary yang generate sendiri
+
+  // 🔥 KUNCI UTAMA: public_id UNIK per upload
+  // Format: avatars/{uid}_{timestamp}_{random}
+  // Ini paksa Cloudinary generate URL BARU setiap upload
+  const safeUid = (uid || 'anon').replace(/[^a-zA-Z0-9_-]/g, '');
+  const uniqueId = `avatars/${safeUid}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  formData.append('public_id', uniqueId);
 
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -7939,7 +7950,7 @@ async function uploadAvatarToCloudinary(file) {
     throw new Error(errorData.error?.message || 'Upload gagal');
   }
   const data = await response.json();
-  console.log('[Cloudinary] Upload success:', data.secure_url);
+  console.log('[Cloudinary] Upload success, NEW URL:', data.secure_url);
   return data.secure_url;
 }
 // ============================================================
@@ -8205,6 +8216,8 @@ if (avatarInput) {
   avatarInput.addEventListener('change', async function() {
     const file = this.files[0];
     if (!file) return;
+
+    // Validasi size & type
     if (file.size > 2 * 1024 * 1024) {
       avatarError.textContent = 'Ukuran file maksimal 2MB';
       avatarError.classList.add('visible');
@@ -8219,24 +8232,31 @@ if (avatarInput) {
     }
     avatarError.classList.remove('visible');
 
-    // Preview lokal
+    // ✅ Reset URL lama dulu, biar kalau upload baru gagal, gak pakai URL basi
+    uploadedAvatarUrl = '';
+
+    // Preview lokal (instant)
     const reader = new FileReader();
     reader.onload = function(e) {
       avatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(file);
 
-    // Disable tombol join sementara upload
+    // 🔥 LOCK tombol join
     const joinBtn = document.getElementById('btn-create-profile');
     const originalBtnHTML = joinBtn.innerHTML;
-    if (joinBtn) {
-      joinBtn.disabled = true;
-      joinBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Upload foto...';
-    }
+    joinBtn.disabled = true;
+    joinBtn.style.pointerEvents = 'none';
+    joinBtn.style.opacity = '0.5';
+    joinBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Mengupload foto...';
+
+    // Set state
+    window._avatarUploadState.setup = true;
 
     try {
       showToast('Mengupload foto...', 'info');
-      const url = await uploadAvatarToCloudinary(file);
+      const uid = getOrCreateUid();
+      const url = await uploadAvatarToCloudinary(file, uid);
       uploadedAvatarUrl = url;
       showToast('Foto profil berhasil diupload!', 'success');
     } catch (error) {
@@ -8245,10 +8265,12 @@ if (avatarInput) {
       avatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
       uploadedAvatarUrl = '';
     } finally {
-      if (joinBtn) {
-        joinBtn.disabled = false;
-        joinBtn.innerHTML = originalBtnHTML;
-      }
+      // 🔓 UNLOCK tombol
+      window._avatarUploadState.setup = false;
+      joinBtn.disabled = false;
+      joinBtn.style.pointerEvents = '';
+      joinBtn.style.opacity = '';
+      joinBtn.innerHTML = originalBtnHTML;
     }
   });
 }
@@ -8269,7 +8291,6 @@ if (editAvatarClickable && editAvatarInput) {
 const editAvatarPreview = document.getElementById('edit-avatar-preview');
 const editAvatarError = document.getElementById('edit-avatar-error');
 let newAvatarUrl = null;
-
 if (editAvatarInput) {
   editAvatarInput.addEventListener('change', async function() {
     const file = this.files[0];
@@ -8277,6 +8298,7 @@ if (editAvatarInput) {
 
     console.log('[Avatar Edit] File selected:', file.name);
 
+    // Validasi size & type
     if (file.size > 2 * 1024 * 1024) {
       editAvatarError.textContent = 'Ukuran file maksimal 2MB';
       editAvatarError.classList.add('visible');
@@ -8291,19 +8313,38 @@ if (editAvatarInput) {
     }
     editAvatarError.classList.remove('visible');
 
-    // Preview
+    // ✅ Reset URL lama
+    newAvatarUrl = null;
+
+    // Preview lokal (instant)
     const reader = new FileReader();
     reader.onload = function(e) {
       editAvatarPreview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     };
     reader.readAsDataURL(file);
 
+    // 🔥 LOCK tombol Simpan + disable input username
+    const saveBtn = document.getElementById('edit-profile-save');
+    const usernameField = document.getElementById('edit-username-input');
+    const originalSaveHTML = saveBtn.innerHTML;
+
+    saveBtn.disabled = true;
+    saveBtn.style.pointerEvents = 'none';
+    saveBtn.style.opacity = '0.5';
+    saveBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Mengupload foto...';
+
+    if (usernameField) usernameField.disabled = true;
+
+    // Set state
+    window._avatarUploadState.edit = true;
+
     // Upload ke Cloudinary
     try {
       showToast('Mengupload foto...', 'info');
-      const url = await uploadAvatarToCloudinary(file);
-      console.log('[Avatar Edit] Upload success, URL:', url);
-      newAvatarUrl = url; // <<< PASTIKAN INI ADA
+      const uid = currentUser?.uid || getOrCreateUid();
+      const url = await uploadAvatarToCloudinary(file, uid);
+      console.log('[Avatar Edit] Upload success, NEW URL:', url);
+      newAvatarUrl = url;
       showToast('Foto baru berhasil diupload!', 'success');
     } catch (error) {
       console.error('[Avatar Edit] Upload error:', error);
@@ -8311,10 +8352,18 @@ if (editAvatarInput) {
       editAvatarError.classList.add('visible');
       editAvatarPreview.innerHTML = `<i class="fa-solid fa-user"></i>`;
       newAvatarUrl = null;
+    } finally {
+      // 🔓 UNLOCK tombol & input
+      window._avatarUploadState.edit = false;
+      saveBtn.disabled = false;
+      saveBtn.style.pointerEvents = '';
+      saveBtn.style.opacity = '';
+      saveBtn.innerHTML = originalSaveHTML;
+
+      if (usernameField) usernameField.disabled = false;
     }
   });
 }
-
 // ============================================================
 // FIREBASE CONFIG & INISIALISASI
 // ============================================================
@@ -8582,6 +8631,19 @@ async function createProfile(uid, username, avatar) {
     const userDoc = await db.collection('users').doc(uid).get();
     if (!userDoc.exists) {
       return { success: false, error: 'User tidak ditemukan' };
+    }
+
+    // 🔥 VALIDASI: pastikan URL benar-benar beda dari yang lama
+    const oldAvatar = (userDoc.data().avatar || '').split('?')[0];
+    const newAvatarClean = (newAvatarUrl || '').split('?')[0];
+
+    if (!newAvatarClean) {
+      return { success: false, error: 'URL avatar kosong' };
+    }
+
+    if (oldAvatar === newAvatarClean) {
+      console.warn('[updateAvatar] URL SAMA PERSIS, skip update:', oldAvatar);
+      return { success: false, error: 'Foto tidak berubah. Coba pilih foto lain.' };
     }
 
     // UPDATE SEMUA PESAN LAMA
@@ -10342,6 +10404,12 @@ document.body.classList.remove('chat-open');  // ← TAMBAH INI
 }
   // ---------- EVENT: BUAT PROFIL ----------
 btnCreateProfile.addEventListener('click', async function() {
+  // 🔥 GUARD: cegah klik saat upload masih jalan
+  if (window._avatarUploadState.setup) {
+    showToast('Tunggu upload foto selesai...', 'warning');
+    return;
+  }
+
   const rawUsername = newUsernameInput.value;
   const username = normalizeUsername(rawUsername);
   const errorEl = document.getElementById('username-error');
@@ -10827,10 +10895,22 @@ btnOpenSettings.addEventListener('click', function() {
     const avatarPreview = document.getElementById('edit-avatar-preview');
     const avatarError = document.getElementById('edit-avatar-error');
 
-    input.value = currentUser.username;
-    errorEl.classList.remove('visible');
-    avatarError.classList.remove('visible');
+input.value = currentUser.username;
+errorEl.classList.remove('visible');
+avatarError.classList.remove('visible');
 
+// 🔥 RESET state upload & tombol
+window._avatarUploadState.edit = false;
+newAvatarUrl = null;
+const saveBtnReset = document.getElementById('edit-profile-save');
+if (saveBtnReset) {
+  saveBtnReset.disabled = false;
+  saveBtnReset.style.pointerEvents = '';
+  saveBtnReset.style.opacity = '';
+  saveBtnReset.innerHTML = 'Simpan Perubahan';
+}
+const usernameFieldReset = document.getElementById('edit-username-input');
+if (usernameFieldReset) usernameFieldReset.disabled = false;
     if (currentUser.avatar) {
   avatarPreview.innerHTML = `<img src="${currentUser.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-user\\'></i>';">`;
 } else {
@@ -10846,11 +10926,27 @@ btnOpenSettings.addEventListener('click', function() {
   });
 
   document.getElementById('edit-profile-cancel').addEventListener('click', function() {
+    // 🔥 Cegah close saat upload masih jalan
+    if (window._avatarUploadState.edit) {
+      showToast('Tunggu upload foto selesai...', 'warning');
+      return;
+    }
+
     document.getElementById('edit-profile-modal').classList.remove('active');
     document.body.classList.remove('modal-open');
-  });
 
-  document.getElementById('edit-profile-save').addEventListener('click', async function() {
+    // Reset state
+    window._avatarUploadState.edit = false;
+    newAvatarUrl = null;
+    document.getElementById('edit-avatar-input').value = '';
+});
+document.getElementById('edit-profile-save').addEventListener('click', async function() {
+    // 🔥 GUARD: cegah klik saat upload masih jalan
+    if (window._avatarUploadState.edit) {
+      showToast('Tunggu upload foto selesai...', 'warning');
+      return;
+    }
+
     const input = document.getElementById('edit-username-input');
     const errorEl = document.getElementById('edit-username-error');
     const newUsername = input.value.trim();
@@ -10859,8 +10955,7 @@ btnOpenSettings.addEventListener('click', function() {
     console.log('[Edit Save] currentUser.avatar:', currentUser.avatar);
 
     const usernameChanged = newUsername && newUsername !== currentUser.username;
-// ✅ Force update kalau user pilih foto
-const avatarChanged = !!newAvatarUrl;
+    const avatarChanged = !!newAvatarUrl;
 
     console.log('[Edit Save] usernameChanged:', usernameChanged);
     console.log('[Edit Save] avatarChanged:', avatarChanged);
