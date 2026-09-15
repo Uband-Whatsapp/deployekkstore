@@ -431,20 +431,17 @@ ul { list-style: none; }
     flex: 1;
 }
 .header-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-press));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.28);
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+    display: none;
 }
+
 .header-logo i {
-    font-size: 20px;
-    line-height: 1;
-    color: #fff;
+    display: none;
 }
 .header-title-group {
     display: flex;
@@ -3718,7 +3715,7 @@ ul { list-style: none; }
    ============================================================ */
 #scroll-bottom-btn {
     position: absolute;
-    bottom: 96px;
+    bottom: 140px;
     right: 20px;
     width: 40px;
     height: 40px;
@@ -4265,25 +4262,27 @@ ul { list-style: none; }
 <div id="app-shell">
 
     <!-- ============ TOP HEADER ============ -->
-    <header id="top-header">
-        <div class="header-left">
-            <button id="btn-hamburger" aria-label="Buka menu">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div class="header-logo">
-                <i class="fa-solid fa-cloud"></i>
-            </div>
-            <div class="header-title-group">
-                <span class="header-title">Ekk Store</span>
-                <span class="header-subtitle">Deployment Platform</span>
-            </div>
+   <header id="top-header">
+    <div class="header-left">
+        <button id="btn-hamburger" aria-label="Buka menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="header-logo">
         </div>
-        <div class="header-right">
-            <div class="header-status">
-                <span class="dot"></span> System Online
-            </div>
+
+        <div class="header-title-group">
+            <span class="header-title">Ekk Store</span>
+            <span class="header-subtitle">Deployment Platform</span>
         </div>
-    </header>
+    </div>
+
+    <div class="header-right">
+        <div class="header-status">
+            <span class="dot"></span> System Online
+        </div>
+    </div>
+</header>
 
     <!-- ============ SIDEBAR BACKDROP (mobile) ============ -->
     <div id="sidebar-backdrop"></div>
@@ -5839,7 +5838,20 @@ function showConfirmModal(title, message, confirmText) {
 /* ============================================================
    6) NAVIGATION (desktop sidebar + mobile drawer + bottom nav)
    ============================================================ */
+// ✅ Global var untuk simpan posisi chat
+let _savedChatScrollTop = 0;
+let _savedChatWasNearBottom = true;
+
 function navigateTo(page) {
+    // ✅ SAVE posisi chat SEBELUM pindah page
+    if (currentPage === 'group') {
+        const list = document.getElementById('messages-list');
+        if (list) {
+            _savedChatScrollTop = list.scrollTop;
+            _savedChatWasNearBottom = (list.scrollHeight - list.scrollTop - list.clientHeight) < 150;
+        }
+    }
+
     currentPage = page;
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -5871,12 +5883,24 @@ function navigateTo(page) {
     if (page === 'history') renderHistory();
     if (page === 'home') updateDashboardStats();
 
-    // Reset scroll instan
+    // Reset scroll instan (WINDOW scroll, bukan chat list)
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-}
 
+    // ✅ RESTORE posisi chat KALAU balik ke grup
+    if (page === 'group') {
+        setTimeout(() => {
+            const list = document.getElementById('messages-list');
+            if (!list) return;
+            if (_savedChatWasNearBottom) {
+                list.scrollTop = list.scrollHeight;
+            } else {
+                list.scrollTop = _savedChatScrollTop;
+            }
+        }, 60);
+    }
+}
 /* ---------- Mobile Drawer helpers ---------- */
 function openSidebarDrawer() {
     const sidebar = document.getElementById('sidebar');
@@ -8453,7 +8477,34 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
 
                 renderedMessages.set(docId, el);
                 addedCount++;
-
+// ✅ FIX: Hapus pending message yang match dengan pesan asli ini
+const senderIdCheck = data.senderId || data.uid || data.sender || '';
+if (senderIdCheck === getMyUid()) {
+    const msgText = (data.text || '').trim();
+    const msgFileName = data.fileName || '';
+    
+    for (let i = pendingMessages.length - 1; i >= 0; i--) {
+        const p = pendingMessages[i];
+        let match = false;
+        
+        // Text message
+        if (p.type === 'text' && msgText && p.text === msgText) {
+            match = true;
+        }
+        // Media message (image, video, audio, file, document)
+        else if (msgFileName && p.fileName === msgFileName) {
+            match = true;
+        }
+        
+        if (match) {
+            console.log('[Chat] Auto-remove pending:', p.id);
+            const el = document.querySelector('[data-pending-id="' + p.id + '"]');
+            if (el) el.remove();
+            try { URL.revokeObjectURL(p.previewUrl); } catch(e) {}
+            pendingMessages.splice(i, 1);
+        }
+    }
+}
                 const senderId = data.senderId || data.uid || data.sender || '';
                 if (senderId !== getMyUid()) addedNotMine++;
             } else if (change.type === 'modified') {
