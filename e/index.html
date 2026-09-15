@@ -6357,7 +6357,10 @@ function getHistory() {
 
 async function checkProjectAvailability(projectName) {
     const db = window._db;
-    if (!db) return { available: false, owned: false, error: 'DB not ready' };
+    if (!db) {
+        console.warn('[checkProjectAvailability] DB belum siap');
+        return { available: true, owned: false, checkFailed: true, error: 'DB not ready' };
+    }
     const uid = getMyUid();
     const name = (projectName || '').toLowerCase().trim();
 
@@ -6376,11 +6379,17 @@ async function checkProjectAvailability(projectName) {
             existing: data
         };
     } catch (e) {
-        console.error('[checkProjectAvailability] Error:', e);
-        return { available: false, owned: false, error: e.message };
+        console.error('[checkProjectAvailability] Gagal query:', e.code, e.message);
+        // JANGAN return available:false — itu bikin user ngira nama udah dipakai
+        // Padahal cuma error permission/network. Biar backend yang handle.
+        return {
+            available: true,      // ← asumsikan available, biar deploy lanjut
+            owned: false,
+            checkFailed: true,
+            error: e.code + ': ' + e.message
+        };
     }
 }
-
 function renderHistory() {
     const historyList = document.getElementById('history-list');
     if (!historyList) return;
@@ -6946,12 +6955,16 @@ async function deploy() {
     }
 
     // Cek ketersediaan nama
-    const check = await checkProjectAvailability(project);
-    if (!check.available && !check.owned) {
-        if (output) output.textContent = 'Project "' + project + '" sudah digunakan. Pilih nama lain.';
-        showToast('Nama project sudah dipakai', 'error');
-        return;
-    }
+    // Cek ketersediaan nama
+const check = await checkProjectAvailability(project);
+if (check.checkFailed) {
+    console.warn('[Deploy] Cek nama gagal (tetap lanjut):', check.error);
+    showToast('Tidak bisa verifikasi nama, tetap lanjut deploy', 'warning');
+} else if (!check.available && !check.owned) {
+    if (output) output.textContent = 'Project "' + project + '" sudah digunakan. Pilih nama lain.';
+    showToast('Nama project sudah dipakai', 'error');
+    return;
+}
 
     const join = isJoinValid();
     const notif = getNotifStatus();
@@ -7239,6 +7252,45 @@ function initApp() {
         initApp();
     });
 })();
+/* ============================================================
+   DIAGNOSTIC TOOL — ketik "diagnoseEkk()" di console
+   ============================================================ */
+window.diagnoseEkk = async function() {
+    console.log('═══════════ EKK STORE DIAGNOSTIC ═══════════');
+    console.log('1. Firebase SDK:', typeof firebase !== 'undefined' ? '✅ OK' : '❌ MISSING');
+    console.log('2. Firebase apps:', firebase?.apps?.length || 0);
+    console.log('3. window._db:', window._db ? '✅ SET' : '❌ MISSING');
+    console.log('4. CURRENT_USER_ID:', CURRENT_USER_ID || '❌ null');
+    console.log('5. window.CURRENT_USER_ID:', window.CURRENT_USER_ID || '❌ null');
+    console.log('6. _firebaseAuthReady:', _firebaseAuthReady);
+
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        const user = firebase.auth().currentUser;
+        console.log('7. Firebase Auth user:', user ? '✅ ' + user.uid : '❌ NULL');
+        console.log('8. isAnonymous:', user?.isAnonymous);
+    } else {
+        console.log('7-8. Firebase Auth SDK: ❌ tidak load');
+    }
+
+    if (window._db) {
+        console.log('9. Test read projects...');
+        try {
+            const snap = await window._db.collection('projects').limit(1).get();
+            console.log('   ✅ Read OK, size:', snap.size);
+        } catch (e) {
+            console.error('   ❌ Read FAILED:', e.code, '-', e.message);
+        }
+        console.log('10. Test read users...');
+        try {
+            const snap = await window._db.collection('users').limit(1).get();
+            console.log('    ✅ Read OK, size:', snap.size);
+        } catch (e) {
+            console.error('    ❌ Read FAILED:', e.code, '-', e.message);
+        }
+    }
+    console.log('═══════════ END ═══════════');
+};
+console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', 'color:#8b5cf6;font-weight:bold;font-size:12px;');
 </script>
 <script>
 /* ============================================================
@@ -11040,17 +11092,29 @@ function initApp() {
 
         // Init state tombol send
         updateSendButtonVisibility();
+        // Tunggu DB + Auth siap
+let _checkUserAttempts = 0;
+const tryCheckUser = () => {
+    _checkUserAttempts++;
+    const dbReady = !!window._db;
+    const uidReady = !!window.CURRENT_USER_ID;
 
-        // Tunggu DB siap
-        const tryCheckUser = () => {
-            if (window._db) {
-                checkUser();
-            } else {
-                setTimeout(tryCheckUser, 400);
-            }
-        };
-        tryCheckUser();
+    if (dbReady && uidReady) {
+        console.log('[Chat] Bootstrap OK — db & uid ready, uid=' + window.CURRENT_USER_ID);
+        checkUser();
+    } else if (_checkUserAttempts > 75) {  // max 30 detik
+        console.error('[Chat] Bootstrap TIMEOUT — db=' + dbReady + ' uid=' + uidReady);
+        console.error('[Chat] Cek: Firebase Auth Anonymous enabled? Refresh halaman?');
+        // Paksa panggil walau gak siap, biar gak blank
+        checkUser();
+    } else {
+        if (_checkUserAttempts % 5 === 0) {
+            console.log('[Chat] Waiting for auth... attempt ' + _checkUserAttempts + ' (db=' + dbReady + ', uid=' + uidReady + ')');
+        }
+        setTimeout(tryCheckUser, 400);
     }
+};
+tryCheckUser();
 
     // Wait DOM ready
     if (document.readyState === 'loading') {
