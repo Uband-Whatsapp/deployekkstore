@@ -1,0 +1,63 @@
+{
+  "name": "Ekk Store — Deployment Platform",
+  "short_name": "Ekk Store",
+  "description": "Deploy website HTML/ZIP gratis, cepat, dan aman. Plus komunitas developer.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0d",
+  "theme_color": "#8b5cf6",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": ["developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "https://files.catbox.moe/kzg0nc.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://files.catbox.moe/kzg0nc.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://files.catbox.moe/kzg0nc.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Deploy Project",
+      "short_name": "Deploy",
+      "description": "Deploy website HTML/ZIP baru",
+      "url": "/?page=deploy",
+      "icons": [
+        {
+          "src": "https://files.catbox.moe/kzg0nc.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Grup Chat",
+      "short_name": "Grup",
+      "description": "Buka chat grup",
+      "url": "/?page=group",
+      "icons": [
+        {
+          "src": "https://files.catbox.moe/kzg0nc.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}
