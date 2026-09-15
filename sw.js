@@ -5,7 +5,7 @@
    - Support push notification + notification click
    ============================================================ */
 
-const SW_VERSION = 'ekk-store-v4.0.0';
+const SW_VERSION = 'ekk-store-v2.0.0';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 
@@ -13,6 +13,8 @@ const SHELL_ASSETS = [
     '/',
     '/index.html',
     '/manifest.json',
+    '/icon/ekkstore-192.png',
+    '/icon/ekkstore-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
 ];
