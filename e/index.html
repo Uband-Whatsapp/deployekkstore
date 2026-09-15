@@ -4202,6 +4202,17 @@ ul { list-style: none; }
     }
 }
 </style>
+<!-- ============================================================
+     ERUDA — Console in-page buat HP (bisa dihapus nanti)
+     Kalau URL ada ?debug → console muncul di layar
+============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
+<script>
+    if (window.location.search.includes('debug')) {
+        eruda.init();
+        console.log('[Eruda] Console aktif. Untuk refresh: buka ulang dengan ?debug');
+    }
+</script>
 </head>
 <body>
 <!-- ============================================================
@@ -11019,54 +11030,63 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
        CHECK USER (bootstrap)
     ============================================================ */
     async function checkUser() {
-        const db = getDb();
-        if (!db) {
-            const profileSetup = document.getElementById('profile-setup');
-            const chatContainer = document.getElementById('chat-container');
-            if (profileSetup) profileSetup.style.display = 'block';
-            if (chatContainer) chatContainer.style.display = 'none';
-            return;
-        }
-
-        const uid = getMyUid();
-        if (!uid) return;
-
-        let userDoc;
-        try {
-            userDoc = await db.collection('users').doc(uid).get();
-        } catch (e) {
-            console.error('[checkUser] Firestore error:', e);
-            const profileSetup = document.getElementById('profile-setup');
-            const chatContainer = document.getElementById('chat-container');
-            if (profileSetup) profileSetup.style.display = 'block';
-            if (chatContainer) chatContainer.style.display = 'none';
-            return;
-        }
-
-        const profileSetup = document.getElementById('profile-setup');
-        const chatContainer = document.getElementById('chat-container');
-
-        if (userDoc.exists) {
-            const data = userDoc.data();
-            currentUser = {
-                uid: uid,
-                username: data.username,
-                avatar: data.avatar || ''
-            };
-            setStoredUser(currentUser);
-            initChat();
-        } else {
-            if (profileSetup) profileSetup.style.display = 'block';
-            if (chatContainer) chatContainer.style.display = 'none';
-            document.documentElement.classList.remove('chat-open');
-            document.body.classList.remove('chat-open');
-
-            if (messagesUnsubscribe) { try { messagesUnsubscribe(); } catch(e) {} messagesUnsubscribe = null; }
-            if (statusInterval) { clearInterval(statusInterval); statusInterval = null; }
-
-            subscribeUsers();
-        }
+    console.log('[Chat] checkUser() dipanggil');
+    const db = getDb();
+    if (!db) {
+        console.error('[Chat] DB belum siap di checkUser');
+        showProfileSetup();
+        return;
     }
+
+    const uid = getMyUid();
+    console.log('[Chat] checkUser — uid:', uid);
+
+    if (!uid) {
+        console.error('[Chat] UID belum siap, tunggu 1 detik...');
+        setTimeout(checkUser, 1000);
+        return;
+    }
+
+    let userDoc;
+    try {
+        userDoc = await db.collection('users').doc(uid).get();
+        console.log('[Chat] User doc exists:', userDoc.exists);
+    } catch (e) {
+        console.error('[Chat] checkUser Firestore error:', e.code, e.message);
+        // Kalau error permission → tampilin profil setup biar user bisa daftar
+        showProfileSetup();
+        return;
+    }
+
+    if (userDoc.exists) {
+        const data = userDoc.data();
+        console.log('[Chat] User found:', data.username);
+        currentUser = {
+            uid: uid,
+            username: data.username,
+            avatar: data.avatar || ''
+        };
+        setStoredUser(currentUser);
+        initChat();
+    } else {
+        console.log('[Chat] User belum ada profil → tampil form setup');
+        showProfileSetup();
+    }
+}
+
+function showProfileSetup() {
+    const profileSetup = document.getElementById('profile-setup');
+    const chatContainer = document.getElementById('chat-container');
+    if (profileSetup) profileSetup.style.display = 'block';
+    if (chatContainer) chatContainer.style.display = 'none';
+    document.documentElement.classList.remove('chat-open');
+    document.body.classList.remove('chat-open');
+
+    if (messagesUnsubscribe) { try { messagesUnsubscribe(); } catch(e) {} messagesUnsubscribe = null; }
+    if (statusInterval) { clearInterval(statusInterval); statusInterval = null; }
+
+    subscribeUsers();
+}
 
     /* ============================================================
        BOOTSTRAP CHAT MODULE
@@ -11115,7 +11135,17 @@ const tryCheckUser = () => {
     }
 };
 tryCheckUser();
-
+// FALLBACK: kalau dalam 5 detik belum ada keputusan, tampilkan form setup
+setTimeout(() => {
+    const profileSetup = document.getElementById('profile-setup');
+    const chatContainer = document.getElementById('chat-container');
+    const setupVisible = profileSetup && profileSetup.style.display === 'block';
+    const chatVisible = chatContainer && chatContainer.style.display !== 'none';
+    if (!setupVisible && !chatVisible) {
+        console.warn('[Chat] Fallback timeout — tampilkan form setup paksa');
+        if (profileSetup) profileSetup.style.display = 'block';
+    }
+}, 5000);
     // Wait DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', bootstrap);
