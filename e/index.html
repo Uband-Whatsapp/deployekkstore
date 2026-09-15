@@ -4497,7 +4497,7 @@ ul { list-style: none; }
                 </div>
                 <div class="page-header-text">
                     <h1>Deploy Project <span class="page-header-tag">Upload</span></h1>
-                    <p>Deploy website HTML atau ZIP Anda dengan cepat.</p>
+                    <p>Deploy website Anda dengan cepat.</p>
                 </div>
             </div>
 
@@ -7250,13 +7250,25 @@ function initApp() {
     }
 
     // Register push kalau permission sudah granted
-    if ('Notification' in window && Notification.permission === 'granted') {
-        if (document.readyState === 'complete') {
-            registerPushNotification().catch(() => {});
-        } else {
-            window.addEventListener('load', () => registerPushNotification().catch(() => {}));
-        }
+    // Register Service Worker SELALU (bukan cuma notifikasi)
+if ('serviceWorker' in navigator) {
+    if (document.readyState === 'complete') {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => console.log('[SW] Registered, scope:', reg.scope))
+            .catch(err => console.warn('[SW] Register fail:', err));
+    } else {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(reg => console.log('[SW] Registered, scope:', reg.scope))
+                .catch(err => console.warn('[SW] Register fail:', err));
+        });
     }
+}
+
+// Register push kalau permission sudah granted (tetap, terpisah)
+if ('Notification' in window && Notification.permission === 'granted') {
+    window.addEventListener('load', () => registerPushNotification().catch(() => {}));
+}
 
     console.log('EKK STORE 4.0 — Premium Deployment Platform');
     console.log('UID:', CURRENT_USER_ID, '| Auth:', _firebaseAuthReady ? 'Firebase' : 'Fallback');
