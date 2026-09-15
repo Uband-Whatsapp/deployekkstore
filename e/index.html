@@ -7218,22 +7218,24 @@ function initApp() {
    16) BOOTSTRAP
    ============================================================ */
 (function bootstrap() {
-    // Init Firebase
     const ok = initFirebase();
     if (!ok) {
         console.warn('[Bootstrap] Firebase gagal, pakai fallback');
         CURRENT_USER_ID = getLegacyLocalUid();
+        window.CURRENT_USER_ID = CURRENT_USER_ID;
         initApp();
         return;
     }
 
-    // Auth → baru init app
     initAuth().then(() => {
         if (!CURRENT_USER_ID) CURRENT_USER_ID = getLegacyLocalUid();
+        window.CURRENT_USER_ID = CURRENT_USER_ID;
+        console.log('[Bootstrap] UID exposed ke window:', window.CURRENT_USER_ID);
         initApp();
     }).catch(err => {
         console.error('[Bootstrap] Auth error:', err);
         if (!CURRENT_USER_ID) CURRENT_USER_ID = getLegacyLocalUid();
+        window.CURRENT_USER_ID = CURRENT_USER_ID;
         initApp();
     });
 })();
