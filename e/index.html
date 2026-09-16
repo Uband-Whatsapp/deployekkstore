@@ -8036,82 +8036,105 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
 /* ============================================================
    PWA INSTALL FLOW — Popup + Halaman Download
 ============================================================ */
+/* ============================================================
+   PWA INSTALL FLOW — V3 (FINAL)
+   - Popup SELALU muncul di setiap browser/tab (kecuali standalone)
+   - Kalau Chrome belum ready → langsung mode manual (3 detik)
+   - Tombol download SELALU aktif
+   - Dismiss per-session per-browser (sessionStorage)
+============================================================ */
 (function initPWAInstallFlow() {
     'use strict';
 
-    const INSTALL_KEY = 'ekk_pwa_installed_v1';
-    const POPUP_DISMISS_KEY = 'ekk_pwa_popup_dismissed_v1';
-    const POPUP_DELAY_MS = 3500;        // Muncul 3.5 detik setelah load
-    const POPUP_RESHOW_DAYS = 7;        // Muncul lagi 7 hari kalau dismiss
+    const SESSION_DISMISS_KEY = 'ekk_pwa_popup_dismissed_v3';
+    const POPUP_DELAY_MS = 2500;       // Muncul 2.5 detik setelah load
+    const MANUAL_MODE_AFTER_MS = 3000; // Kalau 3 detik gak ada prompt → manual
 
     let deferredPrompt = null;
+    let popupShown = false;
+    let manualModeTimer = null;
 
-    function isInstalled() {
+    // ============================================================
+    // CEK: apakah web kebuka sebagai app standalone?
+    // ============================================================
+    function isStandalone() {
+        // Chrome Android / desktop PWA
         if (window.matchMedia('(display-mode: standalone)').matches) return true;
+        // iOS Safari
         if (window.navigator.standalone === true) return true;
-        if (localStorage.getItem(INSTALL_KEY) === '1') return true;
+        // Fallback: display-mode fullscreen
+        if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
         return false;
     }
 
-    function canShowPopup() {
-        if (isInstalled()) return false;
-        const dismissedAt = localStorage.getItem(POPUP_DISMISS_KEY);
-        if (!dismissedAt) return true;
-        const daysPassed = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
-        return daysPassed >= POPUP_RESHOW_DAYS;
+    // ============================================================
+    // CEK: sudah dismiss di session ini?
+    // sessionStorage = per-tab per-browser. Buka tab baru = fresh.
+    // ============================================================
+    function isDismissedThisSession() {
+        try { return sessionStorage.getItem(SESSION_DISMISS_KEY) === '1'; }
+        catch (e) { return false; }
+    }
+
+    function setSessionDismissed() {
+        try { sessionStorage.setItem(SESSION_DISMISS_KEY, '1'); } catch (e) {}
     }
 
     // ============================================================
-    // BEFOREINSTALLPROMPT — Chrome kasih event ini kalau PWA installable
+    // BEFOREINSTALLPROMPT — Chrome kasih kalau PWA installable
     // ============================================================
     window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('[PWA] beforeinstallprompt triggered');
+        console.log('[PWA] beforeinstallprompt fired');
         e.preventDefault();
         deferredPrompt = e;
-        updateInstallUI();
-        maybeShowPopup();
+
+        // Batal timer manual — karena prompt ready
+        if (manualModeTimer) {
+            clearTimeout(manualModeTimer);
+            manualModeTimer = null;
+        }
+
+        updateDownloadPageUI();
     });
 
     // ============================================================
-    // APPINSTALLED — Fires setelah user install
+    // APPINSTALLED
     // ============================================================
     window.addEventListener('appinstalled', () => {
-        console.log('[PWA] appinstalled');
-        localStorage.setItem(INSTALL_KEY, '1');
+        console.log('[PWA] installed');
         deferredPrompt = null;
-        updateInstallUI();
         hidePopup();
+        updateDownloadPageUI();
         if (typeof window.showToast === 'function') {
             window.showToast('Ekk Store berhasil diinstall! 🎉', 'success');
         }
     });
 
     // ============================================================
-    // UPDATE UI — Tombol di halaman download + badge installed
+    // UPDATE UI di halaman download
     // ============================================================
-    function updateInstallUI() {
+    function updateDownloadPageUI() {
         const btn = document.getElementById('dl-install-btn');
         const btnText = document.getElementById('dl-install-text');
         const badge = document.getElementById('dl-installed-badge');
         if (!btn) return;
 
-        if (isInstalled()) {
+        // Kalau lagi standalone (kebuka sebagai app) → badge installed
+        if (isStandalone()) {
             btn.style.display = 'none';
             if (badge) badge.classList.add('visible');
             return;
         }
 
+        // Selain itu → tombol SELALU aktif
         btn.style.display = 'inline-flex';
+        btn.disabled = false;
+        btn.style.opacity = '';
         if (badge) badge.classList.remove('visible');
 
-        if (deferredPrompt) {
-            btn.disabled = false;
-            btn.style.opacity = '';
-            if (btnText) btnText.textContent = 'Install Sekarang';
-        } else {
-            btn.disabled = true;
-            btn.style.opacity = '0.6';
-            if (btnText) btnText.textContent = 'Buka 2x untuk aktifkan';
+        // Ganti text sesuai status
+        if (btnText) {
+            btnText.textContent = deferredPrompt ? 'Install Sekarang' : 'Cara Install';
         }
     }
 
@@ -8119,139 +8142,193 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     // TRIGGER INSTALL
     // ============================================================
     async function triggerInstall() {
-        if (!deferredPrompt) {
-            if (typeof window.showToast === 'function') {
-                window.showToast('Install belum siap. Refresh & buka web 2x.', 'info');
-            }
-            return false;
-        }
-        try {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log('[PWA] User choice:', outcome);
-            if (outcome === 'accepted') {
-                localStorage.setItem(INSTALL_KEY, '1');
-                hidePopup();
-                updateInstallUI();
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Terima kasih! Cek home screen HP lu.', 'success');
+        if (deferredPrompt) {
+            try {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('[PWA] user choice:', outcome);
+                if (outcome === 'accepted') {
+                    hidePopup();
+                    updateDownloadPageUI();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Terima kasih! Cek home screen HP.', 'success');
+                    }
+                } else {
+                    setSessionDismissed();
+                    hidePopup();
                 }
-                return true;
-            } else {
-                // User dismiss → catat waktu biar popup gak muncul-terus
-                localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
-                hidePopup();
-                return false;
+            } catch (e) {
+                console.warn('[PWA] error:', e);
+            } finally {
+                deferredPrompt = null;
+                updateDownloadPageUI();
             }
-        } catch (e) {
-            console.warn('[PWA] Install error:', e);
-            return false;
-        } finally {
-            deferredPrompt = null;
-            updateInstallUI();
+        } else {
+            // Chrome belum ready → tampilkan popup manual
+            setPopupMode('manual');
+            showPopup();
         }
     }
 
     // ============================================================
-    // POPUP CONTROL
+    // POPUP — 2 MODE
     // ============================================================
+    function setPopupMode(mode) {
+        const normal = document.getElementById('pwa-popup-normal-actions');
+        const manual = document.getElementById('pwa-popup-manual-actions');
+        const features = document.getElementById('pwa-popup-features');
+        const title = document.getElementById('pwa-popup-title');
+        const subtitle = document.getElementById('pwa-popup-subtitle');
+
+        if (mode === 'manual') {
+            if (normal) normal.style.display = 'none';
+            if (manual) manual.style.display = 'block';
+            if (features) features.style.display = 'none';
+            if (title) title.textContent = 'Cara Install Manual';
+            if (subtitle) {
+                subtitle.innerHTML = 'Chrome belum bisa install otomatis. Ikuti langkah berikut, atau buka di <strong>Chrome / Edge biasa</strong> (bukan Incognito).';
+            }
+        } else {
+            if (normal) normal.style.display = 'flex';
+            if (manual) manual.style.display = 'none';
+            if (features) features.style.display = 'grid';
+            if (title) title.textContent = 'Install Ekk Store';
+            if (subtitle) {
+                subtitle.innerHTML = 'Pasang <strong>Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, dan seperti app beneran.';
+            }
+        }
+    }
+
     function showPopup() {
         const overlay = document.getElementById('pwa-popup-overlay');
         if (!overlay) return;
         overlay.classList.add('active');
         document.body.classList.add('modal-open');
+        popupShown = true;
     }
 
     function hidePopup() {
         const overlay = document.getElementById('pwa-popup-overlay');
         if (!overlay) return;
         overlay.classList.remove('active');
-        if (!document.querySelector('.modal-overlay.active') && !document.getElementById('attach-menu-overlay')?.classList.contains('active')) {
-            document.body.classList.remove('modal-open');
-        }
+        const otherActive = document.querySelector('.modal-overlay.active')
+            || document.getElementById('attach-menu-overlay')?.classList.contains('active');
+        if (!otherActive) document.body.classList.remove('modal-open');
     }
 
-    function maybeShowPopup() {
-        if (!canShowPopup()) return;
-        if (deferredPrompt && !window._pwaPopupScheduled) {
-            window._pwaPopupScheduled = true;
-            setTimeout(() => {
-                window._pwaPopupScheduled = false;
-                if (canShowPopup() && deferredPrompt) {
-                    showPopup();
-                }
-            }, POPUP_DELAY_MS);
+    // ============================================================
+    // AUTO SHOW POPUP
+    // Muncul 2.5 detik setelah load, di SETIAP browser/tab
+    // kecuali lagi standalone atau udah dismiss di session ini
+    // ============================================================
+    function scheduleAutoShowPopup() {
+        if (isStandalone()) {
+            console.log('[PWA] standalone — skip popup');
+            return;
         }
+        if (isDismissedThisSession()) {
+            console.log('[PWA] dismissed this session — skip popup');
+            return;
+        }
+        if (popupShown) return;
+
+        setTimeout(() => {
+            if (popupShown || isStandalone() || isDismissedThisSession()) return;
+
+            if (deferredPrompt) {
+                // Chrome ready → popup normal
+                console.log('[PWA] showing NORMAL popup');
+                setPopupMode('normal');
+                showPopup();
+            } else {
+                // Chrome belum ready → TETAP munculin popup manual
+                console.log('[PWA] showing MANUAL popup (prompt not ready)');
+                setPopupMode('manual');
+                showPopup();
+            }
+        }, POPUP_DELAY_MS);
     }
 
     // ============================================================
     // EVENT LISTENERS
     // ============================================================
-    document.addEventListener('DOMContentLoaded', () => {
-        updateInstallUI();
+    function bindEvents() {
+        updateDownloadPageUI();
 
         // Tombol install di halaman download
         const dlBtn = document.getElementById('dl-install-btn');
-        if (dlBtn) {
-            dlBtn.addEventListener('click', triggerInstall);
-        }
+        if (dlBtn) dlBtn.addEventListener('click', triggerInstall);
 
         // Tombol install di popup
         const popupInstallBtn = document.getElementById('pwa-popup-install');
-        if (popupInstallBtn) {
-            popupInstallBtn.addEventListener('click', triggerInstall);
-        }
+        if (popupInstallBtn) popupInstallBtn.addEventListener('click', triggerInstall);
 
-        // Tombol close popup (X)
+        // Tombol close popup
         const popupCloseBtn = document.getElementById('pwa-popup-close');
-        if (popupCloseBtn) {
-            popupCloseBtn.addEventListener('click', () => {
-                localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
-                hidePopup();
-            });
-        }
+        if (popupCloseBtn) popupCloseBtn.addEventListener('click', () => {
+            setSessionDismissed();
+            hidePopup();
+        });
 
         // Tombol "Nanti aja"
         const laterBtn = document.getElementById('pwa-popup-later');
-        if (laterBtn) {
-            laterBtn.addEventListener('click', () => {
-                localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
-                hidePopup();
-            });
-        }
-
-        // Klik overlay gelap untuk close
-        const overlay = document.getElementById('pwa-popup-overlay');
-        if (overlay) {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
-                    localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
-                    hidePopup();
-                }
-            });
-        }
-
-        // Update UI saat masuk halaman download
-        const dlMenuItems = document.querySelectorAll('[data-page="download"]');
-        dlMenuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                setTimeout(updateInstallUI, 200);
-            });
+        if (laterBtn) laterBtn.addEventListener('click', () => {
+            setSessionDismissed();
+            hidePopup();
         });
-    });
 
-    // Handle klik via navigateTo juga
-    const origNavigate = window.navigateTo;
-    if (typeof origNavigate === 'function') {
-        window.navigateTo = function(page) {
-            origNavigate(page);
-            if (page === 'download') {
-                setTimeout(updateInstallUI, 200);
+        // Tombol "Mengerti" mode manual
+        const manualCloseBtn = document.getElementById('pwa-popup-manual-close');
+        if (manualCloseBtn) manualCloseBtn.addEventListener('click', () => {
+            setSessionDismissed();
+            hidePopup();
+        });
+
+        // Klik overlay gelap
+        const overlay = document.getElementById('pwa-popup-overlay');
+        if (overlay) overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                setSessionDismissed();
+                hidePopup();
             }
+        });
+
+        // Update UI saat buka halaman download
+        document.querySelectorAll('[data-page="download"]').forEach(item => {
+            item.addEventListener('click', () => setTimeout(updateDownloadPageUI, 200));
+        });
+
+        // Mulai auto-show
+        scheduleAutoShowPopup();
+
+        // Kalau 3 detik gak ada beforeinstallprompt TAPI popup belum muncul,
+        // paksa update UI halaman download ke "Cara Install"
+        manualModeTimer = setTimeout(() => {
+            if (!deferredPrompt) {
+                console.log('[PWA] no prompt after 3s — updating UI to manual mode');
+                updateDownloadPageUI();
+            }
+        }, MANUAL_MODE_AFTER_MS);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindEvents);
+    } else {
+        bindEvents();
+    }
+
+    // ============================================================
+    // HOOK navigateTo biar UI update pas pindah ke halaman download
+    // ============================================================
+    if (typeof window.navigateTo === 'function') {
+        const orig = window.navigateTo;
+        window.navigateTo = function(page) {
+            orig(page);
+            if (page === 'download') setTimeout(updateDownloadPageUI, 200);
         };
     }
 
-    console.log('[PWA] Install flow initialized');
+    console.log('[PWA] Install flow V3 ready');
 })();
 </script>
 <script>
