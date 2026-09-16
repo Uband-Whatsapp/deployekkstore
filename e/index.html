@@ -5348,8 +5348,8 @@ ul { list-style: none; }
         <div class="dl-hero-icon">
             <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
         </div>
-        <h2>Ekk Store</h2>
-        <p>Akses cepat tanpa buka browser. Ringan, aman, seperti app native.</p>
+        <h2>Deploy Project Ekk Store</h2>
+<p>Akses cepat tanpa buka browser. Ringan, aman, seperti app native.</p>
 
         <div class="dl-hero-actions">
             <button class="dl-install-btn" id="dl-install-btn">
@@ -5999,10 +5999,10 @@ ul { list-style: none; }
             <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
         </div>
 
-        <h3 class="pwa-popup-title">Install Ekk Store</h3>
-        <p class="pwa-popup-subtitle">
-            Pasang <strong>Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, seperti app beneran.
-        </p>
+        <h3 class="pwa-popup-title">Install Deploy Project Ekk Store</h3>
+<p class="pwa-popup-subtitle">
+    Pasang <strong>Deploy Project Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, seperti app beneran.
+</p>
 
         <div class="pwa-popup-actions">
             <button class="pwa-popup-btn-install" id="pwa-popup-goto-download">
@@ -6868,34 +6868,80 @@ function updateModalStatus() {
 
     // Auto-close + auto-deploy saat 2 syarat OK
     if (join && notif && !isDeploying) {
-        if (window._autoCloseTimer) return;
-        window._autoCloseTimer = true;
+    if (window._autoCloseTimer) return;
+    window._autoCloseTimer = true;
 
-        setTimeout(() => {
+    setTimeout(() => {
+        if (!isJoinValid() || !getNotifStatus()) {
             window._autoCloseTimer = false;
-            if (!isJoinValid() || !getNotifStatus()) return;
+            return;
+        }
 
-            const deployModal = document.getElementById('deploy-modal');
-            if (deployModal) deployModal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-
-            if (window._pendingDeploy && !isDeploying) {
-                const project = window._pendingDeploy;
-                window._pendingDeploy = null;
-                showToast('Syarat terpenuhi, memulai deploy...', 'success');
-                const deployBtn = document.getElementById('deploy-btn');
-                isDeploying = true;
-                deployState = DEPLOY_STATE.VALIDATING;
-                if (deployBtn) {
-                    deployBtn.disabled = true;
-                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+        // Kalau halaman hidden (user pindah ke PWA), tunggu balik
+        if (document.hidden) {
+            console.log('[Deploy] Halaman hidden — tunggu user balik');
+            const waitVisible = () => {
+                if (!document.hidden) {
+                    document.removeEventListener('visibilitychange', waitVisible);
+                    console.log('[Deploy] User balik — lanjut');
+                    window._autoCloseTimer = false;
+                    setTimeout(() => updateModalStatus(), 500);
                 }
-                performDeploy(project);
-            }
-        }, 800);
-    }
-}
+            };
+            document.addEventListener('visibilitychange', waitVisible);
+            setTimeout(() => {
+                document.removeEventListener('visibilitychange', waitVisible);
+                window._autoCloseTimer = false;
+            }, 60000);
+            return;
+        }
 
+        window._autoCloseTimer = false;
+
+        const deployModal = document.getElementById('deploy-modal');
+        if (deployModal) deployModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+
+        // Cek lock — biar gak deploy 2x di context beda
+        const lockData = localStorage.getItem('ekk_deploy_lock_v1');
+        let skipDeploy = false;
+        if (lockData) {
+            try {
+                const parsed = JSON.parse(lockData);
+                const age = Date.now() - (parsed.timestamp || 0);
+                if (age < 30000) {
+                    console.log('[Deploy] Lock ada, skip');
+                    skipDeploy = true;
+                }
+            } catch(e) {}
+        }
+
+        if (!skipDeploy && window._pendingDeploy && !isDeploying) {
+            const project = window._pendingDeploy;
+            window._pendingDeploy = null;
+            try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
+            try {
+                localStorage.setItem('ekk_deploy_lock_v1', JSON.stringify({
+                    project: project,
+                    timestamp: Date.now()
+                }));
+            } catch(e) {}
+
+            showToast('Syarat terpenuhi, memulai deploy...', 'success');
+            const deployBtn = document.getElementById('deploy-btn');
+            isDeploying = true;
+            deployState = DEPLOY_STATE.VALIDATING;
+            if (deployBtn) {
+                deployBtn.disabled = true;
+                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+            }
+            performDeploy(project);
+        } else if (window._pendingDeploy) {
+            window._pendingDeploy = null;
+            try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
+        }
+    }, 800);
+}
 function setupRequirementEvents() {
     const joinButton = document.getElementById('btn-join-grup');
     if (joinButton) {
@@ -7574,10 +7620,14 @@ async function performDeploy(projectName) {
         if (output) output.textContent = 'Gagal menghubungi server: ' + err.message;
         await saveHistory(project, 'failed', '', '', '');
         showToast('Gagal menghubungi server', 'error');
-    } finally {
-        resetDeployButton();
-        isDeploying = false;
-    }
+ } finally {
+    resetDeployButton();
+    isDeploying = false;
+    setTimeout(() => {
+        try { localStorage.removeItem('ekk_deploy_lock_v1'); } catch(e) {}
+        try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
+    }, 5000);
+}
 }
 
 function openDeployedWebsite() {
@@ -7680,9 +7730,10 @@ if (check.checkFailed) {
         const deployModal = document.getElementById('deploy-modal');
         if (deployModal) deployModal.classList.add('active');
         document.body.classList.add('modal-open');
-        updateModalStatus();
-        window._pendingDeploy = project;
-    }
+       updateModalStatus();
+    window._pendingDeploy = project;
+    try { localStorage.setItem('ekk_pending_deploy', project); } catch(e) {}
+}
 }
 
 function setupDeployButton() {
@@ -7892,7 +7943,19 @@ function initApp() {
     _appInitialized = true;
 
     console.log('[App] Init dengan UID:', CURRENT_USER_ID);
-
+// Restore pending deploy dari localStorage (cross-context)
+try {
+    const savedDeploy = localStorage.getItem('ekk_pending_deploy');
+    if (savedDeploy) {
+        console.log('[App] Restore pending deploy:', savedDeploy);
+        window._pendingDeploy = savedDeploy;
+        setTimeout(() => {
+            if (window._pendingDeploy && isJoinValid() && getNotifStatus() && !isDeploying) {
+                updateModalStatus();
+            }
+        }, 2000);
+    }
+} catch(e) {}
     setupNavigationEvents();
     setupProjectInput();
     setupFileUpload();
@@ -12084,80 +12147,79 @@ if (senderIdCheck === getMyUid()) {
        KEYBOARD DOCKING
     ============================================================ */
     function setupKeyboardDocking() {
-        const vv = window.visualViewport;
-        const chatCard = document.getElementById('chat-card');
-        const chatInput = document.getElementById('chat-input');
-        const messagesList = document.getElementById('messages-list');
-        if (!chatCard || !chatInput) return;
+    const vv = window.visualViewport;
+    const chatCard = document.getElementById('chat-card');
+    const chatInput = document.getElementById('chat-input');
+    const messagesList = document.getElementById('messages-list');
+    if (!chatCard || !chatInput) return;
 
-        const HEADER_H = 64;
-        let baseVH = vv ? vv.height : window.innerHeight;
+    const HEADER_H = 64;
+    let baseVH = vv ? vv.height : window.innerHeight;
 
-        function apply() {
-            if (!vv) {
-                chatInput.addEventListener('focus', () => {
-                    document.body.classList.add('keyboard-open');
-                    chatCard.classList.add('keyboard-open');
-                });
-                chatInput.addEventListener('blur', () => {
-                    document.body.classList.remove('keyboard-open');
-                    chatCard.classList.remove('keyboard-open');
-                });
-                return;
-            }
-            const vvH = vv.height;
-            const vvTop = vv.offsetTop;
-            const keyboardHeight = baseVH - vvH;
-            const open = keyboardHeight > 80;
-
-            chatCard.classList.toggle('keyboard-open', open);
-            document.body.classList.toggle('keyboard-open', open);
-
-            if (open) {
-                const cardTop = vvTop + HEADER_H;
-                const cardHeight = vvH - HEADER_H;
-                chatCard.style.position = 'fixed';
-                chatCard.style.top = cardTop + 'px';
-                chatCard.style.left = '0';
-                chatCard.style.right = '0';
-                chatCard.style.bottom = 'auto';
-                chatCard.style.width = '100vw';
-                chatCard.style.height = Math.max(cardHeight, 200) + 'px';
-                chatCard.style.maxHeight = 'none';
-                chatCard.style.minHeight = '0';
-                chatCard.style.margin = '0';
-                chatCard.style.padding = '0';
-                chatCard.style.borderRadius = '0';
-                chatCard.style.border = 'none';
-                chatCard.style.zIndex = '9999';
-                chatCard.style.overflow = 'hidden';
-                chatCard.style.background = 'var(--bg-card)';
-                chatCard.style.display = 'flex';
-                chatCard.style.flexDirection = 'column';
-
-                if (messagesList) {
-                    requestAnimationFrame(() => { messagesList.scrollTop = messagesList.scrollHeight; });
-                }
-            } else {
-                chatCard.style.cssText = '';
-                baseVH = vvH;
-            }
+    function apply() {
+        if (!vv) {
+            chatInput.addEventListener('focus', () => {
+                document.body.classList.add('keyboard-open');
+                chatCard.classList.add('keyboard-open');
+            });
+            chatInput.addEventListener('blur', () => {
+                document.body.classList.remove('keyboard-open');
+                chatCard.classList.remove('keyboard-open');
+            });
+            return;
         }
+        const vvH = vv.height;
+        const vvTop = vv.offsetTop;
+        const keyboardHeight = baseVH - vvH;
+        const open = keyboardHeight > 80;
 
-        if (vv) {
-            vv.addEventListener('resize', apply);
-            vv.addEventListener('scroll', apply);
+        chatCard.classList.toggle('keyboard-open', open);
+        document.body.classList.toggle('keyboard-open', open);
+
+        if (open) {
+            const cardTop = vvTop + HEADER_H;
+            const cardHeight = vvH - HEADER_H;
+            chatCard.style.position = 'fixed';
+            chatCard.style.top = cardTop + 'px';
+            chatCard.style.left = '0';
+            chatCard.style.right = '0';
+            chatCard.style.bottom = 'auto';
+            chatCard.style.width = '100vw';
+            chatCard.style.height = Math.max(cardHeight, 200) + 'px';
+            chatCard.style.maxHeight = 'none';
+            chatCard.style.minHeight = '0';
+            chatCard.style.margin = '0';
+            chatCard.style.padding = '0';
+            chatCard.style.borderRadius = '0';
+            chatCard.style.border = 'none';
+            chatCard.style.zIndex = '9999';
+            chatCard.style.overflow = 'hidden';
+            chatCard.style.background = 'var(--bg-card)';
+            chatCard.style.display = 'flex';
+            chatCard.style.flexDirection = 'column';
+
+            if (messagesList) {
+                requestAnimationFrame(() => { messagesList.scrollTop = messagesList.scrollHeight; });
+            }
+        } else {
+            chatCard.style.cssText = '';
+            baseVH = vvH;
         }
-        chatInput.addEventListener('focus', function() {
-            if (vv) baseVH = Math.max(baseVH, vv.height);
-            [50, 150, 300, 500, 700].forEach(t => setTimeout(apply, t));
-        });
-        chatInput.addEventListener('blur', function() {
-            setTimeout(apply, 180);
-        });
-        apply();
     }
 
+    if (vv) {
+        vv.addEventListener('resize', apply);
+        vv.addEventListener('scroll', apply);
+    }
+    chatInput.addEventListener('focus', function() {
+        if (vv) baseVH = Math.max(baseVH, vv.height);
+        [50, 150, 300, 500, 700].forEach(t => setTimeout(apply, t));
+    });
+    chatInput.addEventListener('blur', function() {
+        setTimeout(apply, 180);
+    });
+    apply();
+}
     /* ============================================================
        INIT CHAT
     ============================================================ */
