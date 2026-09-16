@@ -4198,6 +4198,506 @@ ul { list-style: none; }
         scroll-behavior: auto !important;
     }
 }
+/* ============================================================
+   PWA INSTALL POPUP
+============================================================ */
+#pwa-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999998;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    padding: 0;
+}
+@media (min-width: 600px) {
+    #pwa-popup-overlay {
+        align-items: center;
+        padding: var(--space-4);
+    }
+}
+#pwa-popup-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.pwa-popup-sheet {
+    width: 100%;
+    max-width: 460px;
+    background: var(--bg-card);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 28px 22px calc(24px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.4s var(--ease-out);
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    text-align: center;
+    position: relative;
+}
+@media (min-width: 600px) {
+    .pwa-popup-sheet {
+        border-radius: 24px;
+        border-bottom: 1px solid var(--border);
+        transform: translateY(20px) scale(0.96);
+    }
+    #pwa-popup-overlay.active .pwa-popup-sheet {
+        transform: translateY(0) scale(1);
+    }
+}
+#pwa-popup-overlay.active .pwa-popup-sheet {
+    transform: translateY(0);
+}
+.pwa-popup-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--border-light);
+    margin: -8px auto 16px;
+}
+@media (min-width: 600px) {
+    .pwa-popup-handle { display: none; }
+}
+.pwa-popup-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+.pwa-popup-close:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+.pwa-popup-close:active {
+    transform: scale(0.9);
+}
+.pwa-popup-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-press));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 32px rgba(139, 92, 246, 0.35);
+    overflow: hidden;
+    position: relative;
+}
+.pwa-popup-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.pwa-popup-icon i {
+    font-size: 36px;
+    color: #fff;
+}
+.pwa-popup-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.25;
+}
+.pwa-popup-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 22px;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.pwa-popup-subtitle strong {
+    color: var(--accent);
+    font-weight: 600;
+}
+.pwa-popup-features {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 22px;
+    text-align: left;
+}
+.pwa-popup-feature {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.pwa-popup-feature-icon {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+}
+.pwa-popup-feature-text {
+    flex: 1;
+    min-width: 0;
+}
+.pwa-popup-feature-text strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 1px;
+}
+.pwa-popup-feature-text span {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+.pwa-popup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.pwa-popup-btn-install {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 50px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 22px rgba(139, 92, 246, 0.35);
+}
+.pwa-popup-btn-install:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(139, 92, 246, 0.45);
+}
+.pwa-popup-btn-install:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.pwa-popup-btn-install:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.pwa-popup-btn-later {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.pwa-popup-btn-later:hover {
+    color: var(--text);
+}
+
+/* ============================================================
+   DOWNLOAD PAGE
+============================================================ */
+.dl-hero {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(139, 92, 246, 0.02));
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    border-radius: var(--radius-xl);
+    padding: 32px 20px 26px;
+    text-align: center;
+    margin-bottom: var(--space-5);
+    position: relative;
+    overflow: hidden;
+}
+.dl-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 70%);
+    pointer-events: none;
+}
+.dl-hero-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    margin: 0 auto 18px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-press));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 40px rgba(139, 92, 246, 0.4);
+    overflow: hidden;
+    position: relative;
+}
+.dl-hero-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.dl-hero-icon i {
+    font-size: 44px;
+    color: #fff;
+}
+.dl-hero h2 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+.dl-hero p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 22px;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.dl-hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 320px;
+    margin: 0 auto;
+}
+.dl-install-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 52px;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 10px 26px rgba(139, 92, 246, 0.35);
+}
+.dl-install-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(139, 92, 246, 0.45);
+}
+.dl-install-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.dl-install-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.dl-installed-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--success-soft);
+    border: 1px solid rgba(34, 211, 168, 0.35);
+    border-radius: 999px;
+    color: var(--success);
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 auto;
+    max-width: 280px;
+}
+.dl-installed-badge.visible {
+    display: inline-flex;
+}
+.dl-installed-badge i {
+    font-size: 14px;
+}
+.dl-features {
+    display: grid;
+    gap: 12px;
+    margin-bottom: var(--space-5);
+}
+.dl-feature {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+.dl-feature:hover {
+    border-color: var(--border-light);
+    transform: translateY(-1px);
+}
+.dl-feature-icon {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+}
+.dl-feature-icon.purple { background: var(--accent-soft); color: var(--accent); }
+.dl-feature-icon.green  { background: var(--success-soft); color: var(--success); }
+.dl-feature-icon.blue   { background: var(--info-soft); color: var(--info); }
+.dl-feature-icon.amber  { background: var(--warning-soft); color: var(--warning); }
+.dl-feature-icon.red    { background: var(--danger-soft); color: var(--danger); }
+.dl-feature-info {
+    flex: 1;
+    min-width: 0;
+}
+.dl-feature-info h4 {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 3px;
+}
+.dl-feature-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+.dl-steps {
+    display: grid;
+    gap: 12px;
+    margin-bottom: var(--space-5);
+}
+.dl-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.dl-step-number {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-press));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+.dl-step-info {
+    flex: 1;
+    min-width: 0;
+}
+.dl-step-info h4 {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 3px;
+}
+.dl-step-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+.dl-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    background: var(--info-soft);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 10px;
+    margin-top: var(--space-3);
+}
+.dl-note i {
+    color: var(--info);
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.dl-note p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+.dl-note p strong {
+    color: var(--text);
+    font-weight: 600;
+}
+.dl-section-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: var(--space-4);
+    letter-spacing: -0.02em;
+}
+.dl-section-title i {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
 </style>
 <!-- ============================================================
      ERUDA — Console in-page buat HP (bisa dihapus nanti)
@@ -4328,6 +4828,9 @@ ul { list-style: none; }
             <button class="sidebar-item" data-page="status">
                 <i class="fa-solid fa-network-wired"></i> System Status
             </button>
+<button class="sidebar-item" data-page="download">
+    <i class="fa-solid fa-mobile-screen-button"></i> Install App
+</button>
         </div>
 
         <div class="sidebar-section">
@@ -4826,7 +5329,140 @@ ul { list-style: none; }
                 </div>
             </div>
         </div>
+<!-- ============================================
+     PAGE: DOWNLOAD APP
+============================================ -->
+<div class="page" id="page-download">
+    <div class="page-header">
+        <div class="page-header-icon">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+        </div>
+        <div class="page-header-text">
+            <h1>Install App <span class="page-header-tag">PWA</span></h1>
+            <p>Pasang Ekk Store di home screen HP Anda.</p>
+        </div>
+    </div>
 
+    <!-- Hero -->
+    <div class="dl-hero">
+        <div class="dl-hero-icon">
+            <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
+        </div>
+        <h2>Ekk Store</h2>
+        <p>Akses cepat tanpa buka browser. Ringan, aman, seperti app native.</p>
+
+        <div class="dl-hero-actions">
+            <button class="dl-install-btn" id="dl-install-btn">
+                <i class="fa-solid fa-download"></i>
+                <span id="dl-install-text">Install Sekarang</span>
+            </button>
+
+            <div class="dl-installed-badge" id="dl-installed-badge">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Sudah Terinstall</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keuntungan -->
+    <div class="card" style="margin-bottom: var(--space-5);">
+        <div class="dl-section-title">
+            <i class="fa-solid fa-sparkles"></i>
+            <span>Keuntungan Install</span>
+        </div>
+
+        <div class="dl-features">
+            <div class="dl-feature">
+                <div class="dl-feature-icon purple">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="dl-feature-info">
+                    <h4>Akses Super Cepat</h4>
+                    <p>Buka langsung dari home screen, tanpa ketik URL dan tanpa buka browser.</p>
+                </div>
+            </div>
+
+            <div class="dl-feature">
+                <div class="dl-feature-icon green">
+                    <i class="fa-solid fa-wifi"></i>
+                </div>
+                <div class="dl-feature-info">
+                    <h4>Hemat Kuota</h4>
+                    <p>Sebagian halaman otomatis ke-cache. Loading lebih ringan setiap dibuka.</p>
+                </div>
+            </div>
+
+            <div class="dl-feature">
+                <div class="dl-feature-icon blue">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="dl-feature-info">
+                    <h4>Notifikasi Realtime</h4>
+                    <p>Dapat notif langsung saat ada pesan grup atau update deploy baru.</p>
+                </div>
+            </div>
+
+            <div class="dl-feature">
+                <div class="dl-feature-icon amber">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
+                <div class="dl-feature-info">
+                    <h4>Tampilan Fullscreen</h4>
+                    <p>Tanpa address bar. Layout penuh, terasa seperti app native di HP.</p>
+                </div>
+            </div>
+
+            <div class="dl-feature">
+                <div class="dl-feature-icon red">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="dl-feature-info">
+                    <h4>Aman &amp; Ringan</h4>
+                    <p>Ukuran cuma ~1 MB. Gak ada iklan, gak nyedot baterai, gak minta izin aneh.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cara Install -->
+    <div class="card">
+        <div class="dl-section-title">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Cara Install</span>
+        </div>
+
+        <div class="dl-steps">
+            <div class="dl-step">
+                <div class="dl-step-number">1</div>
+                <div class="dl-step-info">
+                    <h4>Tap Tombol Install</h4>
+                    <p>Klik tombol <strong>Install Sekarang</strong> di atas.</p>
+                </div>
+            </div>
+
+            <div class="dl-step">
+                <div class="dl-step-number">2</div>
+                <div class="dl-step-info">
+                    <h4>Konfirmasi Install</h4>
+                    <p>Pilih <strong>"Install"</strong> saat muncul popup dari browser.</p>
+                </div>
+            </div>
+
+            <div class="dl-step">
+                <div class="dl-step-number">3</div>
+                <div class="dl-step-info">
+                    <h4>Buka dari Home Screen</h4>
+                    <p>Icon Ekk Store muncul di home screen. Tap icon untuk buka.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dl-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <p><strong>Catatan:</strong> Install cuma jalan di <strong>Chrome</strong> / <strong>Edge</strong> Android. Untuk iOS (Safari), install lewat menu Share → <strong>"Add to Home Screen"</strong>.</p>
+        </div>
+    </div>
+</div>
         <!-- ============================================
              PAGE: SERVICES
         ============================================ -->
@@ -5350,7 +5986,66 @@ ul { list-style: none; }
         <div style="width:64px;"></div>
     </div>
 </div>
+<!-- ============ PWA INSTALL POPUP ============ -->
+<div id="pwa-popup-overlay">
+    <div class="pwa-popup-sheet">
+        <div class="pwa-popup-handle"></div>
+        <button class="pwa-popup-close" id="pwa-popup-close" aria-label="Tutup">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
 
+        <div class="pwa-popup-icon">
+            <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
+        </div>
+
+        <h3 class="pwa-popup-title">Install Ekk Store</h3>
+        <p class="pwa-popup-subtitle">
+            Pasang <strong>Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, dan seperti app beneran.
+        </p>
+
+        <div class="pwa-popup-features">
+            <div class="pwa-popup-feature">
+                <div class="pwa-popup-feature-icon">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="pwa-popup-feature-text">
+                    <strong>Akses Cepat</strong>
+                    <span>Buka tanpa ketik URL &amp; tanpa browser.</span>
+                </div>
+            </div>
+
+            <div class="pwa-popup-feature">
+                <div class="pwa-popup-feature-icon">
+                    <i class="fa-solid fa-wifi"></i>
+                </div>
+                <div class="pwa-popup-feature-text">
+                    <strong>Hemat Kuota</strong>
+                    <span>Sebagian halaman auto-cache, loading ringan.</span>
+                </div>
+            </div>
+
+            <div class="pwa-popup-feature">
+                <div class="pwa-popup-feature-icon">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="pwa-popup-feature-text">
+                    <strong>Notif Realtime</strong>
+                    <span>Update grup &amp; deploy langsung ke HP.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pwa-popup-actions">
+            <button class="pwa-popup-btn-install" id="pwa-popup-install">
+                <i class="fa-solid fa-download"></i>
+                <span>Install Sekarang</span>
+            </button>
+            <button class="pwa-popup-btn-later" id="pwa-popup-later">
+                Nanti aja
+            </button>
+        </div>
+    </div>
+</div>
 <!-- ============ TOAST ============ -->
 <div id="toast"></div>
 
@@ -7338,6 +8033,226 @@ window.diagnoseEkk = async function() {
     console.log('═══════════ END ═══════════');
 };
 console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', 'color:#8b5cf6;font-weight:bold;font-size:12px;');
+/* ============================================================
+   PWA INSTALL FLOW — Popup + Halaman Download
+============================================================ */
+(function initPWAInstallFlow() {
+    'use strict';
+
+    const INSTALL_KEY = 'ekk_pwa_installed_v1';
+    const POPUP_DISMISS_KEY = 'ekk_pwa_popup_dismissed_v1';
+    const POPUP_DELAY_MS = 3500;        // Muncul 3.5 detik setelah load
+    const POPUP_RESHOW_DAYS = 7;        // Muncul lagi 7 hari kalau dismiss
+
+    let deferredPrompt = null;
+
+    function isInstalled() {
+        if (window.matchMedia('(display-mode: standalone)').matches) return true;
+        if (window.navigator.standalone === true) return true;
+        if (localStorage.getItem(INSTALL_KEY) === '1') return true;
+        return false;
+    }
+
+    function canShowPopup() {
+        if (isInstalled()) return false;
+        const dismissedAt = localStorage.getItem(POPUP_DISMISS_KEY);
+        if (!dismissedAt) return true;
+        const daysPassed = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
+        return daysPassed >= POPUP_RESHOW_DAYS;
+    }
+
+    // ============================================================
+    // BEFOREINSTALLPROMPT — Chrome kasih event ini kalau PWA installable
+    // ============================================================
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('[PWA] beforeinstallprompt triggered');
+        e.preventDefault();
+        deferredPrompt = e;
+        updateInstallUI();
+        maybeShowPopup();
+    });
+
+    // ============================================================
+    // APPINSTALLED — Fires setelah user install
+    // ============================================================
+    window.addEventListener('appinstalled', () => {
+        console.log('[PWA] appinstalled');
+        localStorage.setItem(INSTALL_KEY, '1');
+        deferredPrompt = null;
+        updateInstallUI();
+        hidePopup();
+        if (typeof window.showToast === 'function') {
+            window.showToast('Ekk Store berhasil diinstall! 🎉', 'success');
+        }
+    });
+
+    // ============================================================
+    // UPDATE UI — Tombol di halaman download + badge installed
+    // ============================================================
+    function updateInstallUI() {
+        const btn = document.getElementById('dl-install-btn');
+        const btnText = document.getElementById('dl-install-text');
+        const badge = document.getElementById('dl-installed-badge');
+        if (!btn) return;
+
+        if (isInstalled()) {
+            btn.style.display = 'none';
+            if (badge) badge.classList.add('visible');
+            return;
+        }
+
+        btn.style.display = 'inline-flex';
+        if (badge) badge.classList.remove('visible');
+
+        if (deferredPrompt) {
+            btn.disabled = false;
+            btn.style.opacity = '';
+            if (btnText) btnText.textContent = 'Install Sekarang';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            if (btnText) btnText.textContent = 'Buka 2x untuk aktifkan';
+        }
+    }
+
+    // ============================================================
+    // TRIGGER INSTALL
+    // ============================================================
+    async function triggerInstall() {
+        if (!deferredPrompt) {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Install belum siap. Refresh & buka web 2x.', 'info');
+            }
+            return false;
+        }
+        try {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('[PWA] User choice:', outcome);
+            if (outcome === 'accepted') {
+                localStorage.setItem(INSTALL_KEY, '1');
+                hidePopup();
+                updateInstallUI();
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Terima kasih! Cek home screen HP lu.', 'success');
+                }
+                return true;
+            } else {
+                // User dismiss → catat waktu biar popup gak muncul-terus
+                localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
+                hidePopup();
+                return false;
+            }
+        } catch (e) {
+            console.warn('[PWA] Install error:', e);
+            return false;
+        } finally {
+            deferredPrompt = null;
+            updateInstallUI();
+        }
+    }
+
+    // ============================================================
+    // POPUP CONTROL
+    // ============================================================
+    function showPopup() {
+        const overlay = document.getElementById('pwa-popup-overlay');
+        if (!overlay) return;
+        overlay.classList.add('active');
+        document.body.classList.add('modal-open');
+    }
+
+    function hidePopup() {
+        const overlay = document.getElementById('pwa-popup-overlay');
+        if (!overlay) return;
+        overlay.classList.remove('active');
+        if (!document.querySelector('.modal-overlay.active') && !document.getElementById('attach-menu-overlay')?.classList.contains('active')) {
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    function maybeShowPopup() {
+        if (!canShowPopup()) return;
+        if (deferredPrompt && !window._pwaPopupScheduled) {
+            window._pwaPopupScheduled = true;
+            setTimeout(() => {
+                window._pwaPopupScheduled = false;
+                if (canShowPopup() && deferredPrompt) {
+                    showPopup();
+                }
+            }, POPUP_DELAY_MS);
+        }
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        updateInstallUI();
+
+        // Tombol install di halaman download
+        const dlBtn = document.getElementById('dl-install-btn');
+        if (dlBtn) {
+            dlBtn.addEventListener('click', triggerInstall);
+        }
+
+        // Tombol install di popup
+        const popupInstallBtn = document.getElementById('pwa-popup-install');
+        if (popupInstallBtn) {
+            popupInstallBtn.addEventListener('click', triggerInstall);
+        }
+
+        // Tombol close popup (X)
+        const popupCloseBtn = document.getElementById('pwa-popup-close');
+        if (popupCloseBtn) {
+            popupCloseBtn.addEventListener('click', () => {
+                localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
+                hidePopup();
+            });
+        }
+
+        // Tombol "Nanti aja"
+        const laterBtn = document.getElementById('pwa-popup-later');
+        if (laterBtn) {
+            laterBtn.addEventListener('click', () => {
+                localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
+                hidePopup();
+            });
+        }
+
+        // Klik overlay gelap untuk close
+        const overlay = document.getElementById('pwa-popup-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    localStorage.setItem(POPUP_DISMISS_KEY, Date.now().toString());
+                    hidePopup();
+                }
+            });
+        }
+
+        // Update UI saat masuk halaman download
+        const dlMenuItems = document.querySelectorAll('[data-page="download"]');
+        dlMenuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                setTimeout(updateInstallUI, 200);
+            });
+        });
+    });
+
+    // Handle klik via navigateTo juga
+    const origNavigate = window.navigateTo;
+    if (typeof origNavigate === 'function') {
+        window.navigateTo = function(page) {
+            origNavigate(page);
+            if (page === 'download') {
+                setTimeout(updateInstallUI, 200);
+            }
+        };
+    }
+
+    console.log('[PWA] Install flow initialized');
+})();
 </script>
 <script>
 /* ============================================================
