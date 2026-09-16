@@ -1,7 +1,7 @@
 {
   "id": "/?source=pwa",
   "name": "Ekk Store — Deployment Platform",
-  "short_name": "Ekk Store",
+  "short_name": "Deploy Project",
   "description": "Deploy website HTML/ZIP gratis, cepat, dan aman.",
   "start_url": "/?source=pwa",
   "scope": "/",
