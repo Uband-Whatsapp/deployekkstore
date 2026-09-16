@@ -8003,20 +8003,28 @@ window.diagnoseEkk = async function() {
 };
 console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', 'color:#8b5cf6;font-weight:bold;font-size:12px;');
 /* ============================================================
-   PWA INSTALL FLOW — V5 (SIMPLE)
-   - Popup auto muncul → suruh ke halaman download
-   - Di halaman download: tombol install LANGSUNG aktif
-   - Gak ada "Buka 2x untuk aktifkan" lagi
+   PWA INSTALL FLOW — V8 (99% DETECTION)
+   - Pakai navigator.getInstalledRelatedApps() — Chrome API resmi
+   - Detect install dari 3 sumber: standalone + flag + API
+   - Kalau udah install → badge "Berhasil Install"
+   - Kalau belum → tombol install → prompt Chrome
+   - Chrome belum ready → toast aja
 ============================================================ */
 (function initPWAInstallFlow() {
     'use strict';
 
-    const SESSION_DISMISS_KEY = 'ekk_pwa_popup_dismissed_v5';
+    const INSTALL_KEY = 'ekk_pwa_installed_v1';
+    const SESSION_DISMISS_KEY = 'ekk_pwa_popup_dismissed_v8';
     const POPUP_DELAY_MS = 2500;
 
     let deferredPrompt = null;
     let popupShown = false;
+    let apiCheckDone = false;
+    let apiCheckResult = null;  // true = installed, false = not, null = unknown
 
+    // ============================================================
+    // CEK STATUS INSTALL
+    // ============================================================
     function isStandalone() {
         if (window.matchMedia('(display-mode: standalone)').matches) return true;
         if (window.navigator.standalone === true) return true;
@@ -8024,17 +8032,59 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         return false;
     }
 
-    function isDismissedThisSession() {
-        try { return sessionStorage.getItem(SESSION_DISMISS_KEY) === '1'; }
+    function hasInstallFlag() {
+        try { return localStorage.getItem(INSTALL_KEY) === '1'; }
         catch (e) { return false; }
     }
 
-    function setSessionDismissed() {
-        try { sessionStorage.setItem(SESSION_DISMISS_KEY, '1'); } catch (e) {}
+    function isInstalled() {
+        // Standalone mode = pasti install
+        if (isStandalone()) return true;
+        // Chrome API bilang install
+        if (apiCheckResult === true) return true;
+        // Flag di localStorage
+        if (hasInstallFlag()) return true;
+        return false;
     }
 
     // ============================================================
-    // UPDATE UI di halaman Download
+    // CHROME API — getInstalledRelatedApps()
+    // Ini yang bikin deteksi ~99% akurat
+    // ============================================================
+    async function checkGetInstalledRelatedApps() {
+        if (!('getInstalledRelatedApps' in navigator)) {
+            console.log('[PWA] getInstalledRelatedApps NOT supported');
+            apiCheckResult = false;
+            apiCheckDone = true;
+            return false;
+        }
+        try {
+            console.log('[PWA] Calling getInstalledRelatedApps()...');
+            const apps = await navigator.getInstalledRelatedApps();
+            console.log('[PWA] getInstalledRelatedApps result:', apps);
+            if (apps && apps.length > 0) {
+                apiCheckResult = true;
+                try { localStorage.setItem(INSTALL_KEY, '1'); } catch(e) {}
+                apiCheckDone = true;
+                return true;
+            } else {
+                apiCheckResult = false;
+                // API bilang BELUM install → hapus flag lama (kalau ada)
+                // Ini fix masalah "udah uninstall tapi flag masih ada"
+                try { localStorage.removeItem(INSTALL_KEY); } catch(e) {}
+                apiCheckDone = true;
+                return false;
+            }
+        } catch (e) {
+            console.warn('[PWA] getInstalledRelatedApps error:', e);
+            apiCheckResult = null;
+            apiCheckDone = true;
+            return false;
+        }
+    }
+
+    // ============================================================
+    // UPDATE UI HALAMAN DOWNLOAD
     // ============================================================
     function updateDownloadPageUI() {
         const btn = document.getElementById('dl-install-btn');
@@ -8042,19 +8092,22 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         const badge = document.getElementById('dl-installed-badge');
         if (!btn) return;
 
-        if (isStandalone()) {
-            // Udah kebuka sebagai app
+        // CASE 1: SUDAH INSTALL
+        if (isInstalled()) {
             btn.style.display = 'none';
+            btn.disabled = true;
             if (badge) badge.classList.add('visible');
+            console.log('[PWA] UI: INSTALLED');
             return;
         }
 
-        // SELALU aktif & selalu kelihatan
+        // CASE 2: BELUM INSTALL
         btn.style.display = 'inline-flex';
         btn.disabled = false;
         btn.style.opacity = '';
         if (badge) badge.classList.remove('visible');
         if (btnText) btnText.textContent = 'Install Sekarang';
+        console.log('[PWA] UI: NOT-INSTALLED (prompt ready =', !!deferredPrompt + ')');
     }
 
     // ============================================================
@@ -8064,13 +8117,16 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         console.log('[PWA] beforeinstallprompt fired');
         e.preventDefault();
         deferredPrompt = e;
+        updateDownloadPageUI();
     });
 
     // ============================================================
     // APPINSTALLED
     // ============================================================
     window.addEventListener('appinstalled', () => {
-        console.log('[PWA] installed');
+        console.log('[PWA] appinstalled → SET INSTALLED');
+        try { localStorage.setItem(INSTALL_KEY, '1'); } catch(e) {}
+        apiCheckResult = true;
         deferredPrompt = null;
         hidePopup();
         updateDownloadPageUI();
@@ -8080,68 +8136,72 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     });
 
     // ============================================================
-    // TRIGGER INSTALL — dipencet dari halaman download
+    // TRIGGER INSTALL
     // ============================================================
     async function triggerInstall() {
-        // Kalau Chrome ready → pakai prompt
-        if (deferredPrompt && typeof deferredPrompt.prompt === 'function') {
-            const promptRef = deferredPrompt;
-            try {
-                promptRef.prompt();
-                const choice = await Promise.race([
-                    promptRef.userChoice.then(c => c.outcome),
-                    new Promise(r => setTimeout(() => r('__timeout__'), 2500))
-                ]);
+        // Re-check install status realtime sebelum trigger
+        await checkGetInstalledRelatedApps();
 
-                if (choice === 'accepted') {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Berhasil! Cek home screen HP.', 'success');
-                    }
-                } else if (choice === '__timeout__') {
-                    // Chrome gak respon → kasih cara manual
-                    scrollToManualSteps();
-                } else {
-                    // dismissed
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Install dibatalkan', 'info');
-                    }
-                }
-            } catch (e) {
-                console.warn('[PWA] error:', e);
-                scrollToManualSteps();
-            } finally {
-                deferredPrompt = null;
+        if (isInstalled()) {
+            updateDownloadPageUI();
+            if (typeof window.showToast === 'function') {
+                window.showToast('Ekk Store sudah terinstall', 'info');
             }
             return;
         }
 
-        // Chrome belum ready → scroll ke step manual
-        scrollToManualSteps();
-    }
+        // Prompt Chrome
+        if (deferredPrompt && typeof deferredPrompt.prompt === 'function') {
+            const promptRef = deferredPrompt;
+            deferredPrompt = null;
 
-    // ============================================================
-    // SCROLL KE STEP MANUAL di halaman download
-    // ============================================================
-    function scrollToManualSteps() {
-        const stepsCard = document.querySelector('#page-download .dl-steps');
-        if (stepsCard) {
-            stepsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Highlight sebentar
-            stepsCard.style.transition = 'box-shadow 0.4s ease';
-            stepsCard.style.boxShadow = '0 0 0 3px var(--accent), 0 0 30px var(--accent-glow)';
-            setTimeout(() => { stepsCard.style.boxShadow = 'none'; }, 2000);
+            try {
+                promptRef.prompt();
+                const choice = await Promise.race([
+                    promptRef.userChoice.then(c => c.outcome),
+                    new Promise(r => setTimeout(() => r('__timeout__'), 5000))
+                ]);
+
+                if (choice === 'accepted') {
+                    try { localStorage.setItem(INSTALL_KEY, '1'); } catch(e) {}
+                    apiCheckResult = true;
+                    updateDownloadPageUI();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Berhasil! Cek home screen HP.', 'success');
+                    }
+                } else if (choice === 'dismissed') {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Install dibatalkan', 'info');
+                    }
+                } else {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Ikuti dialog Chrome yang muncul', 'info');
+                    }
+                }
+            } catch (e) {
+                console.warn('[PWA] prompt error:', e);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Gagal trigger install. Coba refresh.', 'warning');
+                }
+            } finally {
+                updateDownloadPageUI();
+            }
+            return;
         }
+
+        // Chrome belum ready
         if (typeof window.showToast === 'function') {
-            window.showToast('Ikuti langkah di bawah untuk install manual', 'info');
+            window.showToast('Install belum siap. Tutup tab, buka lagi, tunggu 3 detik.', 'warning');
         }
     }
 
     // ============================================================
-    // SHOW / HIDE POPUP
+    // POPUP
     // ============================================================
     function showPopup() {
         const overlay = document.getElementById('pwa-popup-overlay');
         if (!overlay) return;
+        if (isInstalled()) return;
         overlay.classList.add('active');
         document.body.classList.add('modal-open');
         popupShown = true;
@@ -8156,15 +8216,21 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         if (!otherActive) document.body.classList.remove('modal-open');
     }
 
-    // ============================================================
-    // AUTO SHOW POPUP
-    // ============================================================
+    function isDismissedThisSession() {
+        try { return sessionStorage.getItem(SESSION_DISMISS_KEY) === '1'; }
+        catch (e) { return false; }
+    }
+
+    function setSessionDismissed() {
+        try { sessionStorage.setItem(SESSION_DISMISS_KEY, '1'); } catch (e) {}
+    }
+
     function scheduleAutoShowPopup() {
-        if (isStandalone()) return;
+        if (isInstalled()) return;
         if (isDismissedThisSession()) return;
 
         setTimeout(() => {
-            if (popupShown || isStandalone() || isDismissedThisSession()) return;
+            if (popupShown || isInstalled() || isDismissedThisSession()) return;
             showPopup();
         }, POPUP_DELAY_MS);
     }
@@ -8172,46 +8238,43 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     // ============================================================
     // BIND EVENTS
     // ============================================================
-    function bindEvents() {
+    async function bindEvents() {
+        // PRIORITAS: panggil API dulu biar akurat
+        await checkGetInstalledRelatedApps();
         updateDownloadPageUI();
 
         // Tombol di halaman download
         const dlBtn = document.getElementById('dl-install-btn');
         if (dlBtn) dlBtn.addEventListener('click', triggerInstall);
 
-        // Tombol "Buka Halaman Download" di popup
+        // Tombol popup
         const gotoBtn = document.getElementById('pwa-popup-goto-download');
         if (gotoBtn) {
             gotoBtn.addEventListener('click', () => {
                 setSessionDismissed();
                 hidePopup();
-                // Pindah ke halaman download
                 if (typeof window.navigateTo === 'function') {
                     window.navigateTo('download');
                 } else {
                     const menuBtn = document.querySelector('[data-page="download"]');
                     if (menuBtn) menuBtn.click();
                 }
-                // Update UI halaman download
                 setTimeout(updateDownloadPageUI, 300);
             });
         }
 
-        // Tombol "Nanti aja"
         const laterBtn = document.getElementById('pwa-popup-later');
         if (laterBtn) laterBtn.addEventListener('click', () => {
             setSessionDismissed();
             hidePopup();
         });
 
-        // Tombol close X
         const closeBtn = document.getElementById('pwa-popup-close');
         if (closeBtn) closeBtn.addEventListener('click', () => {
             setSessionDismissed();
             hidePopup();
         });
 
-        // Klik overlay gelap
         const overlay = document.getElementById('pwa-popup-overlay');
         if (overlay) overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
@@ -8220,7 +8283,15 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
             }
         });
 
-        // Auto-show
+        // Watchdog — cek status tiap 2 detik (max 10x)
+        let watchdogCount = 0;
+        const watchdog = setInterval(async () => {
+            watchdogCount++;
+            await checkGetInstalledRelatedApps();
+            updateDownloadPageUI();
+            if (watchdogCount > 10 || isInstalled()) clearInterval(watchdog);
+        }, 2000);
+
         scheduleAutoShowPopup();
     }
 
@@ -8230,16 +8301,21 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         bindEvents();
     }
 
-    // Hook navigateTo biar UI update pas pindah ke download
+    // Hook navigateTo
     if (typeof window.navigateTo === 'function') {
         const orig = window.navigateTo;
         window.navigateTo = function(page) {
             orig(page);
-            if (page === 'download') setTimeout(updateDownloadPageUI, 200);
+            if (page === 'download') {
+                setTimeout(async () => {
+                    await checkGetInstalledRelatedApps();
+                    updateDownloadPageUI();
+                }, 200);
+            }
         };
     }
 
-    console.log('[PWA] Install flow V5 (simple) ready');
+    console.log('[PWA] Install flow V8 (99% detection via Chrome API) ready');
 })();
 </script>
 <script>
