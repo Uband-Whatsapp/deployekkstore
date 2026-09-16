@@ -1,8 +1,9 @@
 {
+  "id": "/?source=pwa",
   "name": "Ekk Store — Deployment Platform",
   "short_name": "Ekk Store",
   "description": "Deploy website HTML/ZIP gratis, cepat, dan aman.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -29,6 +30,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "/manifest.json"
     }
   ],
   "prefer_related_applications": false
