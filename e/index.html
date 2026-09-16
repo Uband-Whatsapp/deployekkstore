@@ -8003,17 +8003,18 @@ window.diagnoseEkk = async function() {
 };
 console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', 'color:#8b5cf6;font-weight:bold;font-size:12px;');
 /* ============================================================
-   /* ============================================================
-   PWA INSTALL FLOW — V13 (FINAL + PAGE-AWARE POPUP)
-   - Popup muncul kalau ready + belum install + BUKAN di halaman Download
-   - Kalau ready pas di Download → tahan popup, muncul saat pindah menu
-   - Dismiss → jangan muncul lagi sampai user refresh
+   PWA INSTALL FLOW — V14 (OPTIMISTIC TAB-2)
+   - Tab 2 langsung tampil "Install Sekarang" (kalau tab 1 udah ready)
+   - Fallback ke "Menyiapkan Install..." kalau 3 detik Chrome gak fire
+   - Popup cuma muncul kalau ready + belum install + bukan di Download
 ============================================================ */
 (function initPWAInstallFlow() {
     'use strict';
 
     const INSTALL_KEY = 'ekk_pwa_installed_v1';
+    const PROMPT_READY_KEY = 'ekk_pwa_prompt_ready_v1';  // ← flag baru
     const RETRY_INTERVAL_MS = 4000;
+    const OPTIMISTIC_TIMEOUT_MS = 3000;  // 3 detik optimistik
 
     let deferredPrompt = null;
     let popupShown = false;
@@ -8021,11 +8022,12 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     let retryInterval = null;
 
     // In-memory only — reset setiap refresh page
-    // Jadi kalau user refresh, popup muncul lagi
     let dismissedThisLoad = false;
-
-    // Kalau ready pas di halaman Download, tahan popup
     let pendingPopup = false;
+
+    // Optimistic state — dianggap ready padahal belum tentu
+    let optimisticReady = false;
+    let optimisticTimer = null;
 
     // ============================================================
     // CEK STATUS INSTALL
@@ -8040,6 +8042,19 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     function hasInstallFlag() {
         try { return localStorage.getItem(INSTALL_KEY) === '1'; }
         catch (e) { return false; }
+    }
+
+    function hasPromptReadyFlag() {
+        try { return localStorage.getItem(PROMPT_READY_KEY) === '1'; }
+        catch (e) { return false; }
+    }
+
+    function setPromptReadyFlag() {
+        try { localStorage.setItem(PROMPT_READY_KEY, '1'); } catch(e) {}
+    }
+
+    function clearPromptReadyFlag() {
+        try { localStorage.removeItem(PROMPT_READY_KEY); } catch(e) {}
     }
 
     function isInstalled() {
@@ -8071,13 +8086,8 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         }
     }
 
-    // ============================================================
-    // CEK: lagi di halaman Download?
-    // ============================================================
     function isOnDownloadPage() {
-        // Cek via global currentPage (dari navigateTo)
         if (typeof window.currentPage !== 'undefined' && window.currentPage === 'download') return true;
-        // Fallback: cek element #page-download aktif
         const page = document.getElementById('page-download');
         if (page && page.classList.contains('active')) return true;
         return false;
@@ -8104,8 +8114,8 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         btn.style.display = 'inline-flex';
         if (badge) badge.classList.remove('visible');
 
-        // Sub-state 2A: READY → tombol aktif
-        if (deferredPrompt) {
+        // Sub-state 2A: READY (beneran ATAU optimistic)
+        if (deferredPrompt || optimisticReady) {
             btn.disabled = false;
             btn.style.opacity = '';
             btn.style.cursor = 'pointer';
@@ -8133,37 +8143,43 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     }
 
     // ============================================================
-    // TRY SHOW POPUP — cek semua syarat
+    // OPTIMISTIC MODE — Tab baru yang "mungkin" udah ready
+    // ============================================================
+    function enterOptimisticMode() {
+        if (deferredPrompt || optimisticReady || isInstalled()) return;
+        console.log('[PWA] Enter OPTIMISTIC mode (tab baru)');
+        optimisticReady = true;
+        updateDownloadPageUI();
+
+        // Timer: kalau Chrome gak fire dalam 3 detik, balik ke Menyiapkan
+        clearTimeout(optimisticTimer);
+        optimisticTimer = setTimeout(() => {
+            if (!deferredPrompt) {
+                console.log('[PWA] Optimistic timeout — fallback to Menyiapkan');
+                optimisticReady = false;
+                updateDownloadPageUI();
+            }
+        }, OPTIMISTIC_TIMEOUT_MS);
+    }
+
+    function exitOptimisticMode() {
+        optimisticReady = false;
+        clearTimeout(optimisticTimer);
+        optimisticTimer = null;
+    }
+
+    // ============================================================
+    // TRY SHOW POPUP
     // ============================================================
     function tryShowPopup() {
-        // Syarat 1: Chrome ready
-        if (!deferredPrompt) {
-            console.log('[PWA] Skip popup: prompt belum ready');
-            return false;
-        }
-        // Syarat 2: Belum install
-        if (isInstalled()) {
-            console.log('[PWA] Skip popup: sudah install');
-            return false;
-        }
-        // Syarat 3: Belum dismiss di page load ini
-        if (dismissedThisLoad) {
-            console.log('[PWA] Skip popup: sudah dismissed di load ini');
-            return false;
-        }
-        // Syarat 4: JANGAN di halaman Download
+        if (!deferredPrompt) return false;
+        if (isInstalled()) return false;
+        if (dismissedThisLoad) return false;
         if (isOnDownloadPage()) {
-            console.log('[PWA] Skip popup: lagi di halaman Download (ditahan)');
             pendingPopup = true;
             return false;
         }
-        // Syarat 5: Popup belum kebuka
-        if (popupShown) {
-            return false;
-        }
-
-        // Semua syarat terpenuhi → show
-        console.log('[PWA] ✅ Semua syarat OK — show popup');
+        if (popupShown) return false;
         pendingPopup = false;
         showPopup();
         return true;
@@ -8203,6 +8219,12 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         e.preventDefault();
         deferredPrompt = e;
 
+        // Set flag — biar tab baru lain tau kalau browser ini udah support
+        setPromptReadyFlag();
+
+        // Exit optimistic — sekarang beneran ready
+        exitOptimisticMode();
+
         if (retryInterval) {
             clearInterval(retryInterval);
             retryInterval = null;
@@ -8210,7 +8232,6 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
 
         updateDownloadPageUI();
 
-        // Coba show popup (kalau lagi di Download → ditahan)
         setTimeout(() => {
             tryShowPopup();
         }, 500);
@@ -8224,6 +8245,7 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         try { localStorage.setItem(INSTALL_KEY, '1'); } catch(e) {}
         apiCheckResult = true;
         deferredPrompt = null;
+        exitOptimisticMode();
         hidePopup();
         updateDownloadPageUI();
         if (typeof window.showToast === 'function') {
@@ -8243,6 +8265,26 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
             return;
         }
 
+        // Kalau cuma optimistic (belum beneran ready)
+        if (!deferredPrompt && optimisticReady) {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Menyiapkan... tunggu sebentar.', 'info');
+            }
+            // Kasih waktu Chrome fire event
+            setTimeout(() => {
+                if (deferredPrompt) {
+                    // Setelah ready, langsung trigger
+                    triggerInstall();
+                } else {
+                    // Masih belum ready → balik ke Menyiapkan
+                    exitOptimisticMode();
+                    updateDownloadPageUI();
+                }
+            }, 1500);
+            return;
+        }
+
+        // READY → install
         if (deferredPrompt && typeof deferredPrompt.prompt === 'function') {
             const promptRef = deferredPrompt;
             deferredPrompt = null;
@@ -8279,6 +8321,7 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
             return;
         }
 
+        // MENYIAPKAN
         if (typeof window.showToast === 'function') {
             window.showToast('Chrome sedang menyiapkan. Tunggu sambil scroll halaman ini.', 'info');
         }
@@ -8293,7 +8336,7 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         if (!overlay) return;
         if (isInstalled()) return;
         if (!deferredPrompt) return;
-        if (isOnDownloadPage()) return;  // double-check
+        if (isOnDownloadPage()) return;
         overlay.classList.add('active');
         document.body.classList.add('modal-open');
         popupShown = true;
@@ -8315,6 +8358,13 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         await checkGetInstalledRelatedApps();
         updateDownloadPageUI();
 
+        // === OPTIMISTIC CHECK ===
+        // Kalau flag ada (artinya tab 1 pernah ready) → langsung optimistic
+        if (!deferredPrompt && !isInstalled() && hasPromptReadyFlag()) {
+            console.log('[PWA] Prompt ready flag found → enter optimistic mode');
+            enterOptimisticMode();
+        }
+
         if (!deferredPrompt && !isInstalled()) {
             startBackgroundRetry();
         }
@@ -8325,7 +8375,6 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         const gotoBtn = document.getElementById('pwa-popup-goto-download');
         if (gotoBtn) {
             gotoBtn.addEventListener('click', () => {
-                // Set dismissed supaya gak muncul lagi
                 dismissedThisLoad = true;
                 hidePopup();
                 if (typeof window.navigateTo === 'function') {
@@ -8365,19 +8414,13 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         bindEvents();
     }
 
-    // ============================================================
-    // HOOK navigateTo — DETEKSI PINDAH MENU
-    // Kalau user pindah dari Download ke menu lain → cek pending popup
-    // ============================================================
+    // Hook navigateTo
     if (typeof window.navigateTo === 'function') {
         const origNavigateTo = window.navigateTo;
         window.navigateTo = function(page) {
             origNavigateTo(page);
-
-            // Update global currentPage juga (biar deteksi akurat)
             window.currentPage = page;
 
-            // Kalau pindah ke Download → update UI
             if (page === 'download') {
                 setTimeout(async () => {
                     await checkGetInstalledRelatedApps();
@@ -8389,9 +8432,7 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
                 return;
             }
 
-            // Kalau pindah ke menu LAIN → cek pending popup
             if (pendingPopup && deferredPrompt && !isInstalled() && !dismissedThisLoad) {
-                console.log('[PWA] Pindah dari Download → coba show pending popup');
                 setTimeout(() => {
                     tryShowPopup();
                 }, 400);
@@ -8399,13 +8440,10 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         };
     }
 
-    // Init currentPage global (kalau belum ada)
     if (typeof window.currentPage === 'undefined') {
         window.currentPage = 'home';
     }
 
-    // Kalau page ke-render dan ada popup yang pending dari beforeinstallprompt
-    // (misal Chrome ready sangat cepat sebelum navigateTo ke-hook)
     window.addEventListener('load', () => {
         setTimeout(() => {
             if (deferredPrompt && !isInstalled() && !dismissedThisLoad && !popupShown) {
@@ -8414,7 +8452,7 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         }, 1000);
     });
 
-    console.log('[PWA] Install flow V13 (page-aware popup) ready');
+    console.log('[PWA] Install flow V14 (optimistic tab-2) ready');
 })();
 </script>
 <script>
