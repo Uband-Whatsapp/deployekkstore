@@ -86,11 +86,11 @@
     --text-faint: #52525e;
 
     /* Accent — PURPLE (branding Ekk Store) */
-    --accent: #8b5cf6;
-    --accent-hover: #a78bfa;
-    --accent-press: #7c3aed;
-    --accent-glow: rgba(139, 92, 246, 0.28);
-    --accent-soft: #1e1a2e;
+    --accent: #f97316;                                    /* 🟠 ORANGE */
+    --accent-hover: #fb923c;                              /* 🟠 orange muda */
+    --accent-press: #ea580c;                              /* 🟠 orange gelap */
+    --accent-glow: rgba(249, 115, 22, 0.28);              /* 🟠 orange transparan */
+    --accent-soft: #2a1e16;                               /* 🟠 orange soft */
 
     /* Status colors */
     --success: #22d3a8;
@@ -121,7 +121,7 @@
     --shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
     --shadow: 0 8px 28px rgba(0,0,0,0.55);
     --shadow-lg: 0 20px 60px rgba(0,0,0,0.7);
-    --shadow-accent: 0 8px 28px rgba(139, 92, 246, 0.28);
+    --shadow-accent: 0 8px 28px rgba(249, 115, 22, 0.28);
 
     /* Motion */
     --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -208,7 +208,7 @@ ul { list-style: none; }
     inset: 0;
     z-index: 999999;
     background:
-        radial-gradient(ellipse at top, rgba(139, 92, 246, 0.08), transparent 60%),
+        radial-gradient(ellipse at top, rgba(249, 115, 22, 0.08), transparent 60%),
         var(--bg);
     display: flex;
     align-items: center;
@@ -245,7 +245,7 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.35);
+    box-shadow: 0 10px 30px rgba(249, 115, 22, 0.35);
 }
 .gate-logo i { font-size: 28px; color: #fff; }
 .gate-steps {
@@ -373,7 +373,7 @@ ul { list-style: none; }
     display: inline-block;
     width: 14px;
     height: 14px;
-    border: 2.5px solid rgba(139, 92, 246, 0.2);
+    border: 2.5px solid rgba(249, 115, 22, 0.2);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
@@ -881,14 +881,14 @@ ul { list-style: none; }
     min-width: 44px;
     border-radius: 12px;
     background: var(--accent-soft);
-    border: 1px solid rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(249, 115, 22, 0.18);
     color: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
     flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.14);
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.14);
 }
 .page-header-text {
     display: flex;
@@ -917,7 +917,7 @@ ul { list-style: none; }
     border-radius: 999px;
     background: var(--accent-soft);
     color: var(--accent);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(249, 115, 22, 0.25);
     line-height: 1;
 }
 .page-header p {
@@ -1428,8 +1428,8 @@ ul { list-style: none; }
 .status-step.active {
     color: var(--accent);
     font-weight: 600;
-    border-color: rgba(139, 92, 246, 0.15);
-    background: rgba(139, 92, 246, 0.05);
+    border-color: rgba(249, 115, 22, 0.15);
+    background: rgba(249, 115, 22, 0.05);
 }
 .status-step.active .step-indicator {
     border-color: var(--accent);
@@ -1707,8 +1707,8 @@ ul { list-style: none; }
    ANNOUNCEMENT / CTA
    ============================================================ */
 .announcement-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(139, 92, 246, 0.03));
-    border: 1px solid rgba(139, 92, 246, 0.24);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.14), rgba(249, 115, 22, 0.03));
+    border: 1px solid rgba(249, 115, 22, 0.24);
     border-radius: var(--radius-lg);
     padding: 16px;
     width: 100%;
@@ -1721,7 +1721,7 @@ ul { list-style: none; }
 }
 .announcement-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 4px 24px rgba(139, 92, 246, 0.12);
+    box-shadow: 0 4px 24px rgba(249, 115, 22, 0.12);
 }
 .announcement-icon {
     flex: 0 0 46px;
@@ -1730,7 +1730,7 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(139, 92, 246, 0.14);
+    background: rgba(249, 115, 22, 0.14);
     border-radius: 12px;
     font-size: 22px;
     color: var(--accent);
@@ -1964,7 +1964,7 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(139, 92, 246, 0.10);
+    background: rgba(249, 115, 22, 0.10);
     color: var(--accent);
     font-size: 17px;
     flex-shrink: 0;
@@ -3550,8 +3550,8 @@ ul { list-style: none; }
     padding: 10px 12px;
     width: 100%;
     box-sizing: border-box;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(139, 92, 246, 0.02));
-    border: 1px solid rgba(139, 92, 246, 0.14);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.06), rgba(249, 115, 22, 0.02));
+    border: 1px solid rgba(249, 115, 22, 0.14);
     border-radius: 14px;
 }
 .group-header-info {
@@ -3617,7 +3617,7 @@ ul { list-style: none; }
     color: #fff;
     font-size: 7px;
     flex-shrink: 0;
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15);
 }
 .group-meta-row {
     display: flex;
@@ -3875,7 +3875,7 @@ ul { list-style: none; }
     padding: 16px 18px 14px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), transparent);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), transparent);
 }
 .member-panel-title-row {
     display: flex;
@@ -4034,7 +4034,7 @@ ul { list-style: none; }
     background: var(--accent-soft);
     color: var(--accent);
     border-radius: 999px;
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(249, 115, 22, 0.25);
     text-transform: uppercase;
     line-height: 1;
 }
@@ -4101,7 +4101,7 @@ ul { list-style: none; }
     color: inherit;
     transition: all 0.15s ease;
 }
-.link-preview:hover { border-color: rgba(139, 92, 246, 0.4); }
+.link-preview:hover { border-color: rgba(249, 115, 22, 0.4); }
 .link-preview-image {
     width: 100%;
     height: 140px;
@@ -4298,7 +4298,7 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 12px 32px rgba(139, 92, 246, 0.35);
+    box-shadow: 0 12px 32px rgba(249, 115, 22, 0.35);
     overflow: hidden;
     position: relative;
 }
@@ -4396,12 +4396,12 @@ ul { list-style: none; }
     letter-spacing: -0.01em;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 8px 22px rgba(139, 92, 246, 0.35);
+    box-shadow: 0 8px 22px rgba(249, 115, 22, 0.35);
 }
 .pwa-popup-btn-install:hover:not(:disabled) {
     background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 12px 28px rgba(139, 92, 246, 0.45);
+    box-shadow: 0 12px 28px rgba(249, 115, 22, 0.45);
 }
 .pwa-popup-btn-install:active:not(:disabled) {
     transform: scale(0.98);
@@ -4431,8 +4431,8 @@ ul { list-style: none; }
    DOWNLOAD PAGE
 ============================================================ */
 .dl-hero {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(139, 92, 246, 0.02));
-    border: 1px solid rgba(139, 92, 246, 0.22);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.14), rgba(249, 115, 22, 0.02));
+    border: 1px solid rgba(249, 115, 22, 0.22);
     border-radius: var(--radius-xl);
     padding: 32px 20px 26px;
     text-align: center;
@@ -4448,7 +4448,7 @@ ul { list-style: none; }
     width: 180px;
     height: 180px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 70%);
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.15), transparent 70%);
     pointer-events: none;
 }
 .dl-hero-icon {
@@ -4460,7 +4460,7 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 16px 40px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 16px 40px rgba(249, 115, 22, 0.4);
     overflow: hidden;
     position: relative;
 }
@@ -4515,12 +4515,12 @@ ul { list-style: none; }
     letter-spacing: -0.01em;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 10px 26px rgba(139, 92, 246, 0.35);
+    box-shadow: 0 10px 26px rgba(249, 115, 22, 0.35);
 }
 .dl-install-btn:hover:not(:disabled) {
     background: var(--accent-hover);
     transform: translateY(-2px);
-    box-shadow: 0 14px 32px rgba(139, 92, 246, 0.45);
+    box-shadow: 0 14px 32px rgba(249, 115, 22, 0.45);
 }
 .dl-install-btn:active:not(:disabled) {
     transform: scale(0.98);
@@ -4630,7 +4630,7 @@ ul { list-style: none; }
     font-size: 14px;
     font-weight: 800;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 .dl-step-info {
     flex: 1;
@@ -8537,7 +8537,8 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     /* ============================================================
        STATE
     ============================================================ */
-    const PAGE_SIZE = 200;
+    const PAGE_SIZE = 200;       // buat pagination scroll ke atas (tetap)
+const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
     const TYPING_DEBOUNCE = 1500;
     const TYPING_CLEANUP = 3500;
     const LINK_PREVIEW_CACHE_TTL = 1000 * 60 * 60;
@@ -8769,26 +8770,38 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     }
 
     async function createProfile(uid, username, avatar) {
-        const db = getDb();
-        if (!db) return false;
-        try {
-            await db.collection('users').doc(uid).set({
-                uid: uid,
-                username: username,
-                usernameLower: username.toLowerCase(),
-                avatar: avatar || '',
-                avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                avatarUpdatedAtMs: Date.now(),
-                isOnline: true,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            return true;
-        } catch (e) {
-            console.error('[createProfile] Error:', e);
-            return false;
-        }
+    const db = getDb();
+    if (!db) return false;
+    try {
+        // 1. Buat user doc
+        await db.collection('users').doc(uid).set({
+            uid: uid,
+            username: username,
+            usernameLower: username.toLowerCase(),
+            avatar: avatar || '',
+            avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            avatarUpdatedAtMs: Date.now(),
+            isOnline: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 2. Kirim SYSTEM MESSAGE "bergabung" ke collection messages
+        await db.collection('messages').add({
+            type: 'join',              // penanda system message
+            senderId: uid,             // biar bisa ngecek "punya gue atau bukan"
+            username: username,
+            avatar: avatar || '',
+            text: '',                  // text di-kosongin, render via type
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        return true;
+    } catch (e) {
+        console.error('[createProfile] Error:', e);
+        return false;
     }
+}
 
     async function updateOnlineStatus(isOnline) {
         if (!currentUser) return;
@@ -9377,19 +9390,24 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
             bubble.style.borderTopRightRadius = '4px';
             bubbleWrapper.style.alignItems = 'flex-end';
         } else if (isSystem) {
-            bubble.style.background = 'transparent';
-            bubble.style.color = 'var(--text-muted)';
-            bubble.style.textAlign = 'center';
-            bubble.style.fontSize = '11px';
-            bubble.style.padding = '2px 0';
-            bubble.style.boxShadow = 'none';
-            bubbleWrapper.style.alignItems = 'center';
-            bubbleWrapper.style.maxWidth = '100%';
-        } else {
-            bubble.style.background = 'var(--bg-input)';
-            bubble.style.color = 'var(--text)';
-            bubble.style.borderTopLeftRadius = '4px';
-        }
+    bubble.style.background = 'transparent';
+    bubble.style.color = 'var(--text-muted)';
+    bubble.style.textAlign = 'center';
+    bubble.style.fontSize = '11px';
+    bubble.style.padding = '2px 0';
+    bubble.style.boxShadow = 'none';
+    bubbleWrapper.style.alignItems = 'center';
+    bubbleWrapper.style.maxWidth = '100%';
+} else if (isMine) {
+    bubble.style.background = 'var(--accent)';
+    bubble.style.color = '#fff';
+    bubble.style.borderTopRightRadius = '4px';
+    bubbleWrapper.style.alignItems = 'flex-end';
+} else {
+    bubble.style.background = 'var(--bg-input)';
+    bubble.style.color = 'var(--text)';
+    bubble.style.borderTopLeftRadius = '4px';
+}
 
         // Username (kecuali system & mine)
         if (!isSystem && !isMine) {
@@ -9482,13 +9500,22 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
         }
 
         // ---- Text ----
-        const textSpan = document.createElement('div');
-        textSpan.className = 'text-content';
+        // ---- Text ----
+const textSpan = document.createElement('div');
+textSpan.className = 'text-content';
 
-        let finalText = displayText;
-        if (isSystem && senderId === getMyUid() && data.type === 'join') {
-            finalText = 'Anda bergabung ke grup';
-        }
+let finalText = displayText;
+
+// Handle system message "bergabung"
+if (isSystem && data.type === 'join') {
+    if (senderId === getMyUid()) {
+        // Yang baru gabung lihat ini:
+        finalText = 'Anda bergabung ke grup ini';
+    } else {
+        // Orang lain lihat ini:
+        finalText = (data.username || 'Seseorang') + ' bergabung ke grup ini';
+    }
+}
 
         if (isDeletedMessage) {
             textSpan.innerHTML = getDeletedMessageHTML(deletedMessageType);
@@ -9924,17 +9951,17 @@ if (senderIdCheck === getMyUid()) {
         const list = document.getElementById('messages-list');
         if (list) list.innerHTML = '';
 
-        // Initial load: 200 pesan terbaru
-        db.collection('messages')
-            .orderBy('timestamp', 'desc')
-            .limit(PAGE_SIZE)
-            .get()
+       // Initial load: 10 pesan terbaru
+db.collection('messages')
+    .orderBy('timestamp', 'desc')
+    .limit(INITIAL_LOAD)
+    .get()
             .then(snapshot => {
                 const docs = snapshot.docs.reverse(); // asc order
 
                 if (docs.length > 0) {
                     oldestLoadedTs = docs[0].data().timestamp?.toMillis?.() || null;
-                    hasMoreOldMessages = docs.length === PAGE_SIZE;
+hasMoreOldMessages = docs.length === INITIAL_LOAD;
                 } else {
                     oldestLoadedTs = null;
                     hasMoreOldMessages = false;
@@ -9964,21 +9991,29 @@ if (senderIdCheck === getMyUid()) {
     }
 
     function startRealtimeListener() {
-        const db = getDb();
-        if (!db) return;
+    const db = getDb();
+    if (!db) return;
 
-        if (messagesUnsubscribe) {
-            try { messagesUnsubscribe(); } catch(e) {}
-        }
-
-        messagesUnsubscribe = db.collection('messages')
-            .orderBy('timestamp', 'asc')
-            .onSnapshot(snapshot => {
-                handleSnapshotChanges(snapshot);
-            }, err => {
-                console.error('[Chat] Realtime error:', err);
-            });
+    if (messagesUnsubscribe) {
+        try { messagesUnsubscribe(); } catch(e) {}
     }
+
+    // Query dasar
+    let query = db.collection('messages').orderBy('timestamp', 'asc');
+
+    // Kalau sudah ada cursor (oldestLoadedTs), mulai dari situ
+    // Artinya: jangan dengar pesan yang LEBIH TUA dari yang sudah di-load
+    if (oldestLoadedTs) {
+        query = query.startAt(new Date(oldestLoadedTs));
+    }
+
+    messagesUnsubscribe = query.onSnapshot(snapshot => {
+        // Pass cursor biar handleSnapshotChanges skip yang lebih tua
+        handleSnapshotChanges(snapshot, { skipOlderThan: oldestLoadedTs || 0 });
+    }, err => {
+        console.error('[Chat] Realtime error:', err);
+    });
+}
 
     /* ============================================================
        LOAD OLDER MESSAGES
@@ -10491,7 +10526,7 @@ if (senderIdCheck === getMyUid()) {
                 if (dx > 0) {
                     const t = Math.min(dx, 80);
                     swipeTargetElement.style.transform = 'translateX(' + t + 'px)';
-                    swipeTargetElement.style.background = 'rgba(139, 92, 246, 0.1)';
+                    swipeTargetElement.style.background = 'rgba(249, 115, 22, 0.1)';
                     swipeTargetElement.style.borderRadius = '8px';
                 } else {
                     const t = Math.max(dx, -80);
@@ -10548,7 +10583,7 @@ if (senderIdCheck === getMyUid()) {
             if (Math.abs(dx) > 10) {
                 if (dx > 0) {
                     mouseTarget.style.transform = 'translateX(' + Math.min(dx, 80) + 'px)';
-                    mouseTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                    mouseTarget.style.background = 'rgba(249, 115, 22, 0.1)';
                 } else {
                     mouseTarget.style.transform = 'translateX(' + Math.max(dx, -80) + 'px)';
                     mouseTarget.style.background = 'rgba(240, 97, 107, 0.1)';
