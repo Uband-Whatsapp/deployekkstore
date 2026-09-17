@@ -12154,8 +12154,12 @@ if (senderIdCheck === getMyUid()) {
     const messagesList = document.getElementById('messages-list');
     if (!chatCard || !chatInput) return;
 
-    const HEADER_H = 64;
+    const HEADER_H = 64; // tinggi #top-header (--header-h: 64px)
     let baseVH = vv ? vv.height : window.innerHeight;
+
+    function scrollBottom() {
+        if (messagesList) messagesList.scrollTop = messagesList.scrollHeight;
+    }
 
     function apply() {
         if (!vv) {
@@ -12169,6 +12173,7 @@ if (senderIdCheck === getMyUid()) {
             });
             return;
         }
+
         const vvH = vv.height;
         const vvTop = vv.offsetTop;
         const keyboardHeight = baseVH - vvH;
@@ -12180,28 +12185,36 @@ if (senderIdCheck === getMyUid()) {
         if (open) {
             const cardTop = vvTop + HEADER_H;
             const cardHeight = vvH - HEADER_H;
-            chatCard.style.position = 'fixed';
-            chatCard.style.top = cardTop + 'px';
-            chatCard.style.left = '0';
-            chatCard.style.right = '0';
-            chatCard.style.bottom = 'auto';
-            chatCard.style.width = '100vw';
-            chatCard.style.height = Math.max(cardHeight, 200) + 'px';
-            chatCard.style.maxHeight = 'none';
-            chatCard.style.minHeight = '0';
-            chatCard.style.margin = '0';
-            chatCard.style.padding = '0';
-            chatCard.style.borderRadius = '0';
-            chatCard.style.border = 'none';
-            chatCard.style.zIndex = '9999';
-            chatCard.style.overflow = 'hidden';
-            chatCard.style.background = 'var(--bg-card)';
-            chatCard.style.display = 'flex';
-            chatCard.style.flexDirection = 'column';
 
-            if (messagesList) {
-                requestAnimationFrame(() => { messagesList.scrollTop = messagesList.scrollHeight; });
-            }
+            // ✅ KUNCI FIX: pakai cssText dengan !important
+            //    biar MENANG lawan .chat-card-fullscreen.keyboard-open
+            //    dan body.chat-open .chat-card-fullscreen { height: auto !important }
+            chatCard.style.cssText = [
+                'position: fixed',
+                'top: ' + cardTop + 'px',
+                'left: 0',
+                'right: 0',
+                'bottom: auto',
+                'width: 100vw',
+                'height: ' + Math.max(cardHeight, 200) + 'px',
+                'max-height: none',
+                'min-height: 0',
+                'margin: 0',
+                'padding: 0',
+                'border-radius: 0',
+                'border: none',
+                'z-index: 9999',
+                'overflow: hidden',
+                'background: var(--bg-card)',
+                'display: flex',
+                'flex-direction: column'
+            ].join(' !important; ') + ' !important;';
+
+            // Scroll ke bawah berkali-kali — keyboard animasi lambat di Android
+            requestAnimationFrame(scrollBottom);
+            setTimeout(scrollBottom, 100);
+            setTimeout(scrollBottom, 300);
+
         } else {
             chatCard.style.cssText = '';
             baseVH = vvH;
@@ -12212,13 +12225,17 @@ if (senderIdCheck === getMyUid()) {
         vv.addEventListener('resize', apply);
         vv.addEventListener('scroll', apply);
     }
-    chatInput.addEventListener('focus', function() {
+
+    // Trigger berkali-kali saat fokus — Android kadang lambat fire resize
+    chatInput.addEventListener('focus', function () {
         if (vv) baseVH = Math.max(baseVH, vv.height);
         [50, 150, 300, 500, 700].forEach(t => setTimeout(apply, t));
     });
-    chatInput.addEventListener('blur', function() {
+
+    chatInput.addEventListener('blur', function () {
         setTimeout(apply, 180);
     });
+
     apply();
 }
     /* ============================================================
