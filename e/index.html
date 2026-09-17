@@ -8544,6 +8544,7 @@ const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
     const LINK_PREVIEW_CACHE_TTL = 1000 * 60 * 60;
 
     let currentUser = null;              // { uid, username, avatar }
+    let _pendingAvatarUploadPromise = null;
     let messagesUnsubscribe = null;
     let usersUnsubscribe = null;
     let statusInterval = null;
@@ -11842,47 +11843,34 @@ if (senderIdCheck === getMyUid()) {
                 };
                 reader.readAsDataURL(file);
 
-                const joinBtn = document.getElementById('btn-create-profile');
-                const originalBtnHTML = joinBtn ? joinBtn.innerHTML : '';
-                if (joinBtn) {
-                    joinBtn.disabled = true;
-                    joinBtn.style.pointerEvents = 'none';
-                    joinBtn.style.opacity = '0.5';
-                    joinBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Mengupload foto...';
-                }
-                window._avatarUploadState.setup = true;
-
-                try {
-                    showToast('Mengupload foto...', 'info');
-                    const uid = getMyUid() || 'anon';
-                    uploadedAvatarUrl = await uploadAvatarToCloudinary(file, uid);
-                    showToast('Foto profil berhasil diupload!', 'success');
-                } catch (error) {
-                    if (avatarError) {
-                        avatarError.textContent = 'Gagal upload: ' + error.message;
-                        avatarError.classList.add('visible');
-                    }
-                    if (avatarPreview) avatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
-                    uploadedAvatarUrl = '';
-                } finally {
-                    window._avatarUploadState.setup = false;
-                    if (joinBtn) {
-                        joinBtn.disabled = false;
-                        joinBtn.style.pointerEvents = '';
-                        joinBtn.style.opacity = '';
-                        joinBtn.innerHTML = originalBtnHTML;
-                    }
-                }
-            });
-        }
+                uploadAvatarToCloudinary(file, getMyUid() || 'anon')
+    .then(url => { uploadedAvatarUrl = url; })
+    .catch(err => {
+        if (avatarError) { avatarError.textContent = 'Gagal upload: ' + err.message; avatarError.classList.add('visible'); }
+        if (avatarPreview) avatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
+        uploadedAvatarUrl = '';
+    });
 
         if (btnCreateProfile) {
             btnCreateProfile.addEventListener('click', async function() {
-                if (window._avatarUploadState.setup) {
-                    showToast('Tunggu upload foto selesai...', 'warning');
-                    return;
-                }
-                const rawUsername = newUsernameInput.value;
+    // Kalau upload masih jalan — tunggu otomatis, tampilkan spinner
+    if (_pendingAvatarUploadPromise) {
+        btnCreateProfile.disabled = true;
+        btnCreateProfile.style.pointerEvents = 'none';
+        btnCreateProfile.innerHTML = '<span class="gate-spinner" style="width:18px;height:18px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Memproses...';
+
+        await _pendingAvatarUploadPromise;
+        _pendingAvatarUploadPromise = null;
+
+        btnCreateProfile.disabled = false;
+        btnCreateProfile.style.pointerEvents = '';
+        btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+
+        if (avatarInput && avatarInput.files[0] && !uploadedAvatarUrl) return; // upload gagal
+    }
+
+    const rawUsername = newUsernameInput.value;
+    // ... sisanya biarkan apa adanya
                 const username = normalizeUsername(rawUsername);
                 const errorEl = document.getElementById('username-error');
                 const validation = isValidUsername(username);
@@ -12039,37 +12027,13 @@ if (senderIdCheck === getMyUid()) {
                 };
                 reader.readAsDataURL(file);
 
-                const saveBtn = document.getElementById('edit-profile-save');
-                const usernameField = document.getElementById('edit-username-input');
-                const originalSaveHTML = saveBtn ? saveBtn.innerHTML : '';
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.style.pointerEvents = 'none';
-                    saveBtn.style.opacity = '0.5';
-                    saveBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Mengupload foto...';
-                }
-                if (usernameField) usernameField.disabled = true;
-                window._avatarUploadState.edit = true;
-
-                try {
-                    showToast('Mengupload foto...', 'info');
-                    const uid = currentUser?.uid || getMyUid();
-                    newAvatarUrl = await uploadAvatarToCloudinary(file, uid);
-                    showToast('Foto baru berhasil diupload!', 'success');
-                } catch (error) {
-                    if (editAvatarError) { editAvatarError.textContent = 'Gagal upload: ' + error.message; editAvatarError.classList.add('visible'); }
-                    if (editAvatarPreview) editAvatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
-                    newAvatarUrl = null;
-                } finally {
-                    window._avatarUploadState.edit = false;
-                    if (saveBtn) {
-                        saveBtn.disabled = false;
-                        saveBtn.style.pointerEvents = '';
-                        saveBtn.style.opacity = '';
-                        saveBtn.innerHTML = originalSaveHTML;
-                    }
-                    if (usernameField) usernameField.disabled = false;
-                }
+                _pendingAvatarUploadPromise = uploadAvatarToCloudinary(file, currentUser?.uid || getMyUid())
+    .then(url => { newAvatarUrl = url; })
+    .catch(err => {
+        if (editAvatarError) { editAvatarError.textContent = 'Gagal upload: ' + err.message; editAvatarError.classList.add('visible'); }
+        if (editAvatarPreview) editAvatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
+        newAvatarUrl = null;
+    });
             });
         }
 
@@ -12092,11 +12056,23 @@ if (senderIdCheck === getMyUid()) {
         const editProfileSave = document.getElementById('edit-profile-save');
         if (editProfileSave) {
             editProfileSave.addEventListener('click', async function() {
-                if (window._avatarUploadState.edit) {
-                    showToast('Tunggu upload foto selesai...', 'warning');
-                    return;
-                }
-                const input = document.getElementById('edit-username-input');
+    if (_pendingAvatarUploadPromise) {
+        editProfileSave.disabled = true;
+        editProfileSave.style.pointerEvents = 'none';
+        editProfileSave.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Memproses...';
+
+        await _pendingAvatarUploadPromise;
+        _pendingAvatarUploadPromise = null;
+
+        editProfileSave.disabled = false;
+        editProfileSave.style.pointerEvents = '';
+        editProfileSave.innerHTML = 'Simpan Perubahan';
+
+        if (!newAvatarUrl && editAvatarInput && editAvatarInput.files[0]) return; // upload gagal
+    }
+
+    const input = document.getElementById('edit-username-input');
+    // ... sisanya biarkan apa adanya
                 const errorEl = document.getElementById('edit-username-error');
                 const newUsername = input.value.trim();
 
@@ -12446,7 +12422,7 @@ setTimeout(() => {
 }, 5000);
 }
     // Wait DOM ready
-    if (document.readyState == 'loading') {
+    if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', bootstrap);
     } else {
         bootstrap();
