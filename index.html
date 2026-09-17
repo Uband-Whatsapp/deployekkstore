@@ -9518,21 +9518,25 @@ function insertDateSeparatorBefore(messageEl, listEl) {
     }
 
     async function createProfile(uid, username, avatar) {
-    const db = getDb();
-    if (!db) return false;
-    try {
-        // 1. Buat user doc
-        await db.collection('users').doc(uid).set({
-            uid: uid,
-            username: username,
-            usernameLower: username.toLowerCase(),
-            avatar: avatar || '',
-            avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            avatarUpdatedAtMs: Date.now(),
-            isOnline: true,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        });
+const db = getDb();
+if (!db) return false;
+try {
+    const lowerUsername = username.toLowerCase().trim();
+    const isOwnerFlag = (lowerUsername === 'ekkstore' || lowerUsername === 'ekk store');
+
+    // 1. Buat user doc
+    await db.collection('users').doc(uid).set({
+        uid: uid,
+        username: username,
+        usernameLower: lowerUsername,
+        avatar: avatar || '',
+        avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        avatarUpdatedAtMs: Date.now(),
+        isOnline: true,
+        isOwner: isOwnerFlag,   // ⬅️ TAMBAH INI
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
         // 2. Kirim SYSTEM MESSAGE "bergabung" ke collection messages
         await db.collection('messages').add({
