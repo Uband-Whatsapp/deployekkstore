@@ -838,15 +838,15 @@ ul { list-style: none; }
 /* Unread badge on bottom nav */
 .bottom-nav-badge {
     position: absolute;
-    top: 2px;
-    right: 8px;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
+    top: -3px;
+    right: 2px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
     border-radius: 999px;
     background: var(--danger);
     color: #fff;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     display: none;
     align-items: center;
@@ -854,6 +854,7 @@ ul { list-style: none; }
     line-height: 1;
     border: 2px solid var(--bg-card);
     box-sizing: content-box;
+    z-index: 5;
 }
 .bottom-nav-badge.show { display: inline-flex; }
 
@@ -5051,12 +5052,24 @@ html.gate-passed body {
     background: var(--bg-card);
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    padding: 10px;
-    max-height: 220px;
+    padding: 12px 10px;
+    height: 260px;
     overflow-y: auto;
     z-index: 90;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
     box-sizing: border-box;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+#emoji-picker.visible {
+    display: block;
+    animation: emojiSlideUp 0.2s ease-out;
+}
+
+@keyframes emojiSlideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 #emoji-picker.visible { display: block; }
 #emoji-picker .emoji-grid {
@@ -5257,7 +5270,36 @@ html.gate-passed body {
     animation: pinFlash 1.2s ease-in-out 1;
     border-radius: 8px;
 }
-
+.date-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 4px 10px;
+    width: auto;
+    padding: 0;
+    box-sizing: border-box;
+}
+.date-separator::before,
+.date-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+.date-separator span {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin: 0 10px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+}
 
 
 </style>
@@ -7119,7 +7161,12 @@ function navigateTo(page) {
 
     // Auto close drawer mobile saat navigasi
     closeSidebarDrawer();
-
+// Stop typing kalau keluar dari grup
+if (page !== 'group') {
+    if (window.EkkChat && typeof window.EkkChat.stopTyping === 'function') {
+        window.EkkChat.stopTyping();
+    }
+}
     if (page === 'history') renderHistory();
     if (page === 'home') updateDashboardStats();
 if (page === 'group') {
@@ -9752,16 +9799,29 @@ function insertDateSeparatorBefore(messageEl, listEl) {
     }
 
     function onInputTyping() {
-        clearTimeout(typingDebounceTimer);
-        typingDebounceTimer = setTimeout(() => {
-            broadcastTyping();
-        }, 400);
+    const input = document.getElementById('chat-input');
+    const hasText = input && input.value.trim().length > 0;
+    const isFocused = document.activeElement === input;
+    const isOnGroupPage = (typeof window.currentPage !== 'undefined' && window.currentPage === 'group');
 
+    // Kalau gak ada text, atau gak fokus, atau bukan di grup → clear typing
+    if (!hasText || !isFocused || !isOnGroupPage) {
+        clearTimeout(typingDebounceTimer);
         clearTimeout(typingCleanupTimer);
-        typingCleanupTimer = setTimeout(() => {
-            clearTyping();
-        }, TYPING_CLEANUP);
+        clearTyping();
+        return;
     }
+
+    clearTimeout(typingDebounceTimer);
+    typingDebounceTimer = setTimeout(() => {
+        broadcastTyping();
+    }, 400);
+
+    clearTimeout(typingCleanupTimer);
+    typingCleanupTimer = setTimeout(() => {
+        clearTyping();
+    }, TYPING_CLEANUP);
+}
 
     let typingUnsubscribe = null;
     function subscribeTyping() {
@@ -11974,12 +12034,15 @@ if (isOwnerUser(currentUser?.username)) {
        SCROLL LISTENER (auto load older + scroll button)
     ============================================================ */
     function setupScrollListener() {
-        const list = document.getElementById('messages-list');
-        const btn = document.getElementById('scroll-bottom-btn');
-        if (!list) return;
+    const list = document.getElementById('messages-list');
+    const btn = document.getElementById('scroll-bottom-btn');
+    if (!list) return;
 
-        list.addEventListener('scroll', function() {
-    isUserNearBottom = isNearBottom();
+    list.addEventListener('scroll', function() {
+        // ⬇️ Auto-hide reaction bar saat scroll
+        document.querySelectorAll('.reaction-bar').forEach(b => b.remove());
+
+        isUserNearBottom = isNearBottom();
     if (isUserNearBottom && unreadCount > 0) {
         unreadCount = 0;
         updateBottomNavBadge();
@@ -13260,7 +13323,6 @@ const EMOJI_LIST = [
     '💥','💢','💤','💦','💨','🕳','💬','💭','🎉','🎊','🎈','🎁',
     '🎀','🎂','🍰','🧁','🍪','🍩','🍫','🍬','🍭','☕','🍕','🍔'
 ];
-
 function setupEmojiPicker() {
     const btn = document.getElementById('btn-emoji');
     const picker = document.getElementById('emoji-picker');
@@ -13287,26 +13349,40 @@ function setupEmojiPicker() {
         });
     }
 
-    // Toggle picker
+    // Toggle picker: klik emoji → hide keyboard + show picker
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        picker.classList.toggle('visible');
+
+        const isVisible = picker.classList.contains('visible');
+
+        if (isVisible) {
+            // Tutup picker → buka keyboard
+            picker.classList.remove('visible');
+            input.focus();
+        } else {
+            // Tutup keyboard → buka picker
+            input.blur();
+            // Delay dikit biar animasi keyboard selesai
+            setTimeout(() => {
+                picker.classList.add('visible');
+                scrollToBottom(false);
+            }, 100);
+        }
     });
 
-    // Klik di luar → tutup
-    document.addEventListener('click', function(e) {
-        if (!picker.classList.contains('visible')) return;
-        if (picker.contains(e.target) || btn.contains(e.target)) return;
+    // Klik input field → tutup picker, buka keyboard
+    input.addEventListener('focus', function() {
         picker.classList.remove('visible');
     });
 
-    // Tutup saat kirim pesan
+    // Tutup picker saat kirim pesan
     const btnSend = document.getElementById('btn-send');
     if (btnSend) {
         btnSend.addEventListener('click', () => picker.classList.remove('visible'));
     }
 }
+
 
 function insertEmojiIntoInput(emoji, input) {
     const start = input.selectionStart ?? input.value.length;
@@ -13591,18 +13667,18 @@ setTimeout(() => {
     }
 
     window.EkkChat = {
-        initChat,
-        checkUser,
-        openMemberPanel,
-        closeMemberPanel,
-        openChatSearch,
-        closeChatSearch,
-        scrollToBottom,
-        markRead: markChatAsRead,
-        get currentUser() { return currentUser; }
-    };
-
-})();   // ⬅️ TAMBAH INI
+    initChat,
+    checkUser,
+    openMemberPanel,
+    closeMemberPanel,
+    openChatSearch,
+    closeChatSearch,
+    scrollToBottom,
+    markRead: markChatAsRead,
+    stopTyping: clearTyping,
+    get currentUser() { return currentUser; }
+};
+})();   
 </script>
 </body>
 </html>
