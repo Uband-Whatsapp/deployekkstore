@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
     <title>Ekk Store — Deployment Platform</title>
-
+<script>
+(function() {
+    try {
+        var STORAGE_KEY = 'wa_gate_passed_v12';
+        var data = localStorage.getItem(STORAGE_KEY);
+        if (data) {
+            var parsed = JSON.parse(data);
+            if (parsed.passed === true && parsed.expiresAt && Date.now() < parsed.expiresAt) {
+                document.documentElement.classList.add('gate-passed');
+            }
+        }
+    } catch (e) {}
+})();
+</script>
     <!-- ============================================================
          SEO / SOCIAL META
     ============================================================ -->
@@ -1001,6 +1014,13 @@ ul { list-style: none; }
 /* ============================================================
    STATS GRID
    ============================================================ */
+.stats-grid-new {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    width: 100%;
+}
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -4703,12 +4723,543 @@ ul { list-style: none; }
     font-size: 13px;
     flex-shrink: 0;
 }
+/* ============================================================
+   OVERRIDE — Icon Download & Services jadi accent orange
+   ============================================================ */
+
+/* Halaman Download — 5 feature icon */
+.dl-feature-icon,
+.dl-feature-icon.purple,
+.dl-feature-icon.green,
+.dl-feature-icon.blue,
+.dl-feature-icon.amber,
+.dl-feature-icon.red {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-line);
+}
+
+/* Halaman Services — 4 stat icon */
+#page-services .stat-icon,
+#page-services .stat-icon.blue,
+#page-services .stat-icon.green,
+#page-services .stat-icon.amber,
+#page-services .stat-icon.red {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+/* ============================================================
+   FIX — Sidebar / Drawer Mobile
+   Cuma nyentuh #sidebar & .sidebar-*
+   ============================================================ */
+
+/* Container sidebar */
+#sidebar {
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    padding: var(--space-4) var(--space-3);
+}
+@media (max-width: 1023px) {
+    #sidebar {
+        width: var(--drawer-w);
+        padding-top: calc(var(--header-h) + var(--space-2));
+        border-right: 1px solid var(--border);
+        box-shadow: none;
+    }
+}
+
+/* Backdrop lebih soft, gak item pekat */
+#sidebar-backdrop {
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Tombol close — posisi rapi sejajar profile */
+#sidebar-close {
+    position: absolute;
+    top: calc(var(--header-h) + 12px);
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-xs);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    z-index: 10;
+}
+@media (max-width: 1023px) {
+    #sidebar-close { display: flex; }
+}
+#sidebar-close:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-color: var(--border-light);
+}
+#sidebar-close:active { transform: scale(0.94); }
+
+/* Profile area */
+.sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2) var(--space-4);
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+    padding-right: 52px; /* kasih ruang buat tombol X */
+}
+
+/* Foto profil — rounded square, konsisten 15px system */
+.sidebar-profile-img {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.sidebar-profile-name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badge OWNER — lebih simple */
+.sidebar-profile-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.sidebar-profile-badge i {
+    font-size: 10px;
+    color: var(--accent);
+}
+
+/* Section title */
+.sidebar-section { margin-bottom: var(--space-4); }
+.sidebar-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-faint);
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+/* Menu item */
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 9px var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    position: relative;
+    min-height: 38px;
+    letter-spacing: -0.005em;
+}
+.sidebar-item:hover {
+    background: var(--bg-input);
+    color: var(--text);
+}
+
+/* Active state — single layer, cuma garis kiri */
+.sidebar-item.active {
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
+    border-left: none;
+    padding-left: var(--space-3);
+}
+.sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 16px;
+    border-radius: 0 2px 2px 0;
+    background: var(--accent);
+}
+.sidebar-item.active i:first-child {
+    color: var(--accent);
+}
+
+.sidebar-item i:first-child {
+    width: 16px;
+    text-align: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color var(--transition);
+}
+.sidebar-item:hover i:first-child {
+    color: var(--text-secondary);
+}
+
+.sidebar-item .chev {
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--text-faint);
+    transition: transform var(--transition);
+    flex-shrink: 0;
+}
+.sidebar-item.open .chev { transform: rotate(180deg); }
+
+/* Submenu */
+.sidebar-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s var(--ease);
+    padding-left: var(--space-4);
+}
+.sidebar-submenu.open { max-height: 400px; }
+.sidebar-submenu .sidebar-item {
+    padding: 7px var(--space-3);
+    font-size: 12px;
+    color: var(--text-muted);
+    min-height: 32px;
+}
+.sidebar-submenu .sidebar-item:hover { color: var(--text); }
+.sidebar-submenu .sidebar-item.active {
+    color: var(--accent);
+    background: transparent;
+}
+.sidebar-submenu .sidebar-item.active::before {
+    display: none;
+}
+/* ============================================================
+   FIX v2 — Sidebar spacing atas + tombol close
+   ============================================================ */
+
+/* Padding atas drawer — lebih rapat */
+@media (max-width: 1023px) {
+    #sidebar {
+        padding-top: calc(var(--header-h) + 8px);
+        padding-left: var(--space-3);
+        padding-right: var(--space-3);
+        padding-bottom: var(--space-4);
+    }
+}
+
+/* Tombol close — sejajar dengan profile */
+#sidebar-close {
+    position: absolute;
+    top: calc(var(--header-h) + 20px);
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    z-index: 10;
+}
+@media (max-width: 1023px) {
+    #sidebar-close { display: flex; }
+}
+#sidebar-close:hover {
+    background: var(--bg-input);
+    color: var(--text);
+    border-color: var(--border-light);
+}
+#sidebar-close:active { transform: scale(0.94); }
+
+/* Profile — padding atas dikurangi, kasih ruang buat tombol X */
+.sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-2) var(--space-4);
+    margin-top: 0;
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+    padding-right: 48px;
+}
+
+/* Foto profil — kotak rounded 10px */
+.sidebar-profile-img {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+/* ============================================================
+   GATE PRE-CHECK — sembunyikan gate kalau sudah verified
+   ============================================================ */
+
+/* Kalau html punya class .gate-passed → gate langsung hidden */
+html.gate-passed #gate-screen {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* App shell langsung keliatan */
+html.gate-passed #app-shell {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Biar body langsung normal (gak di-lock overflow) */
+html.gate-passed body {
+    overflow: auto !important;
+    position: static !important;
+    width: auto !important;
+}
+/* ============================================================
+   EMOJI PICKER
+   ============================================================ */
+#emoji-picker {
+    display: none;
+    position: absolute;
+    bottom: 68px;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 90;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
+    box-sizing: border-box;
+}
+#emoji-picker.visible { display: block; }
+#emoji-picker .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+#emoji-picker .emoji-btn {
+    width: 100%;
+    aspect-ratio: 1;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s ease;
+    line-height: 1;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+#emoji-picker .emoji-btn:hover { background: var(--bg-hover); }
+#emoji-picker .emoji-btn:active { background: var(--accent-soft); transform: scale(0.9); }
+
+#btn-emoji {
+    min-width: 40px;
+    width: 40px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+#btn-emoji:hover { background: var(--bg-hover); color: var(--accent); }
+/* ============================================================
+   REACTION
+   ============================================================ */
+.reaction-bar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    position: fixed;
+    z-index: 100000;
+    animation: reactionPop 0.18s ease-out;
+}
+@keyframes reactionPop {
+    from { opacity: 0; transform: scale(0.8) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.reaction-bar button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease, background 0.12s ease;
+    padding: 0;
+    line-height: 1;
+}
+.reaction-bar button:hover {
+    background: var(--bg-hover);
+    transform: scale(1.15);
+}
+.reaction-bar button:active { transform: scale(0.9); }
+
+.reactions-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 4px;
+    padding: 0 2px;
+}
+.reactions-row.align-mine { justify-content: flex-end; }
+.reaction-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    font-family: var(--font-ui);
+    color: var(--text-muted);
+}
+.reaction-chip:hover {
+    border-color: var(--border-light);
+    background: var(--bg-hover);
+}
+.reaction-chip.mine {
+    background: var(--accent-soft);
+    border-color: rgba(249,115,22,0.4);
+    color: var(--accent);
+}
+.reaction-chip .count {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+/* ============================================================
+   PIN BANNER
+   ============================================================ */
+#pin-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: linear-gradient(135deg, rgba(249,115,22,0.10), rgba(249,115,22,0.03));
+    border-bottom: 1px solid rgba(249,115,22,0.20);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+}
+#pin-banner.visible { display: flex; }
+#pin-banner:hover { background: rgba(249,115,22,0.14); }
+#pin-banner:active { background: rgba(249,115,22,0.18); }
+#pin-banner .pin-icon {
+    flex: 0 0 26px;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(249,115,22,0.18);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+#pin-banner .pin-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+#pin-banner .pin-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+#pin-banner .pin-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#pin-banner .pin-close {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+#pin-banner .pin-close:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+}
+#pin-banner.can-unpin .pin-close { display: flex; }
+
+@keyframes pinFlash {
+    0%, 100% { background: transparent; }
+    50%      { background: rgba(249,115,22,0.20); }
+}
+.message-item.pin-flash {
+    animation: pinFlash 1.2s ease-in-out 1;
+    border-radius: 8px;
+}
+
+
 
 </style>
-<!-- ============================================================
-     ERUDA — Console in-page buat HP (bisa dihapus nanti)
-     Kalau URL ada ?debug → console muncul di layar
-============================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
 <script>
     if (window.location.search.includes('debug')) {
@@ -4803,7 +5354,7 @@ ul { list-style: none; }
             <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="sidebar-profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
             <div class="sidebar-profile-info">
                 <span class="sidebar-profile-name">Ekk Store</span>
-                <span class="sidebar-profile-badge"><i class="fa-solid fa-check-double"></i> Owner</span>
+                <span class="sidebar-profile-badge"><i class="fa-solid fa-circle-check"></i> Owner</span>
             </div>
         </div>
 
@@ -4889,7 +5440,7 @@ ul { list-style: none; }
                     <span class="stat-label">Total Project</span>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon green"><i class="fa-solid fa-check-double"></i></div>
+                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
                     <span class="stat-value" id="stat-success">0</span>
                     <span class="stat-label">Deploy Berhasil</span>
                 </div>
@@ -5482,7 +6033,7 @@ ul { list-style: none; }
                     <p>Layanan pembuatan website profesional.</p>
                 </div>
             </div>
-            <div class="stats-grid" style="margin-bottom: var(--space-4);">
+            <div class="stats-grid-new" style="margin-bottom: var(--space-4);">
                 <div class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-globe"></i></div>
                     <span class="stat-value" style="font-size:14px; font-family:var(--font-ui);">Landing Page</span>
@@ -5619,6 +6170,17 @@ ul { list-style: none; }
                             <button id="chat-search-close" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                     </div>
+<!-- PIN BANNER -->
+<div id="pin-banner">
+    <div class="pin-icon"><i class="fa-solid fa-thumbtack"></i></div>
+    <div class="pin-body">
+        <div class="pin-title">Pesan Disematkan</div>
+        <div class="pin-text" id="pin-banner-text">—</div>
+    </div>
+    <button class="pin-close" id="pin-banner-close" aria-label="Lepas sematan">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+</div>
 
                     <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-3); display: flex; flex-direction: column; gap: 4px;">
                         <!-- Pesan dirender oleh JS -->
@@ -5642,12 +6204,18 @@ ul { list-style: none; }
                     <div id="media-preview-bar" class="media-preview-bar"></div>
 
                     <!-- Input chat -->
+                    <!-- EMOJI PICKER -->
+<div id="emoji-picker">
+    <div class="emoji-grid" id="emoji-grid"></div>
+</div>
                     <div class="chat-input-wrapper" style="display:flex; align-items:flex-end; gap:6px; padding:8px 10px; background:var(--bg-card); border-top:1px solid var(--border);">
                         <button id="btn-attach" style="min-width:40px; width:40px; height:44px; background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background 0.2s; flex-shrink:0;"
                             onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
                             <i class="fa-solid fa-paperclip"></i>
                         </button>
-
+<button id="btn-emoji" title="Emoji" aria-label="Emoji">
+    <i class="fa-regular fa-face-smile"></i>
+</button>
                         <input type="file" id="file-input" accept="image/*,video/*" style="display:none;" multiple>
 
                         <input
@@ -6553,7 +7121,14 @@ function navigateTo(page) {
 
     if (page === 'history') renderHistory();
     if (page === 'home') updateDashboardStats();
-
+if (page === 'group') {
+    // Reset badge + mark read
+    const badge = document.getElementById('bottom-nav-group-badge');
+    if (badge) badge.classList.remove('show');
+    if (window.EkkChat && typeof window.EkkChat.markRead === 'function') {
+        setTimeout(() => window.EkkChat.markRead(), 400);
+    }
+}
     // Reset scroll instan (WINDOW scroll, bukan chat list)
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
@@ -8542,7 +9117,12 @@ console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', '
     ============================================================ */
     const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
     const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
-
+/* Owner username yang boleh pin (case-insensitive) */
+const OWNER_USERNAMES = ['ekkstore', 'ekk store'];
+function isOwnerUser(username) {
+    if (!username) return false;
+    return OWNER_USERNAMES.includes(String(username).toLowerCase().trim());
+}
     /* ============================================================
        STATE
     ============================================================ */
@@ -8616,7 +9196,9 @@ const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
     let newAvatarUrl = null;
     let editingMessageId = null;
     let editingMessageOldText = '';
-
+// Pin state
+let currentPinnedMessage = null;
+let pinnedUnsubscribe = null;
     // Link preview cache (in-memory)
     const linkPreviewCache = new Map();
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -9182,15 +9764,100 @@ const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
     }
 
     function updateBottomNavBadge() {
-        const badge = document.getElementById('bottom-nav-group-badge');
-        if (!badge) return;
-        if (unreadCount > 0 && currentPage !== 'group') {
-            badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
-            badge.classList.add('show');
-        } else {
-            badge.classList.remove('show');
-        }
+    const badge = document.getElementById('bottom-nav-group-badge');
+    if (!badge) return;
+
+    // Hanya tampil kalau user udah punya profil
+    if (!currentUser) {
+        badge.classList.remove('show');
+        return;
     }
+
+    if (unreadCount > 0 && currentPage !== 'group') {
+        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.classList.add('show');
+    } else {
+        badge.classList.remove('show');
+    }
+}
+
+/* ============================================================
+   UNREAD COUNT — badge notif di menu Grup
+============================================================ */
+let lastChatReadAt = 0;
+let unreadListenerUnsub = null;
+
+async function markChatAsRead() {
+    if (!currentUser) return;
+    const db = getDb();
+    if (!db) return;
+    try {
+        lastChatReadAt = Date.now();
+        await db.collection('users').doc(currentUser.uid).update({
+            lastChatReadAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update badge
+        const badge = document.getElementById('bottom-nav-group-badge');
+        if (badge) badge.classList.remove('show');
+        unreadCount = 0;
+    } catch (e) {
+        // silent — user doc mungkin belum ada
+    }
+}
+
+async function initUnreadListener() {
+    if (!currentUser) return;
+    const db = getDb();
+    if (!db) return;
+
+    // Ambil lastChatReadAt
+    try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        if (userDoc.exists) {
+            const d = userDoc.data();
+            lastChatReadAt = d.lastChatReadAt?.toMillis?.() || 0;
+        }
+    } catch (e) {}
+
+    if (unreadListenerUnsub) {
+        try { unreadListenerUnsub(); } catch(e) {}
+        unreadListenerUnsub = null;
+    }
+
+    unreadListenerUnsub = db.collection('messages')
+        .orderBy('timestamp', 'desc')
+        .limit(50)
+        .onSnapshot(snap => {
+            if (!currentUser) return;
+            const myUid = currentUser.uid;
+            let count = 0;
+            snap.forEach(doc => {
+                const d = doc.data();
+                const senderId = d.senderId || d.uid || d.sender || '';
+                if (senderId === myUid) return;
+                if (d.type === 'join' || d.type === 'leave') return;
+                if (d.isDeletedForAll) return;
+                const ts = d.timestamp?.toMillis?.() || 0;
+                if (ts > lastChatReadAt) count++;
+            });
+
+            // Update badge global (dipakai saat di luar halaman grup)
+            if (currentPage !== 'group') {
+                const badge = document.getElementById('bottom-nav-group-badge');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count > 99 ? '99+' : String(count);
+                        badge.classList.add('show');
+                    } else {
+                        badge.classList.remove('show');
+                    }
+                }
+            }
+        }, err => {
+            console.warn('[Unread] Listener error:', err);
+        });
+}
 
     /* ============================================================
        BUILD MESSAGE ELEMENT (XSS-safe)
@@ -9243,7 +9910,116 @@ const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
         }
         return wrap;
     }
+/* ============================================================
+   REACTION
+============================================================ */
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
+function renderReactionsIntoBubble(bubble, data, docId, isMine) {
+    const reactions = data.reactions || {};
+    const grouped = {};
+    const myUid = getMyUid();
+
+    Object.keys(reactions).forEach(uid => {
+        const em = reactions[uid];
+        if (!em) return;
+        if (!grouped[em]) grouped[em] = { count: 0, mine: false };
+        grouped[em].count++;
+        if (uid === myUid) grouped[em].mine = true;
+    });
+
+    const emojis = Object.keys(grouped);
+    if (emojis.length === 0) return;
+
+    const row = document.createElement('div');
+    row.className = 'reactions-row' + (isMine ? ' align-mine' : '');
+
+    emojis.forEach(em => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'reaction-chip' + (grouped[em].mine ? ' mine' : '');
+        chip.innerHTML = '<span>' + em + '</span><span class="count">' + grouped[em].count + '</span>';
+        chip.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleReaction(docId, em);
+        });
+        row.appendChild(chip);
+    });
+
+    bubble.appendChild(row);
+}
+
+async function toggleReaction(docId, emoji) {
+    if (!currentUser) {
+        showToast('Buat profil dulu', 'warning');
+        return;
+    }
+    const db = getDb();
+    if (!db) return;
+
+    try {
+        const docRef = db.collection('messages').doc(docId);
+        const doc = await docRef.get();
+        if (!doc.exists) return;
+
+        const data = doc.data();
+        const reactions = data.reactions || {};
+        const myUid = currentUser.uid;
+
+        if (reactions[myUid] === emoji) {
+            delete reactions[myUid];   // toggle off
+        } else {
+            reactions[myUid] = emoji;  // set / ganti
+        }
+
+        await docRef.update({ reactions });
+    } catch (err) {
+        console.error('[Reaction] Error:', err);
+        showToast('Gagal react', 'error');
+    }
+}
+
+function showReactionBar(anchorEl, docId) {
+    // Hapus reaction bar lama kalau ada
+    document.querySelectorAll('.reaction-bar').forEach(b => b.remove());
+
+    const bar = document.createElement('div');
+    bar.className = 'reaction-bar';
+
+    REACTION_EMOJIS.forEach(em => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = em;
+        b.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleReaction(docId, em);
+            bar.remove();
+        });
+        bar.appendChild(b);
+    });
+
+    document.body.appendChild(bar);
+
+    // Posisi: di atas bubble
+    const rect = anchorEl.getBoundingClientRect();
+    const barWidth = bar.offsetWidth || 240;
+    let left = rect.left + rect.width / 2 - barWidth / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - barWidth - 8));
+    const top = Math.max(8, rect.top - 50);
+
+    bar.style.left = left + 'px';
+    bar.style.top = top + 'px';
+
+    // Auto close kalau klik di luar
+    setTimeout(() => {
+        document.addEventListener('click', function closeBar(e) {
+            if (!bar.contains(e.target)) {
+                bar.remove();
+                document.removeEventListener('click', closeBar);
+            }
+        });
+    }, 50);
+}
     function getDeletedMessageHTML(type) {
         const svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
         let label;
@@ -9568,6 +10344,8 @@ function buildMessageElement(doc) {
 
         bubble.prepend(replyContainer);
     }
+// ---- Reactions ----
+renderReactionsIntoBubble(bubble, data, docId, isMine);
 
     // ---- Timestamp ----
     if (data.timestamp || isMine) {
@@ -9609,9 +10387,11 @@ function buildMessageElement(doc) {
         div.appendChild(bubbleWrapper);
     }
 
-    // ---- Context menu ----
+    // ---- Context menu + double-tap reaction ----
     if (!isSystem && !isDeletedForAll) {
         let longPressTimer = null;
+        let lastTap = 0;
+
         const showMenu = (e) => {
             e.preventDefault();
             const now = Date.now();
@@ -9619,13 +10399,32 @@ function buildMessageElement(doc) {
             const canEdit = (now - msgTime) < 60 * 60 * 1000;
             showMessageMenu(docId, senderId, data.username, data.text, isMine, canEdit, data.isEdited);
         };
+
+        // Long press → menu
         div.addEventListener('touchstart', function() {
             longPressTimer = setTimeout(() => showMenu({ preventDefault: () => {} }), 600);
         }, { passive: true });
         div.addEventListener('touchmove', function() { clearTimeout(longPressTimer); }, { passive: true });
         div.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
         div.addEventListener('contextmenu', showMenu);
-        div.addEventListener('dblclick', showMenu);
+
+        // Double tap → reaction bar (mobile)
+        div.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTap < 300) {
+                if (longPressTimer) clearTimeout(longPressTimer);
+                showReactionBar(div, docId);
+                lastTap = 0;
+            } else {
+                lastTap = now;
+            }
+        });
+
+        // Double click → reaction bar (desktop)
+        div.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            showReactionBar(div, docId);
+        });
     }
 
     return div;
@@ -9992,14 +10791,167 @@ function subscribeMessages() {
             requestAnimationFrame(() => scrollToBottom(false));
 
             // Realtime listener attach SETELAH initial render
-            startRealtimeListener();
-        })
+                // Realtime listener attach SETELAH initial render
+    startRealtimeListener();
+
+    // Subscribe pin banner
+    subscribePinnedMessage();
+})
         .catch(err => {
             console.error('[Chat] Initial load gagal:', err);
             hasMoreOldMessages = false;
-            startRealtimeListener();
+                // Realtime listener attach SETELAH initial render
+    startRealtimeListener();
+
+    // Subscribe pin banner
+    subscribePinnedMessage();
+})
+}
+/* ============================================================
+   PIN PESAN — hanya Ekk Store
+============================================================ */
+function subscribePinnedMessage() {
+    const db = getDb();
+    if (!db) return;
+
+    if (pinnedUnsubscribe) {
+        try { pinnedUnsubscribe(); } catch(e) {}
+        pinnedUnsubscribe = null;
+    }
+
+    pinnedUnsubscribe = db.collection('messages')
+        .where('isPinned', '==', true)
+        .limit(10)
+        .onSnapshot(snap => {
+            if (snap.empty) {
+                currentPinnedMessage = null;
+                hidePinBanner();
+                return;
+            }
+            // Ambil yang paling baru di-pin
+            const docs = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+            docs.sort((a, b) => {
+                const ta = a.data.pinnedAt?.toMillis?.() || 0;
+                const tb = b.data.pinnedAt?.toMillis?.() || 0;
+                return tb - ta;
+            });
+            const doc = docs[0];
+            const d = doc.data;
+            currentPinnedMessage = {
+                docId: doc.id,
+                text: d.text || (d.mediaType ? '📎 ' + (d.fileName || 'File') : ''),
+                username: d.username || 'unknown'
+            };
+            showPinBanner(currentPinnedMessage);
+        }, err => {
+            console.warn('[Pin] Listener error:', err);
         });
 }
+
+function showPinBanner(pin) {
+    const banner = document.getElementById('pin-banner');
+    const textEl = document.getElementById('pin-banner-text');
+    const closeBtn = document.getElementById('pin-banner-close');
+    if (!banner || !textEl) return;
+
+    textEl.textContent = pin.username + ': ' + (pin.text || '(media)');
+    banner.classList.add('visible');
+    banner.dataset.pinDocId = pin.docId;
+
+    const canUnpin = isOwnerUser(currentUser?.username);
+    banner.classList.toggle('can-unpin', canUnpin);
+
+    if (banner._clickHandler) {
+        banner.removeEventListener('click', banner._clickHandler);
+    }
+    banner._clickHandler = function(e) {
+        if (e.target.closest('#pin-banner-close')) return;
+        scrollToPinnedMessage(pin.docId);
+    };
+    banner.addEventListener('click', banner._clickHandler);
+
+    if (closeBtn) {
+        if (closeBtn._unpinHandler) {
+            closeBtn.removeEventListener('click', closeBtn._unpinHandler);
+        }
+        closeBtn._unpinHandler = function(e) {
+            e.stopPropagation();
+            unpinMessage(pin.docId);
+        };
+        closeBtn.addEventListener('click', closeBtn._unpinHandler);
+    }
+}
+
+function hidePinBanner() {
+    const banner = document.getElementById('pin-banner');
+    if (banner) banner.classList.remove('visible');
+}
+
+function scrollToPinnedMessage(docId) {
+    const el = renderedMessages.get(docId);
+    if (!el) {
+        showToast('Pesan tidak ditemukan di tampilan', 'info');
+        return;
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('pin-flash');
+    setTimeout(() => el.classList.remove('pin-flash'), 1300);
+}
+
+async function pinMessage(docId) {
+    if (!isOwnerUser(currentUser?.username)) {
+        showToast('Hanya Ekk Store yang bisa menyematkan pesan', 'warning');
+        return;
+    }
+    const db = getDb();
+    if (!db) return;
+
+    try {
+        // Unpin pesan lain dulu
+        const existing = await db.collection('messages')
+            .where('isPinned', '==', true)
+            .get();
+
+        const batch = db.batch();
+        existing.forEach(doc => {
+            if (doc.id !== docId) {
+                batch.update(doc.ref, { isPinned: false, pinnedAt: null });
+            }
+        });
+
+        batch.update(db.collection('messages').doc(docId), {
+            isPinned: true,
+            pinnedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            pinnedBy: currentUser.username
+        });
+
+        await batch.commit();
+        showToast('Pesan disematkan', 'success');
+    } catch (err) {
+        console.error('[Pin] Error:', err);
+        showToast('Gagal menyematkan: ' + err.message, 'error');
+    }
+}
+
+async function unpinMessage(docId) {
+    if (!isOwnerUser(currentUser?.username)) {
+        showToast('Hanya Ekk Store yang bisa melepas sematan', 'warning');
+        return;
+    }
+    const db = getDb();
+    if (!db) return;
+    try {
+        await db.collection('messages').doc(docId).update({
+            isPinned: false,
+            pinnedAt: null
+        });
+        showToast('Sematan dilepas', 'success');
+    } catch (err) {
+        console.error('[Pin] Error:', err);
+        showToast('Gagal melepas sematan', 'error');
+    }
+}
+
     function startRealtimeListener() {
     const db = getDb();
     if (!db) return;
@@ -10191,7 +11143,24 @@ function subscribeMessages() {
             });
             menu.appendChild(infoBtn);
         }
-
+// Pin menu — hanya owner
+if (isOwnerUser(currentUser?.username)) {
+    const isCurrentlyPinned = currentPinnedMessage && currentPinnedMessage.docId === docId;
+    const pinBtn = createMenuItem(
+        isCurrentlyPinned ? 'Lepas sematan' : 'Sematkan pesan',
+        'fa-solid fa-thumbtack',
+        'var(--accent)'
+    );
+    pinBtn.addEventListener('click', function() {
+        menu.remove();
+        if (isCurrentlyPinned) {
+            unpinMessage(docId);
+        } else {
+            pinMessage(docId);
+        }
+    });
+    menu.appendChild(pinBtn);
+}
         if (isMine && canEdit) {
             const editBtn = createMenuItem('Edit pesan', 'fa-solid fa-pen', 'var(--text)');
             editBtn.addEventListener('click', function() {
@@ -10297,7 +11266,7 @@ function subscribeMessages() {
                 '<div class="read-receipt-sheet">' +
                 '<div class="read-receipt-handle"></div>' +
                 '<div class="read-receipt-header">' +
-                '<div class="read-receipt-title"><div class="read-receipt-title-icon"><i class="fa-solid fa-check-double"></i></div><span>Info Baca</span></div>' +
+                '<div class="read-receipt-title"><div class="read-receipt-title-icon"><i class="fa-solid fa-circle-check"></i></div><span>Info Baca</span></div>' +
                 '<div style="display:flex;align-items:center;gap:8px;">' +
                 '<span class="read-receipt-count">' + readUsers.length + ' orang</span>' +
                 '<button class="read-receipt-close" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>' +
@@ -10922,16 +11891,25 @@ function subscribeMessages() {
         if (!list) return;
 
         list.addEventListener('scroll', function() {
-            isUserNearBottom = isNearBottom();
-            if (isUserNearBottom && unreadCount > 0) {
-                unreadCount = 0;
-                updateBottomNavBadge();
-            }
-            updateScrollButton();
+    isUserNearBottom = isNearBottom();
+    if (isUserNearBottom && unreadCount > 0) {
+        unreadCount = 0;
+        updateBottomNavBadge();
+    }
+    updateScrollButton();
 
-            // Load older kalau scroll ke atas
-            if (list.scrollTop < 80) loadOlderMessages();
-        }, { passive: true });
+    // Load older kalau scroll ke atas
+    if (list.scrollTop < 80) loadOlderMessages();
+
+    // Mark read kalau user scroll ke bawah (throttle 3 detik)
+    if (isUserNearBottom) {
+        const now = Date.now();
+        if (!list._lastReadMark || now - list._lastReadMark > 3000) {
+            list._lastReadMark = now;
+            markChatAsRead();
+        }
+    }
+}, { passive: true });
 
         if (btn) {
             btn.addEventListener('click', function() {
@@ -12176,10 +13154,83 @@ function subscribeMessages() {
             });
         }
     }
+/* ============================================================
+   EMOJI PICKER
+============================================================ */
+const EMOJI_LIST = [
+    '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃',
+    '😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜',
+    '🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟',
+    '😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡',
+    '🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔',
+    '🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮',
+    '😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷',
+    '🤒','🤕','👍','👎','👌','✌️','🤞','🤟','🤘','🤙','👈','👉',
+    '👆','👇','☝️','✋','🤚','🖐','🖖','👋','🤝','🙏','✍️','💪',
+    '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕',
+    '💞','💓','💗','💖','💘','💝','💟','🔥','✨','⭐','🌟','💫',
+    '💥','💢','💤','💦','💨','🕳','💬','💭','🎉','🎊','🎈','🎁',
+    '🎀','🎂','🍰','🧁','🍪','🍩','🍫','🍬','🍭','☕','🍕','🍔'
+];
 
-    /* ============================================================
-       KEYBOARD DOCKING
-    ============================================================ */
+function setupEmojiPicker() {
+    const btn = document.getElementById('btn-emoji');
+    const picker = document.getElementById('emoji-picker');
+    const grid = document.getElementById('emoji-grid');
+    const input = document.getElementById('chat-input');
+
+    if (!btn || !picker || !grid || !input) {
+        console.warn('[Emoji] Element tidak ditemukan');
+        return;
+    }
+
+    // Bikin grid emoji sekali
+    if (grid.children.length === 0) {
+        EMOJI_LIST.forEach(em => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'emoji-btn';
+            b.textContent = em;
+            b.addEventListener('click', function(e) {
+                e.preventDefault();
+                insertEmojiIntoInput(em, input);
+            });
+            grid.appendChild(b);
+        });
+    }
+
+    // Toggle picker
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        picker.classList.toggle('visible');
+    });
+
+    // Klik di luar → tutup
+    document.addEventListener('click', function(e) {
+        if (!picker.classList.contains('visible')) return;
+        if (picker.contains(e.target) || btn.contains(e.target)) return;
+        picker.classList.remove('visible');
+    });
+
+    // Tutup saat kirim pesan
+    const btnSend = document.getElementById('btn-send');
+    if (btnSend) {
+        btnSend.addEventListener('click', () => picker.classList.remove('visible'));
+    }
+}
+
+function insertEmojiIntoInput(emoji, input) {
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    const before = input.value.substring(0, start);
+    const after = input.value.substring(end);
+    input.value = before + emoji + after;
+    const newPos = start + emoji.length;
+    input.setSelectionRange(newPos, newPos);
+    input.focus();
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+}
     function setupKeyboardDocking() {
     const vv = window.visualViewport;
     const chatCard = document.getElementById('chat-card');
@@ -12294,7 +13345,7 @@ function subscribeMessages() {
         subscribeMessages();
         subscribeUsers();
         subscribeTyping();
-
+initUnreadListener();
         if (statusInterval) clearInterval(statusInterval);
         statusInterval = setInterval(() => {
             if (currentUser) updateOnlineStatus(true);
@@ -12316,6 +13367,8 @@ function subscribeMessages() {
         }
 
         setTimeout(() => scrollToBottom(false), 300);
+        // Tandai chat sudah dibaca
+setTimeout(() => markChatAsRead(), 500);
     }
 
     /* ============================================================
@@ -12399,8 +13452,11 @@ function showProfileSetup() {
         setupSwipeToReply();
         setupEditMessageEvents();
 
-        // Setup keyboard docking juga
-        setupKeyboardDocking();
+       // Setup keyboard docking juga
+setupKeyboardDocking();
+
+// Setup emoji picker
+setupEmojiPicker();
 
         // Init state tombol send
         updateSendButtonVisibility();
@@ -12448,16 +13504,16 @@ setTimeout(() => {
 
     // Expose untuk debugging / fitur eksternal
     window.EkkChat = {
-        initChat,
-        checkUser,
-        openMemberPanel,
-        closeMemberPanel,
-        openChatSearch,
-        closeChatSearch,
-        scrollToBottom,
-        get currentUser() { return currentUser; }
-    };
-})();
+    initChat,
+    checkUser,
+    openMemberPanel,
+    closeMemberPanel,
+    openChatSearch,
+    closeChatSearch,
+    scrollToBottom,
+    markRead: markChatAsRead,
+    get currentUser() { return currentUser; }
+};
 </script>
 </body>
 </html>
