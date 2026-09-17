@@ -9325,105 +9325,308 @@ const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
         return player;
     }
 
-    function buildMessageElement(doc) {
-        const data = doc.data();
-        const docId = doc.id;
+function buildMessageElement(doc) {
+    const data = doc.data();
+    const docId = doc.id;
 
-        const senderId = data.senderId || data.uid || data.sender || '';
-        const isMine = senderId === getMyUid();
-        const isSystem = data.type === 'join' || data.type === 'leave' || senderId === 'system';
+    const senderId = data.senderId || data.uid || data.sender || '';
+    const isMine = senderId === getMyUid();
+    const isSystem = data.type === 'join' || data.type === 'leave' || senderId === 'system';
 
-        const isDeletedForMe = Array.isArray(data.deletedFor) && data.deletedFor.includes(getMyUid());
-        const isDeletedForAll = data.isDeletedForAll === true;
+    const isDeletedForMe = Array.isArray(data.deletedFor) && data.deletedFor.includes(getMyUid());
+    const isDeletedForAll = data.isDeletedForAll === true;
 
-        let displayText = data.text || '';
-        let isDeletedMessage = false;
-        let deletedMessageType = null;
+    let displayText = data.text || '';
+    let isDeletedMessage = false;
+    let deletedMessageType = null;
 
-        if (isDeletedForAll) {
-            deletedMessageType = isMine ? 'for-all-mine' : 'for-all-other';
-            displayText = '';
-            isDeletedMessage = true;
-        } else if (isDeletedForMe) {
-            deletedMessageType = isMine ? 'for-me-mine' : 'for-me-other';
-            displayText = '';
-            isDeletedMessage = true;
+    if (isDeletedForAll) {
+        deletedMessageType = isMine ? 'for-all-mine' : 'for-all-other';
+        displayText = '';
+        isDeletedMessage = true;
+    } else if (isDeletedForMe) {
+        deletedMessageType = isMine ? 'for-me-mine' : 'for-me-other';
+        displayText = '';
+        isDeletedMessage = true;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'message-item';
+    if (isMine && !isSystem) div.classList.add('bubble-mine');
+    div.dataset.docId = docId;
+    div.dataset.username = data.username || 'unknown';
+    div.dataset.text = data.text || '';
+    div.style.display = 'flex';
+    div.style.marginBottom = '4px';
+    div.style.gap = '6px';
+    div.style.alignItems = 'flex-start';
+    div.style.transition = 'transform 0.2s';
+    div.style.touchAction = 'pan-y';
+    div.style.position = 'relative';
+
+    // Avatar
+    const avatarDiv = buildAvatar(senderId, data.avatar, data.username);
+
+    // Wrapper
+    const bubbleWrapper = document.createElement('div');
+    bubbleWrapper.style.flex = '1';
+    bubbleWrapper.style.maxWidth = '75%';
+    bubbleWrapper.style.display = 'flex';
+    bubbleWrapper.style.flexDirection = 'column';
+
+    // Bubble
+    const bubble = document.createElement('div');
+    bubble.style.padding = '6px 12px';
+    bubble.style.borderRadius = '12px';
+    bubble.style.wordBreak = 'break-word';
+    bubble.style.lineHeight = '1.4';
+    bubble.style.fontSize = '13px';
+    bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+    bubble.style.position = 'relative';
+
+    // ✅ URUTAN BENAR: cek isSystem DULUAN (biar join message gak jadi orange)
+    if (isSystem) {
+        bubble.style.background = 'transparent';
+        bubble.style.color = 'var(--text-muted)';
+        bubble.style.textAlign = 'center';
+        bubble.style.fontSize = '11px';
+        bubble.style.padding = '2px 0';
+        bubble.style.boxShadow = 'none';
+        bubbleWrapper.style.alignItems = 'center';
+        bubbleWrapper.style.maxWidth = '100%';
+    } else if (isMine) {
+        bubble.style.background = 'var(--accent)';
+        bubble.style.color = '#fff';
+        bubble.style.borderTopRightRadius = '4px';
+        bubbleWrapper.style.alignItems = 'flex-end';
+    } else {
+        bubble.style.background = 'var(--bg-input)';
+        bubble.style.color = 'var(--text)';
+        bubble.style.borderTopLeftRadius = '4px';
+    }
+
+    // Username (kecuali system & mine)
+    if (!isSystem && !isMine) {
+        const nameSpan = document.createElement('div');
+        nameSpan.style.fontSize = '10px';
+        nameSpan.style.fontWeight = '600';
+        nameSpan.style.color = 'var(--accent)';
+        nameSpan.style.marginBottom = '1px';
+        nameSpan.textContent = data.username || 'unknown';
+        bubble.appendChild(nameSpan);
+    }
+
+    // Media-only class
+    if (data.mediaUrl && (!displayText || !displayText.trim()) && !isDeletedMessage) {
+        bubble.classList.add('bubble-media-only');
+    }
+
+    // ---- Media ----
+    if (data.mediaUrl && !isDeletedMessage) {
+        const mediaUrlSafe = safeImageUrl(data.mediaUrl);
+        if (mediaUrlSafe) {
+            const mediaContainer = document.createElement('div');
+            mediaContainer.style.margin = '4px 0';
+            mediaContainer.style.maxWidth = '220px';
+
+            if (data.mediaType === 'image' || data.mediaType === 'video') {
+                const mediaBox = document.createElement('div');
+                mediaBox.className = 'msg-media';
+
+                if (data.mediaType === 'image') {
+                    const img = document.createElement('img');
+                    img.src = mediaUrlSafe;
+                    img.alt = data.fileName || 'Gambar';
+                    img.loading = 'lazy';
+                    mediaBox.appendChild(img);
+                } else {
+                    const video = document.createElement('video');
+                    video.src = mediaUrlSafe;
+                    video.preload = 'metadata';
+                    video.playsInline = true;
+                    video.muted = true;
+                    mediaBox.appendChild(video);
+
+                    const playOverlay = document.createElement('div');
+                    playOverlay.className = 'play-overlay';
+                    playOverlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    mediaBox.appendChild(playOverlay);
+                }
+
+                const zoomHint = document.createElement('div');
+                zoomHint.className = 'media-zoom-hint';
+                zoomHint.innerHTML = '<i class="fa-solid fa-expand"></i>';
+                mediaBox.appendChild(zoomHint);
+
+                mediaBox.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openLightbox(mediaUrlSafe, data.mediaType, data.fileName);
+                });
+
+                mediaContainer.appendChild(mediaBox);
+
+            } else if (data.mediaType === 'audio') {
+                mediaContainer.appendChild(buildAudioPlayer(data));
+            } else {
+                // Dokumen
+                const link = document.createElement('a');
+                link.href = mediaUrlSafe;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.style.color = 'inherit';
+                link.style.textDecoration = 'none';
+                link.style.padding = '8px 10px';
+                link.style.background = 'rgba(0,0,0,0.15)';
+                link.style.borderRadius = '8px';
+                link.style.display = 'flex';
+                link.style.alignItems = 'center';
+                link.style.gap = '8px';
+                link.style.fontSize = '12px';
+                link.innerHTML = '<i class="fa-solid fa-file-lines" style="font-size:20px;"></i>';
+                const nameSpan = document.createElement('span');
+                nameSpan.style.flex = '1';
+                nameSpan.style.wordBreak = 'break-all';
+                nameSpan.textContent = data.fileName || 'File';
+                link.appendChild(nameSpan);
+                mediaContainer.appendChild(link);
+            }
+
+            bubble.appendChild(mediaContainer);
         }
+    }
 
-        const div = document.createElement('div');
-        div.className = 'message-item';
-        if (isMine && !isSystem) div.classList.add('bubble-mine');
-        div.dataset.docId = docId;
-        div.dataset.username = data.username || 'unknown';
-        div.dataset.text = data.text || '';
-        div.style.display = 'flex';
-        div.style.marginBottom = '4px';
-        div.style.gap = '6px';
-        div.style.alignItems = 'flex-start';
-        div.style.transition = 'transform 0.2s';
-        div.style.touchAction = 'pan-y';
-        div.style.position = 'relative';
+    // ---- Text ----
+    const textSpan = document.createElement('div');
+    textSpan.className = 'text-content';
 
-        // Avatar
-        const avatarDiv = buildAvatar(senderId, data.avatar, data.username);
+    let finalText = displayText;
 
-        // Wrapper
-        const bubbleWrapper = document.createElement('div');
-        bubbleWrapper.style.flex = '1';
-        bubbleWrapper.style.maxWidth = '75%';
-        bubbleWrapper.style.display = 'flex';
-        bubbleWrapper.style.flexDirection = 'column';
+    // Handle system message "bergabung"
+    if (isSystem && data.type === 'join') {
+        if (senderId === getMyUid()) {
+            finalText = 'Anda bergabung ke grup ini';
+        } else {
+            finalText = (data.username || 'Seseorang') + ' bergabung ke grup ini';
+        }
+    }
 
-        // Bubble
-        const bubble = document.createElement('div');
-        bubble.style.padding = '6px 12px';
-        bubble.style.borderRadius = '12px';
-        bubble.style.wordBreak = 'break-word';
-        bubble.style.lineHeight = '1.4';
-        bubble.style.fontSize = '13px';
-        bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        bubble.style.position = 'relative';
+    if (isDeletedMessage) {
+        textSpan.innerHTML = getDeletedMessageHTML(deletedMessageType);
+    } else if (finalText) {
+        const firstUrl = extractFirstUrl(finalText);
+        textSpan.textContent = finalText;
 
+        if (firstUrl) {
+            fetchLinkPreview(firstUrl).then(preview => {
+                if (!preview) return;
+                if (!document.body.contains(textSpan)) return;
+                if (textSpan.nextElementSibling && textSpan.nextElementSibling.classList.contains('link-preview')) return;
+                const previewEl = buildLinkPreviewElement(preview, firstUrl);
+                textSpan.parentNode.insertBefore(previewEl, textSpan.nextSibling);
+            }).catch(() => {});
+        }
+    }
+
+    if (data.isEdited && !isDeletedMessage && finalText) {
+        const editedLabel = document.createElement('span');
+        editedLabel.style.fontSize = '9px';
+        editedLabel.style.opacity = '0.5';
+        editedLabel.style.marginLeft = '4px';
+        editedLabel.textContent = ' (diedit)';
+        textSpan.appendChild(editedLabel);
+    }
+
+    if (finalText || isDeletedMessage) {
+        bubble.appendChild(textSpan);
+    }
+
+    // ---- Reply ----
+    if (data.replyTo && !isDeletedMessage) {
+        const replyContainer = document.createElement('div');
+        replyContainer.style.padding = '2px 8px';
+        replyContainer.style.marginBottom = '3px';
+        replyContainer.style.borderRadius = '4px';
+        replyContainer.style.fontSize = '10px';
+        replyContainer.style.opacity = '0.7';
+        replyContainer.style.borderLeft = '2px solid var(--accent)';
         if (isMine) {
-            bubble.style.background = 'var(--accent)';
-            bubble.style.color = '#fff';
-            bubble.style.borderTopRightRadius = '4px';
-            bubbleWrapper.style.alignItems = 'flex-end';
-        } else if (isSystem) {
-    bubble.style.background = 'transparent';
-    bubble.style.color = 'var(--text-muted)';
-    bubble.style.textAlign = 'center';
-    bubble.style.fontSize = '11px';
-    bubble.style.padding = '2px 0';
-    bubble.style.boxShadow = 'none';
-    bubbleWrapper.style.alignItems = 'center';
-    bubbleWrapper.style.maxWidth = '100%';
-} else if (isMine) {
-    bubble.style.background = 'var(--accent)';
-    bubble.style.color = '#fff';
-    bubble.style.borderTopRightRadius = '4px';
-    bubbleWrapper.style.alignItems = 'flex-end';
-} else {
-    bubble.style.background = 'var(--bg-input)';
-    bubble.style.color = 'var(--text)';
-    bubble.style.borderTopLeftRadius = '4px';
+            replyContainer.style.background = 'rgba(255,255,255,0.08)';
+        } else {
+            replyContainer.style.background = 'var(--bg-hover)';
+        }
+        const replyName = document.createElement('span');
+        replyName.style.fontWeight = '600';
+        replyName.textContent = data.replyTo.username || 'unknown';
+        replyContainer.appendChild(replyName);
+
+        const replyText = document.createElement('span');
+        replyText.textContent = ': ' + (data.replyTo.text || '');
+        replyContainer.appendChild(replyText);
+
+        bubble.prepend(replyContainer);
+    }
+
+    // ---- Timestamp ----
+    if (data.timestamp || isMine) {
+        const timeSpan = document.createElement('div');
+        timeSpan.className = 'bubble-timestamp';
+
+        if (data.timestamp) {
+            timeSpan.appendChild(document.createTextNode(formatTime(data.timestamp)));
+        }
+
+        if (isMine && !isSystem && !isDeletedForAll) {
+            const readStatus = document.createElement('span');
+            readStatus.className = 'read-check';
+            const readCount = data.readBy ? Object.keys(data.readBy).length : 0;
+            if (readCount > 0) {
+                readStatus.innerHTML = '✓✓';
+                readStatus.style.color = 'var(--success)';
+                readStatus.classList.add('read-double');
+            } else {
+                readStatus.innerHTML = '✓';
+                readStatus.style.color = 'var(--text-muted)';
+            }
+            timeSpan.appendChild(readStatus);
+        }
+        bubble.appendChild(timeSpan);
+    }
+
+    // ---- Layout ----
+    if (isSystem) {
+        div.style.justifyContent = 'center';
+        div.appendChild(bubble);
+    } else if (isMine) {
+        div.style.justifyContent = 'flex-end';
+        bubbleWrapper.appendChild(bubble);
+        div.appendChild(bubbleWrapper);
+    } else {
+        div.appendChild(avatarDiv);
+        bubbleWrapper.appendChild(bubble);
+        div.appendChild(bubbleWrapper);
+    }
+
+    // ---- Context menu ----
+    if (!isSystem && !isDeletedForAll) {
+        let longPressTimer = null;
+        const showMenu = (e) => {
+            e.preventDefault();
+            const now = Date.now();
+            const msgTime = data.timestamp ? data.timestamp.toMillis() : 0;
+            const canEdit = (now - msgTime) < 60 * 60 * 1000;
+            showMessageMenu(docId, senderId, data.username, data.text, isMine, canEdit, data.isEdited);
+        };
+        div.addEventListener('touchstart', function() {
+            longPressTimer = setTimeout(() => showMenu({ preventDefault: () => {} }), 600);
+        }, { passive: true });
+        div.addEventListener('touchmove', function() { clearTimeout(longPressTimer); }, { passive: true });
+        div.addEventListener('touchend', function() { clearTimeout(longPressTimer); });
+        div.addEventListener('contextmenu', showMenu);
+        div.addEventListener('dblclick', showMenu);
+    }
+
+    return div;
 }
-
-        // Username (kecuali system & mine)
-        if (!isSystem && !isMine) {
-            const nameSpan = document.createElement('div');
-            nameSpan.style.fontSize = '10px';
-            nameSpan.style.fontWeight = '600';
-            nameSpan.style.color = 'var(--accent)';
-            nameSpan.style.marginBottom = '1px';
-            nameSpan.textContent = data.username || 'unknown';
-            bubble.appendChild(nameSpan);
-        }
-
-        // Media-only class
-        if (data.mediaUrl && (!displayText || !displayText.trim()) && !isDeletedMessage) {
-            bubble.classList.add('bubble-media-only');
-        }
 
         // ---- Media ----
         if (data.mediaUrl && !isDeletedMessage) {
@@ -9655,15 +9858,16 @@ if (isSystem && data.type === 'join') {
             const docId = doc.id;
 
             if (change.type === 'added') {
-                if (renderedMessages.has(docId)) return;
+    if (renderedMessages.has(docId)) return;
 
-                // Skip kalau lebih lama dari oldestLoadedTs (kecuali initial)
-                const data = doc.data();
-                const msgTs = data.timestamp?.toMillis?.() || 0;
+    const data = doc.data();
+    const msgTs = data.timestamp?.toMillis?.() || 0;
 
-                // Kalau pagination sudah load lebih lama, skip yang lebih lama
-                if (opts?.skipOlderThan && msgTs && msgTs < opts.skipOlderThan) return;
-
+    // ✅ Guard: skip kalau lebih tua dari cursor
+    if (opts?.skipOlderThan && msgTs && msgTs < opts.skipOlderThan) {
+        console.log('[Chat] Skip pesan lama:', docId, '(ts=' + msgTs + ', cursor=' + opts.skipOlderThan + ')');
+        return;
+    }
                 // Insert berurutan berdasarkan timestamp
                 const el = buildMessageElement(doc);
 
@@ -9936,80 +10140,100 @@ if (senderIdCheck === getMyUid()) {
        SUBSCRIBE MESSAGES (pagination + realtime)
     ============================================================ */
     function subscribeMessages() {
-        const db = getDb();
-        if (!db) {
-            console.warn('[Chat] DB belum siap');
-            return;
-        }
-
-        if (messagesUnsubscribe) {
-            try { messagesUnsubscribe(); } catch(e) {}
-            messagesUnsubscribe = null;
-        }
-        renderedMessages.clear();
-
-        const list = document.getElementById('messages-list');
-        if (list) list.innerHTML = '';
-
-       // Initial load: 10 pesan terbaru
-db.collection('messages')
-    .orderBy('timestamp', 'desc')
-    .limit(INITIAL_LOAD)
-    .get()
-            .then(snapshot => {
-                const docs = snapshot.docs.reverse(); // asc order
-
-                if (docs.length > 0) {
-                    oldestLoadedTs = docs[0].data().timestamp?.toMillis?.() || null;
-hasMoreOldMessages = docs.length === INITIAL_LOAD;
-                } else {
-                    oldestLoadedTs = null;
-                    hasMoreOldMessages = false;
-                }
-
-                // Render manual
-                docs.forEach(doc => {
-                    const el = buildMessageElement(doc);
-                    el.dataset.ts = String(doc.data().timestamp?.toMillis?.() || Date.now());
-                    const listEl = document.getElementById('messages-list');
-                    if (listEl) listEl.appendChild(el);
-                    renderedMessages.set(doc.id, el);
-                });
-
-                initialLoadDone = true;
-                observeMessages();
-                requestAnimationFrame(() => scrollToBottom(false));
-
-                // Realtime listener dari oldestLoadedTs
-                startRealtimeListener();
-            })
-            .catch(err => {
-                console.error('[Chat] Initial load gagal:', err);
-                hasMoreOldMessages = false;
-                startRealtimeListener();
-            });
+    const db = getDb();
+    if (!db) {
+        console.warn('[Chat] DB belum siap');
+        return;
     }
 
+    if (messagesUnsubscribe) {
+        try { messagesUnsubscribe(); } catch(e) {}
+        messagesUnsubscribe = null;
+    }
+    renderedMessages.clear();
+
+    const list = document.getElementById('messages-list');
+    if (list) list.innerHTML = '';
+
+    // Initial load: 10 pesan terbaru
+    db.collection('messages')
+        .orderBy('timestamp', 'desc')
+        .limit(INITIAL_LOAD)
+        .get()
+        .then(snapshot => {
+            const docs = snapshot.docs.reverse(); // asc order (terlama → terbaru)
+
+            console.log('[Chat] Initial load:', docs.length, 'pesan (limit=' + INITIAL_LOAD + ')');
+
+            if (docs.length > 0) {
+                // ✅ FIX: fallback ke Date.now() kalau timestamp null/undefined
+                const firstDocTs = docs[0].data().timestamp?.toMillis?.();
+                oldestLoadedTs = firstDocTs || Date.now();
+
+                console.log('[Chat] oldestLoadedTs diset:', oldestLoadedTs, '(dari', docs[0].id + ')');
+
+                hasMoreOldMessages = docs.length === INITIAL_LOAD;
+            } else {
+                oldestLoadedTs = null;
+                hasMoreOldMessages = false;
+                console.log('[Chat] Grup masih kosong, no messages');
+            }
+
+            // Render 10 pesan (batch pakai fragment biar gak kedip)
+            const listEl = document.getElementById('messages-list');
+            if (listEl) {
+                const fragment = document.createDocumentFragment();
+                docs.forEach(doc => {
+                    const el = buildMessageElement(doc);
+                    const ts = doc.data().timestamp?.toMillis?.() || Date.now();
+                    el.dataset.ts = String(ts);
+                    fragment.appendChild(el);
+                    renderedMessages.set(doc.id, el);
+                });
+                listEl.innerHTML = '';       // clear dulu
+                listEl.appendChild(fragment); // append 10 sekaligus
+            }
+
+            initialLoadDone = true;
+            observeMessages();
+            requestAnimationFrame(() => scrollToBottom(false));
+
+            // Realtime listener attach SETELAH initial render
+            startRealtimeListener();
+        })
+        .catch(err => {
+            console.error('[Chat] Initial load gagal:', err);
+            hasMoreOldMessages = false;
+            startRealtimeListener();
+        });
+}
     function startRealtimeListener() {
     const db = getDb();
     if (!db) return;
 
     if (messagesUnsubscribe) {
         try { messagesUnsubscribe(); } catch(e) {}
+        messagesUnsubscribe = null;
     }
 
-    // Query dasar
-    let query = db.collection('messages').orderBy('timestamp', 'asc');
-
-    // Kalau sudah ada cursor (oldestLoadedTs), mulai dari situ
-    // Artinya: jangan dengar pesan yang LEBIH TUA dari yang sudah di-load
-    if (oldestLoadedTs) {
-        query = query.startAt(new Date(oldestLoadedTs));
+    // ✅ FIX: kalau oldestLoadedTs gak ada, JANGAN attach
+    //         (kalau attach tanpa startAt, Firestore kirim SEMUA pesan)
+    if (!oldestLoadedTs) {
+        console.warn('[Chat] oldestLoadedTs belum siap, retry 500ms...');
+        setTimeout(startRealtimeListener, 500);
+        return;
     }
+
+    const cursor = new Date(oldestLoadedTs);
+    console.log('[Chat] Realtime listener attach dari:', cursor.toISOString());
+
+    let query = db.collection('messages')
+        .orderBy('timestamp', 'asc')
+        .startAt(cursor);
 
     messagesUnsubscribe = query.onSnapshot(snapshot => {
-        // Pass cursor biar handleSnapshotChanges skip yang lebih tua
-        handleSnapshotChanges(snapshot, { skipOlderThan: oldestLoadedTs || 0 });
+        // Safety: double-guard skipOlderThan
+        handleSnapshotChanges(snapshot, { skipOlderThan: oldestLoadedTs });
     }, err => {
         console.error('[Chat] Realtime error:', err);
     });
