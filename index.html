@@ -5300,7 +5300,35 @@ html.gate-passed body {
     font-family: var(--font-mono);
     white-space: nowrap;
 }
+/* ============================================================
+   MEMBER DELETE BUTTON
+   ============================================================ */
+.member-row-delete {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-left: 4px;
+}
+.member-row-delete:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(240, 97, 107, 0.3);
+}
+.member-row-delete:active { transform: scale(0.94); }
+.member-row.can-delete .member-row-delete { display: flex; }
 
+/* Kecilkan sedikit ruang kalau ada tombol */
+.member-row.can-delete .member-row-info { padding-right: 4px; }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
@@ -9365,6 +9393,9 @@ function buildDateSeparator(date) {
 function insertDateSeparatorBefore(messageEl, listEl) {
     if (!messageEl || !listEl) return;
 
+    // ⬇️ TAMBAH INI — skip kalau ini system message
+    if (messageEl.dataset.isSystem === 'true') return;
+
     const prevEl = messageEl.previousElementSibling;
 
     let prevMessage = null;
@@ -10275,11 +10306,12 @@ function buildMessageElement(doc) {
     }
 
     const div = document.createElement('div');
-    div.className = 'message-item';
-    if (isMine && !isSystem) div.classList.add('bubble-mine');
-    div.dataset.docId = docId;
-    div.dataset.username = data.username || 'unknown';
-    div.dataset.text = data.text || '';
+div.className = 'message-item';
+if (isMine && !isSystem) div.classList.add('bubble-mine');
+div.dataset.docId = docId;
+div.dataset.username = data.username || 'unknown';
+div.dataset.text = data.text || '';
+div.dataset.isSystem = String(isSystem);   // ⬅️ TAMBAH INI
     div.style.display = 'flex';
     div.style.marginBottom = '4px';
     div.style.gap = '6px';
@@ -10919,11 +10951,16 @@ if (listEl) {
     const fragment = document.createDocumentFragment();
     let lastDateKey = null;
     docs.forEach(doc => {
-        const ts = doc.data().timestamp?.toMillis?.() || Date.now();
+        const d = doc.data();
+        const ts = d.timestamp?.toMillis?.() || Date.now();
         const dateKey = getDateKey(new Date(ts));
 
-        // Sisipkan separator kalau beda hari
-        if (dateKey !== lastDateKey) {
+        // ⬇️ Cek apakah ini system message
+        const senderId = d.senderId || d.uid || d.sender || '';
+        const isSystem = d.type === 'join' || d.type === 'leave' || senderId === 'system';
+
+        // Sisipkan separator HANYA kalau bukan system message
+        if (!isSystem && dateKey !== lastDateKey) {
             fragment.appendChild(buildDateSeparator(new Date(ts)));
             lastDateKey = dateKey;
         }
@@ -11746,49 +11783,122 @@ if (isOwnerUser(currentUser?.username)) {
        SUBSCRIBE USERS (member panel + online count)
     ============================================================ */
     function subscribeUsers() {
-        const db = getDb();
-        if (!db) return;
-        if (usersUnsubscribe) {
-            try { usersUnsubscribe(); } catch(e) {}
-            usersUnsubscribe = null;
-        }
-        usersUnsubscribe = db.collection('users').onSnapshot(snapshot => {
-            let online = 0;
-            allUsersCache = [];
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                if (d.isOnline === true) online++;
-                window._userAvatarCache[doc.id] = {
-                    username: d.username || '',
-                    avatar: d.avatar || '',
-                    avatarUpdatedAt: d.avatarUpdatedAt || null,
-                    avatarUpdatedAtMs: d.avatarUpdatedAtMs || null
-                };
-                allUsersCache.push({
-                    uid: doc.id,
-                    username: d.username || '',
-                    avatar: d.avatar || '',
-                    isOnline: d.isOnline === true,
-                    lastSeen: d.lastSeen || null
-                });
+    const db = getDb();
+    if (!db) return;
+    if (usersUnsubscribe) {
+        try { usersUnsubscribe(); } catch(e) {}
+        usersUnsubscribe = null;
+    }
+    usersUnsubscribe = db.collection('users').onSnapshot(snapshot => {
+        let online = 0;
+        allUsersCache = [];
+        let myDocExists = false;
+
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            if (d.isOnline === true) online++;
+            window._userAvatarCache[doc.id] = {
+                username: d.username || '',
+                avatar: d.avatar || '',
+                avatarUpdatedAt: d.avatarUpdatedAt || null,
+                avatarUpdatedAtMs: d.avatarUpdatedAtMs || null
+            };
+            allUsersCache.push({
+                uid: doc.id,
+                username: d.username || '',
+                avatar: d.avatar || '',
+                isOnline: d.isOnline === true,
+                lastSeen: d.lastSeen || null
             });
 
-            const total = snapshot.size;
-            const groupInfo = document.getElementById('group-info');
-            if (groupInfo) groupInfo.textContent = total + ' anggota · ' + online + ' online';
-
-            // Update member panel stats
-            const totalEl = document.getElementById('member-total-stat');
-            const onlineEl = document.getElementById('member-online-stat');
-            if (totalEl) totalEl.textContent = total + ' anggota';
-            if (onlineEl) onlineEl.textContent = online + ' online';
-
-            // Re-render member panel kalau terbuka
-            if (memberPanelOpen) renderMemberPanel();
-        }, (error) => {
-            console.error('Error listening users:', error);
+            if (currentUser && doc.id === currentUser.uid) {
+                myDocExists = true;
+            }
         });
+
+        const total = snapshot.size;
+        const groupInfo = document.getElementById('group-info');
+        if (groupInfo) groupInfo.textContent = total + ' anggota · ' + online + ' online';
+
+        const totalEl = document.getElementById('member-total-stat');
+        const onlineEl = document.getElementById('member-online-stat');
+        if (totalEl) totalEl.textContent = total + ' anggota';
+        if (onlineEl) onlineEl.textContent = online + ' online';
+
+        if (memberPanelOpen) renderMemberPanel();
+
+        // ⬇️ DETEKSI: kalau currentUser udah gak ada di list → auto logout
+        if (currentUser && !myDocExists) {
+            console.log('[Member] User sendiri dihapus oleh owner');
+            handleSelfLogout();
+        }
+    }, (error) => {
+        console.error('Error listening users:', error);
+    });
+}
+
+/* ============================================================
+   SELF LOGOUT — dipanggil kalau user dihapus oleh owner
+============================================================ */
+function handleSelfLogout() {
+    // Unsubscribe listener dulu biar gak dobel trigger
+    if (usersUnsubscribe) {
+        try { usersUnsubscribe(); } catch(e) {}
+        usersUnsubscribe = null;
     }
+    if (messagesUnsubscribe) {
+        try { messagesUnsubscribe(); } catch(e) {}
+        messagesUnsubscribe = null;
+    }
+    if (statusInterval) {
+        clearInterval(statusInterval);
+        statusInterval = null;
+    }
+
+    // Clear state
+    currentUser = null;
+
+    // Clear localStorage
+    try {
+        localStorage.removeItem('ekk_group_user');
+    } catch (e) {}
+
+    // Close chat-open class
+    document.documentElement.classList.remove('chat-open');
+    document.body.classList.remove('chat-open');
+
+    // Show toast + info
+    showToast('Anda telah dikeluarkan dari grup oleh owner', 'warning');
+
+    // Balik ke form "Buat Profil"
+    setTimeout(() => {
+        showProfileSetup();
+        // Reset input fields
+        const newUsernameInput = document.getElementById('new-username');
+        const avatarInput = document.getElementById('avatar-input');
+        const avatarPreview = document.getElementById('avatar-preview');
+        const usernameError = document.getElementById('username-error');
+        const avatarError = document.getElementById('avatar-error');
+        const usernameCheckIcon = document.getElementById('username-check-icon');
+
+        if (newUsernameInput) newUsernameInput.value = '';
+        if (avatarInput) avatarInput.value = '';
+        if (avatarPreview) avatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
+        if (usernameError) {
+            usernameError.textContent = '';
+            usernameError.classList.remove('visible');
+        }
+        if (avatarError) {
+            avatarError.textContent = '';
+            avatarError.classList.remove('visible');
+        }
+        if (usernameCheckIcon) {
+            usernameCheckIcon.className = 'username-status-icon';
+            usernameCheckIcon.innerHTML = '';
+        }
+        uploadedAvatarUrl = '';
+    }, 600);
+}
 
     /* ============================================================
        MEMBER PANEL
@@ -11841,27 +11951,40 @@ if (isOwnerUser(currentUser?.username)) {
         const offlineUsers = users.filter(u => !u.isOnline);
         const myUid = getMyUid();
 
-        function renderUserRow(u, isMe) {
-            const initial = (u.username || '?')[0].toUpperCase();
-            const avatarUrl = safeImageUrl(u.avatar);
-            const avatarHTML = avatarUrl
-                ? '<img src="' + escapeHTML(avatarUrl) + '" alt="">'
-                : escapeHTML(initial);
+        const iAmOwner = isOwnerUser(currentUser?.username);
 
-            const metaText = u.isOnline ? '<span class="online-txt">Online</span>' : 'Offline';
-            const youTag = isMe ? '<span class="you-tag">Anda</span>' : '';
+function renderUserRow(u, isMe) {
+    const initial = (u.username || '?')[0].toUpperCase();
+    const avatarUrl = safeImageUrl(u.avatar);
+    const avatarHTML = avatarUrl
+        ? '<img src="' + escapeHTML(avatarUrl) + '" alt="">'
+        : escapeHTML(initial);
 
-            return '<div class="member-row">' +
-                '<div class="member-row-avatar-wrap">' +
-                '<div class="member-row-avatar">' + avatarHTML + '</div>' +
-                '<span class="member-row-status ' + (u.isOnline ? 'online' : 'offline') + '"></span>' +
-                '</div>' +
-                '<div class="member-row-info">' +
-                '<div class="member-row-name">' + escapeHTML(u.username || 'unknown') + youTag + '</div>' +
-                '<div class="member-row-meta">' + metaText + '</div>' +
-                '</div>' +
-                '</div>';
-        }
+    const metaText = u.isOnline ? '<span class="online-txt">Online</span>' : 'Offline';
+    const youTag = isMe ? '<span class="you-tag">Anda</span>' : '';
+
+    // Owner bisa hapus member, TAPI gak bisa hapus diri sendiri
+    const canDelete = iAmOwner && !isMe;
+
+    const deleteBtnHTML = '<button class="member-row-delete" ' +
+        'data-uid="' + escapeHTML(u.uid) + '" ' +
+        'data-username="' + escapeHTML(u.username || 'unknown') + '" ' +
+        'aria-label="Hapus member" title="Hapus member">' +
+        '<i class="fa-solid fa-trash"></i>' +
+        '</button>';
+
+    return '<div class="member-row' + (canDelete ? ' can-delete' : '') + '">' +
+        '<div class="member-row-avatar-wrap">' +
+        '<div class="member-row-avatar">' + avatarHTML + '</div>' +
+        '<span class="member-row-status ' + (u.isOnline ? 'online' : 'offline') + '"></span>' +
+        '</div>' +
+        '<div class="member-row-info">' +
+        '<div class="member-row-name">' + escapeHTML(u.username || 'unknown') + youTag + '</div>' +
+        '<div class="member-row-meta">' + metaText + '</div>' +
+        '</div>' +
+        (canDelete ? deleteBtnHTML : '') +
+        '</div>';
+}
 
         let html = '';
         if (onlineUsers.length > 0) {
@@ -11874,22 +11997,93 @@ if (isOwnerUser(currentUser?.username)) {
         }
         list.innerHTML = html;
     }
-
-    function setupMemberPanelEvents() {
-        const openBtn = document.getElementById('btn-open-members');
-        if (openBtn) openBtn.addEventListener('click', openMemberPanel);
-
-        const closeBtn = document.getElementById('member-panel-close');
-        if (closeBtn) closeBtn.addEventListener('click', closeMemberPanel);
-
-        const backdrop = document.getElementById('member-panel-backdrop');
-        if (backdrop) backdrop.addEventListener('click', closeMemberPanel);
-
-        const searchInput = document.getElementById('member-panel-search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', debounce(() => renderMemberPanel(), 200));
-        }
+/* ============================================================
+   HAPUS MEMBER — hanya owner
+============================================================ */
+async function handleDeleteMember(uid, username) {
+    // Cek permission owner
+    if (!isOwnerUser(currentUser?.username)) {
+        showToast('Hanya Ekk Store yang bisa hapus member', 'warning');
+        return;
     }
+
+    // Cek jangan hapus diri sendiri
+    if (uid === currentUser?.uid) {
+        showToast('Tidak bisa hapus diri sendiri', 'warning');
+        return;
+    }
+
+    // Konfirmasi
+    const ok = await showConfirmModal(
+        'Hapus Member?',
+        'User "' + username + '" akan dihapus dari grup.\n\n' +
+        'Mereka harus buat profil baru untuk gabung lagi.\n' +
+        'Pesan lama mereka tetap tersimpan.\n\n' +
+        'Lanjutkan?',
+        'Hapus'
+    );
+    if (!ok) return;
+
+    const db = getDb();
+    if (!db) {
+        showToast('DB belum siap', 'error');
+        return;
+    }
+
+    try {
+        // 1. Hapus user doc dari Firestore
+        await db.collection('users').doc(uid).delete();
+
+        // 2. Hapus typing doc kalau ada
+        try {
+            await db.collection('typing').doc(uid).delete();
+        } catch (e) { /* silent */ }
+
+        // 3. Kalau yang dihapus adalah currentUser (harusnya gak mungkin,
+        //    tapi kalau ada edge case) — logout
+        if (uid === currentUser?.uid) {
+            handleSelfLogout();
+            return;
+        }
+
+        showToast('Member "' + username + '" dihapus', 'success');
+
+        // Panel member akan auto-update via subscribeUsers listener
+    } catch (err) {
+        console.error('[DeleteMember] Error:', err);
+        showToast('Gagal hapus member: ' + err.message, 'error');
+    }
+}
+    function setupMemberPanelEvents() {
+    const openBtn = document.getElementById('btn-open-members');
+    if (openBtn) openBtn.addEventListener('click', openMemberPanel);
+
+    const closeBtn = document.getElementById('member-panel-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeMemberPanel);
+
+    const backdrop = document.getElementById('member-panel-backdrop');
+    if (backdrop) backdrop.addEventListener('click', closeMemberPanel);
+
+    const searchInput = document.getElementById('member-panel-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(() => renderMemberPanel(), 200));
+    }
+
+    // Event delegation — handle tombol hapus member
+    const memberList = document.getElementById('member-list');
+    if (memberList) {
+        memberList.addEventListener('click', function(e) {
+            const btn = e.target.closest('.member-row-delete');
+            if (!btn) return;
+            e.stopPropagation();
+
+            const targetUid = btn.dataset.uid;
+            const targetUsername = btn.dataset.username || 'user ini';
+
+            handleDeleteMember(targetUid, targetUsername);
+        });
+    }
+}
 
     /* ============================================================
        CHAT SEARCH
