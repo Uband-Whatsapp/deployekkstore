@@ -102,8 +102,9 @@
     --accent: #f97316;                                    /* 🟠 ORANGE */
     --accent-hover: #fb923c;                              /* 🟠 orange muda */
     --accent-press: #ea580c;                              /* 🟠 orange gelap */
-    --accent-glow: rgba(249, 115, 22, 0.28);              /* 🟠 orange transparan */
-    --accent-soft: #2a1e16;                               /* 🟠 orange soft */
+    --accent-glow: rgba(249, 115, 22, 0.28);
+--accent-soft: #2a1e16;
+--accent-line: rgba(249, 115, 22, 0.28);  /* ⬅️ TAMBAH INI */
 
     /* Status colors */
     --success: #22d3a8;
@@ -9267,7 +9268,84 @@ let pinnedUnsubscribe = null;
         const sec = s % 60;
         return m + ':' + (sec < 10 ? '0' : '') + sec;
     }
+/* ============================================================
+   DATE SEPARATOR
+============================================================ */
+function getDateKey(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.getFullYear() + '-' +
+           String(d.getMonth() + 1).padStart(2, '0') + '-' +
+           String(d.getDate()).padStart(2, '0');
+}
 
+function formatDateSeparator(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    const now = new Date();
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = Math.floor((today - target) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Hari ini';
+    if (diffDays === 1) return 'Kemarin';
+
+    if (diffDays >= 2 && diffDays <= 6) {
+        const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        return days[d.getDay()];
+    }
+
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = months[d.getMonth()];
+    const yyyy = d.getFullYear();
+
+    if (yyyy === now.getFullYear()) {
+        return dd + ' ' + mm;
+    }
+    return dd + ' ' + mm + ' ' + yyyy;
+}
+
+function buildDateSeparator(date) {
+    const sep = document.createElement('div');
+    sep.className = 'date-separator';
+    sep.dataset.dateKey = getDateKey(date);
+    const span = document.createElement('span');
+    span.textContent = formatDateSeparator(date);
+    sep.appendChild(span);
+    return sep;
+}
+
+function insertDateSeparatorBefore(messageEl, listEl) {
+    if (!messageEl || !listEl) return;
+
+    const prevEl = messageEl.previousElementSibling;
+
+    let prevMessage = null;
+    if (prevEl && prevEl.classList.contains('message-item')) {
+        prevMessage = prevEl;
+    } else if (prevEl && prevEl.classList.contains('date-separator')) {
+        prevMessage = prevEl.previousElementSibling;
+        if (prevMessage && !prevMessage.classList.contains('message-item')) {
+            prevMessage = null;
+        }
+    }
+
+    const curTs = parseInt(messageEl.dataset.ts || '0', 10);
+    const prevTs = prevMessage ? parseInt(prevMessage.dataset.ts || '0', 10) : 0;
+    if (!curTs) return;
+
+    const curKey = getDateKey(new Date(curTs));
+    const prevKey = prevMessage ? getDateKey(new Date(prevTs)) : null;
+
+    if (curKey === prevKey) return;
+
+    if (prevEl && prevEl.classList.contains('date-separator')) {
+        prevEl.remove();
+    }
+
+    const sep = buildDateSeparator(new Date(curTs));
+    listEl.insertBefore(sep, messageEl);
+}
     function showToast(msg, type) {
         if (typeof window.showToast === 'function') window.showToast(msg, type);
     }
@@ -10484,11 +10562,14 @@ function handleSnapshotChanges(snapshot, opts) {
                     }
                 }
                 if (!inserted) {
-                    list.appendChild(el);
-                }
+    list.appendChild(el);
+}
 
-                renderedMessages.set(docId, el);
-                addedCount++;
+// ⬇️ TAMBAH INI
+insertDateSeparatorBefore(el, list);
+
+renderedMessages.set(docId, el);
+addedCount++;
 // ✅ FIX: Hapus pending message yang match dengan pesan asli ini
 const senderIdCheck = data.senderId || data.uid || data.sender || '';
 if (senderIdCheck === getMyUid()) {
@@ -10772,19 +10853,29 @@ function subscribeMessages() {
             }
 
             // Render 10 pesan (batch pakai fragment biar gak kedip)
-            const listEl = document.getElementById('messages-list');
-            if (listEl) {
-                const fragment = document.createDocumentFragment();
-                docs.forEach(doc => {
-                    const el = buildMessageElement(doc);
-                    const ts = doc.data().timestamp?.toMillis?.() || Date.now();
-                    el.dataset.ts = String(ts);
-                    fragment.appendChild(el);
-                    renderedMessages.set(doc.id, el);
-                });
-                listEl.innerHTML = '';       // clear dulu
-                listEl.appendChild(fragment); // append 10 sekaligus
-            }
+            // Render 10 pesan (batch pakai fragment biar gak kedip)
+const listEl = document.getElementById('messages-list');
+if (listEl) {
+    const fragment = document.createDocumentFragment();
+    let lastDateKey = null;
+    docs.forEach(doc => {
+        const ts = doc.data().timestamp?.toMillis?.() || Date.now();
+        const dateKey = getDateKey(new Date(ts));
+
+        // Sisipkan separator kalau beda hari
+        if (dateKey !== lastDateKey) {
+            fragment.appendChild(buildDateSeparator(new Date(ts)));
+            lastDateKey = dateKey;
+        }
+
+        const el = buildMessageElement(doc);
+        el.dataset.ts = String(ts);
+        fragment.appendChild(el);
+        renderedMessages.set(doc.id, el);
+    });
+    listEl.innerHTML = '';
+    listEl.appendChild(fragment);
+}
 
             initialLoadDone = true;
             observeMessages();
@@ -10797,15 +10888,12 @@ function subscribeMessages() {
     // Subscribe pin banner
     subscribePinnedMessage();
 })
-        .catch(err => {
-            console.error('[Chat] Initial load gagal:', err);
-            hasMoreOldMessages = false;
-                // Realtime listener attach SETELAH initial render
+.catch(err => {
+    console.error('[Chat] Initial load gagal:', err);
+    hasMoreOldMessages = false;
     startRealtimeListener();
-
-    // Subscribe pin banner
     subscribePinnedMessage();
-})
+});
 }
 /* ============================================================
    PIN PESAN — hanya Ekk Store
@@ -13502,18 +13590,19 @@ setTimeout(() => {
         bootstrap();
     }
 
-    // Expose untuk debugging / fitur eksternal
     window.EkkChat = {
-    initChat,
-    checkUser,
-    openMemberPanel,
-    closeMemberPanel,
-    openChatSearch,
-    closeChatSearch,
-    scrollToBottom,
-    markRead: markChatAsRead,
-    get currentUser() { return currentUser; }
-};
+        initChat,
+        checkUser,
+        openMemberPanel,
+        closeMemberPanel,
+        openChatSearch,
+        closeChatSearch,
+        scrollToBottom,
+        markRead: markChatAsRead,
+        get currentUser() { return currentUser; }
+    };
+
+})();   // ⬅️ TAMBAH INI
 </script>
 </body>
 </html>
