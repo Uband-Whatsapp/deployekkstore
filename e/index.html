@@ -1008,13 +1008,23 @@ ul { list-style: none; }
     margin-bottom: var(--space-6);
     width: 100%;
 }
+
+/* Kartu pertama full width di HP */
+.stats-grid .stat-card:first-child {
+    grid-column: 1 / -1;
+}
+
 @media (min-width: 768px) {
     .stats-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: var(--space-4);
     }
-    .stats-grid .stat-card:first-child { grid-column: span 2; }
+
+    .stats-grid .stat-card:first-child {
+        grid-column: span 2;
+    }
 }
+
 .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -1707,9 +1717,9 @@ ul { list-style: none; }
    ANNOUNCEMENT / CTA
    ============================================================ */
 .announcement-card {
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.14), rgba(249, 115, 22, 0.03));
-    border: 1px solid rgba(249, 115, 22, 0.24);
-    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     padding: 16px;
     width: 100%;
     box-sizing: border-box;
@@ -1717,11 +1727,11 @@ ul { list-style: none; }
     align-items: center;
     gap: 14px;
     margin-bottom: 20px;
-    transition: all 0.3s var(--ease-out);
+    transition: all var(--transition);
 }
 .announcement-card:hover {
-    border-color: var(--accent);
-    box-shadow: 0 4px 24px rgba(249, 115, 22, 0.12);
+    border-color: var(--border-light);
+    background: var(--bg-elevated);
 }
 .announcement-icon {
     flex: 0 0 46px;
@@ -1730,15 +1740,12 @@ ul { list-style: none; }
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(249, 115, 22, 0.14);
-    border-radius: 12px;
-    font-size: 22px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-sm);
+    font-size: 20px;
     color: var(--accent);
     flex-shrink: 0;
-    transition: transform 0.3s var(--ease-out);
-}
-.announcement-card:hover .announcement-icon {
-    transform: scale(1.08) rotate(-6deg);
 }
 .announcement-content {
     flex: 1;
@@ -1771,7 +1778,6 @@ ul { list-style: none; }
     min-height: 34px;
     font-size: 12px;
 }
-
 /* ============================================================
    EMPTY STATE
    ============================================================ */
@@ -6517,6 +6523,7 @@ function navigateTo(page) {
     }
 
     currentPage = page;
+    window.currentPage = page;   // ✅ FIX #3: sync ke window juga
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const targetPage = document.getElementById('page-' + page);
@@ -6655,10 +6662,12 @@ function validateProjectName(name) {
     if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };
     if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };
     if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };
-    if (!/^[a-z0-9-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, dan tanda hubung (-).' };
+    if (!/^[a-z0-9.-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, tanda hubung (-), dan titik (.).' };
     if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };
+    if (/\.\./.test(name)) return { valid: false, msg: 'Tidak boleh dua titik berurutan (..).' };
     return { valid: true };
 }
+
 
 function setupProjectInput() {
     const projectInput = document.getElementById('project');
@@ -6668,6 +6677,7 @@ function setupProjectInput() {
 
     projectInput.addEventListener('input', function () {
         const val = this.value.trim().toLowerCase();
+        // ✅ FIX #5B: izinkan titik (.) juga, konsisten dengan validator
         this.value = val.replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^[-.]|[-.]$/g, '');
 
         if (this.value.length === 0) {
@@ -6693,7 +6703,6 @@ function setupProjectInput() {
         }
     });
 }
-
 /* ============================================================
    8) FILE UPLOAD (dropzone + large file warning)
    ============================================================ */
@@ -7436,7 +7445,7 @@ async function performDeploy(projectName) {
             resetDeployButton();
             return;
         }
-        project = projectInputVal.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        project = projectInputVal.toLowerCase().replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^[-.]|[-.]$/g, '');
     }
 
     if (!project || project.length < 3) {
@@ -8554,7 +8563,7 @@ const INITIAL_LOAD = 10;     // ← BARU: batas awal cuma 10 pesan
     let typingCleanupTimer = null;
 
     // Pagination
-    let oldestLoadedTs = null;           // cursor untuk load lebih lama
+    let oldestLoadedTs = Date.now();           // cursor untuk load lebih lama
     let hasMoreOldMessages = true;
     let isLoadingOlder = false;
     let initialLoadDone = false;
@@ -9920,7 +9929,7 @@ if (senderIdCheck === getMyUid()) {
     /* ============================================================
        SUBSCRIBE MESSAGES (pagination + realtime)
     ============================================================ */
-    function subscribeMessages() {
+function subscribeMessages() {
     const db = getDb();
     if (!db) {
         console.warn('[Chat] DB belum siap');
@@ -9955,9 +9964,12 @@ if (senderIdCheck === getMyUid()) {
 
                 hasMoreOldMessages = docs.length === INITIAL_LOAD;
             } else {
-                oldestLoadedTs = null;
+                // ✅ FIX #4: pakai Date.now() bukan null
+                // Grup kosong — pakai waktu sekarang sebagai cursor.
+                // Listener nanti akan tangkap pesan baru yang masuk setelah ini.
+                oldestLoadedTs = Date.now();
                 hasMoreOldMessages = false;
-                console.log('[Chat] Grup masih kosong, no messages');
+                console.log('[Chat] Grup masih kosong, pakai waktu sekarang sebagai cursor');
             }
 
             // Render 10 pesan (batch pakai fragment biar gak kedip)
@@ -11728,206 +11740,212 @@ if (senderIdCheck === getMyUid()) {
     }
 
     function setupProfileSetup() {
-        const newUsernameInput = document.getElementById('new-username');
-        const btnCreateProfile = document.getElementById('btn-create-profile');
-        const avatarInput = document.getElementById('avatar-input');
-        const avatarPreview = document.getElementById('avatar-preview');
-        const avatarError = document.getElementById('avatar-error');
+    const newUsernameInput = document.getElementById('new-username');
+    const btnCreateProfile = document.getElementById('btn-create-profile');
+    const avatarInput = document.getElementById('avatar-input');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const avatarError = document.getElementById('avatar-error');
 
-        if (newUsernameInput) {
-            newUsernameInput.addEventListener('input', async function() {
-                const raw = this.value;
-                const normalized = normalizeUsername(raw);
-                if (raw !== normalized && raw.length > 0 && !/\s$/.test(raw)) {
-                    this.value = normalized;
-                }
-                const val = this.value;
-                const errorEl = document.getElementById('username-error');
-                const hintEl = document.getElementById('username-hint');
-                const checkIcon = document.getElementById('username-check-icon');
-                const counter = document.getElementById('username-counter');
+    if (newUsernameInput) {
+        newUsernameInput.addEventListener('input', async function() {
+            const raw = this.value;
+            const normalized = normalizeUsername(raw);
+            if (raw !== normalized && raw.length > 0 && !/\s$/.test(raw)) {
+                this.value = normalized;
+            }
+            const val = this.value;
+            const errorEl = document.getElementById('username-error');
+            const hintEl = document.getElementById('username-hint');
+            const checkIcon = document.getElementById('username-check-icon');
+            const counter = document.getElementById('username-counter');
 
-                const len = val.length;
-                if (counter) {
-                    counter.textContent = len + '/10';
-                    counter.className = 'username-counter';
-                    if (len === 10) counter.classList.add('full');
-                    else if (len >= 8) counter.classList.add('warn');
-                }
+            const len = val.length;
+            if (counter) {
+                counter.textContent = len + '/10';
+                counter.className = 'username-counter';
+                if (len === 10) counter.classList.add('full');
+                else if (len >= 8) counter.classList.add('warn');
+            }
 
+            if (checkIcon) {
+                checkIcon.className = 'username-status-icon';
+                checkIcon.innerHTML = '';
+            }
+            if (errorEl) errorEl.classList.remove('visible');
+            resetUsernameHint(hintEl);
+
+            if (!val) return;
+
+            const result = isValidUsername(val);
+            if (!result.valid) {
+                if (errorEl) { errorEl.textContent = result.msg; errorEl.classList.add('visible'); }
                 if (checkIcon) {
-                    checkIcon.className = 'username-status-icon';
-                    checkIcon.innerHTML = '';
+                    checkIcon.classList.add('taken');
+                    checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
                 }
-                if (errorEl) errorEl.classList.remove('visible');
-                resetUsernameHint(hintEl);
+                return;
+            }
+            if (checkIcon) checkIcon.innerHTML = '<div class="mini-spinner"></div>';
 
-                if (!val) return;
-
-                const result = isValidUsername(val);
-                if (!result.valid) {
-                    if (errorEl) { errorEl.textContent = result.msg; errorEl.classList.add('visible'); }
-                    if (checkIcon) {
-                        checkIcon.classList.add('taken');
-                        checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
-                    }
-                    return;
-                }
-                if (checkIcon) checkIcon.innerHTML = '<div class="mini-spinner"></div>';
-
-                clearTimeout(this._timeout);
-                const currentVal = val;
-                this._timeout = setTimeout(async () => {
-                    if (newUsernameInput.value !== currentVal) return;
-                    try {
-                        const exists = await checkUsername(currentVal);
-                        if (newUsernameInput.value !== currentVal) return;
-                        if (exists) {
-                            if (errorEl) {
-                                errorEl.textContent = 'Username sudah dipakai (huruf besar/kecil dianggap sama)';
-                                errorEl.classList.add('visible');
-                            }
-                            if (checkIcon) {
-                                checkIcon.className = 'username-status-icon taken';
-                                checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
-                            }
-                            if (counter) counter.classList.add('full');
-                            resetUsernameHint(hintEl);
-                        } else {
-                            if (errorEl) errorEl.classList.remove('visible');
-                            if (checkIcon) {
-                                checkIcon.className = 'username-status-icon available';
-                                checkIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-                            }
-                            if (hintEl) {
-                                hintEl.textContent = 'Username tersedia!';
-                                hintEl.style.color = 'var(--success)';
-                            }
-                            if (counter) counter.classList.add('available');
-                        }
-                    } catch (e) {
-                        if (checkIcon) checkIcon.innerHTML = '';
-                    }
-                }, 150);
-            });
-        }
-
-        if (avatarInput) {
-            avatarInput.addEventListener('change', async function() {
-                const file = this.files[0];
-                if (!file) return;
-                if (file.size > 2 * 1024 * 1024) {
-                    if (avatarError) {
-                        avatarError.textContent = 'Ukuran file maksimal 2MB';
-                        avatarError.classList.add('visible');
-                    }
-                    this.value = '';
-                    return;
-                }
-                if (!file.type.startsWith('image/')) {
-                    if (avatarError) {
-                        avatarError.textContent = 'Hanya file gambar yang didukung';
-                        avatarError.classList.add('visible');
-                    }
-                    this.value = '';
-                    return;
-                }
-                if (avatarError) avatarError.classList.remove('visible');
-                uploadedAvatarUrl = '';
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    if (avatarPreview) {
-                        avatarPreview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-                    }
-                };
-                reader.readAsDataURL(file);
-
-                uploadAvatarToCloudinary(file, getMyUid() || 'anon')
-    .then(url => { uploadedAvatarUrl = url; })
-    .catch(err => {
-        if (avatarError) { avatarError.textContent = 'Gagal upload: ' + err.message; avatarError.classList.add('visible'); }
-        if (avatarPreview) avatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
-        uploadedAvatarUrl = '';
-    });
-
-        if (btnCreateProfile) {
-            btnCreateProfile.addEventListener('click', async function() {
-    // Kalau upload masih jalan — tunggu otomatis, tampilkan spinner
-    if (_pendingAvatarUploadPromise) {
-        btnCreateProfile.disabled = true;
-        btnCreateProfile.style.pointerEvents = 'none';
-        btnCreateProfile.innerHTML = '<span class="gate-spinner" style="width:18px;height:18px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Memproses...';
-
-        await _pendingAvatarUploadPromise;
-        _pendingAvatarUploadPromise = null;
-
-        btnCreateProfile.disabled = false;
-        btnCreateProfile.style.pointerEvents = '';
-        btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
-
-        if (avatarInput && avatarInput.files[0] && !uploadedAvatarUrl) return; // upload gagal
-    }
-
-    const rawUsername = newUsernameInput.value;
-    // ... sisanya biarkan apa adanya
-                const username = normalizeUsername(rawUsername);
-                const errorEl = document.getElementById('username-error');
-                const validation = isValidUsername(username);
-                if (!validation.valid) {
-                    if (errorEl) { errorEl.textContent = validation.msg; errorEl.classList.add('visible'); }
-                    return;
-                }
-
-                if (avatarInput && avatarInput.files[0] && !uploadedAvatarUrl) {
-                    if (avatarError) {
-                        avatarError.textContent = 'Foto masih diupload atau gagal. Coba pilih lagi.';
-                        avatarError.classList.add('visible');
-                    }
-                    showToast('Tunggu upload foto selesai dulu', 'warning');
-                    return;
-                }
-
-                btnCreateProfile.disabled = true;
-                btnCreateProfile.innerHTML = '<span class="gate-spinner" style="width:18px;height:18px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Memproses...';
-                if (errorEl) errorEl.classList.remove('visible');
-
+            clearTimeout(this._timeout);
+            const currentVal = val;
+            this._timeout = setTimeout(async () => {
+                if (newUsernameInput.value !== currentVal) return;
                 try {
-                    const exists = await checkUsername(username);
+                    const exists = await checkUsername(currentVal);
+                    if (newUsernameInput.value !== currentVal) return;
                     if (exists) {
                         if (errorEl) {
-                            errorEl.textContent = 'Username sudah dipakai, coba yang lain';
+                            errorEl.textContent = 'Username sudah dipakai (huruf besar/kecil dianggap sama)';
                             errorEl.classList.add('visible');
                         }
-                        return;
-                    }
-                    const uid = getMyUid();
-                    const avatarUrl = uploadedAvatarUrl || '';
-                    const success = await createProfile(uid, username, avatarUrl);
-                    if (success) {
-                        currentUser = { uid, username, avatar: avatarUrl };
-                        setStoredUser(currentUser);
-                        showToast('Selamat datang di grup! 🎉', 'success');
-                        initChat();
+                        if (checkIcon) {
+                            checkIcon.className = 'username-status-icon taken';
+                            checkIcon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+                        }
+                        if (counter) counter.classList.add('full');
+                        resetUsernameHint(hintEl);
                     } else {
-                        if (errorEl) {
-                            errorEl.textContent = 'Gagal membuat profil, coba lagi';
-                            errorEl.classList.add('visible');
+                        if (errorEl) errorEl.classList.remove('visible');
+                        if (checkIcon) {
+                            checkIcon.className = 'username-status-icon available';
+                            checkIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
                         }
+                        if (hintEl) {
+                            hintEl.textContent = 'Username tersedia!';
+                            hintEl.style.color = 'var(--success)';
+                        }
+                        if (counter) counter.classList.add('available');
                     }
-                } catch (err) {
-                    console.error('Error saat membuat profil:', err);
+                } catch (e) {
+                    if (checkIcon) checkIcon.innerHTML = '';
+                }
+            }, 150);
+        });
+    }
+
+    if (avatarInput) {
+        avatarInput.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                if (avatarError) {
+                    avatarError.textContent = 'Ukuran file maksimal 2MB';
+                    avatarError.classList.add('visible');
+                }
+                this.value = '';
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                if (avatarError) {
+                    avatarError.textContent = 'Hanya file gambar yang didukung';
+                    avatarError.classList.add('visible');
+                }
+                this.value = '';
+                return;
+            }
+            if (avatarError) avatarError.classList.remove('visible');
+            uploadedAvatarUrl = '';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (avatarPreview) {
+                    avatarPreview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+                }
+            };
+            reader.readAsDataURL(file);
+
+            // ✅ FIX #2: simpan Promise ke _pendingAvatarUploadPromise
+            _pendingAvatarUploadPromise = uploadAvatarToCloudinary(file, getMyUid() || 'anon')
+                .then(url => { uploadedAvatarUrl = url; })
+                .catch(err => {
+                    if (avatarError) {
+                        avatarError.textContent = 'Gagal upload: ' + err.message;
+                        avatarError.classList.add('visible');
+                    }
+                    if (avatarPreview) avatarPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
+                    uploadedAvatarUrl = '';
+                });
+        });   // ✅ FIX #1: tutup change handler DI SINI
+    }         // ✅ FIX #1: tutup if (avatarInput) DI SINI
+
+    // ✅ FIX #1: btnCreateProfile handler SEKARANG DI LUAR change handler
+    if (btnCreateProfile) {
+        btnCreateProfile.addEventListener('click', async function() {
+            // Kalau upload masih jalan — tunggu otomatis, tampilkan spinner
+            if (_pendingAvatarUploadPromise) {
+                btnCreateProfile.disabled = true;
+                btnCreateProfile.style.pointerEvents = 'none';
+                btnCreateProfile.innerHTML = '<span class="gate-spinner" style="width:18px;height:18px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Memproses...';
+
+                await _pendingAvatarUploadPromise;
+                _pendingAvatarUploadPromise = null;
+
+                btnCreateProfile.disabled = false;
+                btnCreateProfile.style.pointerEvents = '';
+                btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+
+                if (avatarInput && avatarInput.files[0] && !uploadedAvatarUrl) return; // upload gagal
+            }
+
+            const rawUsername = newUsernameInput.value;
+            const username = normalizeUsername(rawUsername);
+            const errorEl = document.getElementById('username-error');
+            const validation = isValidUsername(username);
+            if (!validation.valid) {
+                if (errorEl) { errorEl.textContent = validation.msg; errorEl.classList.add('visible'); }
+                return;
+            }
+
+            if (avatarInput && avatarInput.files[0] && !uploadedAvatarUrl) {
+                if (avatarError) {
+                    avatarError.textContent = 'Foto masih diupload atau gagal. Coba pilih lagi.';
+                    avatarError.classList.add('visible');
+                }
+                showToast('Tunggu upload foto selesai dulu', 'warning');
+                return;
+            }
+
+            btnCreateProfile.disabled = true;
+            btnCreateProfile.innerHTML = '<span class="gate-spinner" style="width:18px;height:18px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;"></span> Memproses...';
+            if (errorEl) errorEl.classList.remove('visible');
+
+            try {
+                const exists = await checkUsername(username);
+                if (exists) {
                     if (errorEl) {
-                        errorEl.textContent = 'Terjadi error: ' + err.message;
+                        errorEl.textContent = 'Username sudah dipakai, coba yang lain';
                         errorEl.classList.add('visible');
                     }
-                } finally {
-                    btnCreateProfile.disabled = false;
-                    btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+                    return;
                 }
-            });
-        }
+                const uid = getMyUid();
+                const avatarUrl = uploadedAvatarUrl || '';
+                const success = await createProfile(uid, username, avatarUrl);
+                if (success) {
+                    currentUser = { uid, username, avatar: avatarUrl };
+                    setStoredUser(currentUser);
+                    showToast('Selamat datang di grup! 🎉', 'success');
+                    initChat();
+                } else {
+                    if (errorEl) {
+                        errorEl.textContent = 'Gagal membuat profil, coba lagi';
+                        errorEl.classList.add('visible');
+                    }
+                }
+            } catch (err) {
+                console.error('Error saat membuat profil:', err);
+                if (errorEl) {
+                    errorEl.textContent = 'Terjadi error: ' + err.message;
+                    errorEl.classList.add('visible');
+                }
+            } finally {
+                btnCreateProfile.disabled = false;
+                btnCreateProfile.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup';
+            }
+        });
     }
+}
 
     /* ============================================================
        EDIT PROFILE MODAL
