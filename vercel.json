@@ -1,0 +1,14 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/deploy", "destination": "/deploy/index.html" },
+    { "source": "/history", "destination": "/history/index.html" },
+    { "source": "/group", "destination": "/group/index.html" },
+    { "source": "/docs", "destination": "/docs/index.html" },
+    { "source": "/info", "destination": "/info/index.html" },
+    { "source": "/status", "destination": "/status/index.html" },
+    { "source": "/download", "destination": "/download/index.html" },
+    { "source": "/services", "destination": "/services/index.html" }
+  ]
+}
