@@ -121,7 +121,7 @@
         const countEl = $('subscriber-count');
         if (!countEl) return;
         try {
-            const res = await fetch('/api/subscriber-count');
+            const res = await fetch('/api/subscriber');
             if (!res.ok) throw new Error('fail');
             const data = await res.json();
             countEl.textContent = data.count || 0;
