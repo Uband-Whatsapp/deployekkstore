@@ -636,8 +636,8 @@ async function performDeploy(projectName) {
                 console.warn('Notif deploy gagal:', notifErr.message);
             }
 
-            resetDeployButton();
-        } else {
+            showDeploySuccessState();
+} else {
             deployState = DEPLOY_STATE.FAILED;
             markDeployStepFailed('step-deploying');
             markDeployStepFailed('step-completed');
@@ -772,8 +772,97 @@ async function deploy() {
 function setupDeployButton() {
     const deployButtonElement = document.getElementById('deploy-btn');
     if (deployButtonElement) {
-        deployButtonElement.addEventListener('click', deploy);
+        deployButtonElement.addEventListener('click', function() {
+            if (this.dataset.state === 'success') {
+                resetDeployForm();
+                return;
+            }
+            deploy();
+        });
     }
+}
+
+/* Tampilkan mode sukses — sembunyikan form + ubah tombol */
+function showDeploySuccessState() {
+    const projectInput = document.getElementById('project');
+    if (projectInput) {
+        const pg = projectInput.closest('.form-group');
+        if (pg) pg.style.display = 'none';
+    }
+    const dropzone = document.getElementById('upload-dropzone');
+    if (dropzone) {
+        const ug = dropzone.closest('.form-group');
+        if (ug) ug.style.display = 'none';
+    }
+    const fileInfo = document.getElementById('file-info');
+    if (fileInfo) fileInfo.classList.remove('visible');
+
+    const deployBtn = document.getElementById('deploy-btn');
+    if (deployBtn) {
+        deployBtn.disabled = false;
+        deployBtn.classList.remove('btn-primary');
+        deployBtn.classList.add('btn-outline');
+        deployBtn.innerHTML = '<i class="fa-solid fa-plus"></i> <span id="deploy-btn-text">Deploy Project Baru</span>';
+        deployBtn.dataset.state = 'success';
+    }
+}
+
+/* Reset form untuk deploy project baru */
+function resetDeployForm() {
+    // Tampilkan form kembali
+    const projectInput = document.getElementById('project');
+    if (projectInput) {
+        const pg = projectInput.closest('.form-group');
+        if (pg) pg.style.display = '';
+        projectInput.value = '';
+        projectInput.classList.remove('error', 'success');
+    }
+    const dropzone = document.getElementById('upload-dropzone');
+    if (dropzone) {
+        const ug = dropzone.closest('.form-group');
+        if (ug) ug.style.display = '';
+        dropzone.classList.remove('has-file', 'dragover');
+        const iconEl = dropzone.querySelector('i');
+        const pEl = dropzone.querySelector('p');
+        const spanEl = dropzone.querySelector('span');
+        if (iconEl) iconEl.className = 'fa-solid fa-file-arrow-up';
+        if (pEl) pEl.textContent = 'Upload file HTML atau ZIP';
+        if (spanEl) spanEl.textContent = 'Drag & drop atau klik untuk memilih file';
+    }
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.value = '';
+
+    const fileInfo = document.getElementById('file-info');
+    if (fileInfo) {
+        fileInfo.classList.remove('visible');
+        fileInfo.innerHTML = '';
+    }
+
+    const output = document.getElementById('output');
+    if (output) output.textContent = 'Status: Menunggu file & nama project...';
+
+    const statusPanel = document.getElementById('deploy-status-panel');
+    if (statusPanel) statusPanel.classList.add('hidden');
+
+    const projectHint = document.getElementById('project-hint');
+    if (projectHint) projectHint.style.display = 'block';
+    const projectError = document.getElementById('project-error');
+    if (projectError) projectError.classList.remove('visible');
+
+    const deployBtn = document.getElementById('deploy-btn');
+    if (deployBtn) {
+        deployBtn.disabled = false;
+        deployBtn.classList.remove('btn-outline');
+        deployBtn.classList.add('btn-primary');
+        deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+        delete deployBtn.dataset.state;
+    }
+
+    deployState = DEPLOY_STATE.IDLE;
+    deployCompleted = false;
+    isDeploying = false;
+    _selectedFile = null;
+    resetDeployStatus();
 }
 
 /* ============================================================
