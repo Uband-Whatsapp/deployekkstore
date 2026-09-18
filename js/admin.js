@@ -5,7 +5,7 @@
     'use strict';
 
     // ⚠️ GANTI dengan password yang sama dengan env ADMIN_PASSWORD di Vercel
-    const ADMIN_PASSWORD = 'ekkstore2024admin';
+    const ADMIN_PASSWORD = 'AdminEkkStore1';
 
     const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
     const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
