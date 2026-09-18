@@ -2228,27 +2228,36 @@ ul { list-style: none; }
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
-
 .deploy-action-btn {
     width: 100%;
     min-width: 0;
     height: 42px;
-    padding: 0 14px;
+    padding: 0 10px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 6px;
     font-family: inherit;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     box-sizing: border-box;
     transition: all 0.15s ease;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-.deploy-action-btn i { font-size: 12px; }
+.deploy-action-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.deploy-action-btn i { font-size: 12px; flex-shrink: 0; }
+
 
 .deploy-open-btn {
     border: 0;
@@ -5304,3 +5313,33 @@ html.gate-passed body {
 
 /* Kecilkan sedikit ruang kalau ada tombol */
 .member-row.can-delete .member-row-info { padding-right: 4px; }
+/* ============================================================
+   TOMBOL "DEPLOY PROJECT BARU" (setelah sukses)
+   Kontras dengan background card, tidak menyatu
+   ============================================================ */
+.btn.deploy-btn-new,
+.deploy-btn-new {
+    background: var(--bg-input);
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.18);
+    font-weight: 700;
+}
+.btn.deploy-btn-new:hover:not(:disabled),
+.deploy-btn-new:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: var(--accent-hover);
+    color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.28);
+}
+.btn.deploy-btn-new:active:not(:disabled),
+.deploy-btn-new:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+.btn.deploy-btn-new i,
+.deploy-btn-new i {
+    font-size: 13px;
+}
+
+
