@@ -9390,39 +9390,40 @@ function buildDateSeparator(date) {
     return sep;
 }
 
-function insertDateSeparatorBefore(messageEl, listEl) {
-    if (!messageEl || !listEl) return;
+/* ============================================================
+   REBUILD DATE SEPARATORS
+   Hapus semua separator, rebuild dari awal berdasarkan message-item.
+   Cuma 1 separator per hari, di pesan reguler pertama hari itu.
+   System message di-skip.
+============================================================ */
+function rebuildDateSeparators(listEl) {
+    if (!listEl) return;
 
-    // ⬇️ TAMBAH INI — skip kalau ini system message
-    if (messageEl.dataset.isSystem === 'true') return;
+    // 1. Hapus semua separator lama
+    listEl.querySelectorAll('.date-separator').forEach(sep => sep.remove());
 
-    const prevEl = messageEl.previousElementSibling;
+    // 2. Ambil semua message-item dalam urutan DOM
+    const allMessages = Array.from(listEl.querySelectorAll('.message-item'));
 
-    let prevMessage = null;
-    if (prevEl && prevEl.classList.contains('message-item')) {
-        prevMessage = prevEl;
-    } else if (prevEl && prevEl.classList.contains('date-separator')) {
-        prevMessage = prevEl.previousElementSibling;
-        if (prevMessage && !prevMessage.classList.contains('message-item')) {
-            prevMessage = null;
+    // 3. Loop dan tambah separator di tempat yang tepat
+    let lastDateKey = null;
+
+    allMessages.forEach(msg => {
+        // Skip system message
+        if (msg.dataset.isSystem === 'true') return;
+
+        const ts = parseInt(msg.dataset.ts || '0', 10);
+        if (!ts) return;
+
+        const dateKey = getDateKey(new Date(ts));
+
+        // Kalau beda hari dengan pesan sebelumnya → tambah separator
+        if (dateKey !== lastDateKey) {
+            const sep = buildDateSeparator(new Date(ts));
+            listEl.insertBefore(sep, msg);
+            lastDateKey = dateKey;
         }
-    }
-
-    const curTs = parseInt(messageEl.dataset.ts || '0', 10);
-    const prevTs = prevMessage ? parseInt(prevMessage.dataset.ts || '0', 10) : 0;
-    if (!curTs) return;
-
-    const curKey = getDateKey(new Date(curTs));
-    const prevKey = prevMessage ? getDateKey(new Date(prevTs)) : null;
-
-    if (curKey === prevKey) return;
-
-    if (prevEl && prevEl.classList.contains('date-separator')) {
-        prevEl.remove();
-    }
-
-    const sep = buildDateSeparator(new Date(curTs));
-    listEl.insertBefore(sep, messageEl);
+    });
 }
     function showToast(msg, type) {
         if (typeof window.showToast === 'function') window.showToast(msg, type);
@@ -10657,12 +10658,9 @@ function handleSnapshotChanges(snapshot, opts) {
                         inserted = true;
                     }
                 }
-                if (!inserted) {
+if (!inserted) {
     list.appendChild(el);
 }
-
-// ⬇️ TAMBAH INI
-insertDateSeparatorBefore(el, list);
 
 renderedMessages.set(docId, el);
 addedCount++;
@@ -10726,9 +10724,10 @@ if (senderIdCheck === getMyUid()) {
         }
 
         updateScrollButton();
-        updateBottomNavBadge();
-        observeMessages();
-    }
+    updateBottomNavBadge();
+    rebuildDateSeparators(list);   // ⬅️ TAMBAH INI
+    observeMessages();
+}
 
     /* ============================================================
        RENDER PENDING
@@ -10953,22 +10952,9 @@ function subscribeMessages() {
 const listEl = document.getElementById('messages-list');
 if (listEl) {
     const fragment = document.createDocumentFragment();
-    let lastDateKey = null;
     docs.forEach(doc => {
         const d = doc.data();
         const ts = d.timestamp?.toMillis?.() || Date.now();
-        const dateKey = getDateKey(new Date(ts));
-
-        // ⬇️ Cek apakah ini system message
-        const senderId = d.senderId || d.uid || d.sender || '';
-        const isSystem = d.type === 'join' || d.type === 'leave' || senderId === 'system';
-
-        // Sisipkan separator HANYA kalau bukan system message
-        if (!isSystem && dateKey !== lastDateKey) {
-            fragment.appendChild(buildDateSeparator(new Date(ts)));
-            lastDateKey = dateKey;
-        }
-
         const el = buildMessageElement(doc);
         el.dataset.ts = String(ts);
         fragment.appendChild(el);
@@ -10976,8 +10962,10 @@ if (listEl) {
     });
     listEl.innerHTML = '';
     listEl.appendChild(fragment);
-}
 
+    // ⬇️ Rebuild separator setelah render
+    rebuildDateSeparators(listEl);
+}
             initialLoadDone = true;
             observeMessages();
             requestAnimationFrame(() => scrollToBottom(false));
@@ -11223,13 +11211,16 @@ async function unpinMessage(docId) {
                 hasMoreOldMessages = docs.length === 50;
             }
 
-            // Restore scroll position
-            requestAnimationFrame(() => {
-                const newHeight = list.scrollHeight;
-                list.scrollTop = oldTop + (newHeight - oldHeight);
-            });
+       // Rebuild separator setelah prepend
+rebuildDateSeparators(list);
 
-            observeMessages();
+// Restore scroll position
+requestAnimationFrame(() => {
+    const newHeight = list.scrollHeight;
+    list.scrollTop = oldTop + (newHeight - oldHeight);
+});
+
+observeMessages();
         } catch (e) {
             console.warn('[Chat] Load older error:', e);
         } finally {
