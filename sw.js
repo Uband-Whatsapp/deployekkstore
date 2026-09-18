@@ -1,39 +1,80 @@
 /* ============================================================
-   EKK STORE — Service Worker 4.0
-   - Cache app shell (HTML/CSS/JS/fonts) dengan stale-while-revalidate
-   - Skip caching untuk API, Firebase, Cloudinary
+   EKK STORE — Service Worker 5.0
+   - Cache app shell + semua halaman (multi-page)
+   - Navigation: NETWORK-FIRST (HTML selalu fresh)
+   - Assets: NETWORK-FIRST dengan fallback cache (anti broken-cache)
+   - Auto purge cache lama saat version bump
    - Support push notification + notification click
    ============================================================ */
 
-const SW_VERSION = 'ekk-store-v2.0.0';
+const SW_VERSION = 'ekk-store-v5.0.0';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 
 const SHELL_ASSETS = [
     '/',
     '/index.html',
+    '/deploy',
+    '/deploy/',
+    '/deploy/index.html',
+    '/history',
+    '/history/',
+    '/history/index.html',
+    '/group',
+    '/group/',
+    '/group/index.html',
+    '/docs',
+    '/docs/',
+    '/docs/index.html',
+    '/info',
+    '/info/',
+    '/info/index.html',
+    '/status',
+    '/status/',
+    '/status/index.html',
+    '/download',
+    '/download/',
+    '/download/index.html',
+    '/services',
+    '/services/',
+    '/services/index.html',
+    '/css/style.css',
+    '/js/common.js',
+    '/js/home.js',
+    '/js/deploy.js',
+    '/js/history.js',
+    '/js/group.js',
     '/manifest.json',
     '/icon/ekkstore-192.png',
     '/icon/ekkstore-512.png',
-    '/?source=pwa',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap'
 ];
 
 /* ============================================================
-   INSTALL
+   INSTALL — pre-cache shell
    ============================================================ */
 self.addEventListener('install', (event) => {
     console.log('[SW] Install', SW_VERSION);
     event.waitUntil(
         caches.open(SHELL_CACHE)
-            .then((cache) => cache.addAll(SHELL_ASSETS).catch((e) => console.warn('[SW] Pre-cache partial fail:', e)))
+            .then((cache) => {
+                // addAll gagal total kalau 1 file 404.
+                // Jadi add satu-satu biar partial-fail tetap jalan.
+                return Promise.all(
+                    SHELL_ASSETS.map((url) =>
+                        cache.add(url).catch((e) => {
+                            console.warn('[SW] Skip pre-cache:', url, '-', e.message);
+                        })
+                    )
+                );
+            })
             .then(() => self.skipWaiting())
     );
 });
 
 /* ============================================================
-   ACTIVATE
+   ACTIVATE — hapus cache lama
    ============================================================ */
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activate', SW_VERSION);
@@ -79,42 +120,61 @@ self.addEventListener('fetch', (event) => {
 
     if (url.pathname.startsWith('/api/')) return;
 
-    // Navigation requests → network first, fallback ke cache
+    // ============================================================
+    // NAVIGATION (HTML) → network-first, cache fallback
+    // ============================================================
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
                 .then((response) => {
-                    const copy = response.clone();
-                    caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+                    if (response && response.status === 200) {
+                        const copy = response.clone();
+                        caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+                    }
                     return response;
                 })
-                .catch(() => caches.match('/index.html').then(r => r || caches.match('/')))
+                .catch(() => {
+                    // Offline: coba cache spesifik dulu, baru fallback ke /
+                    return caches.match(request).then((cached) => {
+                        if (cached) return cached;
+                        return caches.match('/index.html')
+                            .then((r) => r || caches.match('/'));
+                    });
+                })
         );
         return;
     }
 
-    // Same-origin assets & CSS/JS/fonts → stale-while-revalidate
+    // ============================================================
+    // STATIC ASSETS (JS/CSS/font/img) → network-first, cache fallback
+    // KUNCI: network-first biar update JS/CSS selalu ke-fetch fresh
+    // ============================================================
+    const isSameOrigin = url.hostname === self.location.hostname;
     const isCacheable = ['style', 'script', 'font', 'image'].includes(request.destination)
-        || url.hostname === self.location.hostname
+        || isSameOrigin
         || url.hostname.includes('fonts.g')
         || url.hostname.includes('cdnjs');
 
     if (!isCacheable) return;
 
     event.respondWith(
-        caches.match(request).then((cached) => {
-            const networkFetch = fetch(request)
-                .then((response) => {
-                    if (response && response.status === 200 && response.type !== 'opaque') {
-                        const copy = response.clone();
-                        caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
-                    }
-                    return response;
-                })
-                .catch(() => cached);
-
-            return cached || networkFetch;
-        })
+        fetch(request)
+            .then((response) => {
+                // Cuma cache response yang valid
+                if (response && response.status === 200 && response.type !== 'opaque') {
+                    const copy = response.clone();
+                    caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+                }
+                return response;
+            })
+            .catch(() => {
+                // Network fail (offline) → fallback ke cache
+                return caches.match(request).then((cached) => {
+                    if (cached) return cached;
+                    // Cache miss → coba di SHELL_CACHE juga
+                    return caches.open(SHELL_CACHE).then((cache) => cache.match(request));
+                });
+            })
     );
 });
 
@@ -171,7 +231,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /* ============================================================
-   MESSAGE (dari client)
+   MESSAGE (dari client) — untuk skip waiting dari halaman
    ============================================================ */
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
