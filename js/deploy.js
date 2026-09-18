@@ -1,9 +1,3 @@
-/* ============================================================
-   EKK STORE 4.0 — DEPLOY.JS
-   Berisi: Project validation, File upload, Requirements modal,
-   Deploy status UI, performDeploy, main deploy handler.
-   Digunakan HANYA di /deploy (deploy/index.html)
-   ============================================================ */
 
 /* ============================================================
    1) PROJECT NAME VALIDATION
@@ -204,7 +198,7 @@ function updateModalStatus() {
             grupBtn.style.pointerEvents = '';
             grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
             if (!grupBtn.hasAttribute('href')) {
-                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4');
+                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/HwnicJ4WcxLDfiL6Wx7Lk4?s=cl&p=a&mlu=4&ilr=4');
             }
         }
     }
@@ -550,93 +544,97 @@ async function performDeploy(projectName) {
         const result = await response.json();
 
         if (result.url && isValidHttpUrl(result.url)) {
-            deployState = DEPLOY_STATE.SUCCESS;
-            markDeployStepComplete('step-upload');
-            markDeployStepComplete('step-validate');
-            markDeployStepComplete('step-deploying');
-            markDeployStepComplete('step-completed');
+    deployState = DEPLOY_STATE.SUCCESS;
+    deployCompleted = true;
 
-            if (output) {
-                const safeUrl = escapeHTML(result.url);
-                output.innerHTML = `
-                    <div class="deploy-success">
-                        <div class="deploy-success-header">
-                            <div class="deploy-success-icon">
-                                <i class="fa-solid fa-check"></i>
-                            </div>
-                            <div class="deploy-success-info">
-                                <div class="deploy-success-title">Deploy Berhasil</div>
-                                <div class="deploy-success-subtitle">Project berhasil dipublikasikan.</div>
-                            </div>
-                        </div>
-                        <div class="deploy-url-row">
-                            <i class="fa-solid fa-link"></i>
-                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="deploy-url" id="deploy-url">${safeUrl}</a>
-                        </div>
-                        <div class="deploy-actions">
-                            <button type="button" class="deploy-action-btn deploy-open-btn" onclick="openDeployedWebsite()">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                <span>Buka Website</span>
-                            </button>
-                            <button type="button" class="deploy-action-btn deploy-copy-btn" onclick="copyDeployedLink()">
-                                <i class="fa-regular fa-copy"></i>
-                                <span>Salin Link</span>
-                            </button>
-                        </div>
+    markDeployStepComplete('step-upload');
+    markDeployStepComplete('step-validate');
+    markDeployStepComplete('step-deploying');
+    markDeployStepComplete('step-completed');
+
+    if (output) {
+        const safeUrl = escapeHTML(result.url);
+        output.innerHTML = `
+            <div class="deploy-success">
+                <div class="deploy-success-header">
+                    <div class="deploy-success-icon">
+                        <i class="fa-solid fa-check"></i>
                     </div>
-                `;
-            }
+                    <div class="deploy-success-info">
+                        <div class="deploy-success-title">Deploy Berhasil</div>
+                        <div class="deploy-success-subtitle">Project berhasil dipublikasikan.</div>
+                    </div>
+                </div>
+                <div class="deploy-url-row">
+                    <i class="fa-solid fa-link"></i>
+                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="deploy-url" id="deploy-url">${safeUrl}</a>
+                </div>
+                <div class="deploy-actions">
+                    <button type="button" class="deploy-action-btn deploy-open-btn" onclick="openDeployedWebsite()">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>Buka Website</span>
+                    </button>
+                    <button type="button" class="deploy-action-btn deploy-copy-btn" onclick="copyDeployedLink()">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Salin Link</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
-            showToast('Project berhasil dideploy!', 'success');
+    /* ⚡ UI update SEGERA — jangan tunggu track & notify selesai */
+    showDeploySuccessState();
+    showToast('Project berhasil dideploy!', 'success');
 
-            const projectId = result.projectId || result.id || '';
-            const deploymentId = result.deploymentId || '';
-            await saveHistory(project, 'success', result.url, projectId, deploymentId);
+    const projectId = result.projectId || result.id || '';
+    const deploymentId = result.deploymentId || '';
+    await saveHistory(project, 'success', result.url, projectId, deploymentId);
 
-            deployCompleted = true;
+    try {
+        const deviceInfo = await getDeviceInfo();
+        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+        await fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                anonId: anonId,
+                visitorNumber: visitorNumber,
+                eventType: 'deploy_success',
+                timestamp: new Date().toISOString(),
+                deviceInfo: deviceInfo,
+                project: project,
+                url: result.url
+            })
+        });
+    } catch (e) {
+        console.warn('Gagal kirim track deploy:', e.message);
+    }
 
-            try {
-                const deviceInfo = await getDeviceInfo();
-                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-                const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
-                await fetch('/api/track', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        anonId: anonId,
-                        visitorNumber: visitorNumber,
-                        eventType: 'deploy_success',
-                        timestamp: new Date().toISOString(),
-                        deviceInfo: deviceInfo,
-                        project: project,
-                        url: result.url
-                    })
-                });
-            } catch (e) {
-                console.warn('Gagal kirim track deploy:', e.message);
-            }
+    try {
+        let deviceInfo = {};
+        try { deviceInfo = await getDeviceInfo(); } catch (e) {}
+        await fetch('/api/notify-deploy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project: project,
+                url: result.url,
+                user: getMyUid(),
+                fileName: file.name,
+                fileContent: fileContent,
+                fileType: file.name.toLowerCase().endsWith('.zip') ? 'zip' : 'html',
+                deviceInfo: deviceInfo
+            })
+        });
+    } catch (notifErr) {
+        console.warn('Notif deploy gagal:', notifErr.message);
+    }
 
-            try {
-                let deviceInfo = {};
-                try { deviceInfo = await getDeviceInfo(); } catch (e) {}
-                await fetch('/api/notify-deploy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        project: project,
-                        url: result.url,
-                        user: getMyUid(),
-                        fileName: file.name,
-                        fileContent: fileContent,
-                        fileType: file.name.toLowerCase().endsWith('.zip') ? 'zip' : 'html',
-                        deviceInfo: deviceInfo
-                    })
-                });
-            } catch (notifErr) {
-                console.warn('Notif deploy gagal:', notifErr.message);
-            }
-
-            showDeploySuccessState();
+    /* ⚠️ PENTING: TIDAK ada resetDeployButton() di sini.
+       Sudah digantikan showDeploySuccessState() di atas.
+       resetDeployButton() hanya jalan di finally. */
 } else {
             deployState = DEPLOY_STATE.FAILED;
             markDeployStepFailed('step-deploying');
@@ -800,13 +798,12 @@ function showDeploySuccessState() {
     const deployBtn = document.getElementById('deploy-btn');
     if (deployBtn) {
         deployBtn.disabled = false;
-        deployBtn.classList.remove('btn-primary');
-        deployBtn.classList.add('btn-outline');
+        deployBtn.classList.remove('btn-primary', 'btn-outline');
+        deployBtn.classList.add('deploy-btn-new');
         deployBtn.innerHTML = '<i class="fa-solid fa-plus"></i> <span id="deploy-btn-text">Deploy Project Baru</span>';
         deployBtn.dataset.state = 'success';
     }
 }
-
 /* Reset form untuk deploy project baru */
 function resetDeployForm() {
     // Tampilkan form kembali
@@ -849,14 +846,14 @@ function resetDeployForm() {
     const projectError = document.getElementById('project-error');
     if (projectError) projectError.classList.remove('visible');
 
-    const deployBtn = document.getElementById('deploy-btn');
-    if (deployBtn) {
-        deployBtn.disabled = false;
-        deployBtn.classList.remove('btn-outline');
-        deployBtn.classList.add('btn-primary');
-        deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
-        delete deployBtn.dataset.state;
-    }
+   const deployBtn = document.getElementById('deploy-btn');
+if (deployBtn) {
+    deployBtn.disabled = false;
+    deployBtn.classList.remove('deploy-btn-new', 'btn-outline');
+    deployBtn.classList.add('btn-primary');
+    deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+    delete deployBtn.dataset.state;
+}
 
     deployState = DEPLOY_STATE.IDLE;
     deployCompleted = false;
