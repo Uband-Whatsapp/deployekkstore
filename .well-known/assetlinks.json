@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "id.web.ekkstore.project.deploy.twa",
+    "sha256_cert_fingerprints": ["71:85:B1:19:35:4E:AC:51:9E:B1:B1:9B:92:06:A4:84:FB:73:5A:EA:D2:FA:81:80:CE:9E:D8:FF:93:96:CE:A5"]
+  }
+}]
