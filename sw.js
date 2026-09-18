@@ -1,13 +1,5 @@
-/* ============================================================
-   EKK STORE — Service Worker 5.0
-   - Cache app shell + semua halaman (multi-page)
-   - Navigation: NETWORK-FIRST (HTML selalu fresh)
-   - Assets: NETWORK-FIRST dengan fallback cache (anti broken-cache)
-   - Auto purge cache lama saat version bump
-   - Support push notification + notification click
-   ============================================================ */
 
-const SW_VERSION = 'ekk-store-v5.0.1';
+const SW_VERSION = 'ekk-store-v5.0.2';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 
