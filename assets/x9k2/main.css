@@ -145,7 +145,14 @@ ul { list-style: none; }
     background: var(--accent);
     color: #fff;
 }
+.card-header h3 i.fa-bolt {
+    animation: boltPulse 3s ease-in-out infinite;
+}
 
+@keyframes boltPulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+}
 /* ============================================================
    GATE SCREEN
    ============================================================ */
