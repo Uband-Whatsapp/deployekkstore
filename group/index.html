@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+    <title>Grup Chat — Ekk Store</title>
+<script>
+(function() {
+    try {
+        var STORAGE_KEY = 'wa_gate_passed_v12';
+        var data = localStorage.getItem(STORAGE_KEY);
+        if (data) {
+            var parsed = JSON.parse(data);
+            if (parsed.passed === true && parsed.expiresAt && Date.now() < parsed.expiresAt) {
+                document.documentElement.classList.add('gate-passed');
+            }
+        }
+    } catch (e) {}
+})();
+</script>
+    <!-- ============================================================
+         SEO / SOCIAL META
+    ============================================================ -->
+    <meta name="description" content="Grup komunitas developer Ekk Store — ngobrol, share project, dan diskusi deployment." />
+    <meta name="theme-color" content="#0c0c0e" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="application-name" content="Ekk Store" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ekk Store" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Grup Chat — Ekk Store" />
+    <meta property="og:description" content="Grup komunitas developer Ekk Store." />
+    <meta property="og:image" content="https://files.catbox.moe/kzg0nc.png" />
+    <meta property="og:url" content="https://deploy.project.ekkstore.web.id/group" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Grup Chat — Ekk Store" />
+    <meta name="twitter:description" content="Grup komunitas developer Ekk Store." />
+    <meta name="twitter:image" content="https://files.catbox.moe/kzg0nc.png" />
+
+    <!-- ============================================================
+         PWA
+    ============================================================ -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="https://files.catbox.moe/kzg0nc.png" type="image/png" />
+    <link rel="apple-touch-icon" href="https://files.catbox.moe/kzg0nc.png" />
+
+    <!-- ============================================================
+         FONTS
+    ============================================================ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- ============================================================
+         ICON
+    ============================================================ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- ============================================================
+         CSS
+    ============================================================ -->
+    <link rel="stylesheet" href="/css/style.css" />
+
+    <!-- ============================================================
+         FIREBASE SDK (compat)
+    ============================================================ -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body data-page="group">
+<!-- ============================================================
+     GATE SCREEN
+============================================================ -->
+<div id="gate-screen">
+    <div class="gate-card" id="gate-card">
+        <div class="gate-steps" id="gate-steps">
+            <div class="gate-step-dot active" id="g-dot1"></div>
+            <div class="gate-step-line" id="g-line1"></div>
+            <div class="gate-step-dot" id="g-dot2"></div>
+            <div class="gate-step-line" id="g-line2"></div>
+            <div class="gate-step-dot" id="g-dot3"></div>
+        </div>
+        <div class="gate-step-labels">
+            <span class="active" id="g-label1">Follow</span>
+            <span id="g-label2">Konfirmasi</span>
+            <span id="g-label3">Selesai</span>
+        </div>
+        <div class="gate-logo">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h2>Verifikasi Follow</h2>
+        <p class="gate-sub">
+            Untuk melanjutkan, ikuti saluran WhatsApp terlebih dahulu.
+            Klik <strong>Buka Saluran WhatsApp</strong>, pilih
+            <strong>Buka di WhatsApp</strong>, lalu tekan <strong>Ikuti</strong>.
+            Kembali ke halaman ini setelah selesai.
+        </p>
+        <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener noreferrer" class="gate-btn" id="btn-follow-wa">
+            <i class="fa-brands fa-whatsapp"></i> Buka Saluran WhatsApp
+        </a>
+        <button class="gate-btn secondary" id="btn-confirm" disabled>
+            Saya Sudah Follow
+        </button>
+        <div class="gate-verify-msg" id="verify-msg-box">
+            <i id="verify-icon"></i>
+            <span id="verify-text"></span>
+        </div>
+        <div class="gate-footer-text">
+            <i class="fa-solid fa-lock" style="font-size:9px;"></i>
+            Verifikasi diperlukan untuk mengakses konten
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL
+============================================================ -->
+<div id="app-shell">
+
+    <!-- ============ TOP HEADER ============ -->
+    <header id="top-header">
+        <div class="header-left">
+            <button id="btn-hamburger" aria-label="Buka menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="header-logo">
+            </div>
+
+            <div class="header-title-group">
+                <span class="header-title">Ekk Store</span>
+                <span class="header-subtitle">Deployment Platform</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="header-status">
+                <span class="dot"></span> System Online
+            </div>
+        </div>
+    </header>
+
+    <!-- ============ SIDEBAR BACKDROP (mobile) ============ -->
+    <div id="sidebar-backdrop"></div>
+
+    <!-- ============ SIDEBAR (desktop) + MOBILE DRAWER ============ -->
+    <nav id="sidebar" aria-label="Navigasi">
+        <button id="sidebar-close" aria-label="Tutup menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="sidebar-profile">
+            <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="sidebar-profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
+            <div class="sidebar-profile-info">
+                <span class="sidebar-profile-name">Ekk Store</span>
+                <span class="sidebar-profile-badge"><i class="fa-solid fa-circle-check"></i> Owner</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Main</div>
+            <button class="sidebar-item" data-page="home">
+                <i class="fa-solid fa-house-user"></i> Beranda
+            </button>
+            <button class="sidebar-item" data-page="deploy">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Deploy
+            </button>
+            <button class="sidebar-item" data-page="history">
+                <i class="fa-solid fa-timeline"></i> Riwayat
+            </button>
+            <button class="sidebar-item active" data-page="group">
+                <i class="fa-solid fa-users"></i> Grup
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Resources</div>
+            <button class="sidebar-item" data-page="docs">
+                <i class="fa-solid fa-file-lines"></i> Dokumentasi
+            </button>
+            <button class="sidebar-item" data-page="info">
+                <i class="fa-solid fa-circle-info"></i> Info Website
+            </button>
+            <button class="sidebar-item" data-page="status">
+                <i class="fa-solid fa-network-wired"></i> System Status
+            </button>
+            <button class="sidebar-item" data-page="download">
+                <i class="fa-solid fa-mobile-screen-button"></i> Install App
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Services</div>
+            <button class="sidebar-item" data-page="services">
+                <i class="fa-solid fa-laptop-code"></i> Jasa Website
+            </button>
+            <button class="sidebar-item accordion-trigger" data-accordion="contact-acc">
+                <i class="fa-solid fa-headset"></i> Contact
+                <i class="fa-solid fa-chevron-down chev"></i>
+            </button>
+            <div class="sidebar-submenu" id="contact-acc">
+                <a class="sidebar-item" href="https://wa.me/6285177464515" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 1
+                </a>
+                <a class="sidebar-item" href="https://wa.me/6285177464516" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 2
+                </a>
+                <a class="sidebar-item" href="https://wa.me/6285177464517" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 3
+                </a>
+                <a class="sidebar-item" href="https://t.me/XzzEkk" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-telegram"></i> Telegram
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main id="main-content">
+
+        <!-- ============================================
+             PAGE: GROUP
+        ============================================ -->
+        <div class="page active" id="page-group">
+
+            <!-- Profile setup -->
+            <div id="profile-setup" style="display: none;">
+                <div class="page-header">
+                    <div class="page-header-icon">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div class="page-header-text">
+                        <h1>Buat Profil <span class="page-header-tag">Grup</span></h1>
+                        <p>Isi username dan foto untuk bergabung ke grup.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">Pilih Username</label>
+                        <div class="username-wrapper">
+                            <input type="text" id="new-username" class="form-input username-input"
+                                   placeholder="contoh: Ekk Store"
+                                   maxlength="10"
+                                   autocomplete="off"
+                                   autocapitalize="words"
+                                   spellcheck="false">
+                            <span id="username-check-icon" class="username-status-icon"></span>
+                        </div>
+                        <div class="username-hint-row">
+                            <span class="form-hint" id="username-hint">Huruf besar/kecil, angka, spasi · 3-10 karakter</span>
+                            <span class="username-counter" id="username-counter">0/10</span>
+                        </div>
+                        <span class="form-error" id="username-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Foto Profil (opsional)</label>
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            <div id="avatar-preview" style="
+                                width:64px;height:64px;border-radius:50%;
+                                background:var(--bg-input);
+                                display:flex;align-items:center;justify-content:center;
+                                font-size:28px;color:var(--text-muted);
+                                border:2px dashed var(--border);
+                                overflow:hidden;
+                                flex-shrink:0;
+                            ">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <input type="file" id="avatar-input" accept="image/*" style="flex:1;min-width:120px;">
+                        </div>
+                        <span class="form-hint">Upload gambar (max 2MB, format JPG/PNG).</span>
+                        <span class="form-error" id="avatar-error"></span>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" id="btn-create-profile" style="width:100%;">
+                        <i class="fa-solid fa-right-to-bracket"></i> Bergabung ke Grup
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat -->
+            <div id="chat-container" style="display: none;">
+                <div class="group-header-bar">
+                    <div class="group-header-info">
+                        <div class="group-username-row">
+                            <span class="live-pulse"></span>
+                            <span class="group-username" id="my-username-display">username</span>
+                            <span class="verified-badge">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div class="group-meta-row">
+                            <span class="group-meta-pill">
+                                <i class="fa-solid fa-users"></i>
+                                <span id="group-info">0 anggota · 0 online</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
+                        <button id="btn-open-search" class="group-settings-btn" aria-label="Cari pesan" title="Cari pesan">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <button id="btn-open-members" class="group-settings-btn" aria-label="Anggota" title="Anggota">
+                            <i class="fa-solid fa-users"></i>
+                        </button>
+                        <button id="btn-open-settings" class="group-settings-btn" aria-label="Pengaturan" title="Pengaturan profil">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card chat-card-fullscreen" id="chat-card" style="position: relative;">
+
+                    <!-- Chat search bar (hidden by default) -->
+                    <div id="chat-search-bar">
+                        <input type="text" id="chat-search-input" placeholder="Cari pesan..." autocomplete="off">
+                        <span class="chat-search-count" id="chat-search-count">0/0</span>
+                        <div class="chat-search-nav">
+                            <button id="chat-search-prev" title="Sebelumnya"><i class="fa-solid fa-chevron-up"></i></button>
+                            <button id="chat-search-next" title="Berikutnya"><i class="fa-solid fa-chevron-down"></i></button>
+                            <button id="chat-search-close" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- PIN BANNER -->
+                    <div id="pin-banner">
+                        <div class="pin-icon"><i class="fa-solid fa-thumbtack"></i></div>
+                        <div class="pin-body">
+                            <div class="pin-title">Pesan Disematkan</div>
+                            <div class="pin-text" id="pin-banner-text">—</div>
+                        </div>
+                        <button class="pin-close" id="pin-banner-close" aria-label="Lepas sematan">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div id="messages-list" style="flex:1; overflow-y: auto; padding: var(--space-3); display: flex; flex-direction: column; gap: 4px;">
+                        <!-- Pesan dirender oleh JS -->
+                    </div>
+
+                    <!-- Scroll to bottom + unread pill -->
+                    <button id="scroll-bottom-btn" aria-label="Ke pesan terbaru">
+                        <i class="fa-solid fa-arrow-down"></i>
+                        <span class="unread-pill" id="scroll-unread-pill" style="display:none;">0</span>
+                    </button>
+
+                    <!-- Typing indicator -->
+                    <div id="typing-indicator">
+                        <span class="typing-dots">
+                            <span></span><span></span><span></span>
+                        </span>
+                        <span id="typing-text">seseorang sedang mengetik...</span>
+                    </div>
+
+                    <!-- Preview file sebelum kirim -->
+                    <div id="media-preview-bar" class="media-preview-bar"></div>
+
+                    <!-- EMOJI PICKER -->
+                    <div id="emoji-picker">
+                        <div class="emoji-grid" id="emoji-grid"></div>
+                    </div>
+
+                    <!-- Input chat -->
+                    <div class="chat-input-wrapper" style="display:flex; align-items:flex-end; gap:6px; padding:8px 10px; background:var(--bg-card); border-top:1px solid var(--border);">
+                        <button id="btn-attach" style="min-width:40px; width:40px; height:44px; background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background 0.2s; flex-shrink:0;"
+                            onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                        <button id="btn-emoji" title="Emoji" aria-label="Emoji">
+                            <i class="fa-regular fa-face-smile"></i>
+                        </button>
+                        <input type="file" id="file-input" accept="image/*,video/*" style="display:none;" multiple>
+
+                        <input
+                            type="text"
+                            id="chat-input"
+                            class="form-input"
+                            placeholder="Ketik pesan..."
+                            name="ekk-chat-msg-xyz"
+                            autocomplete="off"
+                            autocorrect="off"
+                            autocapitalize="sentences"
+                            spellcheck="false"
+                            data-form-type="other"
+                            inputmode="text"
+                            enterkeyhint="send"
+                            style="flex:1; min-height:42px; max-height:120px; font-size:14px; padding:10px 16px; border-radius:22px; resize:none; box-sizing:border-box;"
+                        >
+
+                        <div class="voice-recording-bar" id="voice-recording-bar">
+                            <span class="record-dot"></span>
+                            <span class="record-time" id="record-time">0:00</span>
+                            <span class="record-hint">
+                                <i class="fa-solid fa-chevron-left"></i>
+                                Geser untuk batal
+                            </span>
+                            <button class="voice-cancel-btn" id="voice-cancel-btn" title="Batal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <button class="voice-btn" id="btn-voice" title="Rekam suara">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+
+                        <button class="btn btn-primary" id="btn-send" style="min-width:44px; width:44px; height:44px; padding:0; font-size:18px; border-radius:50%; display: none; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ============================================
+         BOTTOM NAV (mobile)
+    ============================================ -->
+    <nav id="bottom-nav" aria-label="Navigasi Mobile">
+        <button class="bottom-nav-item" data-page="home">
+            <i class="fa-solid fa-house-user"></i>
+            <span class="nav-label">Beranda</span>
+        </button>
+        <button class="bottom-nav-item" data-page="deploy">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span class="nav-label">Deploy</span>
+        </button>
+        <button class="bottom-nav-item" data-page="history">
+            <i class="fa-solid fa-timeline"></i>
+            <span class="nav-label">Riwayat</span>
+        </button>
+        <button class="bottom-nav-item active" data-page="group">
+            <i class="fa-solid fa-users"></i>
+            <span class="nav-label">Grup</span>
+            <span class="bottom-nav-badge" id="bottom-nav-group-badge"></span>
+        </button>
+    </nav>
+
+</div><!-- /#app-shell -->
+
+<!-- ============================================================
+     MODALS
+============================================================ -->
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-overlay" id="confirm-modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
+        <h4 id="modal-title">Konfirmasi</h4>
+        <p id="modal-message">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="modal-cancel-btn">Batal</button>
+            <button class="btn btn-danger" id="modal-confirm-btn">Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ EDIT PROFILE MODAL ============ -->
+<div class="modal-overlay" id="edit-profile-modal">
+    <div class="modal-box edit-profile-box">
+        <button class="modal-close-x" id="edit-profile-cancel" aria-label="Tutup">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <h4 class="edit-profile-title">Profil Kamu</h4>
+        <p class="edit-profile-sub">Ganti nama atau foto kapan aja</p>
+
+        <div class="avatar-picker" id="edit-avatar-clickable" role="button" tabindex="0">
+            <div id="edit-avatar-preview" class="avatar-preview">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="avatar-edit-badge">
+                <i class="fa-solid fa-camera"></i>
+            </div>
+        </div>
+        <input type="file" id="edit-avatar-input" accept="image/*" style="display:none;">
+        <span class="edit-avatar-error" id="edit-avatar-error"></span>
+
+        <div class="edit-field-group">
+            <input
+                type="text"
+                id="edit-username-input"
+                class="edit-field-input"
+                placeholder="contoh: Ekk Store"
+                maxlength="10"
+                autocomplete="off"
+                autocapitalize="words"
+                spellcheck="false"
+            >
+            <span class="edit-field-hint" id="edit-username-hint">Bisa ganti 2x per minggu</span>
+            <span class="form-error" id="edit-username-error"></span>
+        </div>
+
+        <button class="btn btn-primary edit-save-btn" id="edit-profile-save">
+            Simpan Perubahan
+        </button>
+    </div>
+</div>
+
+<!-- ============ EDIT MESSAGE MODAL ============ -->
+<div class="modal-overlay" id="edit-message-modal">
+    <div class="modal-box" style="max-width:420px;">
+        <div class="modal-icon"><i class="fa-solid fa-pen"></i></div>
+        <h4>Edit Pesan</h4>
+        <p>Ubah isi pesanmu.</p>
+        <div class="form-group" style="text-align:left;">
+            <label class="form-label">Pesan Baru</label>
+            <input type="text" id="edit-message-input" class="form-input" placeholder="Tulis pesan baru...">
+            <span class="form-error" id="edit-message-error"></span>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="edit-message-cancel">Batal</button>
+            <button class="btn btn-primary" id="edit-message-save">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ ATTACHMENT BOTTOM SHEET ============ -->
+<div class="attach-menu-overlay" id="attach-menu-overlay">
+    <div class="attach-menu-sheet">
+        <div class="attach-menu-handle"></div>
+
+        <div class="attach-options">
+            <button class="attach-option" data-attach="document">
+                <div class="attach-option-icon attach-opt-doc"><i class="fa-solid fa-file-lines"></i></div>
+                <span class="attach-option-label">Dokumen</span>
+            </button>
+            <button class="attach-option" data-attach="gallery">
+                <div class="attach-option-icon attach-opt-gallery"><i class="fa-solid fa-image"></i></div>
+                <span class="attach-option-label">Galeri</span>
+            </button>
+            <button class="attach-option" data-attach="camera">
+                <div class="attach-option-icon attach-opt-camera"><i class="fa-solid fa-camera"></i></div>
+                <span class="attach-option-label">Kamera</span>
+            </button>
+            <button class="attach-option" data-attach="location">
+                <div class="attach-option-icon attach-opt-location"><i class="fa-solid fa-location-dot"></i></div>
+                <span class="attach-option-label">Lokasi</span>
+            </button>
+            <button class="attach-option" data-attach="contact">
+                <div class="attach-option-icon attach-opt-contact"><i class="fa-solid fa-user"></i></div>
+                <span class="attach-option-label">Kontak</span>
+            </button>
+            <button class="attach-option" data-attach="poll">
+                <div class="attach-option-icon attach-opt-poll"><i class="fa-solid fa-chart-simple"></i></div>
+                <span class="attach-option-label">Polling</span>
+            </button>
+            <button class="attach-option" data-attach="event">
+                <div class="attach-option-icon attach-opt-event"><i class="fa-solid fa-calendar-days"></i></div>
+                <span class="attach-option-label">Acara</span>
+            </button>
+            <button class="attach-option" data-attach="doodle">
+                <div class="attach-option-icon attach-opt-doodle"><i class="fa-solid fa-paintbrush"></i></div>
+                <span class="attach-option-label">Doodle</span>
+            </button>
+        </div>
+
+        <div class="attach-bottom">
+            <button class="attach-camera-btn" id="attach-camera-btn">
+                <i class="fa-solid fa-camera"></i>
+                <span>Kamera</span>
+            </button>
+            <div class="attach-recent" id="attach-recent">
+                <div class="attach-recent-empty">
+                    <i class="fa-solid fa-image"></i>
+                    Foto terbaru akan muncul di sini
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File input tambahan -->
+<input type="file" id="file-input-document" accept="*/*" style="display:none;" multiple>
+<input type="file" id="file-input-camera" accept="image/*,video/*" capture="environment" style="display:none;">
+
+<!-- ============ MEMBER PANEL ============ -->
+<div id="member-panel-backdrop"></div>
+<aside id="member-panel" aria-label="Daftar Anggota">
+    <div class="member-panel-header">
+        <div class="member-panel-title-row">
+            <div class="member-panel-title">
+                <i class="fa-solid fa-users"></i>
+                <span>Anggota Grup</span>
+            </div>
+            <button class="member-panel-close" id="member-panel-close" aria-label="Tutup">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="member-panel-stats">
+            <span id="member-total-stat">0 anggota</span>
+            <span>·</span>
+            <span class="stat-online" id="member-online-stat">0 online</span>
+        </div>
+    </div>
+    <div class="member-panel-search">
+        <div class="member-panel-search-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="member-panel-search-input" placeholder="Cari anggota..." autocomplete="off">
+        </div>
+    </div>
+    <div class="member-list" id="member-list">
+        <div class="member-empty">
+            <i class="fa-solid fa-users"></i>
+            <p>Belum ada anggota</p>
+        </div>
+    </div>
+</aside>
+
+<!-- ============ CAMERA IN-APP ============ -->
+<div class="camera-overlay" id="camera-overlay">
+    <video id="camera-preview" autoplay playsinline muted></video>
+    <div class="camera-placeholder" id="camera-placeholder" style="display:none;">
+        <div>
+            <i class="fa-solid fa-camera" style="font-size:42px;margin-bottom:12px;display:block;"></i>
+            Kamera tidak tersedia
+        </div>
+    </div>
+
+    <div class="camera-top-bar">
+        <button class="camera-close-btn" id="camera-close-btn" aria-label="Tutup kamera">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <button class="camera-flip-btn" id="camera-flip-btn" aria-label="Balik kamera">
+            <i class="fa-solid fa-camera-rotate"></i>
+        </button>
+    </div>
+
+    <div class="camera-timer" id="camera-timer">
+        <span id="camera-timer-text">0:00</span>
+    </div>
+
+    <div class="camera-bottom-bar">
+        <div class="camera-mode-toggle">
+            <button class="camera-mode-btn active" data-mode="photo">Foto</button>
+            <button class="camera-mode-btn" data-mode="video">Video</button>
+        </div>
+        <button class="camera-shutter" id="camera-shutter" aria-label="Ambil"></button>
+        <div style="width:64px;"></div>
+    </div>
+</div>
+
+<!-- ============ PWA INSTALL POPUP ============ -->
+<div id="pwa-popup-overlay">
+    <div class="pwa-popup-sheet">
+        <div class="pwa-popup-handle"></div>
+        <button class="pwa-popup-close" id="pwa-popup-close" aria-label="Tutup">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="pwa-popup-icon">
+            <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
+        </div>
+
+        <h3 class="pwa-popup-title">Install Deploy Project Ekk Store</h3>
+        <p class="pwa-popup-subtitle">
+            Pasang <strong>Deploy Project Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, seperti app beneran.
+        </p>
+
+        <div class="pwa-popup-actions">
+            <button class="pwa-popup-btn-install" id="pwa-popup-goto-download">
+                <i class="fa-solid fa-arrow-right"></i>
+                <span>Buka Halaman Download</span>
+            </button>
+            <button class="pwa-popup-btn-later" id="pwa-popup-later">
+                Nanti aja
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast"></div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lightbox-overlay" id="lightbox-overlay">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Tutup">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="lightbox-content" id="lightbox-content"></div>
+</div>
+
+<!-- ============ ERUDA DEBUG (opsional via ?debug) ============ -->
+<script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
+<script>
+    if (window.location.search.includes('debug')) {
+        eruda.init();
+        console.log('[Eruda] Console aktif. Untuk refresh: buka ulang dengan ?debug');
+    }
+</script>
+
+<!-- ============================================================
+     SCRIPTS
+     Urutan: common.js → group.js
+     group.js HANYA di-load di halaman ini.
+============================================================ -->
+<script src="/js/common.js"></script>
+<script src="/js/group.js"></script>
+
+</body>
+</html>
