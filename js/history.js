@@ -1,348 +1,171 @@
-<!DOCTYPE html>
-<html lang="id" data-theme="dark">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
-    <title>Riwayat Deploy — Ekk Store</title>
-<script>
-(function() {
-    try {
-        var STORAGE_KEY = 'wa_gate_passed_v12';
-        var data = localStorage.getItem(STORAGE_KEY);
-        if (data) {
-            var parsed = JSON.parse(data);
-            if (parsed.passed === true && parsed.expiresAt && Date.now() < parsed.expiresAt) {
-                document.documentElement.classList.add('gate-passed');
-            }
-        }
-    } catch (e) {}
-})();
-</script>
-    <!-- ============================================================
-         SEO / SOCIAL META
-    ============================================================ -->
-    <meta name="description" content="Riwayat deployment project Anda di Ekk Store." />
-    <meta name="theme-color" content="#0c0c0e" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="application-name" content="Ekk Store" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Ekk Store" />
+/* ============================================================
+   EKK STORE 4.0 — HISTORY.JS
+   Berisi: renderHistory, setupHistoryEvents, deleteHistoryItem.
+   Digunakan HANYA di /history (history/index.html)
 
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Riwayat Deploy — Ekk Store" />
-    <meta property="og:description" content="Semua deployment Anda dalam satu tempat." />
-    <meta property="og:image" content="https://files.catbox.moe/kzg0nc.png" />
-    <meta property="og:url" content="https://deploy.project.ekkstore.web.id/history" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Riwayat Deploy — Ekk Store" />
-    <meta name="twitter:description" content="Semua deployment Anda dalam satu tempat." />
-    <meta name="twitter:image" content="https://files.catbox.moe/kzg0nc.png" />
+   Catatan: function renderHistory() dipanggil OTOMATIS oleh
+   startHistoryListener() di common.js setiap ada update dari
+   Firestore. Jadi setelah user buka halaman, list otomatis
+   refresh tanpa harus reload.
+   ============================================================ */
 
-    <!-- ============================================================
-         PWA
-    ============================================================ -->
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" href="https://files.catbox.moe/kzg0nc.png" type="image/png" />
-    <link rel="apple-touch-icon" href="https://files.catbox.moe/kzg0nc.png" />
+/* ============================================================
+   1) RENDER HISTORY LIST
+   ============================================================ */
+function renderHistory() {
+    const historyList = document.getElementById('history-list');
+    if (!historyList) return;
+    const history = getHistory();
+    let filtered = [...history];
 
-    <!-- ============================================================
-         FONTS
-    ============================================================ -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-    <!-- ============================================================
-         ICON
-    ============================================================ -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-
-    <!-- ============================================================
-         CSS
-    ============================================================ -->
-    <link rel="stylesheet" href="/css/style.css" />
-
-    <!-- ============================================================
-         FIREBASE SDK (compat)
-    ============================================================ -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-</head>
-<body data-page="history">
-<!-- ============================================================
-     GATE SCREEN
-============================================================ -->
-<div id="gate-screen">
-    <div class="gate-card" id="gate-card">
-        <div class="gate-steps" id="gate-steps">
-            <div class="gate-step-dot active" id="g-dot1"></div>
-            <div class="gate-step-line" id="g-line1"></div>
-            <div class="gate-step-dot" id="g-dot2"></div>
-            <div class="gate-step-line" id="g-line2"></div>
-            <div class="gate-step-dot" id="g-dot3"></div>
-        </div>
-        <div class="gate-step-labels">
-            <span class="active" id="g-label1">Follow</span>
-            <span id="g-label2">Konfirmasi</span>
-            <span id="g-label3">Selesai</span>
-        </div>
-        <div class="gate-logo">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-        </div>
-        <h2>Verifikasi Follow</h2>
-        <p class="gate-sub">
-            Untuk melanjutkan, ikuti saluran WhatsApp terlebih dahulu.
-            Klik <strong>Buka Saluran WhatsApp</strong>, pilih
-            <strong>Buka di WhatsApp</strong>, lalu tekan <strong>Ikuti</strong>.
-            Kembali ke halaman ini setelah selesai.
-        </p>
-        <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener noreferrer" class="gate-btn" id="btn-follow-wa">
-            <i class="fa-brands fa-whatsapp"></i> Buka Saluran WhatsApp
-        </a>
-        <button class="gate-btn secondary" id="btn-confirm" disabled>
-            Saya Sudah Follow
-        </button>
-        <div class="gate-verify-msg" id="verify-msg-box">
-            <i id="verify-icon"></i>
-            <span id="verify-text"></span>
-        </div>
-        <div class="gate-footer-text">
-            <i class="fa-solid fa-lock" style="font-size:9px;"></i>
-            Verifikasi diperlukan untuk mengakses konten
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================
-     APP SHELL
-============================================================ -->
-<div id="app-shell">
-
-    <!-- ============ TOP HEADER ============ -->
-    <header id="top-header">
-        <div class="header-left">
-            <button id="btn-hamburger" aria-label="Buka menu">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-
-            <div class="header-logo">
-            </div>
-
-            <div class="header-title-group">
-                <span class="header-title">Ekk Store</span>
-                <span class="header-subtitle">Deployment Platform</span>
-            </div>
-        </div>
-
-        <div class="header-right">
-            <div class="header-status">
-                <span class="dot"></span> System Online
-            </div>
-        </div>
-    </header>
-
-    <!-- ============ SIDEBAR BACKDROP (mobile) ============ -->
-    <div id="sidebar-backdrop"></div>
-
-    <!-- ============ SIDEBAR (desktop) + MOBILE DRAWER ============ -->
-    <nav id="sidebar" aria-label="Navigasi">
-        <button id="sidebar-close" aria-label="Tutup menu">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-
-        <div class="sidebar-profile">
-            <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="sidebar-profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
-            <div class="sidebar-profile-info">
-                <span class="sidebar-profile-name">Ekk Store</span>
-                <span class="sidebar-profile-badge"><i class="fa-solid fa-circle-check"></i> Owner</span>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Main</div>
-            <button class="sidebar-item" data-page="home">
-                <i class="fa-solid fa-house-user"></i> Beranda
-            </button>
-            <button class="sidebar-item" data-page="deploy">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Deploy
-            </button>
-            <button class="sidebar-item active" data-page="history">
-                <i class="fa-solid fa-timeline"></i> Riwayat
-            </button>
-            <button class="sidebar-item" data-page="group">
-                <i class="fa-solid fa-users"></i> Grup
-            </button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Resources</div>
-            <button class="sidebar-item" data-page="docs">
-                <i class="fa-solid fa-file-lines"></i> Dokumentasi
-            </button>
-            <button class="sidebar-item" data-page="info">
-                <i class="fa-solid fa-circle-info"></i> Info Website
-            </button>
-            <button class="sidebar-item" data-page="status">
-                <i class="fa-solid fa-network-wired"></i> System Status
-            </button>
-            <button class="sidebar-item" data-page="download">
-                <i class="fa-solid fa-mobile-screen-button"></i> Install App
-            </button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Services</div>
-            <button class="sidebar-item" data-page="services">
-                <i class="fa-solid fa-laptop-code"></i> Jasa Website
-            </button>
-            <button class="sidebar-item accordion-trigger" data-accordion="contact-acc">
-                <i class="fa-solid fa-headset"></i> Contact
-                <i class="fa-solid fa-chevron-down chev"></i>
-            </button>
-            <div class="sidebar-submenu" id="contact-acc">
-                <a class="sidebar-item" href="https://wa.me/6285177464515" target="_blank" rel="noopener">
-                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 1
-                </a>
-                <a class="sidebar-item" href="https://wa.me/6285177464516" target="_blank" rel="noopener">
-                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 2
-                </a>
-                <a class="sidebar-item" href="https://wa.me/6285177464517" target="_blank" rel="noopener">
-                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 3
-                </a>
-                <a class="sidebar-item" href="https://t.me/XzzEkk" target="_blank" rel="noopener">
-                    <i class="fa-brands fa-telegram"></i> Telegram
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ============ MAIN CONTENT ============ -->
-    <main id="main-content">
-
-        <!-- ============================================
-             PAGE: HISTORY
-        ============================================ -->
-        <div class="page active" id="page-history">
-            <div class="page-header">
-                <div class="page-header-icon">
-                    <i class="fa-solid fa-timeline"></i>
-                </div>
-                <div class="page-header-text">
-                    <h1>Project History <span class="page-header-tag">Deploy</span></h1>
-                    <p>Semua deployment Anda dalam satu tempat.</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; align-items: center; width: 100%; box-sizing: border-box;">
-                    <div class="search-wrapper">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="history-search" placeholder="Cari project..." autocomplete="off">
-                    </div>
-                    <div class="filter-chips" id="history-filter">
-                        <button class="filter-chip active" data-filter="all">Semua</button>
-                        <button class="filter-chip" data-filter="success">Berhasil</button>
-                        <button class="filter-chip" data-filter="failed">Gagal</button>
-                        <button class="filter-chip" data-filter="proses">Proses</button>
-                    </div>
-                </div>
-                <div class="history-list-container" id="history-list"></div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- ============================================
-         BOTTOM NAV (mobile)
-    ============================================ -->
-    <nav id="bottom-nav" aria-label="Navigasi Mobile">
-        <button class="bottom-nav-item" data-page="home">
-            <i class="fa-solid fa-house-user"></i>
-            <span class="nav-label">Beranda</span>
-        </button>
-        <button class="bottom-nav-item" data-page="deploy">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span class="nav-label">Deploy</span>
-        </button>
-        <button class="bottom-nav-item active" data-page="history">
-            <i class="fa-solid fa-timeline"></i>
-            <span class="nav-label">Riwayat</span>
-        </button>
-        <button class="bottom-nav-item" data-page="group">
-            <i class="fa-solid fa-users"></i>
-            <span class="nav-label">Grup</span>
-            <span class="bottom-nav-badge" id="bottom-nav-group-badge"></span>
-        </button>
-    </nav>
-
-</div><!-- /#app-shell -->
-
-<!-- ============================================================
-     MODALS
-============================================================ -->
-
-<!-- ============ CONFIRM MODAL ============ -->
-<div class="modal-overlay" id="confirm-modal-overlay">
-    <div class="modal-box">
-        <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
-        <h4 id="modal-title">Konfirmasi</h4>
-        <p id="modal-message">Apakah Anda yakin?</p>
-        <div class="modal-actions">
-            <button class="btn btn-outline" id="modal-cancel-btn">Batal</button>
-            <button class="btn btn-danger" id="modal-confirm-btn">Hapus</button>
-        </div>
-    </div>
-</div>
-
-<!-- ============ PWA INSTALL POPUP ============ -->
-<div id="pwa-popup-overlay">
-    <div class="pwa-popup-sheet">
-        <div class="pwa-popup-handle"></div>
-        <button class="pwa-popup-close" id="pwa-popup-close" aria-label="Tutup">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-
-        <div class="pwa-popup-icon">
-            <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
-        </div>
-
-        <h3 class="pwa-popup-title">Install Deploy Project Ekk Store</h3>
-        <p class="pwa-popup-subtitle">
-            Pasang <strong>Deploy Project Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, seperti app beneran.
-        </p>
-
-        <div class="pwa-popup-actions">
-            <button class="pwa-popup-btn-install" id="pwa-popup-goto-download">
-                <i class="fa-solid fa-arrow-right"></i>
-                <span>Buka Halaman Download</span>
-            </button>
-            <button class="pwa-popup-btn-later" id="pwa-popup-later">
-                Nanti aja
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ============ TOAST ============ -->
-<div id="toast"></div>
-
-<!-- ============ ERUDA DEBUG (opsional via ?debug) ============ -->
-<script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
-<script>
-    if (window.location.search.includes('debug')) {
-        eruda.init();
-        console.log('[Eruda] Console aktif. Untuk refresh: buka ulang dengan ?debug');
+    if (historyFilter !== 'all') {
+        filtered = filtered.filter(item => item.status === historyFilter);
     }
-</script>
+    if (historySearch.trim()) {
+        const search = historySearch.toLowerCase().trim();
+        filtered = filtered.filter(item => item.project.toLowerCase().includes(search));
+    }
 
-<!-- ============================================================
-     SCRIPTS
-     Urutan: common.js → history.js
-============================================================ -->
-<script src="/js/common.js"></script>
-<script src="/js/history.js"></script>
+    if (filtered.length === 0) {
+        historyList.innerHTML =
+            '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Belum ada deployment</p><span class="sub">Deployment yang Anda lakukan akan muncul di sini</span><button class="btn btn-primary btn-sm" data-page="deploy" style="display:inline-flex;"><i class="fa-solid fa-rocket"></i> Mulai Deploy</button></div>';
+        historyList.querySelectorAll('[data-page]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                navigateTo(this.dataset.page);
+            });
+        });
+        return;
+    }
 
-</body>
-</html>
+    historyList.innerHTML = filtered.map((item, index) => {
+        const realIndex = history.indexOf(item);
+        let statusBadge = '';
+        if (item.status === 'success') {
+            statusBadge = '<span class="badge success"><i class="fa-solid fa-check-circle"></i> Berhasil</span>';
+        } else if (item.status === 'failed') {
+            statusBadge = '<span class="badge failed"><i class="fa-solid fa-times-circle"></i> Gagal</span>';
+        } else if (item.status === 'proses') {
+            statusBadge = '<span class="badge proses"><i class="fa-solid fa-spinner"></i> Proses</span>';
+        } else {
+            statusBadge = '<span class="badge info">' + escapeHTML(item.status) + '</span>';
+        }
+
+        const urlSafe = isValidHttpUrl(item.url) ? item.url : '';
+        const urlDisplay = urlSafe
+            ? '<a href="' + escapeAttr(urlSafe) + '" target="_blank" rel="noopener noreferrer" class="history-url" title="' + escapeAttr(urlSafe) + '"><i class="fa-solid fa-link"></i> ' + escapeHTML(urlSafe) + '</a>'
+            : '';
+
+        return '<div class="history-item" data-index="' + realIndex + '">' +
+            '<div class="history-info">' +
+            '<span class="history-name" title="' + escapeAttr(item.project) + '">' + escapeHTML(item.project) + '</span>' +
+            '<span class="history-meta"><i class="fa-regular fa-clock"></i> ' + escapeHTML(item.date) + ' · <span class="time-nowrap">' + escapeHTML(item.time) + '</span></span>' +
+            (urlDisplay ? '<span class="history-meta">' + urlDisplay + '</span>' : '') +
+            '</div>' +
+            '<div class="history-actions">' +
+            statusBadge +
+            (urlSafe ? '<button class="history-action-btn" data-action="copy" data-url="' + escapeAttr(urlSafe) + '" title="Salin Link" aria-label="Salin Link"><i class="fa-solid fa-copy"></i></button>' : '') +
+            (urlSafe ? '<a class="history-action-btn" href="' + escapeAttr(urlSafe) + '" target="_blank" rel="noopener noreferrer" title="Buka Website" aria-label="Buka Website"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>' : '') +
+            '<button class="history-action-btn danger" data-action="delete" data-index="' + realIndex + '" title="Hapus" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>' +
+            '</div>' +
+            '</div>';
+    }).join('');
+}
+
+/* ============================================================
+   2) HISTORY EVENTS (delegation, filter chips, search)
+   ============================================================ */
+function setupHistoryEvents() {
+    const historyList = document.getElementById('history-list');
+    if (historyList) {
+        historyList.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (btn.dataset.action === 'copy') {
+                copyURL(btn.dataset.url);
+            } else if (btn.dataset.action === 'delete') {
+                deleteHistoryItem(parseInt(btn.dataset.index));
+            }
+        });
+    }
+
+    const searchInput = document.getElementById('history-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            historySearch = this.value;
+            renderHistory();
+        });
+    }
+
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            historyFilter = this.dataset.filter;
+            renderHistory();
+        });
+    });
+}
+
+/* ============================================================
+   3) DELETE HISTORY ITEM
+   ============================================================ */
+async function deleteHistoryItem(index) {
+    const history = getHistory();
+    if (index < 0 || index >= history.length) return;
+    const item = history[index];
+    const confirmed = await showConfirmModal(
+        'Hapus Project?',
+        'Project "' + item.project + '" akan dihapus dari Vercel dan database.\nWebsite akan mati.\n\nLanjutkan?',
+        'Hapus'
+    );
+    if (!confirmed) return;
+
+    const db = window._db;
+    if (!db) return;
+    const uid = getMyUid();
+
+    if (item.projectId) {
+        try {
+            const response = await fetch('/api/delete-project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId: item.projectId, ownerId: uid })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                showToast('Gagal hapus Vercel: ' + (result.error || 'Error'), 'warning');
+            } else {
+                showToast('Project dihapus dari Vercel', 'success');
+            }
+        } catch (err) {
+            console.error('[delete] Vercel error:', err);
+            showToast('Gagal menghubungi server', 'warning');
+        }
+    }
+
+    try {
+        if (item.id) {
+            await db.collection('projects').doc(item.id).delete();
+            showToast('Project dihapus', 'success');
+        }
+    } catch (e) {
+        console.error('[delete] Firestore error:', e);
+        showToast('Gagal hapus dari database', 'error');
+    }
+}
+
+/* ============================================================
+   4) EXPOSE GLOBAL (untuk debug via console atau onclick)
+   ============================================================ */
+window.deleteHistoryItem = deleteHistoryItem;
+
+/* ============================================================
+   5) PAGE-SPECIFIC INIT
+   Dipanggil otomatis oleh common.js's initApp()
+   ============================================================ */
+function setupPageSpecific() {
+    setupHistoryEvents();
+    // Render awal dengan cache kosong (akan diisi ulang oleh
+    // startHistoryListener dari common.js begitu Firestore siap)
+    renderHistory();
+}
