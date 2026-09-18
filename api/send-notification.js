@@ -27,11 +27,30 @@ webpush.setVapidDetails(
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-key');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // ============================================================
+  // GET = hitung subscriber (untuk header admin)
+  // ============================================================
+  if (req.method === 'GET') {
+    try {
+      console.log('📊 GET count — project:', admin.app().options.projectId);
+      const snapshot = await db.collection('push_subscriptions').get();
+      const count = snapshot.size;
+      console.log('📊 Total subscriber:', count);
+      return res.status(200).json({ count });
+    } catch (err) {
+      console.error('Gagal hitung subscriber:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // ============================================================
+  // POST = kirim notifikasi
+  // ============================================================
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -49,6 +68,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('📨 POST send — project:', admin.app().options.projectId);
     const snapshot = await db.collection('push_subscriptions').get();
     const subscriptions = [];
     const docIds = [];
