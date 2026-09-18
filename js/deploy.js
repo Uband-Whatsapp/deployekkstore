@@ -430,6 +430,14 @@ function markDeployStepFailed(step) {
 function resetDeployButton() {
     const deployBtn = document.getElementById('deploy-btn');
     if (!deployBtn) return;
+
+    // Kalau deploy sukses → jangan reset, biar tombol tetap "Deploy Project Baru"
+    if (deployCompleted) {
+        deployState = DEPLOY_STATE.SUCCESS;
+        isDeploying = false;
+        return;
+    }
+
     deployBtn.disabled = false;
     deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
     deployState = DEPLOY_STATE.IDLE;
