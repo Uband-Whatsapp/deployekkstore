@@ -14,9 +14,10 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// VAPID Keys - PAKAI PUNYA KAMU
 const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
-const VAPID_PRIVATE_KEY = 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
+
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ekkstore2024admin';
 
 webpush.setVapidDetails(
   'mailto:ekkstore.id@gmail.com',
@@ -25,62 +26,100 @@ webpush.setVapidDetails(
 );
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-key');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { title, body, icon, url } = req.body;
+  const adminKey = req.headers['x-admin-key'];
+  if (adminKey !== ADMIN_PASSWORD) {
+    console.log('❌ Unauthorized attempt');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { title, body, icon, url, image, badge, tag, vibrate, requireInteraction, testMode = false } = req.body;
+
   if (!title || !body) {
     return res.status(400).json({ error: 'Title dan body wajib diisi' });
   }
 
   try {
-    // Ambil semua subscription dari Firestore
     const snapshot = await db.collection('push_subscriptions').get();
     const subscriptions = [];
+    const docIds = [];
+
     snapshot.forEach(doc => {
       const data = doc.data();
       if (data.subscription) {
         subscriptions.push(data.subscription);
+        docIds.push(doc.id);
       }
     });
 
     console.log(`📨 Total subscriber: ${subscriptions.length}`);
 
     if (subscriptions.length === 0) {
-      return res.status(200).json({ message: 'Tidak ada subscriber', total: 0 });
+      return res.status(200).json({ total: 0, success: 0, message: 'Tidak ada subscriber' });
     }
 
     const payload = JSON.stringify({
       title: title,
       body: body,
-      icon: icon || 'https://files.catbox.moe/kzg0nc.png',
-      badge: icon || 'https://files.catbox.moe/kzg0nc.png',
-      url: url || 'https://deploy.project.ekkstore.web.id/'
+      icon: icon || image || 'https://files.catbox.moe/kzg0nc.png',
+      badge: badge || icon || 'https://files.catbox.moe/kzg0nc.png',
+      image: image || undefined,
+      tag: tag || 'ekk-store-notif',
+      url: url || 'https://deploy.project.ekkstore.web.id/',
+      vibrate: vibrate || [200, 100, 200],
+      requireInteraction: requireInteraction === true,
+      data: { url: url || 'https://deploy.project.ekkstore.web.id/' }
     });
 
-    // Kirim ke semua subscriber
-    const results = [];
-    for (const sub of subscriptions) {
+    const targets = testMode ? subscriptions.slice(0, 1) : subscriptions;
+    console.log(`📤 ${testMode ? 'TEST' : 'BLAST'} → ${targets.length} target(s)`);
+
+    let successCount = 0;
+    let failCount = 0;
+    const expiredDocIds = [];
+
+    for (let i = 0; i < targets.length; i++) {
+      const sub = targets[i];
       try {
         await webpush.sendNotification(sub, payload);
-        results.push({ success: true });
-        console.log('✅ Notifikasi terkirim ke subscriber');
+        successCount++;
       } catch (err) {
-        console.error('❌ Gagal kirim ke subscriber:', err.statusCode, err.message);
-        console.error('📨 Detail error:', err);
-        results.push({ success: false, error: err.message });
-        // Jika subscription expired (410), hapus dari DB
+        failCount++;
+        console.error(`❌ Gagal (${err.statusCode}):`, err.message);
         if (err.statusCode === 410 || err.statusCode === 404) {
-          // Hapus subscription yang tidak valid (opsional)
-          // Tapi kita tidak tahu anonId-nya, jadi skip dulu
+          const idx = subscriptions.indexOf(sub);
+          if (idx >= 0 && docIds[idx]) {
+            expiredDocIds.push(docIds[idx]);
+          }
         }
       }
     }
 
-    const total = results.length;
-    const successCount = results.filter(r => r.success).length;
-    res.status(200).json({ total, success: successCount });
+    if (expiredDocIds.length > 0) {
+      console.log(`🧹 Hapus ${expiredDocIds.length} subscription expired`);
+      const batch = db.batch();
+      expiredDocIds.forEach(id => {
+        batch.delete(db.collection('push_subscriptions').doc(id));
+      });
+      await batch.commit().catch(e => console.error('Cleanup gagal:', e));
+    }
+
+    res.status(200).json({
+      total: targets.length,
+      success: successCount,
+      failed: failCount,
+      cleaned: expiredDocIds.length,
+      testMode: testMode
+    });
   } catch (err) {
     console.error('❌ Error send-notification:', err);
     res.status(500).json({ error: err.message });
