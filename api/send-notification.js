@@ -1,23 +1,28 @@
 import admin from 'firebase-admin';
 import webpush from 'web-push';
 
-if (!admin.apps.length) {
+// ============================================================
+// FORCE init named app instance "visitor" — biar tidak bentrok
+// dengan file API lain yang juga pakai firebase-admin
+// ============================================================
+let visitorApp;
+try {
+  visitorApp = admin.app('visitor');
+} catch (e) {
   const serviceAccountStr = process.env.FIREBASE_VISITOR_SERVICE_ACCOUNT;
   if (!serviceAccountStr) {
     throw new Error('FIREBASE_VISITOR_SERVICE_ACCOUNT belum diatur');
   }
   const serviceAccount = JSON.parse(serviceAccountStr);
-  admin.initializeApp({
+  visitorApp = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
-  });
+  }, 'visitor');
 }
 
-const db = admin.firestore();
+const db = visitorApp.firestore();
 
 const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ekkstore2024admin';
+const VAPID_PRIVATE_KEY = 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
 
 webpush.setVapidDetails(
   'mailto:ekkstore.id@gmail.com',
@@ -28,23 +33,27 @@ webpush.setVapidDetails(
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   // ============================================================
-  // GET = hitung subscriber (untuk header admin)
+  // Logging info project — buat diagnosa
+  // ============================================================
+  const projectId = visitorApp.options.projectId;
+  console.log(`🔑 Firebase project aktif: ${projectId}`);
+
+  // ============================================================
+  // GET = hitung subscriber (untuk admin panel)
   // ============================================================
   if (req.method === 'GET') {
     try {
-      console.log('📊 GET count — project:', admin.app().options.projectId);
       const snapshot = await db.collection('push_subscriptions').get();
-      const count = snapshot.size;
-      console.log('📊 Total subscriber:', count);
-      return res.status(200).json({ count });
+      console.log(`📊 GET count [${projectId}] → ${snapshot.size} subscriber`);
+      return res.status(200).json({ count: snapshot.size, project: projectId });
     } catch (err) {
-      console.error('Gagal hitung subscriber:', err);
-      return res.status(500).json({ error: err.message });
+      console.error('❌ Gagal hitung subscriber:', err);
+      return res.status(500).json({ error: err.message, project: projectId });
     }
   }
 
@@ -55,12 +64,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== ADMIN_PASSWORD) {
-    console.log('❌ Unauthorized attempt');
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
   const { title, body, icon, url, image, badge, tag, vibrate, requireInteraction, testMode = false } = req.body;
 
   if (!title || !body) {
@@ -68,7 +71,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('📨 POST send — project:', admin.app().options.projectId);
     const snapshot = await db.collection('push_subscriptions').get();
     const subscriptions = [];
     const docIds = [];
@@ -81,10 +83,10 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`📨 Total subscriber: ${subscriptions.length}`);
+    console.log(`📨 [${projectId}] Total subscriber: ${subscriptions.length}`);
 
     if (subscriptions.length === 0) {
-      return res.status(200).json({ total: 0, success: 0, message: 'Tidak ada subscriber' });
+      return res.status(200).json({ total: 0, success: 0, message: 'Tidak ada subscriber', project: projectId });
     }
 
     const payload = JSON.stringify({
@@ -125,12 +127,11 @@ export default async function handler(req, res) {
     }
 
     if (expiredDocIds.length > 0) {
-      console.log(`🧹 Hapus ${expiredDocIds.length} subscription expired`);
       const batch = db.batch();
       expiredDocIds.forEach(id => {
         batch.delete(db.collection('push_subscriptions').doc(id));
       });
-      await batch.commit().catch(e => console.error('Cleanup gagal:', e));
+      await batch.commit().catch(() => {});
     }
 
     res.status(200).json({
@@ -138,10 +139,11 @@ export default async function handler(req, res) {
       success: successCount,
       failed: failCount,
       cleaned: expiredDocIds.length,
-      testMode: testMode
+      testMode: testMode,
+      project: projectId
     });
   } catch (err) {
     console.error('❌ Error send-notification:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, project: projectId });
   }
 }
