@@ -1,27 +1,22 @@
 import admin from 'firebase-admin';
 
-let visitorApp;
-try {
-  visitorApp = admin.app('visitor');
-} catch (e) {
+if (!admin.apps.length) {
   const serviceAccountStr = process.env.FIREBASE_VISITOR_SERVICE_ACCOUNT;
   if (!serviceAccountStr) {
     throw new Error('FIREBASE_VISITOR_SERVICE_ACCOUNT belum diatur');
   }
   const serviceAccount = JSON.parse(serviceAccountStr);
-  visitorApp = admin.initializeApp({
+  admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
-  }, 'visitor');
+  });
 }
 
-const db = visitorApp.firestore();
+const db = admin.firestore();
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  console.log('📨 SUBSCRIBE: menerima request');
+  console.log('📨 Method:', req.method);
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -37,10 +32,10 @@ export default async function handler(req, res) {
       updatedAt: new Date().toISOString()
     });
 
-    console.log(`✅ Subscriber baru tersimpan: ${anonId}`);
+    console.log('✅ Subscription tersimpan:', anonId);
     res.status(200).json({ success: true });
   } catch (err) {
-    console.error('❌ Gagal simpan subscription:', err);
+    console.error('Gagal simpan subscription:', err);
     res.status(500).json({ error: err.message });
   }
 }
