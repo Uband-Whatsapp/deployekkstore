@@ -207,8 +207,8 @@
 
       const sent = result.success || 0;
       const total = result.total || 0;
-     // showResult('success', `✓ Notifikasi terkirim ke ${sent} perangkat dari ${total} subscriber.`);
-      showToast(`Terkirim ke ${sent} perangkat`, 'success');
+     showResult('success', `✓ Notifikasi terkirim ke ${sent} perangkat dari ${total} subscriber.`);
+     // showToast(`Terkirim ke ${sent} perangkat`, 'success');
 
       // Update last sent
       const statLast = $('stat-last');
