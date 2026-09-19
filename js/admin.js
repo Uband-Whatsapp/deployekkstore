@@ -4,7 +4,7 @@
 (function() {
   'use strict';
 
-  const ADMIN_PASSWORD = 'ekkadmin2024'; // ⚠️ GANTI INI
+  const ADMIN_PASSWORD = 'Admin1'; // ⚠️ GANTI INI
   const SESSION_KEY = 'ekk_admin_logged';
   const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
