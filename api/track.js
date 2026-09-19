@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { anonId, visitorNumber, eventType, timestamp, deviceInfo } = req.body;
+  const { anonId, visitorNumber, eventType, target, uid, timestamp, deviceInfo } = req.body;
   if (!anonId || !eventType) {
     res.status(400).json({ error: 'Data tidak lengkap' });
     return;
@@ -31,12 +31,13 @@ export default async function handler(req, res) {
     anonId,
     visitorNumber,
     eventType,
+    target: target || '',
+    uid: uid || '',
     timestamp,
     deviceInfo,
     date: today
   });
 
-  // Mendapatkan lokasi dari IP
   let locationInfo = '';
   try {
     const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
@@ -56,17 +57,17 @@ export default async function handler(req, res) {
   const waktu = formatTimeWIB(timestamp);
   const deviceStr = formatDeviceInfo(deviceInfo);
 
-  let msg;
+  let msg = null;
+
   if (eventType === 'visit') {
     msg = `👤 PENGUNJUNG BARU\n\n🆔 ID: #${visitorNumber}\n📌 Status: Masih di Gerbang Follow\n🕐 Waktu: ${waktu}\n${deviceStr}\n${locationInfo}`;
   } else if (eventType === 'follow_passed') {
     msg = `✅ BERHASIL MELEWATI FOLLOW\n\n🆔 ID: #${visitorNumber}\n📌 Status: Berhasil\n🕐 Waktu: ${waktu}\n${deviceStr}\n${locationInfo}`;
-  } else {
-    res.status(200).json({ success: true });
-    return;
   }
 
-  await sendTelegramMessage(msg.trim());
+  if (msg) {
+    await sendTelegramMessage(msg.trim());
+  }
 
   res.status(200).json({ success: true });
 }
