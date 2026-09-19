@@ -2,6 +2,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/deploy", "destination": "/deploy/index.html" },
     { "source": "/history", "destination": "/history/index.html" },
     { "source": "/group", "destination": "/group/index.html" },
