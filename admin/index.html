@@ -3,922 +3,2350 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
 <title>Admin Panel — Ekk Store</title>
+
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0c0c0e">
+<meta name="theme-color" content="#0a0a0d">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+>
+
 <link rel="stylesheet" href="/css/style.css">
+
 <style>
+
 /* ============================================================
-   ADMIN v4 — Full redsign, tanpa design picker
+   EKK STORE ADMIN PANEL
+   Visual only — tidak mengubah fungsi / ID / JS
+   Branding:
+   #0a0a0d
+   #121216
+   #1a1a20
+   #f97316
    ============================================================ */
-html, body {
-  background: var(--bg);
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+html {
+    background: #0a0a0d !important;
+    min-height: 100%;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
 }
 
 body.admin-page {
-  padding: 0;
-  overflow-x: hidden;
+    background: #0a0a0d !important;
+    color: #f2f2f5 !important;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    overflow-x: hidden;
 }
 
+/* Paksa semua elemen admin menggunakan box sizing yang konsisten */
+body.admin-page *,
+body.admin-page *::before,
+body.admin-page *::after {
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   GLOBAL FONT + ICON FIX
+   ============================================================ */
+
+body.admin-page h1,
+body.admin-page h2,
+body.admin-page h3,
+body.admin-page h4,
+body.admin-page h5,
+body.admin-page h6,
+body.admin-page p,
+body.admin-page span,
+body.admin-page label,
+body.admin-page button,
+body.admin-page input,
+body.admin-page textarea,
+body.admin-page div {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* PENTING:
+   Jangan biarkan CSS utama membuat icon menjadi hitam */
+body.admin-page i,
+body.admin-page .fa,
+body.admin-page .fas,
+body.admin-page .far,
+body.admin-page .fal,
+body.admin-page .fab,
+body.admin-page [class^="fa-"],
+body.admin-page [class*=" fa-"] {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+    font-style: normal !important;
+    font-weight: 900 !important;
+}
+
+/* ============================================================
+   BACKGROUND
+   ============================================================ */
+
 body.admin-page::before {
-  content: '';
-  position: fixed;
-  top: -200px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 500px;
-  background: radial-gradient(ellipse, rgba(249,115,22,0.10), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+    content: "";
+    position: fixed;
+    width: 700px;
+    height: 500px;
+    left: 50%;
+    top: -280px;
+    transform: translateX(-50%);
+    background: radial-gradient(
+        ellipse,
+        rgba(249, 115, 22, 0.085),
+        transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* ============================================================
    HEADER
    ============================================================ */
+
 .admin-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(14,14,18,0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    width: 100%;
+
+    min-height: 64px;
+    padding: 10px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    background: rgba(10, 10, 13, 0.94) !important;
+
+    border-bottom: 1px solid #26262e !important;
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
+
 .admin-header::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.3;
-}
-.admin-brand { display: flex; align-items: center; gap: 12px; }
-.admin-brand-logo {
-  width: 40px; height: 40px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 17px;
-  box-shadow: 0 6px 18px rgba(249,115,22,0.4), 0 0 0 1px rgba(255,255,255,0.06) inset;
-  position: relative;
-  overflow: hidden;
-}
-.admin-brand-logo::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 50%);
-  pointer-events: none;
-}
-.admin-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-.admin-brand-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.03em;
-}
-.admin-brand-sub {
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
+    content: "";
+    position: absolute;
 
-.header-actions { display: flex; gap: 8px; align-items: center; }
+    left: 0;
+    right: 0;
+    bottom: -1px;
 
-.sub-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(34,211,168,0.15), rgba(34,211,168,0.05));
-  border: 1px solid rgba(34,211,168,0.25);
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--success);
-  font-family: var(--font-mono);
-  letter-spacing: -0.01em;
-}
-.sub-chip i { font-size: 11px; }
+    height: 1px;
 
-.admin-logout-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(249, 115, 22, 0.7),
+        transparent
+    );
+
+    opacity: .35;
 }
-.admin-logout-btn:hover {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border-color: rgba(240,97,107,0.3);
-}
-.admin-logout-btn i { font-size: 11px; }
 
 /* ============================================================
-   LOGIN
+   BRAND
    ============================================================ */
+
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    min-width: 0;
+}
+
+.admin-brand-logo {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: linear-gradient(
+        135deg,
+        #f97316,
+        #ea580c
+    ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 16px;
+
+    box-shadow:
+        0 7px 20px rgba(249, 115, 22, .22),
+        inset 0 1px 0 rgba(255,255,255,.16);
+
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-brand-logo i {
+    color: #ffffff !important;
+    font-size: 16px !important;
+}
+
+.admin-brand-logo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,.16),
+        transparent 50%
+    );
+
+    pointer-events: none;
+}
+
+.admin-brand-text {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+
+    line-height: 1.15;
+}
+
+.admin-brand-title {
+    color: #f2f2f5 !important;
+
+    font-size: 15px;
+    font-weight: 800;
+
+    letter-spacing: -.03em;
+
+    white-space: nowrap;
+}
+
+.admin-brand-sub {
+    color: #78788a !important;
+
+    margin-top: 3px;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    letter-spacing: .07em;
+    text-transform: uppercase;
+
+    white-space: nowrap;
+}
+
+/* ============================================================
+   HEADER ACTION
+   ============================================================ */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    flex-shrink: 0;
+}
+
+.sub-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 34px;
+
+    padding: 7px 11px;
+
+    border-radius: 999px;
+
+    background: rgba(34, 211, 168, .08) !important;
+
+    border: 1px solid rgba(34, 211, 168, .22) !important;
+
+    color: #22d3a8 !important;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.sub-chip i {
+    color: #22d3a8 !important;
+    font-size: 10px !important;
+}
+
+/* Logout */
+
+.admin-logout-btn {
+    min-height: 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border-radius: 10px;
+
+    background: #1a1a20 !important;
+
+    border: 1px solid #26262e !important;
+
+    color: #b6b6c0 !important;
+
+    font-family: 'Inter', sans-serif !important;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        color .2s ease;
+}
+
+.admin-logout-btn i {
+    color: #b6b6c0 !important;
+    font-size: 11px !important;
+}
+
+.admin-logout-btn:hover {
+    background: #2a1216 !important;
+    border-color: rgba(240,97,107,.3) !important;
+    color: #f0616b !important;
+}
+
+.admin-logout-btn:hover i {
+    color: #f0616b !important;
+}
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+
 #login-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background:
-    radial-gradient(ellipse at top, rgba(249,115,22,0.12), transparent 60%),
-    var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+    position: fixed;
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding:
+        max(20px, env(safe-area-inset-top))
+        20px
+        max(20px, env(safe-area-inset-bottom));
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(249,115,22,.13),
+            transparent 48%
+        ),
+        #0a0a0d !important;
+
+    color: #f2f2f5 !important;
 }
-#login-screen.hidden { display: none; }
+
+#login-screen.hidden {
+    display: none !important;
+}
+
 .login-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
-  padding: 36px 28px 30px;
-  max-width: 380px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  animation: cardIn 0.5s cubic-bezier(0.22,0.61,0.36,1);
+    width: min(390px, 100%);
+
+    padding: 32px 26px 26px;
+
+    background: #121216 !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.65),
+        inset 0 1px 0 rgba(255,255,255,.025);
+
+    text-align: center;
+
+    color: #f2f2f5 !important;
+
+    position: relative;
+    overflow: hidden;
 }
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
+
 .login-card::before {
-  content: '';
-  position: absolute;
-  top: -80px; right: -80px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(249,115,22,0.2), transparent 70%);
-  pointer-events: none;
+    content: "";
+
+    position: absolute;
+
+    width: 220px;
+    height: 220px;
+
+    right: -100px;
+    top: -120px;
+
+    background: radial-gradient(
+        circle,
+        rgba(249,115,22,.15),
+        transparent 70%
+    );
+
+    pointer-events: none;
 }
+
 .login-icon {
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 20px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 28px;
-  box-shadow: 0 12px 36px rgba(249,115,22,0.45), 0 0 0 1px rgba(255,255,255,0.08) inset;
-  position: relative;
+    width: 68px;
+    height: 68px;
+
+    margin: 0 auto 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+
+    background: linear-gradient(
+        135deg,
+        #f97316,
+        #ea580c
+    ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 27px;
+
+    box-shadow:
+        0 12px 35px rgba(249,115,22,.25),
+        inset 0 1px 0 rgba(255,255,255,.15);
 }
-.login-icon::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent 50%);
-  pointer-events: none;
+
+.login-icon i {
+    color: #ffffff !important;
+    font-size: 27px !important;
 }
+
 .login-card h2 {
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 6px;
-  color: var(--text);
+    margin: 0 0 7px;
+
+    color: #f2f2f5 !important;
+
+    font-size: 22px;
+    font-weight: 800;
+
+    letter-spacing: -.035em;
 }
+
 .login-card p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 22px;
-  line-height: 1.5;
+    margin: 0 0 22px;
+
+    color: #78788a !important;
+
+    font-size: 12.5px;
+    line-height: 1.55;
 }
+
+/* Login input */
+
 .login-input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  box-sizing: border-box;
-  text-align: center;
-  margin-bottom: 12px;
-  transition: all 0.2s ease;
+    display: block;
+
+    width: 100%;
+    height: 50px;
+
+    margin: 0 0 12px;
+
+    padding: 12px 15px;
+
+    background: #1a1a20 !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 11px;
+
+    outline: none;
+
+    color: #f2f2f5 !important;
+
+    text-align: center;
+
+    font-family: 'JetBrains Mono', monospace !important;
+
+    font-size: 15px;
+
+    letter-spacing: .08em;
+
+    transition: .2s ease;
 }
+
+.login-input::placeholder {
+    color: #52525e !important;
+}
+
 .login-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-glow);
+    border-color: #f97316 !important;
+
+    box-shadow:
+        0 0 0 3px rgba(249,115,22,.13) !important;
 }
+
+/* Login button */
+
 .login-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  color: #fff;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(249,115,22,0.4);
-  min-height: 50px;
-  transition: all 0.2s ease;
+    width: 100%;
+    min-height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    padding: 13px 16px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: linear-gradient(
+        135deg,
+        #f97316,
+        #ea580c
+    ) !important;
+
+    color: #ffffff !important;
+
+    font-family: 'Inter', sans-serif !important;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 9px 25px rgba(249,115,22,.22);
+
+    transition: .2s ease;
 }
+
+.login-btn i {
+    color: #ffffff !important;
+    font-size: 14px !important;
+}
+
 .login-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(249,115,22,0.5);
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 12px 30px rgba(249,115,22,.3);
 }
-.login-btn:active { transform: scale(0.98); }
+
+.login-btn:active {
+    transform: scale(.98);
+}
+
 .login-error {
-  color: var(--danger);
-  font-size: 12px;
-  margin-top: 12px;
-  display: none;
-  font-weight: 600;
+    display: none;
+
+    margin-top: 12px;
+
+    color: #f0616b !important;
+
+    font-size: 12px;
+    font-weight: 600;
 }
-.login-error.visible { display: block; }
+
+.login-error.visible {
+    display: block;
+}
 
 /* ============================================================
    MAIN PANEL
    ============================================================ */
+
 #panel {
-  display: none;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 28px 20px 80px;
-  position: relative;
-  z-index: 1;
-}
-#panel.visible { display: block; }
+    display: none;
 
-.panel-header {
-  margin-bottom: 26px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-  position: relative;
-}
-.panel-header::after {
-  content: '';
-  position: absolute;
-  left: 0; bottom: -1px;
-  width: 70px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  border-radius: 2px;
-}
-.panel-header-icon {
-  width: 48px; height: 48px;
-  border-radius: 13px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-  box-shadow: 0 6px 18px rgba(249,115,22,0.18);
-}
-.panel-header-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.panel-header h1 {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  color: var(--text);
-  line-height: 1.15;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 0;
-}
-.panel-header h1 .tag {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--accent-line);
-  line-height: 1;
-}
-.panel-header p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 0;
+    width: min(1320px, 100%);
+
+    margin: 0 auto;
+
+    padding:
+        26px 20px
+        calc(70px + env(safe-area-inset-bottom));
+
+    position: relative;
+    z-index: 1;
 }
 
-/* Stats */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
+#panel.visible {
+    display: block;
 }
-@media (min-width: 768px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-}
-.stat-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-.stat-box::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.4;
-}
-.stat-box:hover {
-  border-color: var(--border-light);
-  background: var(--bg-hover);
-  transform: translateY(-2px);
-}
-.stat-box-icon {
-  width: 42px; height: 42px;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.stat-box-icon.green { background: var(--success-soft); color: var(--success); }
-.stat-box-icon.blue { background: var(--info-soft); color: var(--info); }
-.stat-box-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.stat-box-value {
-  font-size: 22px;
-  font-weight: 800;
-  font-family: var(--font-mono);
-  color: var(--text);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-}
-.stat-box-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* Grid layout */
-.grid-2 {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 1024px) {
-  .grid-2 { grid-template-columns: 1.1fr 1fr; align-items: start; }
-}
-
-/* Form card */
-.form-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 22px;
-  position: relative;
-  overflow: hidden;
-}
-.form-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.3), transparent);
-}
-
-.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-.form-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.form-label i { color: var(--accent); font-size: 11px; }
-
-.form-input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 11px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-.form-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-glow);
-}
-.form-input::placeholder { color: var(--text-muted); }
-
-.form-hint { font-size: 11px; color: var(--text-muted); }
-.counter {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
-  padding: 1px 5px;
-  background: var(--accent-soft);
-  border-radius: 4px;
-}
-
-/* Upload */
-.upload-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border: 1.5px dashed var(--border);
-  border-radius: 13px;
-  background: var(--bg-input);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.upload-box:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.upload-box.dragover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.upload-preview {
-  width: 58px; height: 58px;
-  border-radius: 11px;
-  background: var(--bg-hover);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 20px;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-}
-.upload-preview img { width: 100%; height: 100%; object-fit: cover; }
-.upload-info { flex: 1; min-width: 0; }
-.upload-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 3px;
-}
-.upload-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.4;
-  word-break: break-word;
-}
-.upload-remove {
-  width: 32px; height: 32px;
-  border-radius: 9px;
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid rgba(240,97,107,0.3);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-}
-.upload-box.has-image .upload-remove { display: flex; }
-.upload-remove:hover { background: var(--danger); color: #fff; }
-
-/* Send button */
-.send-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 16px 24px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  color: #fff;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  min-height: 54px;
-  box-shadow: 0 10px 28px rgba(249,115,22,0.4);
-  transition: all 0.2s ease;
-  margin-top: 24px;
-  letter-spacing: -0.01em;
-  position: relative;
-  overflow: hidden;
-}
-.send-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 50%);
-  pointer-events: none;
-}
-.send-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 36px rgba(249,115,22,0.5);
-}
-.send-btn:active:not(:disabled) { transform: scale(0.98); }
-.send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.send-btn i { font-size: 15px; }
-
-/* Result */
-.result {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  font-size: 12.5px;
-  font-weight: 500;
-  display: none;
-  align-items: flex-start;
-  gap: 10px;
-  line-height: 1.5;
-  animation: resultIn 0.3s ease;
-}
-@keyframes resultIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.result.visible { display: flex; }
-.result.success { background: var(--success-soft); border: 1px solid rgba(34,211,168,0.3); color: #6ee7b7; }
-.result.error { background: var(--danger-soft); border: 1px solid rgba(240,97,107,0.3); color: #fca5a5; }
-.result.loading { background: var(--info-soft); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
-.result i { flex-shrink: 0; margin-top: 1px; font-size: 14px; }
 
 /* ============================================================
-   PREVIEW PANEL
+   PANEL TITLE
    ============================================================ */
-.preview-wrap {
-  background: linear-gradient(180deg, var(--bg-card), var(--bg-elevated));
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 24px 20px 26px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-  position: relative;
-  overflow: hidden;
+
+.panel-header {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid #26262e;
+
+    position: relative;
 }
+
+.panel-header::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -1px;
+
+    width: 75px;
+    height: 2px;
+
+    background: linear-gradient(
+        90deg,
+        #f97316,
+        transparent
+    );
+
+    border-radius: 2px;
+}
+
+.panel-header-icon {
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #2a1e16 !important;
+
+    border: 1px solid rgba(249,115,22,.25) !important;
+
+    color: #f97316 !important;
+
+    font-size: 19px;
+
+    box-shadow:
+        0 7px 20px rgba(249,115,22,.09);
+}
+
+.panel-header-icon i {
+    color: #f97316 !important;
+    font-size: 19px !important;
+}
+
+.panel-header-text {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.panel-header h1 {
+    margin: 0;
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    color: #f2f2f5 !important;
+
+    font-size: 23px;
+    font-weight: 800;
+
+    letter-spacing: -.035em;
+
+    line-height: 1.2;
+}
+
+.panel-header h1 .tag {
+    padding: 4px 9px;
+
+    border-radius: 999px;
+
+    background: #2a1e16 !important;
+
+    border: 1px solid rgba(249,115,22,.25) !important;
+
+    color: #f97316 !important;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: .08em;
+
+    text-transform: uppercase;
+}
+
+.panel-header p {
+    margin: 0;
+
+    color: #78788a !important;
+
+    font-size: 12.5px;
+
+    line-height: 1.45;
+}
+
+/* ============================================================
+   STATS
+   ============================================================ */
+
+.stats-row {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.stat-box {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 15px;
+
+    background: #121216 !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 15px;
+
+    color: #f2f2f5 !important;
+
+    position: relative;
+    overflow: hidden;
+
+    transition: .2s ease;
+}
+
+.stat-box::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 15%;
+    right: 15%;
+
+    height: 1px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(249,115,22,.6),
+        transparent
+    );
+}
+
+.stat-box:hover {
+    border-color: #32323c !important;
+    background: #16161b !important;
+    transform: translateY(-1px);
+}
+
+.stat-box-icon {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background: #2a1e16 !important;
+
+    color: #f97316 !important;
+
+    font-size: 15px;
+}
+
+.stat-box-icon i {
+    color: #f97316 !important;
+    font-size: 15px !important;
+}
+
+.stat-box-icon.green {
+    background: #0d2a22 !important;
+    color: #22d3a8 !important;
+}
+
+.stat-box-icon.green i {
+    color: #22d3a8 !important;
+}
+
+.stat-box-icon.blue {
+    background: #101e33 !important;
+    color: #3b82f6 !important;
+}
+
+.stat-box-icon.blue i {
+    color: #3b82f6 !important;
+}
+
+.stat-box-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.stat-box-value {
+    color: #f2f2f5 !important;
+
+    font-family: 'JetBrains Mono', monospace !important;
+
+    font-size: 21px;
+    font-weight: 700;
+
+    line-height: 1.1;
+}
+
+.stat-box-label {
+    color: #78788a !important;
+
+    font-size: 9.5px;
+    font-weight: 700;
+
+    letter-spacing: .06em;
+
+    text-transform: uppercase;
+}
+
+/* ============================================================
+   GRID
+   ============================================================ */
+
+.grid-2 {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .grid-2 {
+        grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
+    }
+}
+
+/* ============================================================
+   FORM CARD
+   ============================================================ */
+
+.form-card {
+    position: relative;
+    overflow: hidden;
+
+    padding: 21px;
+
+    background: #121216 !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 18px;
+
+    color: #f2f2f5 !important;
+}
+
+.form-card::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 12%;
+    right: 12%;
+
+    height: 1px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(249,115,22,.55),
+        transparent
+    );
+}
+
+/* Form */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+
+    margin-bottom: 17px;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    color: #b6b6c0 !important;
+
+    font-size: 10.5px;
+    font-weight: 700;
+
+    letter-spacing: .06em;
+
+    text-transform: uppercase;
+}
+
+.form-label i {
+    color: #f97316 !important;
+    font-size: 10px !important;
+}
+
+.form-input {
+    width: 100%;
+
+    padding: 12px 13px;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: #1a1a20 !important;
+
+    color: #f2f2f5 !important;
+
+    font-family: 'Inter', sans-serif !important;
+
+    font-size: 14px;
+
+    line-height: 1.4;
+
+    transition: .2s ease;
+}
+
+textarea.form-input {
+    min-height: 85px;
+}
+
+.form-input::placeholder {
+    color: #52525e !important;
+}
+
+.form-input:focus {
+    border-color: #f97316 !important;
+
+    box-shadow:
+        0 0 0 3px rgba(249,115,22,.12) !important;
+}
+
+.form-hint {
+    color: #78788a !important;
+
+    font-size: 10.5px;
+
+    line-height: 1.4;
+}
+
+.counter {
+    display: inline-block;
+
+    padding: 1px 5px;
+
+    border-radius: 4px;
+
+    background: #2a1e16 !important;
+
+    color: #f97316 !important;
+
+    font-family: 'JetBrains Mono', monospace !important;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+/* ============================================================
+   UPLOAD
+   ============================================================ */
+
+.upload-box {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 13px;
+
+    background: #1a1a20 !important;
+
+    border: 1.5px dashed #32323c !important;
+
+    border-radius: 12px;
+
+    color: #f2f2f5 !important;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+}
+
+.upload-box:hover,
+.upload-box.dragover {
+    background: #2a1e16 !important;
+
+    border-color: #f97316 !important;
+
+    box-shadow:
+        0 0 0 3px rgba(249,115,22,.08);
+}
+
+.upload-preview {
+    width: 55px;
+    height: 55px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #202027 !important;
+
+    border: 1px solid #32323c !important;
+
+    color: #78788a !important;
+
+    font-size: 18px;
+
+    overflow: hidden;
+}
+
+.upload-preview i {
+    color: #78788a !important;
+    font-size: 18px !important;
+}
+
+.upload-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.upload-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.upload-title {
+    margin-bottom: 3px;
+
+    color: #f2f2f5 !important;
+
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.upload-hint {
+    color: #78788a !important;
+
+    font-size: 10.5px;
+
+    line-height: 1.4;
+
+    word-break: break-word;
+}
+
+.upload-remove {
+    width: 31px;
+    height: 31px;
+
+    flex-shrink: 0;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border-radius: 8px;
+
+    background: #2a1216 !important;
+
+    border: 1px solid rgba(240,97,107,.3) !important;
+
+    color: #f0616b !important;
+
+    cursor: pointer;
+}
+
+.upload-box.has-image .upload-remove {
+    display: flex;
+}
+
+.upload-remove i {
+    color: #f0616b !important;
+    font-size: 11px !important;
+}
+
+/* ============================================================
+   SEND BUTTON
+   ============================================================ */
+
+.send-btn {
+    width: 100%;
+    min-height: 53px;
+
+    margin-top: 21px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    padding: 14px 18px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: linear-gradient(
+        135deg,
+        #f97316,
+        #ea580c
+    ) !important;
+
+    color: #ffffff !important;
+
+    font-family: 'Inter', sans-serif !important;
+
+    font-size: 13.5px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 9px 25px rgba(249,115,22,.2);
+
+    transition: .2s ease;
+
+    position: relative;
+    overflow: hidden;
+}
+
+.send-btn i {
+    color: #ffffff !important;
+    font-size: 14px !important;
+}
+
+.send-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 12px 30px rgba(249,115,22,.28);
+}
+
+.send-btn:active:not(:disabled) {
+    transform: scale(.985);
+}
+
+.send-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+
+.result {
+    margin-top: 14px;
+
+    padding: 13px 14px;
+
+    display: none;
+
+    align-items: flex-start;
+
+    gap: 9px;
+
+    border-radius: 11px;
+
+    font-family: 'Inter', sans-serif !important;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.result.visible {
+    display: flex;
+}
+
+.result i {
+    flex-shrink: 0;
+
+    margin-top: 2px;
+
+    font-size: 13px !important;
+}
+
+.result.success {
+    background: #0d2a22 !important;
+    border: 1px solid rgba(34,211,168,.25) !important;
+    color: #6ee7b7 !important;
+}
+
+.result.error {
+    background: #2a1216 !important;
+    border: 1px solid rgba(240,97,107,.25) !important;
+    color: #fca5a5 !important;
+}
+
+.result.loading {
+    background: #101e33 !important;
+    border: 1px solid rgba(59,130,246,.25) !important;
+    color: #93c5fd !important;
+}
+
+/* ============================================================
+   PREVIEW
+   ============================================================ */
+
+.preview-wrap {
+    position: relative;
+    overflow: hidden;
+
+    padding: 21px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #121216,
+            #0f0f13
+        ) !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 18px;
+
+    color: #f2f2f5 !important;
+}
+
 .preview-wrap::before {
-  content: '';
-  position: absolute;
-  top: -100px; right: -100px;
-  width: 250px; height: 250px;
-  background: radial-gradient(circle, rgba(249,115,22,0.12), transparent 70%);
-  pointer-events: none;
+    content: "";
+
+    position: absolute;
+
+    width: 230px;
+    height: 230px;
+
+    right: -120px;
+    top: -110px;
+
+    background: radial-gradient(
+        circle,
+        rgba(249,115,22,.11),
+        transparent 70%
+    );
+
+    pointer-events: none;
 }
 
 .preview-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin-bottom: 16px;
-}
-.preview-label::before,
-.preview-label::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 15px;
+
+    color: #78788a !important;
+
+    font-size: 9.5px;
+    font-weight: 800;
+
+    letter-spacing: .12em;
+
+    text-transform: uppercase;
 }
 
-.phone-shell {
-  background: #0f0f13;
-  border-radius: 28px;
-  padding: 14px 12px 16px;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02) inset;
-  position: relative;
+.preview-label::before,
+.preview-label::after {
+    content: "";
+
+    flex: 1;
+
+    height: 1px;
+
+    background: #26262e;
 }
+
+/* ============================================================
+   PHONE PREVIEW
+   ============================================================ */
+
+.phone-shell {
+    padding: 13px 11px 15px;
+
+    background: #0a0a0d !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 25px;
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.4);
+}
+
 .phone-notch {
-  width: 60px;
-  height: 5px;
-  background: #1f1f24;
-  border-radius: 3px;
-  margin: 0 auto 12px;
-  opacity: 0.7;
+    width: 58px;
+    height: 5px;
+
+    margin: 0 auto 11px;
+
+    border-radius: 999px;
+
+    background: #26262e !important;
 }
 
 .phone-notif {
-  background: linear-gradient(180deg, #1c1c22, #17171c);
-  border-radius: 20px;
-  padding: 14px;
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid rgba(255,255,255,0.05);
-  color: #fff;
-  transition: all 0.35s cubic-bezier(0.22,0.61,0.36,1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  position: relative;
-  overflow: hidden;
+    min-height: 140px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 9px;
+
+    padding: 13px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #1a1a20,
+            #121216
+        ) !important;
+
+    border: 1px solid #26262e !important;
+
+    border-radius: 18px;
+
+    color: #ffffff !important;
+
+    box-shadow:
+        0 5px 18px rgba(0,0,0,.3);
 }
 
 .pn-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 2px;
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
 }
 
 .pn-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10.5px;
-  color: #a0a0b0;
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    color: #a0a0b0 !important;
+
+    font-size: 10px;
 }
+
 .pn-icon {
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #fff;
-  flex-shrink: 0;
-  overflow: hidden;
+    width: 23px;
+    height: 23px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+
+    background: linear-gradient(
+        135deg,
+        #f97316,
+        #ea580c
+    ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 10px;
+
+    overflow: hidden;
 }
-.pn-icon img { width: 100%; height: 100%; object-fit: cover; }
-.pn-app { font-weight: 600; color: #d0d0d8; }
+
+.pn-icon i {
+    color: #ffffff !important;
+    font-size: 10px !important;
+}
+
+.pn-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pn-app {
+    color: #d0d0d8 !important;
+    font-weight: 600;
+}
+
 .pn-time {
-  margin-left: auto;
-  font-size: 10px;
-  color: #70707a;
-  font-family: var(--font-mono);
+    margin-left: auto;
+
+    color: #70707a !important;
+
+    font-family: 'JetBrains Mono', monospace !important;
+
+    font-size: 9px;
 }
 
 .pn-body-wrap {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 9px;
 }
 
 .pn-thumb {
-  width: 46px; height: 46px;
-  border-radius: 10px;
-  background: #2a2a35;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #808090;
-  font-size: 17px;
-  overflow: hidden;
-}
-.pn-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    width: 46px;
+    height: 46px;
 
-.pn-text { flex: 1; min-width: 0; }
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #202027 !important;
+
+    color: #78788a !important;
+
+    font-size: 16px;
+
+    overflow: hidden;
+}
+
+.pn-thumb i {
+    color: #78788a !important;
+    font-size: 16px !important;
+}
+
+.pn-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pn-text {
+    min-width: 0;
+    flex: 1;
+}
+
 .pn-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: #fff;
-  margin-bottom: 3px;
-  word-break: break-word;
-  transition: opacity 0.2s ease;
-}
-.pn-body {
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: #b0b0bc;
-  word-break: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: opacity 0.2s ease;
-}
-.pn-url {
-  margin-top: 6px;
-  font-size: 9.5px;
-  color: #70707a;
-  font-family: var(--font-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    margin-bottom: 3px;
+
+    color: #ffffff !important;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    word-break: break-word;
 }
 
-/* Toast position */
-#toast { position: fixed; bottom: 24px; left: 50%; }
+.pn-body {
+    color: #b0b0bc !important;
+
+    font-size: 11px;
+
+    line-height: 1.4;
+
+    word-break: break-word;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+.pn-url {
+    margin-top: 6px;
+
+    color: #70707a !important;
+
+    font-family: 'JetBrains Mono', monospace !important;
+
+    font-size: 9px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* ============================================================
-   RESPONSIVE
+   TOAST
    ============================================================ */
-@media (max-width: 480px) {
-  .admin-header { padding: 10px 14px; }
-  .admin-brand-title { font-size: 14px; }
-  .admin-brand-sub { font-size: 9px; }
-  .sub-chip { padding: 6px 10px; font-size: 10.5px; }
-  .admin-logout-btn span { display: none; }
-  .admin-logout-btn { padding: 8px 10px; }
-  #panel { padding: 20px 14px 60px; }
-  .panel-header h1 { font-size: 20px; }
-  .panel-header-icon { width: 42px; height: 42px; font-size: 17px; }
-  .stat-box { padding: 13px; }
-  .stat-box-value { font-size: 19px; }
-  .stat-box-icon { width: 38px; height: 38px; font-size: 14px; }
-  .form-card { padding: 18px 16px; border-radius: 16px; }
-  .preview-wrap { padding: 20px 16px 22px; border-radius: 20px; }
+
+#toast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 24px;
+
+    transform: translateX(-50%);
+
+    z-index: 10000;
+
+    font-family: 'Inter', sans-serif !important;
 }
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+    .admin-header {
+        min-height: 62px;
+
+        padding:
+            9px
+            14px;
+    }
+
+    .admin-brand {
+        gap: 9px;
+    }
+
+    .admin-brand-logo {
+        width: 38px;
+        height: 38px;
+
+        border-radius: 11px;
+    }
+
+    .admin-brand-logo i {
+        font-size: 15px !important;
+    }
+
+    .admin-brand-title {
+        font-size: 14px;
+    }
+
+    .admin-brand-sub {
+        font-size: 9px;
+    }
+
+    .sub-chip {
+        min-height: 32px;
+        padding: 6px 9px;
+
+        font-size: 10px;
+    }
+
+    .admin-logout-btn {
+        width: 35px;
+        height: 35px;
+
+        padding: 0;
+
+        border-radius: 9px;
+    }
+
+    .admin-logout-btn span {
+        display: none;
+    }
+
+    #panel {
+        padding:
+            19px
+            14px
+            calc(70px + env(safe-area-inset-bottom));
+    }
+
+    .panel-header {
+        gap: 10px;
+        margin-bottom: 17px;
+        padding-bottom: 15px;
+    }
+
+    .panel-header-icon {
+        width: 41px;
+        height: 41px;
+
+        border-radius: 11px;
+
+        font-size: 16px;
+    }
+
+    .panel-header-icon i {
+        font-size: 16px !important;
+    }
+
+    .panel-header h1 {
+        font-size: 19px;
+    }
+
+    .panel-header h1 .tag {
+        padding: 4px 8px;
+        font-size: 8.5px;
+    }
+
+    .panel-header p {
+        font-size: 11px;
+    }
+
+    .stats-row {
+        gap: 9px;
+        margin-bottom: 14px;
+    }
+
+    .stat-box {
+        padding: 12px 11px;
+
+        border-radius: 13px;
+
+        gap: 8px;
+    }
+
+    .stat-box-icon {
+        width: 35px;
+        height: 35px;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+    }
+
+    .stat-box-icon i {
+        font-size: 13px !important;
+    }
+
+    .stat-box-value {
+        font-size: 18px;
+    }
+
+    .stat-box-label {
+        font-size: 8.5px;
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+    }
+
+    .form-card {
+        padding: 17px 15px;
+
+        border-radius: 16px;
+    }
+
+    .preview-wrap {
+        padding: 17px 13px 19px;
+
+        border-radius: 16px;
+    }
+
+    .send-btn {
+        min-height: 51px;
+
+        margin-top: 19px;
+
+        font-size: 13px;
+    }
+}
+
+/* ============================================================
+   HP KECIL
+   ============================================================ */
+
+@media (max-width: 380px) {
+
+    .admin-brand-sub {
+        display: none;
+    }
+
+    .header-actions {
+        gap: 5px;
+    }
+
+    .sub-chip {
+        padding: 6px 8px;
+    }
+
+    #panel {
+        padding-left: 11px;
+        padding-right: 11px;
+    }
+
+    .stats-row {
+        gap: 7px;
+    }
+
+    .stat-box {
+        padding: 11px 9px;
+    }
+
+    .stat-box-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .stat-box-value {
+        font-size: 17px;
+    }
+
+    .stat-box-label {
+        font-size: 7.8px;
+    }
+
+    .panel-header h1 {
+        font-size: 18px;
+    }
+
+    .panel-header p {
+        font-size: 10.5px;
+    }
+
+    .form-card {
+        padding: 15px 13px;
+    }
+
+    .login-card {
+        padding: 28px 19px 22px;
+        border-radius: 19px;
+    }
+}
+
+/* ============================================================
+   VERY SMALL SCREEN
+   ============================================================ */
+
+@media (max-width: 330px) {
+
+    .admin-brand-title {
+        font-size: 13px;
+    }
+
+    .sub-chip {
+        font-size: 9px;
+    }
+
+    .panel-header-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .panel-header h1 {
+        font-size: 17px;
+    }
+}
+
+/* ============================================================
+   REDUCE MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
 </style>
 </head>
+
 <body class="admin-page">
 
-<!-- LOGIN -->
+<!-- ============================================================
+     LOGIN
+     ============================================================ -->
+
 <div id="login-screen">
-  <div class="login-card">
-    <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
-    <h2>Admin Panel</h2>
-    <p>Masukkan password untuk mengakses dashboard notifikasi.</p>
-    <input type="password" id="admin-password" class="login-input" placeholder="••••••••" autocomplete="off">
-    <button id="login-btn" class="login-btn">
-      <i class="fa-solid fa-right-to-bracket"></i> Masuk
-    </button>
-    <div id="login-error" class="login-error">Password salah. Coba lagi.</div>
-  </div>
+
+    <div class="login-card">
+
+        <div class="login-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <h2>Admin Panel</h2>
+
+        <p>
+            Masukkan password untuk mengakses dashboard notifikasi.
+        </p>
+
+        <input
+            type="password"
+            id="admin-password"
+            class="login-input"
+            placeholder="••••••••"
+            autocomplete="off"
+        >
+
+        <button
+            id="login-btn"
+            class="login-btn"
+        >
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Masuk</span>
+        </button>
+
+        <div
+            id="login-error"
+            class="login-error"
+        >
+            Password salah. Coba lagi.
+        </div>
+
+    </div>
+
 </div>
 
-<!-- HEADER -->
-<header class="admin-header" id="admin-header" style="display:none;">
-  <div class="admin-brand">
-    <div class="admin-brand-logo"><i class="fa-solid fa-bell"></i></div>
-    <div class="admin-brand-text">
-      <span class="admin-brand-title">Ekk Store</span>
-      <span class="admin-brand-sub">Admin Panel</span>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+
+<header
+    class="admin-header"
+    id="admin-header"
+    style="display:none;"
+>
+
+    <div class="admin-brand">
+
+        <div class="admin-brand-logo">
+            <i class="fa-solid fa-bell"></i>
+        </div>
+
+        <div class="admin-brand-text">
+
+            <span class="admin-brand-title">
+                Ekk Store
+            </span>
+
+            <span class="admin-brand-sub">
+                Admin Panel
+            </span>
+
+        </div>
+
     </div>
-  </div>
-  <div class="header-actions">
-    <span class="sub-chip"><i class="fa-solid fa-users"></i> <span id="sub-count">—</span></span>
-    <button class="admin-logout-btn" id="logout-btn">
-      <i class="fa-solid fa-arrow-right-from-bracket"></i>
-      <span>Keluar</span>
-    </button>
-  </div>
+
+
+    <div class="header-actions">
+
+        <span class="sub-chip">
+            <i class="fa-solid fa-users"></i>
+            <span id="sub-count">—</span>
+        </span>
+
+        <button
+            class="admin-logout-btn"
+            id="logout-btn"
+        >
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+
+            <span>
+                Keluar
+            </span>
+        </button>
+
+    </div>
+
 </header>
 
-<!-- PANEL -->
+
+<!-- ============================================================
+     MAIN PANEL
+     ============================================================ -->
+
 <main id="panel">
 
-  <div class="panel-header">
-    <div class="panel-header-icon"><i class="fa-solid fa-paper-plane"></i></div>
-    <div class="panel-header-text">
-      <h1>Kirim Notifikasi <span class="tag">Broadcast</span></h1>
-      <p>Isi konten, lihat preview, lalu kirim ke semua subscriber.</p>
-    </div>
-  </div>
 
-  <div class="stats-row">
-    <div class="stat-box">
-      <div class="stat-box-icon green"><i class="fa-solid fa-users"></i></div>
-      <div class="stat-box-info">
-        <span class="stat-box-value" id="stat-sub-count">—</span>
-        <span class="stat-box-label">Subscriber</span>
-      </div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-box-icon blue"><i class="fa-solid fa-clock"></i></div>
-      <div class="stat-box-info">
-        <span class="stat-box-value" id="stat-last">—</span>
-        <span class="stat-box-label">Last Sent</span>
-      </div>
-    </div>
-  </div>
+    <!-- PANEL HEADER -->
 
-  <div class="grid-2">
+    <div class="panel-header">
 
-    <div class="form-card">
-      <div class="form-group">
-        <label class="form-label" for="title"><i class="fa-solid fa-heading"></i> Judul Notifikasi</label>
-        <input type="text" id="title" class="form-input" placeholder="contoh: Ekk Store Update" maxlength="60" autocomplete="off">
-        <span class="form-hint"><span class="counter" id="title-count">0</span> / 60 karakter</span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="body"><i class="fa-solid fa-align-left"></i> Isi Notifikasi</label>
-        <textarea id="body" class="form-input" placeholder="Tulis pesan singkat dan jelas di sini..." maxlength="180" rows="3" style="resize:vertical;min-height:85px;"></textarea>
-        <span class="form-hint"><span class="counter" id="body-count">0</span> / 180 karakter</span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="url"><i class="fa-solid fa-link"></i> URL Tujuan</label>
-        <input type="url" id="url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" autocomplete="off">
-        <span class="form-hint">Halaman yang dibuka saat notif diklik.</span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label"><i class="fa-solid fa-image"></i> Gambar Notifikasi (opsional)</label>
-        <div class="upload-box" id="upload-box">
-          <div class="upload-preview" id="upload-preview"><i class="fa-solid fa-image"></i></div>
-          <div class="upload-info">
-            <div class="upload-title" id="upload-title">Tap untuk upload gambar</div>
-            <div class="upload-hint" id="upload-hint">JPG / PNG · Max 3 MB</div>
-          </div>
-          <button type="button" class="upload-remove" id="upload-remove" aria-label="Hapus gambar">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+        <div class="panel-header-icon">
+            <i class="fa-solid fa-paper-plane"></i>
         </div>
-        <input type="file" id="image-input" accept="image/*" style="display:none;">
-      </div>
 
-      <button id="btn-send" class="send-btn">
-        <i class="fa-solid fa-paper-plane"></i>
-        Kirim ke Semua Subscriber
-      </button>
+        <div class="panel-header-text">
 
-      <div class="result" id="result">
-        <i id="result-icon"></i>
-        <span id="result-text"></span>
-      </div>
-    </div>
+            <h1>
+                Kirim Notifikasi
 
-    <div class="preview-wrap">
-      <div class="preview-label">Preview</div>
-      <div class="phone-shell">
-        <div class="phone-notch"></div>
-        <div class="phone-notif">
-          <div class="pn-content">
-            <div class="pn-head">
-              <div class="pn-icon"><i class="fa-solid fa-bolt"></i></div>
-              <span class="pn-app">Deploy Project</span>
-              <span class="pn-time">baru saja</span>
-            </div>
-            <div class="pn-body-wrap">
-              <div class="pn-thumb" id="pn-thumb"><i class="fa-solid fa-bullhorn"></i></div>
-              <div class="pn-text">
-                <div class="pn-title" id="pn-title">Ekk Store</div>
-                <div class="pn-body" id="pn-body">Isi notifikasi akan muncul di sini saat Anda mengetik.</div>
-                <div class="pn-url" id="pn-url" style="display:none;"></div>
-              </div>
-            </div>
-          </div>
+                <span class="tag">
+                    Broadcast
+                </span>
+            </h1>
+
+            <p>
+                Isi konten, lihat preview, lalu kirim ke semua subscriber.
+            </p>
+
         </div>
-      </div>
+
     </div>
 
-  </div>
+
+    <!-- ========================================================
+         STATS
+         ======================================================== -->
+
+    <div class="stats-row">
+
+
+        <div class="stat-box">
+
+            <div class="stat-box-icon green">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <div class="stat-box-info">
+
+                <span
+                    class="stat-box-value"
+                    id="stat-sub-count"
+                >
+                    —
+                </span>
+
+                <span class="stat-box-label">
+                    Subscriber
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="stat-box">
+
+            <div class="stat-box-icon blue">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+
+            <div class="stat-box-info">
+
+                <span
+                    class="stat-box-value"
+                    id="stat-last"
+                >
+                    —
+                </span>
+
+                <span class="stat-box-label">
+                    Last Sent
+                </span>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- ========================================================
+         CONTENT GRID
+         ======================================================== -->
+
+    <div class="grid-2">
+
+
+        <!-- ====================================================
+             FORM
+             ==================================================== -->
+
+        <div class="form-card">
+
+
+            <!-- TITLE -->
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="title"
+                >
+                    <i class="fa-solid fa-heading"></i>
+                    Judul Notifikasi
+                </label>
+
+                <input
+                    type="text"
+                    id="title"
+                    class="form-input"
+                    placeholder="contoh: Ekk Store Update"
+                    maxlength="60"
+                    autocomplete="off"
+                >
+
+                <span class="form-hint">
+                    <span
+                        class="counter"
+                        id="title-count"
+                    >0</span>
+                    / 60 karakter
+                </span>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="body"
+                >
+                    <i class="fa-solid fa-align-left"></i>
+                    Isi Notifikasi
+                </label>
+
+                <textarea
+                    id="body"
+                    class="form-input"
+                    placeholder="Tulis pesan singkat dan jelas di sini..."
+                    maxlength="180"
+                    rows="3"
+                    style="resize:vertical;min-height:85px;"
+                ></textarea>
+
+                <span class="form-hint">
+                    <span
+                        class="counter"
+                        id="body-count"
+                    >0</span>
+                    / 180 karakter
+                </span>
+
+            </div>
+
+
+            <!-- URL -->
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="url"
+                >
+                    <i class="fa-solid fa-link"></i>
+                    URL Tujuan
+                </label>
+
+                <input
+                    type="url"
+                    id="url"
+                    class="form-input"
+                    placeholder="https://deploy.project.ekkstore.web.id/"
+                    autocomplete="off"
+                >
+
+                <span class="form-hint">
+                    Halaman yang dibuka saat notif diklik.
+                </span>
+
+            </div>
+
+
+            <!-- IMAGE -->
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    <i class="fa-solid fa-image"></i>
+                    Gambar Notifikasi (opsional)
+                </label>
+
+                <div
+                    class="upload-box"
+                    id="upload-box"
+                >
+
+                    <div
+                        class="upload-preview"
+                        id="upload-preview"
+                    >
+                        <i class="fa-solid fa-image"></i>
+                    </div>
+
+
+                    <div class="upload-info">
+
+                        <div
+                            class="upload-title"
+                            id="upload-title"
+                        >
+                            Tap untuk upload gambar
+                        </div>
+
+                        <div
+                            class="upload-hint"
+                            id="upload-hint"
+                        >
+                            JPG / PNG · Max 3 MB
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="upload-remove"
+                        id="upload-remove"
+                        aria-label="Hapus gambar"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                </div>
+
+
+                <input
+                    type="file"
+                    id="image-input"
+                    accept="image/*"
+                    style="display:none;"
+                >
+
+            </div>
+
+
+            <!-- SEND -->
+
+            <button
+                id="btn-send"
+                class="send-btn"
+            >
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+                <span>
+                    Kirim ke Semua Subscriber
+                </span>
+
+            </button>
+
+
+            <!-- RESULT -->
+
+            <div
+                class="result"
+                id="result"
+            >
+
+                <i id="result-icon"></i>
+
+                <span id="result-text"></span>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ====================================================
+             PREVIEW
+             ==================================================== -->
+
+        <div class="preview-wrap">
+
+
+            <div class="preview-label">
+                Preview
+            </div>
+
+
+            <div class="phone-shell">
+
+                <div class="phone-notch"></div>
+
+
+                <div class="phone-notif">
+
+                    <div class="pn-content">
+
+
+                        <!-- NOTIFICATION HEADER -->
+
+                        <div class="pn-head">
+
+                            <div class="pn-icon">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+
+                            <span class="pn-app">
+                                Deploy Project
+                            </span>
+
+                            <span class="pn-time">
+                                baru saja
+                            </span>
+
+                        </div>
+
+
+                        <!-- NOTIFICATION BODY -->
+
+                        <div class="pn-body-wrap">
+
+
+                            <div
+                                class="pn-thumb"
+                                id="pn-thumb"
+                            >
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+
+
+                            <div class="pn-text">
+
+                                <div
+                                    class="pn-title"
+                                    id="pn-title"
+                                >
+                                    Ekk Store
+                                </div>
+
+                                <div
+                                    class="pn-body"
+                                    id="pn-body"
+                                >
+                                    Isi notifikasi akan muncul di sini saat Anda mengetik.
+                                </div>
+
+                                <div
+                                    class="pn-url"
+                                    id="pn-url"
+                                    style="display:none;"
+                                ></div>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
 </main>
 
+
+<!-- TOAST -->
+
 <div id="toast"></div>
+
+
+<!-- ============================================================
+     JAVASCRIPT ASLI
+     JANGAN DIUBAH
+     ============================================================ -->
+
 <script src="/js/admin.js"></script>
+
 </body>
 </html>
