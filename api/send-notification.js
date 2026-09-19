@@ -75,7 +75,7 @@ export default async function handler(req, res) {
 
     // ⚠️ KUNCI: kalau testMode true → kirim 1 saja
     //    kalau testMode undefined (dari bot Telegram) → kirim SEMUA
-    const targets = testMode ? subscriptions.slice(0, 1) : subscriptions;
+    const targets = subscriptions;
 
     const results = [];
     for (const sub of targets) {
