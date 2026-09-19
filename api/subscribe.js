@@ -38,4 +38,4 @@ export default async function handler(req, res) {
     console.error('Gagal simpan subscription:', err);
     res.status(500).json({ error: err.message });
   }
-}
+ }
