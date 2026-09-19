@@ -1,15 +1,54 @@
 /* ============================================================
-   ADMIN DASHBOARD — Kirim Notifikasi
-   Password: cek client-side saja (sama seperti gate screen)
-   Backend: TIDAK ADA AUTH — pakai endpoint yang sama dengan bot
+   ADMIN DASHBOARD v2 — 4 Design Notifikasi
    ============================================================ */
 (function() {
   'use strict';
 
-  const ADMIN_PASSWORD = 'Admin1';
-
+  const ADMIN_PASSWORD = 'ekkadmin2024'; // ⚠️ GANTI INI
   const SESSION_KEY = 'ekk_admin_logged';
-  const SESSION_DURATION = 12 * 60 * 60 * 1000; // 12 jam
+  const SESSION_DURATION = 12 * 60 * 60 * 1000;
+
+  const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
+  const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
+
+  // Preset tiap design — apa yang dikirim ke FCM
+  const DESIGN_PRESETS = {
+    minimal: {
+      icon: 'https://files.catbox.moe/kzg0nc.png',
+      image: '',
+      vibrate: [100],
+      requireInteraction: false,
+      tag: 'ekk-minimal',
+      fallbackIcon: 'fa-feather'
+    },
+    classic: {
+      icon: 'https://files.catbox.moe/kzg0nc.png',
+      image: '',
+      vibrate: [200, 100, 200],
+      requireInteraction: false,
+      tag: 'ekk-classic',
+      fallbackIcon: 'fa-bullhorn'
+    },
+    image: {
+      icon: 'https://files.catbox.moe/kzg0nc.png',
+      image: '',
+      vibrate: [200, 100, 200],
+      requireInteraction: false,
+      tag: 'ekk-image',
+      fallbackIcon: 'fa-image'
+    },
+    urgent: {
+      icon: 'https://files.catbox.moe/kzg0nc.png',
+      image: '',
+      vibrate: [500, 200, 500, 200, 500],
+      requireInteraction: true,
+      tag: 'ekk-urgent',
+      fallbackIcon: 'fa-triangle-exclamation'
+    }
+  };
+
+  let currentDesign = 'classic';
+  let uploadedImageUrl = '';
 
   function $(id) { return document.getElementById(id); }
 
@@ -50,15 +89,11 @@
 
   function setLoggedIn() {
     try {
-      localStorage.setItem(SESSION_KEY, JSON.stringify({
-        expiresAt: Date.now() + SESSION_DURATION
-      }));
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ expiresAt: Date.now() + SESSION_DURATION }));
     } catch (e) {}
   }
 
-  function clearLogin() {
-    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
-  }
+  function clearLogin() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
 
   function showLogin() {
     $('login-screen').classList.remove('hidden');
@@ -79,12 +114,41 @@
     el.textContent = '...';
     try {
       const res = await fetch('/api/send-notification');
-      if (!res.ok) throw new Error('fail');
       const data = await res.json();
       el.textContent = data.count || 0;
-    } catch (e) {
-      el.textContent = '?';
+    } catch (e) { el.textContent = '?'; }
+  }
+
+  function setDesign(design) {
+    currentDesign = design;
+    document.querySelectorAll('.design-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.design === design);
+    });
+
+    // Update preview phone layout
+    const phone = $('phone-notif');
+    if (phone) phone.setAttribute('data-design', design);
+
+    // Show/hide image uploader (hanya untuk design "image")
+    const imageGroup = $('image-group');
+    if (imageGroup) {
+      imageGroup.style.display = design === 'image' ? 'flex' : 'none';
     }
+
+    // Fallback icon di thumb
+    const preset = DESIGN_PRESETS[design];
+    const thumb = $('pn-thumb');
+    if (thumb && !uploadedImageUrl) {
+      thumb.innerHTML = '<i class="fa-solid ' + preset.fallbackIcon + '"></i>';
+    }
+
+    // Fallback icon di image besar (untuk preview design "image")
+    const pnImage = $('pn-image');
+    if (pnImage && !uploadedImageUrl) {
+      pnImage.innerHTML = '<i class="fa-solid fa-image"></i>';
+    }
+
+    updatePreview();
   }
 
   function updatePreview() {
@@ -95,20 +159,108 @@
     if ($('title-count')) $('title-count').textContent = ($('title')?.value || '').length;
     if ($('body-count')) $('body-count').textContent = ($('body')?.value || '').length;
 
-    if ($('preview-title')) {
-      $('preview-title').textContent = title || 'Ekk Store';
-      $('preview-title').style.opacity = title ? '1' : '0.5';
+    if ($('pn-title')) {
+      $('pn-title').textContent = title || 'Ekk Store';
+      $('pn-title').style.opacity = title ? '1' : '0.5';
     }
-    if ($('preview-body')) {
-      $('preview-body').textContent = body || 'Isi notif akan muncul di sini.';
-      $('preview-body').style.opacity = body ? '1' : '0.5';
+    if ($('pn-body')) {
+      $('pn-body').textContent = body || 'Isi notif akan muncul di sini.';
+      $('pn-body').style.opacity = body ? '1' : '0.5';
     }
-    if ($('preview-url')) {
+    if ($('pn-url')) {
       if (url) {
-        $('preview-url').style.display = 'block';
-        $('preview-url').textContent = url.replace(/^https?:\/\//, '');
+        $('pn-url').style.display = 'block';
+        $('pn-url').textContent = url.replace(/^https?:\/\//, '');
       } else {
-        $('preview-url').style.display = 'none';
+        $('pn-url').style.display = 'none';
+      }
+    }
+
+    // Preview thumbnail (untuk design minimal / classic / urgent)
+    if ($('pn-thumb')) {
+      if (uploadedImageUrl && currentDesign !== 'image') {
+        $('pn-thumb').innerHTML = '<img src="' + uploadedImageUrl + '" alt="">';
+      } else if (currentDesign !== 'image') {
+        const preset = DESIGN_PRESETS[currentDesign];
+        $('pn-thumb').innerHTML = '<i class="fa-solid ' + preset.fallbackIcon + '"></i>';
+      }
+    }
+
+    // Preview image besar (untuk design image)
+    if ($('pn-image')) {
+      if (uploadedImageUrl) {
+        $('pn-image').innerHTML = '<img src="' + uploadedImageUrl + '" alt="">';
+      } else {
+        $('pn-image').innerHTML = '<i class="fa-solid fa-image"></i>';
+      }
+    }
+  }
+
+  function setupImageUpload() {
+    const box = $('upload-box');
+    const input = $('image-input');
+    const removeBtn = $('upload-remove');
+    const preview = $('upload-preview');
+    const titleEl = $('upload-title');
+    const hintEl = $('upload-hint');
+
+    if (!box || !input) return;
+
+    box.addEventListener('click', (e) => {
+      if (e.target.closest('#upload-remove')) return;
+      input.click();
+    });
+
+    input.addEventListener('change', function() {
+      if (this.files && this.files[0]) handleUpload(this.files[0]);
+    });
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        uploadedImageUrl = '';
+        input.value = '';
+        box.classList.remove('has-image');
+        preview.innerHTML = '<i class="fa-solid fa-image"></i>';
+        titleEl.textContent = 'Tap untuk upload gambar';
+        hintEl.textContent = 'JPG / PNG · Max 3 MB';
+        updatePreview();
+      });
+    }
+
+    async function handleUpload(file) {
+      if (!file.type.startsWith('image/')) { showToast('Hanya gambar', 'error'); return; }
+      if (file.size > 3 * 1024 * 1024) { showToast('Max 3 MB', 'error'); return; }
+
+      const reader = new FileReader();
+      reader.onload = (e) => { preview.innerHTML = '<img src="' + e.target.result + '">'; };
+      reader.readAsDataURL(file);
+
+      titleEl.textContent = 'Mengupload...';
+      hintEl.textContent = file.name;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+          { method: 'POST', body: formData }
+        );
+        const data = await res.json();
+        uploadedImageUrl = data.secure_url;
+        box.classList.add('has-image');
+        titleEl.textContent = 'Gambar terpasang';
+        hintEl.textContent = 'Klik untuk ganti';
+        updatePreview();
+        showToast('Gambar diupload', 'success');
+      } catch (err) {
+        titleEl.textContent = 'Upload gagal';
+        hintEl.textContent = 'Coba lagi';
+        preview.innerHTML = '<i class="fa-solid fa-image"></i>';
+        uploadedImageUrl = '';
+        updatePreview();
+        showToast('Gagal upload', 'error');
       }
     }
   }
@@ -119,23 +271,21 @@
     const url = ($('url')?.value || '').trim() || 'https://deploy.project.ekkstore.web.id/';
 
     if (!title) { showToast('Judul wajib diisi', 'error'); return null; }
-    if (!body) { showToast('Isi notif wajib diisi', 'error'); return null; }
-
+    if (!body) { showToast('Isi wajib diisi', 'error'); return null; }
     try { new URL(url); } catch (e) { showToast('URL tidak valid', 'error'); return null; }
 
     return { title, body, url };
   }
 
-  async function sendNotif(testMode) {
+  async function sendNotif() {
     const data = validateForm();
     if (!data) return;
 
-    const btnSend = $('btn-send');
-    const btnTest = $('btn-test');
-    if (btnSend) btnSend.disabled = true;
-    if (btnTest) btnTest.disabled = true;
+    const preset = DESIGN_PRESETS[currentDesign] || DESIGN_PRESETS.classic;
 
-    showResult('loading', testMode ? 'Mengirim test notif...' : 'Mengirim ke semua subscriber...');
+    const btnSend = $('btn-send');
+    if (btnSend) btnSend.disabled = true;
+    showResult('loading', 'Mengirim notifikasi ke semua subscriber...');
 
     try {
       const res = await fetch('/api/send-notification', {
@@ -144,30 +294,23 @@
         body: JSON.stringify({
           title: data.title,
           body: data.body,
-          icon: 'https://files.catbox.moe/kzg0nc.png',
           url: data.url,
-          testMode: testMode
+          icon: preset.icon,
+          image: uploadedImageUrl || '',
+          vibrate: preset.vibrate,
+          requireInteraction: preset.requireInteraction,
+          tag: preset.tag
         })
       });
 
       const result = await res.json();
-
       if (!res.ok) throw new Error(result.error || 'HTTP ' + res.status);
 
       const sent = result.success || 0;
       const total = result.total || 0;
 
-      if (testMode) {
-        if (sent > 0) {
-          showResult('success', '✓ Test notif terkirim ke 1 subscriber!');
-          showToast('Test notif terkirim', 'success');
-        } else {
-          showResult('error', 'Tidak ada subscriber aktif untuk test.');
-        }
-      } else {
-        showResult('success', `✓ Notifikasi terkirim ke ${sent} perangkat dari ${total} subscriber.`);
-        showToast(`Terkirim ke ${sent} perangkat`, 'success');
-      }
+      showResult('success', `✓ Notifikasi terkirim ke ${sent} perangkat dari ${total} subscriber.`);
+      showToast(`Terkirim ke ${sent} perangkat`, 'success');
 
       setTimeout(loadSubscriberCount, 1000);
     } catch (err) {
@@ -176,7 +319,6 @@
       showToast('Gagal kirim notif', 'error');
     } finally {
       if (btnSend) btnSend.disabled = false;
-      if (btnTest) btnTest.disabled = false;
     }
   }
 
@@ -184,18 +326,13 @@
     const loginBtn = $('login-btn');
     const loginInput = $('admin-password');
     const logoutBtn = $('logout-btn');
-    const titleInput = $('title');
-    const bodyInput = $('body');
-    const urlInput = $('url');
 
     if (loginBtn) {
       loginBtn.addEventListener('click', () => {
-        const pwd = (loginInput?.value || '').trim();
-        if (pwd === ADMIN_PASSWORD) {
+        if ((loginInput?.value || '').trim() === ADMIN_PASSWORD) {
           setLoggedIn();
           $('login-error').classList.remove('visible');
           showPanel();
-          showToast('Login berhasil', 'success');
         } else {
           $('login-error').classList.add('visible');
           loginInput.value = '';
@@ -209,24 +346,28 @@
       });
     }
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        clearLogin();
-        showLogin();
-      });
+      logoutBtn.addEventListener('click', () => { clearLogin(); showLogin(); });
     }
 
-    if (titleInput) titleInput.addEventListener('input', updatePreview);
-    if (bodyInput) bodyInput.addEventListener('input', updatePreview);
-    if (urlInput) urlInput.addEventListener('input', updatePreview);
+    // Design selector
+    document.querySelectorAll('.design-btn').forEach(btn => {
+      btn.addEventListener('click', () => setDesign(btn.dataset.design));
+    });
 
-    if ($('btn-send')) $('btn-send').addEventListener('click', () => sendNotif(false));
-    if ($('btn-test')) $('btn-test').addEventListener('click', () => sendNotif(true));
+    // Live update
+    ['title', 'body', 'url'].forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener('input', updatePreview);
+    });
+
+    setupImageUpload();
+
+    if ($('btn-send')) $('btn-send').addEventListener('click', sendNotif);
+
+    setDesign('classic');
 
     if (isLoggedIn()) showPanel();
-    else {
-      showLogin();
-      setTimeout(() => loginInput?.focus(), 300);
-    }
+    else { showLogin(); setTimeout(() => loginInput?.focus(), 300); }
   }
 
   if (document.readyState === 'loading') {
