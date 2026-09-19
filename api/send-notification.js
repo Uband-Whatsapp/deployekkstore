@@ -14,7 +14,6 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// VAPID Keys - PAKAI PUNYA KAMU
 const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
 const VAPID_PRIVATE_KEY = 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
 
@@ -25,17 +24,32 @@ webpush.setVapidDetails(
 );
 
 export default async function handler(req, res) {
+  // ============================================================
+  // GET → untuk dashboard admin (baca jumlah subscriber)
+  // Bot Telegram kirim POST, jadi TIDAK terpengaruh
+  // ============================================================
+  if (req.method === 'GET') {
+    try {
+      const snapshot = await db.collection('push_subscriptions').get();
+      return res.status(200).json({ count: snapshot.size });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // ============================================================
+  // POST → kirim notifikasi (IDENTIK dengan kode lama Anda)
+  // ============================================================
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { title, body, icon, url } = req.body;
+  const { title, body, icon, url, testMode } = req.body;
   if (!title || !body) {
     return res.status(400).json({ error: 'Title dan body wajib diisi' });
   }
 
   try {
-    // Ambil semua subscription dari Firestore
     const snapshot = await db.collection('push_subscriptions').get();
     const subscriptions = [];
     snapshot.forEach(doc => {
@@ -59,22 +73,19 @@ export default async function handler(req, res) {
       url: url || 'https://deploy.project.ekkstore.web.id/'
     });
 
-    // Kirim ke semua subscriber
+    // ⚠️ KUNCI: kalau testMode true → kirim 1 saja
+    //    kalau testMode undefined (dari bot Telegram) → kirim SEMUA
+    const targets = testMode ? subscriptions.slice(0, 1) : subscriptions;
+
     const results = [];
-    for (const sub of subscriptions) {
+    for (const sub of targets) {
       try {
         await webpush.sendNotification(sub, payload);
         results.push({ success: true });
         console.log('✅ Notifikasi terkirim ke subscriber');
       } catch (err) {
         console.error('❌ Gagal kirim ke subscriber:', err.statusCode, err.message);
-        console.error('📨 Detail error:', err);
         results.push({ success: false, error: err.message });
-        // Jika subscription expired (410), hapus dari DB
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          // Hapus subscription yang tidak valid (opsional)
-          // Tapi kita tidak tahu anonId-nya, jadi skip dulu
-        }
       }
     }
 
