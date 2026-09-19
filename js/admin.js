@@ -1,1097 +1,311 @@
-<!DOCTYPE html>
-<html lang="id" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Admin Panel — Ekk Store</title>
-<meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0c0c0e">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="/css/style.css">
-<style>
 /* ============================================================
-   ADMIN v3 — Match web utama Ekk Store
+   ADMIN DASHBOARD v3 — Match web utama
    ============================================================ */
-html, body {
-  background: var(--bg);
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-}
+(function() {
+  'use strict';
 
-body.admin-page {
-  padding: 0;
-  overflow-x: hidden;
-}
+  const ADMIN_PASSWORD = 'ekkadmin2024'; // ⚠️ GANTI INI
+  const SESSION_KEY = 'ekk_admin_logged';
+  const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
-/* Ambient glow background */
-body.admin-page::before {
-  content: '';
-  position: fixed;
-  top: -200px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 500px;
-  background: radial-gradient(ellipse, rgba(249,115,22,0.10), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+  const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
+  const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
 
-/* ============================================================
-   HEADER
-   ============================================================ */
-.admin-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(14,14,18,0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  position: relative;
-  z-index: 100;
-}
-.admin-header::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.3;
-}
-.admin-brand { display: flex; align-items: center; gap: 12px; }
-.admin-brand-logo {
-  width: 40px; height: 40px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 17px;
-  box-shadow: 0 6px 18px rgba(249,115,22,0.4), 0 0 0 1px rgba(255,255,255,0.06) inset;
-  position: relative;
-  overflow: hidden;
-}
-.admin-brand-logo::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 50%);
-  pointer-events: none;
-}
-.admin-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-.admin-brand-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.03em;
-}
-.admin-brand-sub {
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
+  const DESIGN_PRESETS = {
+    minimal: { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [100], requireInteraction: false, tag: 'ekk-minimal', fallbackIcon: 'fa-feather', label: 'Minimal' },
+    classic: { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [200,100,200], requireInteraction: false, tag: 'ekk-classic', fallbackIcon: 'fa-bullhorn', label: 'Classic' },
+    image:   { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [200,100,200], requireInteraction: false, tag: 'ekk-image', fallbackIcon: 'fa-image', label: 'Gambar' },
+    urgent:  { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [500,200,500,200,500], requireInteraction: true, tag: 'ekk-urgent', fallbackIcon: 'fa-triangle-exclamation', label: 'Urgent' }
+  };
 
-.header-actions { display: flex; gap: 8px; align-items: center; }
+  let currentDesign = 'classic';
+  let uploadedImageUrl = '';
 
-.sub-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(34,211,168,0.15), rgba(34,211,168,0.05));
-  border: 1px solid rgba(34,211,168,0.25);
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--success);
-  font-family: var(--font-mono);
-  letter-spacing: -0.01em;
-}
-.sub-chip i { font-size: 11px; }
+  function $(id) { return document.getElementById(id); }
 
-.admin-logout-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.admin-logout-btn:hover {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border-color: rgba(240,97,107,0.3);
-}
-.admin-logout-btn i { font-size: 11px; }
+  function showToast(msg, type) {
+    const toast = $('toast');
+    if (!toast) return;
+    let icon = '';
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
+    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger);"></i>';
+    else icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>';
+    toast.innerHTML = icon + ' ' + msg;
+    toast.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2600);
+  }
 
-/* ============================================================
-   LOGIN
-   ============================================================ */
-#login-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background:
-    radial-gradient(ellipse at top, rgba(249,115,22,0.12), transparent 60%),
-    var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-#login-screen.hidden { display: none; }
-.login-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
-  padding: 36px 28px 30px;
-  max-width: 380px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  animation: cardIn 0.5s cubic-bezier(0.22,0.61,0.36,1);
-}
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: -80px; right: -80px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(249,115,22,0.2), transparent 70%);
-  pointer-events: none;
-}
-.login-icon {
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 20px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 28px;
-  box-shadow: 0 12px 36px rgba(249,115,22,0.45), 0 0 0 1px rgba(255,255,255,0.08) inset;
-  position: relative;
-}
-.login-icon::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent 50%);
-  pointer-events: none;
-}
-.login-card h2 {
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 6px;
-  color: var(--text);
-}
-.login-card p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 22px;
-  line-height: 1.5;
-}
-.login-input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  box-sizing: border-box;
-  text-align: center;
-  margin-bottom: 12px;
-  transition: all 0.2s ease;
-}
-.login-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-glow);
-}
-.login-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  color: #fff;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(249,115,22,0.4);
-  min-height: 50px;
-  transition: all 0.2s ease;
-}
-.login-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(249,115,22,0.5);
-}
-.login-btn:active { transform: scale(0.98); }
-.login-error {
-  color: var(--danger);
-  font-size: 12px;
-  margin-top: 12px;
-  display: none;
-  font-weight: 600;
-}
-.login-error.visible { display: block; }
+  function showResult(type, text) {
+    const box = $('result'), icon = $('result-icon'), txt = $('result-text');
+    if (!box || !icon || !txt) return;
+    box.classList.remove('success', 'error', 'loading');
+    box.classList.add('visible', type);
+    if (type === 'loading') icon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    else if (type === 'success') icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+    else if (type === 'error') icon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+    txt.textContent = text;
+  }
 
-/* ============================================================
-   MAIN PANEL
-   ============================================================ */
-#panel {
-  display: none;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 28px 20px 80px;
-  position: relative;
-  z-index: 1;
-}
-#panel.visible { display: block; }
+  function isLoggedIn() {
+    try {
+      const data = localStorage.getItem(SESSION_KEY);
+      if (!data) return false;
+      const p = JSON.parse(data);
+      return p.expiresAt && Date.now() < p.expiresAt;
+    } catch (e) { return false; }
+  }
 
-/* Page header */
-.panel-header {
-  margin-bottom: 26px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-  position: relative;
-}
-.panel-header::after {
-  content: '';
-  position: absolute;
-  left: 0; bottom: -1px;
-  width: 70px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  border-radius: 2px;
-}
-.panel-header-icon {
-  width: 48px; height: 48px;
-  border-radius: 13px;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-  box-shadow: 0 6px 18px rgba(249,115,22,0.18);
-}
-.panel-header-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.panel-header h1 {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  color: var(--text);
-  line-height: 1.15;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 0;
-}
-.panel-header h1 .tag {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid var(--accent-line);
-  line-height: 1;
-}
-.panel-header p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 0;
-}
+  function setLoggedIn() {
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify({ expiresAt: Date.now() + SESSION_DURATION })); } catch (e) {}
+  }
 
-/* Stats row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-@media (min-width: 768px) {
-  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 14px; }
-}
-.stat-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-.stat-box::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.4;
-}
-.stat-box:hover {
-  border-color: var(--border-light);
-  background: var(--bg-hover);
-  transform: translateY(-2px);
-}
-.stat-box-icon {
-  width: 42px; height: 42px;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.stat-box-icon.green { background: var(--success-soft); color: var(--success); }
-.stat-box-icon.blue { background: var(--info-soft); color: var(--info); }
-.stat-box-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.stat-box-value {
-  font-size: 22px;
-  font-weight: 800;
-  font-family: var(--font-mono);
-  color: var(--text);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-}
-.stat-box-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
+  function clearLogin() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
 
-/* Grid layout */
-.grid-2 {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 1024px) {
-  .grid-2 { grid-template-columns: 1.1fr 1fr; align-items: start; }
-}
+  function showLogin() {
+    $('login-screen').classList.remove('hidden');
+    $('panel').classList.remove('visible');
+    $('admin-header').style.display = 'none';
+  }
 
-/* Form card */
-.form-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 22px;
-  position: relative;
-  overflow: hidden;
-}
-.form-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.3), transparent);
-}
+  function showPanel() {
+    $('login-screen').classList.add('hidden');
+    $('panel').classList.add('visible');
+    $('admin-header').style.display = 'flex';
+    loadSubscriberCount();
+  }
 
-.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-.form-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.form-label i { color: var(--accent); font-size: 11px; }
+  async function loadSubscriberCount() {
+    const el1 = $('sub-count');
+    const el2 = $('stat-sub-count');
+    if (el1) el1.textContent = '...';
+    if (el2) el2.textContent = '...';
+    try {
+      const res = await fetch('/api/send-notification');
+      const data = await res.json();
+      const count = data.count || 0;
+      if (el1) el1.textContent = count;
+      if (el2) el2.textContent = count;
+    } catch (e) {
+      if (el1) el1.textContent = '?';
+      if (el2) el2.textContent = '?';
+    }
+  }
 
-.form-input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 11px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-.form-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-glow);
-}
-.form-input::placeholder { color: var(--text-muted); }
+  function setDesign(design) {
+    currentDesign = design;
+    document.querySelectorAll('.design-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.design === design);
+    });
 
-.form-hint { font-size: 11px; color: var(--text-muted); }
-.counter {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
-  padding: 1px 5px;
-  background: var(--accent-soft);
-  border-radius: 4px;
-}
+    const phone = $('phone-notif');
+    if (phone) phone.setAttribute('data-design', design);
 
-/* Design picker */
-.design-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 22px;
-}
-@media (min-width: 640px) {
-  .design-grid { grid-template-columns: repeat(4, 1fr); }
-}
-.design-btn {
-  padding: 14px 10px;
-  border-radius: 14px;
-  background: var(--bg-input);
-  border: 1.5px solid var(--border);
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  position: relative;
-  overflow: hidden;
-}
-.design-btn:hover {
-  border-color: var(--border-light);
-  background: var(--bg-hover);
-  transform: translateY(-1px);
-}
-.design-btn.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.design-btn .d-icon {
-  width: 42px; height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  transition: all 0.2s ease;
-}
-.design-btn.active .d-icon {
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(249,115,22,0.4);
-}
-.design-btn .d-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text-secondary);
-}
-.design-btn.active .d-label { color: var(--text); }
+    const imageGroup = $('image-group');
+    if (imageGroup) imageGroup.style.display = design === 'image' ? 'flex' : 'none';
 
-.design-btn[data-design="minimal"] .d-icon { background: rgba(59,130,246,0.15); color: #3b82f6; }
-.design-btn[data-design="minimal"].active .d-icon { background: #3b82f6; color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
-.design-btn[data-design="classic"] .d-icon { background: var(--accent-soft); color: var(--accent); }
-.design-btn[data-design="image"] .d-icon { background: rgba(139,92,246,0.15); color: #8b5cf6; }
-.design-btn[data-design="image"].active .d-icon { background: #8b5cf6; color: #fff; box-shadow: 0 4px 12px rgba(139,92,246,0.4); }
-.design-btn[data-design="urgent"] .d-icon { background: var(--danger-soft); color: var(--danger); }
-.design-btn[data-design="urgent"].active .d-icon { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(240,97,107,0.4); }
+    const statDesign = $('stat-design');
+    if (statDesign) statDesign.textContent = DESIGN_PRESETS[design]?.label || design;
 
-/* Upload */
-.upload-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border: 1.5px dashed var(--border);
-  border-radius: 13px;
-  background: var(--bg-input);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.upload-box:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.upload-box.dragover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.upload-preview {
-  width: 58px; height: 58px;
-  border-radius: 11px;
-  background: var(--bg-hover);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 20px;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-}
-.upload-preview img { width: 100%; height: 100%; object-fit: cover; }
-.upload-info { flex: 1; min-width: 0; }
-.upload-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 3px;
-}
-.upload-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.4;
-  word-break: break-word;
-}
-.upload-remove {
-  width: 32px; height: 32px;
-  border-radius: 9px;
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid rgba(240,97,107,0.3);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-}
-.upload-box.has-image .upload-remove { display: flex; }
-.upload-remove:hover { background: var(--danger); color: #fff; }
+    const preset = DESIGN_PRESETS[design];
+    const thumb = $('pn-thumb');
+    if (thumb && !uploadedImageUrl) thumb.innerHTML = '<i class="fa-solid ' + preset.fallbackIcon + '"></i>';
 
-/* Send button */
-.send-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 16px 24px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  color: #fff;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  min-height: 54px;
-  box-shadow: 0 10px 28px rgba(249,115,22,0.4);
-  transition: all 0.2s ease;
-  margin-top: 24px;
-  letter-spacing: -0.01em;
-  position: relative;
-  overflow: hidden;
-}
-.send-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 50%);
-  pointer-events: none;
-}
-.send-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 36px rgba(249,115,22,0.5);
-}
-.send-btn:active:not(:disabled) { transform: scale(0.98); }
-.send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.send-btn i { font-size: 15px; }
+    const pnImage = $('pn-image');
+    if (pnImage && !uploadedImageUrl) pnImage.innerHTML = '<i class="fa-solid fa-image"></i>';
 
-/* Result */
-.result {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  font-size: 12.5px;
-  font-weight: 500;
-  display: none;
-  align-items: flex-start;
-  gap: 10px;
-  line-height: 1.5;
-  animation: resultIn 0.3s ease;
-}
-@keyframes resultIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.result.visible { display: flex; }
-.result.success { background: var(--success-soft); border: 1px solid rgba(34,211,168,0.3); color: #6ee7b7; }
-.result.error { background: var(--danger-soft); border: 1px solid rgba(240,97,107,0.3); color: #fca5a5; }
-.result.loading { background: var(--info-soft); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
-.result i { flex-shrink: 0; margin-top: 1px; font-size: 14px; }
+    updatePreview();
+  }
 
-/* ============================================================
-   PREVIEW PANEL
-   ============================================================ */
-.preview-wrap {
-  background: linear-gradient(180deg, var(--bg-card), var(--bg-elevated));
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 24px 20px 26px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-  position: relative;
-  overflow: hidden;
-}
-.preview-wrap::before {
-  content: '';
-  position: absolute;
-  top: -100px; right: -100px;
-  width: 250px; height: 250px;
-  background: radial-gradient(circle, rgba(249,115,22,0.12), transparent 70%);
-  pointer-events: none;
-}
+  function updatePreview() {
+    const title = ($('title')?.value || '').trim();
+    const body = ($('body')?.value || '').trim();
+    const url = ($('url')?.value || '').trim();
 
-.preview-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin-bottom: 16px;
-}
-.preview-label::before,
-.preview-label::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
-}
+    if ($('title-count')) $('title-count').textContent = ($('title')?.value || '').length;
+    if ($('body-count')) $('body-count').textContent = ($('body')?.value || '').length;
 
-.phone-shell {
-  background: #0f0f13;
-  border-radius: 28px;
-  padding: 14px 12px 16px;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02) inset;
-  position: relative;
-}
-.phone-notch {
-  width: 60px;
-  height: 5px;
-  background: #1f1f24;
-  border-radius: 3px;
-  margin: 0 auto 12px;
-  opacity: 0.7;
-}
+    if ($('pn-title')) {
+      $('pn-title').textContent = title || 'Ekk Store';
+      $('pn-title').style.opacity = title ? '1' : '0.5';
+    }
+    if ($('pn-body')) {
+      $('pn-body').textContent = body || 'Isi notifikasi akan muncul di sini saat Anda mengetik.';
+      $('pn-body').style.opacity = body ? '1' : '0.5';
+    }
+    if ($('pn-url')) {
+      if (url) {
+        $('pn-url').style.display = 'block';
+        $('pn-url').textContent = url.replace(/^https?:\/\//, '');
+      } else {
+        $('pn-url').style.display = 'none';
+      }
+    }
+    if ($('pn-thumb') && currentDesign !== 'image') {
+      if (uploadedImageUrl) $('pn-thumb').innerHTML = '<img src="' + uploadedImageUrl + '" alt="">';
+      else {
+        const preset = DESIGN_PRESETS[currentDesign];
+        $('pn-thumb').innerHTML = '<i class="fa-solid ' + preset.fallbackIcon + '"></i>';
+      }
+    }
+    if ($('pn-image')) {
+      if (uploadedImageUrl) $('pn-image').innerHTML = '<img src="' + uploadedImageUrl + '" alt="">';
+      else $('pn-image').innerHTML = '<i class="fa-solid fa-image"></i>';
+    }
+  }
 
-.phone-notif {
-  background: linear-gradient(180deg, #1c1c22, #17171c);
-  border-radius: 20px;
-  padding: 14px;
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid rgba(255,255,255,0.05);
-  color: #fff;
-  transition: all 0.35s cubic-bezier(0.22,0.61,0.36,1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  position: relative;
-  overflow: hidden;
-}
+  function setupImageUpload() {
+    const box = $('upload-box'), input = $('image-input'), removeBtn = $('upload-remove');
+    const preview = $('upload-preview'), titleEl = $('upload-title'), hintEl = $('upload-hint');
+    if (!box || !input) return;
 
-/* MINIMAL */
-.phone-notif[data-design="minimal"] {
-  padding: 12px 14px;
-  min-height: auto;
-}
-.phone-notif[data-design="minimal"] .pn-body { display: none; }
-.phone-notif[data-design="minimal"] .pn-thumb { display: none; }
+    box.addEventListener('click', (e) => {
+      if (e.target.closest('#upload-remove')) return;
+      input.click();
+    });
+    input.addEventListener('change', function() {
+      if (this.files && this.files[0]) handleUpload(this.files[0]);
+    });
+    if (removeBtn) removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      uploadedImageUrl = '';
+      input.value = '';
+      box.classList.remove('has-image');
+      preview.innerHTML = '<i class="fa-solid fa-image"></i>';
+      titleEl.textContent = 'Tap untuk upload gambar';
+      hintEl.textContent = 'JPG / PNG · Max 3 MB';
+      updatePreview();
+    });
 
-/* CLASSIC - default */
+    async function handleUpload(file) {
+      if (!file.type.startsWith('image/')) { showToast('Hanya gambar', 'error'); return; }
+      if (file.size > 3 * 1024 * 1024) { showToast('Max 3 MB', 'error'); return; }
 
-/* IMAGE */
-.phone-notif[data-design="image"] {
-  padding: 0;
-  gap: 0;
-}
-.phone-notif[data-design="image"] .pn-image {
-  width: 100%;
-  height: 140px;
-  background: linear-gradient(135deg, #2a1e16, #1a1a20);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #70707a;
-  font-size: 30px;
-  overflow: hidden;
-}
-.phone-notif[data-design="image"] .pn-image img {
-  width: 100%; height: 100%; object-fit: cover;
-}
-.phone-notif[data-design="image"] .pn-content {
-  padding: 14px 16px 16px;
-}
-.phone-notif[data-design="image"] .pn-thumb { display: none; }
-.phone-notif:not([data-design="image"]) .pn-image { display: none; }
+      const reader = new FileReader();
+      reader.onload = (e) => { preview.innerHTML = '<img src="' + e.target.result + '">'; };
+      reader.readAsDataURL(file);
 
-/* URGENT */
-.phone-notif[data-design="urgent"] {
-  border-left: 4px solid var(--danger);
-  background: linear-gradient(90deg, rgba(240,97,107,0.12), #17171c 40%);
-  box-shadow: 0 4px 16px rgba(240,97,107,0.2), 0 0 0 1px rgba(240,97,107,0.15) inset;
-}
-.phone-notif[data-design="urgent"] .pn-icon {
-  background: var(--danger) !important;
-  color: #fff;
-}
-.phone-notif[data-design="urgent"] .pn-title {
-  color: #fca5a5;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-size: 12px;
-}
+      titleEl.textContent = 'Mengupload...';
+      hintEl.textContent = file.name;
 
-.pn-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 2px;
-}
-.phone-notif[data-design="image"] .pn-content { padding: 0; }
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+        const data = await res.json();
+        uploadedImageUrl = data.secure_url;
+        box.classList.add('has-image');
+        titleEl.textContent = 'Gambar terpasang';
+        hintEl.textContent = 'Klik untuk ganti';
+        updatePreview();
+        showToast('Gambar diupload', 'success');
+      } catch (err) {
+        titleEl.textContent = 'Upload gagal';
+        hintEl.textContent = 'Coba lagi';
+        preview.innerHTML = '<i class="fa-solid fa-image"></i>';
+        uploadedImageUrl = '';
+        updatePreview();
+        showToast('Gagal upload', 'error');
+      }
+    }
+  }
 
-.pn-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10.5px;
-  color: #a0a0b0;
-}
-.pn-icon {
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #fff;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-.pn-icon img { width: 100%; height: 100%; object-fit: cover; }
-.pn-app { font-weight: 600; color: #d0d0d8; }
-.pn-time {
-  margin-left: auto;
-  font-size: 10px;
-  color: #70707a;
-  font-family: var(--font-mono);
-}
+  function validateForm() {
+    const title = ($('title')?.value || '').trim();
+    const body = ($('body')?.value || '').trim();
+    const url = ($('url')?.value || '').trim() || 'https://deploy.project.ekkstore.web.id/';
+    if (!title) { showToast('Judul wajib diisi', 'error'); return null; }
+    if (!body) { showToast('Isi wajib diisi', 'error'); return null; }
+    try { new URL(url); } catch (e) { showToast('URL tidak valid', 'error'); return null; }
+    return { title, body, url };
+  }
 
-.pn-body-wrap {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-.phone-notif[data-design="image"] .pn-body-wrap { padding: 0 14px 0 14px; }
+  async function sendNotif() {
+    const data = validateForm();
+    if (!data) return;
 
-.pn-thumb {
-  width: 46px; height: 46px;
-  border-radius: 10px;
-  background: #2a2a35;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #808090;
-  font-size: 17px;
-  overflow: hidden;
-}
-.pn-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    const preset = DESIGN_PRESETS[currentDesign] || DESIGN_PRESETS.classic;
+    const btnSend = $('btn-send');
+    if (btnSend) btnSend.disabled = true;
+    showResult('loading', 'Mengirim notifikasi ke semua subscriber...');
 
-.pn-text { flex: 1; min-width: 0; }
-.pn-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: #fff;
-  margin-bottom: 3px;
-  word-break: break-word;
-  transition: opacity 0.2s ease;
-}
-.pn-body {
-  font-size: 11.5px;
-  line-height: 1.4;
-  color: #b0b0bc;
-  word-break: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: opacity 0.2s ease;
-}
-.pn-url {
-  margin-top: 6px;
-  font-size: 9.5px;
-  color: #70707a;
-  font-family: var(--font-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    try {
+      const res = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          body: data.body,
+          url: data.url,
+          icon: preset.icon,
+          image: uploadedImageUrl || '',
+          vibrate: preset.vibrate,
+          requireInteraction: preset.requireInteraction,
+          tag: preset.tag
+        })
+      });
 
-/* Empty state untuk preview awal */
-.pn-title:empty::before { content: 'Judul notif'; opacity: 0.4; }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'HTTP ' + res.status);
 
-/* ============================================================
-   TOAST (sesuaikan posisi di admin)
-   ============================================================ */
-#toast { position: fixed; bottom: 24px; left: 50%; }
+      const sent = result.success || 0;
+      const total = result.total || 0;
+      showResult('success', `✓ Notifikasi terkirim ke ${sent} perangkat dari ${total} subscriber.`);
+      showToast(`Terkirim ke ${sent} perangkat`, 'success');
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 480px) {
-  .admin-header { padding: 10px 14px; }
-  .admin-brand-title { font-size: 14px; }
-  .admin-brand-sub { font-size: 9px; }
-  .sub-chip { padding: 6px 10px; font-size: 10.5px; }
-  .admin-logout-btn span { display: none; }
-  .admin-logout-btn { padding: 8px 10px; }
-  #panel { padding: 20px 14px 60px; }
-  .panel-header h1 { font-size: 20px; }
-  .panel-header-icon { width: 42px; height: 42px; font-size: 17px; }
-  .stat-box { padding: 13px; }
-  .stat-box-value { font-size: 19px; }
-  .stat-box-icon { width: 38px; height: 38px; font-size: 14px; }
-  .form-card { padding: 18px 16px; border-radius: 16px; }
-  .preview-wrap { padding: 20px 16px 22px; border-radius: 20px; }
-  .design-btn { padding: 12px 8px; }
-  .design-btn .d-icon { width: 38px; height: 38px; font-size: 15px; }
-  .design-btn .d-label { font-size: 10px; }
-}
-</style>
-</head>
-<body class="admin-page">
+      // Update last sent
+      const statLast = $('stat-last');
+      if (statLast) {
+        const now = new Date();
+        statLast.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+      }
 
-<!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
-    <h2>Admin Panel</h2>
-    <p>Masukkan password untuk mengakses dashboard notifikasi.</p>
-    <input type="password" id="admin-password" class="login-input" placeholder="••••••••" autocomplete="off">
-    <button id="login-btn" class="login-btn">
-      <i class="fa-solid fa-right-to-bracket"></i> Masuk
-    </button>
-    <div id="login-error" class="login-error">Password salah. Coba lagi.</div>
-  </div>
-</div>
+      setTimeout(loadSubscriberCount, 1000);
+    } catch (err) {
+      console.error('[Send]', err);
+      showResult('error', 'Gagal kirim: ' + err.message);
+      showToast('Gagal kirim notif', 'error');
+    } finally {
+      if (btnSend) btnSend.disabled = false;
+    }
+  }
 
-<!-- HEADER -->
-<header class="admin-header" id="admin-header" style="display:none;">
-  <div class="admin-brand">
-    <div class="admin-brand-logo"><i class="fa-solid fa-bell"></i></div>
-    <div class="admin-brand-text">
-      <span class="admin-brand-title">Ekk Store</span>
-      <span class="admin-brand-sub">Admin Panel</span>
-    </div>
-  </div>
-  <div class="header-actions">
-    <span class="sub-chip"><i class="fa-solid fa-users"></i> <span id="sub-count">—</span></span>
-    <button class="admin-logout-btn" id="logout-btn">
-      <i class="fa-solid fa-arrow-right-from-bracket"></i>
-      <span>Keluar</span>
-    </button>
-  </div>
-</header>
+  function bootstrap() {
+    const loginBtn = $('login-btn'), loginInput = $('admin-password'), logoutBtn = $('logout-btn');
 
-<!-- PANEL -->
-<main id="panel">
+    if (loginBtn) loginBtn.addEventListener('click', () => {
+      if ((loginInput?.value || '').trim() === ADMIN_PASSWORD) {
+        setLoggedIn();
+        $('login-error').classList.remove('visible');
+        showPanel();
+      } else {
+        $('login-error').classList.add('visible');
+        loginInput.value = '';
+        loginInput.focus();
+      }
+    });
+    if (loginInput) loginInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn?.click(); });
+    if (logoutBtn) logoutBtn.addEventListener('click', () => { clearLogin(); showLogin(); });
 
-  <!-- PAGE HEADER -->
-  <div class="panel-header">
-    <div class="panel-header-icon"><i class="fa-solid fa-paper-plane"></i></div>
-    <div class="panel-header-text">
-      <h1>Kirim Notifikasi <span class="tag">Broadcast</span></h1>
-      <p>Pilih design, isi konten, lihat preview, lalu kirim ke semua subscriber.</p>
-    </div>
-  </div>
+    document.querySelectorAll('.design-btn').forEach(btn => {
+      btn.addEventListener('click', () => setDesign(btn.dataset.design));
+    });
 
-  <!-- STATS -->
-  <div class="stats-row">
-    <div class="stat-box">
-      <div class="stat-box-icon green"><i class="fa-solid fa-users"></i></div>
-      <div class="stat-box-info">
-        <span class="stat-box-value" id="stat-sub-count">—</span>
-        <span class="stat-box-label">Subscriber</span>
-      </div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-box-icon"><i class="fa-solid fa-palette"></i></div>
-      <div class="stat-box-info">
-        <span class="stat-box-value" id="stat-design">Classic</span>
-        <span class="stat-box-label">Design</span>
-      </div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-box-icon blue"><i class="fa-solid fa-clock"></i></div>
-      <div class="stat-box-info">
-        <span class="stat-box-value" id="stat-last">Belum</span>
-        <span class="stat-box-label">Last Sent</span>
-      </div>
-    </div>
-  </div>
+    ['title', 'body', 'url'].forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener('input', updatePreview);
+    });
 
-  <!-- MAIN GRID -->
-  <div class="grid-2">
+    setupImageUpload();
+    if ($('btn-send')) $('btn-send').addEventListener('click', sendNotif);
 
-    <!-- FORM -->
-    <div class="form-card">
-      <div class="form-group" style="margin-bottom:12px;">
-        <label class="form-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Design Notifikasi</label>
-      </div>
+    setDesign('classic');
 
-      <div class="design-grid" id="design-grid">
-        <button type="button" class="design-btn" data-design="minimal">
-          <div class="d-icon"><i class="fa-solid fa-feather"></i></div>
-          <span class="d-label">Minimal</span>
-        </button>
-        <button type="button" class="design-btn active" data-design="classic">
-          <div class="d-icon"><i class="fa-solid fa-bullhorn"></i></div>
-          <span class="d-label">Classic</span>
-        </button>
-        <button type="button" class="design-btn" data-design="image">
-          <div class="d-icon"><i class="fa-solid fa-image"></i></div>
-          <span class="d-label">Gambar</span>
-        </button>
-        <button type="button" class="design-btn" data-design="urgent">
-          <div class="d-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <span class="d-label">Urgent</span>
-        </button>
-      </div>
+    if (isLoggedIn()) showPanel();
+    else { showLogin(); setTimeout(() => loginInput?.focus(), 300); }
+  }
 
-      <div class="form-group">
-        <label class="form-label" for="title"><i class="fa-solid fa-heading"></i> Judul Notifikasi</label>
-        <input type="text" id="title" class="form-input" placeholder="contoh: Ekk Store Update" maxlength="60" autocomplete="off">
-        <span class="form-hint"><span class="counter" id="title-count">0</span> / 60 karakter</span>
-      </div>
-
-      <div class="form-group" id="body-group">
-        <label class="form-label" for="body"><i class="fa-solid fa-align-left"></i> Isi Notifikasi</label>
-        <textarea id="body" class="form-input" placeholder="Tulis pesan singkat dan jelas di sini..." maxlength="180" rows="3" style="resize:vertical;min-height:85px;"></textarea>
-        <span class="form-hint"><span class="counter" id="body-count">0</span> / 180 karakter</span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="url"><i class="fa-solid fa-link"></i> URL Tujuan</label>
-        <input type="url" id="url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" autocomplete="off">
-        <span class="form-hint">Halaman yang dibuka saat notif diklik.</span>
-      </div>
-
-      <div class="form-group" id="image-group" style="display:none;">
-        <label class="form-label"><i class="fa-solid fa-image"></i> Gambar Notifikasi</label>
-        <div class="upload-box" id="upload-box">
-          <div class="upload-preview" id="upload-preview"><i class="fa-solid fa-image"></i></div>
-          <div class="upload-info">
-            <div class="upload-title" id="upload-title">Tap untuk upload gambar</div>
-            <div class="upload-hint" id="upload-hint">JPG / PNG · Max 3 MB</div>
-          </div>
-          <button type="button" class="upload-remove" id="upload-remove" aria-label="Hapus gambar">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        <input type="file" id="image-input" accept="image/*" style="display:none;">
-      </div>
-
-      <button id="btn-send" class="send-btn">
-        <i class="fa-solid fa-paper-plane"></i>
-        Kirim ke Semua Subscriber
-      </button>
-
-      <div class="result" id="result">
-        <i id="result-icon"></i>
-        <span id="result-text"></span>
-      </div>
-    </div>
-
-    <!-- PREVIEW -->
-    <div class="preview-wrap">
-      <div class="preview-label">Preview</div>
-
-      <div class="phone-shell">
-        <div class="phone-notch"></div>
-        <div class="phone-notif" id="phone-notif" data-design="classic">
-          <div class="pn-image" id="pn-image"><i class="fa-solid fa-image"></i></div>
-          <div class="pn-content">
-            <div class="pn-head">
-              <div class="pn-icon"><i class="fa-solid fa-bolt"></i></div>
-              <span class="pn-app">Deploy Project</span>
-              <span class="pn-time">baru saja</span>
-            </div>
-            <div class="pn-body-wrap">
-              <div class="pn-thumb" id="pn-thumb"><i class="fa-solid fa-bullhorn"></i></div>
-              <div class="pn-text">
-                <div class="pn-title" id="pn-title">Ekk Store</div>
-                <div class="pn-body" id="pn-body">Isi notifikasi akan muncul di sini saat Anda mengetik.</div>
-                <div class="pn-url" id="pn-url" style="display:none;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</main>
-
-<div id="toast"></div>
-<script src="/js/admin.js"></script>
-</body>
-</html>
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootstrap);
+  else bootstrap();
+})();
