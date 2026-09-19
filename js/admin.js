@@ -1,24 +1,16 @@
 /* ============================================================
-   ADMIN DASHBOARD v3 — Match web utama
+   ADMIN DASHBOARD v4 — Simple, no design picker
    ============================================================ */
 (function() {
   'use strict';
 
-  const ADMIN_PASSWORD = 'Admin1'; // ⚠️ GANTI INI
+  const ADMIN_PASSWORD = 'Admin1'; // 
   const SESSION_KEY = 'ekk_admin_logged';
   const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
   const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
   const CLOUDINARY_UPLOAD_PRESET = 'Deploy-EkkStore';
 
-  const DESIGN_PRESETS = {
-    minimal: { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [100], requireInteraction: false, tag: 'ekk-minimal', fallbackIcon: 'fa-feather', label: 'Minimal' },
-    classic: { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [200,100,200], requireInteraction: false, tag: 'ekk-classic', fallbackIcon: 'fa-bullhorn', label: 'Classic' },
-    image:   { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [200,100,200], requireInteraction: false, tag: 'ekk-image', fallbackIcon: 'fa-image', label: 'Gambar' },
-    urgent:  { icon: 'https://files.catbox.moe/kzg0nc.png', vibrate: [500,200,500,200,500], requireInteraction: true, tag: 'ekk-urgent', fallbackIcon: 'fa-triangle-exclamation', label: 'Urgent' }
-  };
-
-  let currentDesign = 'classic';
   let uploadedImageUrl = '';
 
   function $(id) { return document.getElementById(id); }
@@ -92,31 +84,6 @@
     }
   }
 
-  function setDesign(design) {
-    currentDesign = design;
-    document.querySelectorAll('.design-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.design === design);
-    });
-
-    const phone = $('phone-notif');
-    if (phone) phone.setAttribute('data-design', design);
-
-    const imageGroup = $('image-group');
-    if (imageGroup) imageGroup.style.display = design === 'image' ? 'flex' : 'none';
-
-    const statDesign = $('stat-design');
-    if (statDesign) statDesign.textContent = DESIGN_PRESETS[design]?.label || design;
-
-    const preset = DESIGN_PRESETS[design];
-    const thumb = $('pn-thumb');
-    if (thumb && !uploadedImageUrl) thumb.innerHTML = '<i class="fa-solid ' + preset.fallbackIcon + '"></i>';
-
-    const pnImage = $('pn-image');
-    if (pnImage && !uploadedImageUrl) pnImage.innerHTML = '<i class="fa-solid fa-image"></i>';
-
-    updatePreview();
-  }
-
   function updatePreview() {
     const title = ($('title')?.value || '').trim();
     const body = ($('body')?.value || '').trim();
@@ -141,16 +108,9 @@
         $('pn-url').style.display = 'none';
       }
     }
-    if ($('pn-thumb') && currentDesign !== 'image') {
+    if ($('pn-thumb')) {
       if (uploadedImageUrl) $('pn-thumb').innerHTML = '<img src="' + uploadedImageUrl + '" alt="">';
-      else {
-        const preset = DESIGN_PRESETS[currentDesign];
-        $('pn-thumb').innerHTML = '<i class="fa-solid ' + preset.fallbackIcon + '"></i>';
-      }
-    }
-    if ($('pn-image')) {
-      if (uploadedImageUrl) $('pn-image').innerHTML = '<img src="' + uploadedImageUrl + '" alt="">';
-      else $('pn-image').innerHTML = '<i class="fa-solid fa-image"></i>';
+      else $('pn-thumb').innerHTML = '<i class="fa-solid fa-bullhorn"></i>';
     }
   }
 
@@ -225,7 +185,6 @@
     const data = validateForm();
     if (!data) return;
 
-    const preset = DESIGN_PRESETS[currentDesign] || DESIGN_PRESETS.classic;
     const btnSend = $('btn-send');
     if (btnSend) btnSend.disabled = true;
     showResult('loading', 'Mengirim notifikasi ke semua subscriber...');
@@ -238,11 +197,8 @@
           title: data.title,
           body: data.body,
           url: data.url,
-          icon: preset.icon,
-          image: uploadedImageUrl || '',
-          vibrate: preset.vibrate,
-          requireInteraction: preset.requireInteraction,
-          tag: preset.tag
+          icon: 'https://files.catbox.moe/kzg0nc.png',
+          image: uploadedImageUrl || ''
         })
       });
 
@@ -288,10 +244,6 @@
     if (loginInput) loginInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn?.click(); });
     if (logoutBtn) logoutBtn.addEventListener('click', () => { clearLogin(); showLogin(); });
 
-    document.querySelectorAll('.design-btn').forEach(btn => {
-      btn.addEventListener('click', () => setDesign(btn.dataset.design));
-    });
-
     ['title', 'body', 'url'].forEach(id => {
       const el = $(id);
       if (el) el.addEventListener('input', updatePreview);
@@ -299,8 +251,6 @@
 
     setupImageUpload();
     if ($('btn-send')) $('btn-send').addEventListener('click', sendNotif);
-
-    setDesign('classic');
 
     if (isLoggedIn()) showPanel();
     else { showLogin(); setTimeout(() => loginInput?.focus(), 300); }
