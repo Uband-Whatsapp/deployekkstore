@@ -14,6 +14,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+// VAPID Keys - PAKAI PUNYA KAMU
 const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
 const VAPID_PRIVATE_KEY = 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
 
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Ambil semua subscription dari Firestore
     const snapshot = await db.collection('push_subscriptions').get();
     const subscriptions = [];
     snapshot.forEach(doc => {
@@ -57,6 +59,7 @@ export default async function handler(req, res) {
       url: url || 'https://deploy.project.ekkstore.web.id/'
     });
 
+    // Kirim ke semua subscriber
     const results = [];
     for (const sub of subscriptions) {
       try {
@@ -65,7 +68,13 @@ export default async function handler(req, res) {
         console.log('✅ Notifikasi terkirim ke subscriber');
       } catch (err) {
         console.error('❌ Gagal kirim ke subscriber:', err.statusCode, err.message);
+        console.error('📨 Detail error:', err);
         results.push({ success: false, error: err.message });
+        // Jika subscription expired (410), hapus dari DB
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          // Hapus subscription yang tidak valid (opsional)
+          // Tapi kita tidak tahu anonId-nya, jadi skip dulu
+        }
       }
     }
 
