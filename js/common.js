@@ -1,8 +1,5 @@
 /* ============================================================
    EKK STORE 4.0 — COMMON.JS
-   Berisi: Gate Screen, Firebase, Auth, Utilities, Toast,
-   Confirm Modal, Navigation, Sidebar Drawer, Tracking,
-   PWA Install Flow, Bootstrap, Diagnostic
    ============================================================ */
 
 /* ============================================================
@@ -31,10 +28,7 @@
     const gLabel3 = document.getElementById('g-label3');
     const appShell = document.getElementById('app-shell');
 
-    if (!gateScreen || !btnFollowWA || !btnConfirm) {
-        // Halaman tanpa gate (jarang) — biarkan
-        return;
-    }
+    if (!gateScreen || !btnFollowWA || !btnConfirm) return;
 
     let followClickCount = 0;
     let confirmAttempts = 0;
@@ -48,9 +42,7 @@
             const data = localStorage.getItem(STORAGE_KEY);
             if (!data) return false;
             const parsed = JSON.parse(data);
-            if (parsed.passed === true && parsed.expiresAt && Date.now() < parsed.expiresAt) {
-                return true;
-            }
+            if (parsed.passed === true && parsed.expiresAt && Date.now() < parsed.expiresAt) return true;
             localStorage.removeItem(STORAGE_KEY);
             return false;
         } catch (e) { return false; }
@@ -58,11 +50,7 @@
 
     function setPassed() {
         const expiresAt = Date.now() + (GATE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            passed: true,
-            timestamp: Date.now(),
-            expiresAt: expiresAt
-        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ passed: true, timestamp: Date.now(), expiresAt: expiresAt }));
     }
 
     function showApp() {
@@ -74,30 +62,18 @@
     }
 
     function updateStep(step) {
-        [gDot1, gDot2, gDot3].forEach(function (el) { if (el) el.classList.remove('active', 'done'); });
-        [gLine1, gLine2].forEach(function (el) { if (el) el.classList.remove('done'); });
-        [gLabel1, gLabel2, gLabel3].forEach(function (el) { if (el) el.classList.remove('active', 'done'); });
-
-        if (step >= 1) {
-            gDot1?.classList.add('done');
-            gLabel1?.classList.add('done');
-        }
+        [gDot1, gDot2, gDot3].forEach(el => { if (el) el.classList.remove('active', 'done'); });
+        [gLine1, gLine2].forEach(el => { if (el) el.classList.remove('done'); });
+        [gLabel1, gLabel2, gLabel3].forEach(el => { if (el) el.classList.remove('active', 'done'); });
+        if (step >= 1) { gDot1?.classList.add('done'); gLabel1?.classList.add('done'); }
         if (step >= 2) {
-            gDot1?.classList.add('done');
-            gDot2?.classList.add('active');
-            gLine1?.classList.add('done');
-            gLabel1?.classList.add('done');
-            gLabel2?.classList.add('active');
+            gDot1?.classList.add('done'); gDot2?.classList.add('active');
+            gLine1?.classList.add('done'); gLabel1?.classList.add('done'); gLabel2?.classList.add('active');
         }
         if (step >= 3) {
-            gDot1?.classList.add('done');
-            gDot2?.classList.add('done');
-            gDot3?.classList.add('done');
-            gLine1?.classList.add('done');
-            gLine2?.classList.add('done');
-            gLabel1?.classList.add('done');
-            gLabel2?.classList.add('done');
-            gLabel3?.classList.add('done');
+            gDot1?.classList.add('done'); gDot2?.classList.add('done'); gDot3?.classList.add('done');
+            gLine1?.classList.add('done'); gLine2?.classList.add('done');
+            gLabel1?.classList.add('done'); gLabel2?.classList.add('done'); gLabel3?.classList.add('done');
         }
     }
 
@@ -132,13 +108,9 @@
         verifyMsgBox.style.display = 'flex';
         verifyMsgBox.className = 'gate-verify-msg ' + type;
         if (verifyIcon) {
-            if (type === 'loading') {
-                verifyIcon.innerHTML = '<span class="gate-spinner"></span>';
-            } else if (type === 'error') {
-                verifyIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
-            } else if (type === 'success') {
-                verifyIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-            }
+            if (type === 'loading') verifyIcon.innerHTML = '<span class="gate-spinner"></span>';
+            else if (type === 'error') verifyIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            else if (type === 'success') verifyIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
         }
         if (verifyText) verifyText.innerHTML = html;
     }
@@ -171,12 +143,7 @@
                 setTimeout(function () { showApp(); }, 500);
                 return;
             }
-            showVerify('error',
-                '<b>Verifikasi gagal.</b><br>' +
-                'Kami belum mendeteksi bahwa kamu sudah mengikuti saluran WhatsApp. ' +
-                'Silakan klik <b>Buka Saluran WhatsApp</b> sekali lagi, ' +
-                'pastikan kamu sudah menekan <b>Ikuti</b>, lalu tekan ' +
-                '<b>Coba Lagi</b>.');
+            showVerify('error', '<b>Verifikasi gagal.</b><br>Kami belum mendeteksi bahwa kamu sudah mengikuti saluran WhatsApp. Silakan klik <b>Buka Saluran WhatsApp</b> sekali lagi, pastikan kamu sudah menekan <b>Ikuti</b>, lalu tekan <b>Coba Lagi</b>.');
             btnConfirm.disabled = false;
             btnConfirm.classList.add('active');
             btnConfirm.style.pointerEvents = 'auto';
@@ -196,10 +163,7 @@
     document.addEventListener('visibilitychange', function () {
         if (document.hidden && waitingForWhatsApp) {
             waitingForWhatsApp = false;
-            if (!hasClickedFollowOnce) {
-                hasClickedFollowOnce = true;
-                enableConfirm();
-            }
+            if (!hasClickedFollowOnce) { hasClickedFollowOnce = true; enableConfirm(); }
             if (followClickCount >= 1 && confirmAttempts >= 1 && !gateRemoved) {
                 hideVerify();
                 btnConfirm.textContent = 'Coba Lagi';
@@ -219,11 +183,7 @@
     });
 
     function init() {
-        if (isAlreadyPassed()) {
-            gateRemoved = true;
-            showApp();
-            return;
-        }
+        if (isAlreadyPassed()) { gateRemoved = true; showApp(); return; }
         document.body.style.overflow = 'hidden';
         document.body.style.position = 'fixed';
         document.body.style.width = '100%';
@@ -249,29 +209,22 @@ let historyFilter = 'all';
 let historySearch = '';
 let _appInitialized = false;
 
-// Sync ke window juga biar module lain bisa akses
 window.currentPage = currentPage;
 
-// Cache history dari Firestore
 let _historyCache = [];
 let _historyUnsubscribe = null;
 
 const DEPLOY_STATE = {
-    IDLE: 'idle',
-    VALIDATING: 'validating',
-    UPLOADING: 'uploading',
-    DEPLOYING: 'deploying',
-    SUCCESS: 'success',
-    FAILED: 'failed'
+    IDLE: 'idle', VALIDATING: 'validating', UPLOADING: 'uploading',
+    DEPLOYING: 'deploying', SUCCESS: 'success', FAILED: 'failed'
 };
 let deployState = DEPLOY_STATE.IDLE;
 
 window._pendingDeploy = null;
-
 const LARGE_FILE_THRESHOLD = 25 * 1024 * 1024;
 
 /* ============================================================
-   3) FIREBASE CONFIG + INIT
+   3) FIREBASE CONFIG
    ============================================================ */
 const firebaseConfig = {
     apiKey: "AIzaSyCesmK4pK1sv48Z9EkYDapH7GXRf7BeOkA",
@@ -300,9 +253,7 @@ function initFirebase() {
         console.error('[Firebase] SDK belum di-load!');
         return false;
     }
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     window._db = db;
     _firebaseReady = true;
@@ -323,13 +274,11 @@ function initAuth() {
 
         const unsub = auth.onAuthStateChanged(async (user) => {
             if (resolved) return;
-
             if (!user) {
                 try {
                     await auth.signInAnonymously();
                 } catch (e) {
                     console.warn('[Auth] Anonymous sign-in gagal:', e.message);
-                    console.warn('[Auth] Fallback ke localStorage UID (mode terbatas)');
                     CURRENT_USER_ID = getLegacyLocalUid();
                     resolved = true;
                     unsub();
@@ -337,7 +286,6 @@ function initAuth() {
                 }
                 return;
             }
-
             CURRENT_USER_ID = user.uid;
             localStorage.setItem('ekk_authUid', user.uid);
             _firebaseAuthReady = true;
@@ -364,26 +312,17 @@ function initAuth() {
    ============================================================ */
 function escapeHTML(str) {
     if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function escapeAttr(str) {
-    return escapeHTML(str);
-}
+function escapeAttr(str) { return escapeHTML(str); }
 
 function isValidHttpUrl(str) {
     if (!str || typeof str !== 'string') return false;
     try {
         const u = new URL(str);
         return u.protocol === 'http:' || u.protocol === 'https:';
-    } catch (e) {
-        return false;
-    }
+    } catch (e) { return false; }
 }
 
 function safeImageUrl(url) {
@@ -400,9 +339,7 @@ function debounce(fn, wait) {
     };
 }
 
-function getMyUid() {
-    return CURRENT_USER_ID || getLegacyLocalUid();
-}
+function getMyUid() { return CURRENT_USER_ID || getLegacyLocalUid(); }
 
 /* ============================================================
    5) TOAST
@@ -411,22 +348,15 @@ function showToast(msg, type) {
     const toast = document.getElementById('toast');
     if (!toast) return;
     let icon = '';
-    if (type === 'success') {
-        icon = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
-    } else if (type === 'error') {
-        icon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger);"></i>';
-    } else if (type === 'warning') {
-        icon = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i>';
-    } else {
-        icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>';
-    }
+    if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>';
+    else if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark" style="color:var(--danger);"></i>';
+    else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i>';
+    else icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>';
     toast.innerHTML = icon + ' ' + escapeHTML(msg);
     toast.style.whiteSpace = 'nowrap';
     toast.classList.add('show');
     clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => {
-        toast.classList.remove('show');
-    }, 2600);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
 /* ============================================================
@@ -439,10 +369,7 @@ function showConfirmModal(title, message, confirmText) {
         const messageEl = document.getElementById('modal-message');
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
-        if (!overlay || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
-            resolve(false);
-            return;
-        }
+        if (!overlay || !titleEl || !messageEl || !confirmBtn || !cancelBtn) { resolve(false); return; }
 
         titleEl.textContent = title;
         messageEl.textContent = message;
@@ -458,10 +385,7 @@ function showConfirmModal(title, message, confirmText) {
         }
         function onCancel() { cleanup(false); }
         function onConfirm() { cleanup(true); }
-        function onKey(e) {
-            if (e.key === 'Escape') cleanup(false);
-            if (e.key === 'Enter') cleanup(true);
-        }
+        function onKey(e) { if (e.key === 'Escape') cleanup(false); if (e.key === 'Enter') cleanup(true); }
         cancelBtn.addEventListener('click', onCancel);
         confirmBtn.addEventListener('click', onConfirm);
         document.addEventListener('keydown', onKey);
@@ -470,14 +394,12 @@ function showConfirmModal(title, message, confirmText) {
 }
 
 /* ============================================================
-   7) NAVIGATION
-   Karena sekarang multi-page, navigateTo() = pindah halaman.
+   7) NAVIGATION + TRACKING
    ============================================================ */
 let _savedChatScrollTop = 0;
 let _savedChatWasNearBottom = true;
 
 function navigateTo(page) {
-    // Simpan posisi chat sebelum keluar
     if (currentPage === 'group') {
         const list = document.getElementById('messages-list');
         if (list) {
@@ -489,13 +411,14 @@ function navigateTo(page) {
             } catch (e) {}
         }
     }
-    // Stop typing kalau keluar dari grup
     if (page !== 'group') {
         if (window.EkkChat && typeof window.EkkChat.stopTyping === 'function') {
             window.EkkChat.stopTyping();
         }
     }
-    // Pindah halaman
+    if (page && page !== 'home') {
+        sendEventToBackend('click_menu', page);
+    }
     const target = (page === 'home' || !page) ? '/' : '/' + page;
     if (window.location.pathname !== target) {
         window.location.href = target;
@@ -503,7 +426,6 @@ function navigateTo(page) {
 }
 window.navigateTo = navigateTo;
 
-/* ---------- Mobile Drawer helpers ---------- */
 function openSidebarDrawer() {
     const sidebar = document.getElementById('sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
@@ -524,24 +446,16 @@ function closeSidebarDrawer() {
 
 function setupNavigationEvents() {
     document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
-        item.addEventListener('click', function() {
-            navigateTo(this.dataset.page);
-        });
+        item.addEventListener('click', function() { navigateTo(this.dataset.page); });
     });
     document.querySelectorAll('.bottom-nav-item[data-page]').forEach(item => {
-        item.addEventListener('click', function() {
-            navigateTo(this.dataset.page);
-        });
+        item.addEventListener('click', function() { navigateTo(this.dataset.page); });
     });
     document.querySelectorAll('.quick-action[data-page]').forEach(item => {
-        item.addEventListener('click', function() {
-            navigateTo(this.dataset.page);
-        });
+        item.addEventListener('click', function() { navigateTo(this.dataset.page); });
     });
     document.querySelectorAll('.btn[data-page]').forEach(item => {
-        item.addEventListener('click', function() {
-            navigateTo(this.dataset.page);
-        });
+        item.addEventListener('click', function() { navigateTo(this.dataset.page); });
     });
     document.querySelectorAll('.sidebar-item.accordion-trigger').forEach(item => {
         item.addEventListener('click', function() {
@@ -582,7 +496,6 @@ function setupNavigationEvents() {
         }
     });
 
-    // Set active state sesuai halaman sekarang
     document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
         item.classList.toggle('active', item.dataset.page === currentPage);
     });
@@ -592,14 +505,11 @@ function setupNavigationEvents() {
 }
 
 /* ============================================================
-   8) HISTORY LISTENER (dipakai banyak halaman)
+   8) HISTORY LISTENER
    ============================================================ */
 async function saveHistory(project, status, url, projectId, deploymentId) {
     const db = window._db;
-    if (!db) {
-        console.warn('[saveHistory] DB belum siap');
-        return false;
-    }
+    if (!db) return false;
     const uid = getMyUid();
     const projectName = (project || '').toLowerCase().trim();
 
@@ -607,26 +517,19 @@ async function saveHistory(project, status, url, projectId, deploymentId) {
         const snap = await db.collection('projects')
             .where('ownerUid', '==', uid)
             .where('projectName', '==', projectName)
-            .limit(1)
-            .get();
+            .limit(1).get();
 
         const payload = {
-            projectName: projectName,
-            ownerUid: uid,
-            url: url || '',
-            status: status,
-            projectId: projectId || '',
-            deploymentId: deploymentId || '',
+            projectName: projectName, ownerUid: uid, url: url || '', status: status,
+            projectId: projectId || '', deploymentId: deploymentId || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         if (!snap.empty) {
             await snap.docs[0].ref.update(payload);
-            console.log('[saveHistory] Updated:', projectName);
         } else {
             payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await db.collection('projects').add(payload);
-            console.log('[saveHistory] Created:', projectName);
         }
         return true;
     } catch (e) {
@@ -637,94 +540,53 @@ async function saveHistory(project, status, url, projectId, deploymentId) {
 
 function startHistoryListener() {
     const db = window._db;
-    if (!db) {
-        console.warn('[History] DB belum siap');
-        return;
-    }
-    if (_historyUnsubscribe) {
-        try { _historyUnsubscribe(); } catch(e) {}
-        _historyUnsubscribe = null;
-    }
+    if (!db) return;
+    if (_historyUnsubscribe) { try { _historyUnsubscribe(); } catch(e) {} _historyUnsubscribe = null; }
     const uid = getMyUid();
-    console.log('[History] Listening for uid:', uid);
 
     _historyUnsubscribe = db.collection('projects')
         .where('ownerUid', '==', uid)
         .onSnapshot(snap => {
-            _historyCache = snap.docs
-                .map(doc => {
-                    const d = doc.data();
-                    const ts = d.createdAt?.toDate?.() || new Date();
-                    return {
-                        id: doc.id,
-                        project: d.projectName || '',
-                        status: d.status || 'unknown',
-                        url: d.url || '',
-                        projectId: d.projectId || '',
-                        deploymentId: d.deploymentId || '',
-                        ownerId: d.ownerUid || '',
-                        date: ts.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
-                        time: ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                        _ts: ts.getTime()
-                    };
-                })
-                .sort((a, b) => b._ts - a._ts)
-                .slice(0, 50);
+            _historyCache = snap.docs.map(doc => {
+                const d = doc.data();
+                const ts = d.createdAt?.toDate?.() || new Date();
+                return {
+                    id: doc.id, project: d.projectName || '', status: d.status || 'unknown',
+                    url: d.url || '', projectId: d.projectId || '', deploymentId: d.deploymentId || '',
+                    ownerId: d.ownerUid || '',
+                    date: ts.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    time: ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                    _ts: ts.getTime()
+                };
+            }).sort((a, b) => b._ts - a._ts).slice(0, 50);
 
-            // Render kalau halaman yang butuh renderHistory aktif
             if (typeof renderHistory === 'function') renderHistory();
             if (typeof updateDashboardStats === 'function') updateDashboardStats();
-        }, err => {
-            console.error('[History] Listener error:', err);
-        });
+        }, err => { console.error('[History] Listener error:', err); });
 }
 
-function getHistory() {
-    return _historyCache;
-}
+function getHistory() { return _historyCache; }
 
 async function checkProjectAvailability(projectName) {
     const db = window._db;
-    if (!db) {
-        console.warn('[checkProjectAvailability] DB belum siap');
-        return { available: true, owned: false, checkFailed: true, error: 'DB not ready' };
-    }
+    if (!db) return { available: true, owned: false, checkFailed: true, error: 'DB not ready' };
     const uid = getMyUid();
     const name = (projectName || '').toLowerCase().trim();
 
     try {
-        const snap = await db.collection('projects')
-            .where('projectName', '==', name)
-            .limit(1)
-            .get();
-
+        const snap = await db.collection('projects').where('projectName', '==', name).limit(1).get();
         if (snap.empty) return { available: true, owned: false };
-
         const data = snap.docs[0].data();
-        return {
-            available: false,
-            owned: data.ownerUid === uid,
-            existing: data
-        };
+        return { available: false, owned: data.ownerUid === uid, existing: data };
     } catch (e) {
-        console.error('[checkProjectAvailability] Gagal query:', e.code, e.message);
-        return {
-            available: true,
-            owned: false,
-            checkFailed: true,
-            error: e.code + ': ' + e.message
-        };
+        return { available: true, owned: false, checkFailed: true, error: e.code + ': ' + e.message };
     }
 }
 
 function copyURL(url) {
     if (!url) return;
     if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => {
-            showToast('Link berhasil disalin', 'success');
-        }).catch(() => {
-            fallbackCopy(url);
-        });
+        navigator.clipboard.writeText(url).then(() => showToast('Link berhasil disalin', 'success')).catch(() => fallbackCopy(url));
     } else {
         fallbackCopy(url);
     }
@@ -740,9 +602,7 @@ function fallbackCopy(url) {
     try {
         document.execCommand('copy');
         showToast('Link berhasil disalin', 'success');
-    } catch (e) {
-        showToast('Gagal menyalin link', 'error');
-    }
+    } catch (e) { showToast('Gagal menyalin link', 'error'); }
     document.body.removeChild(textarea);
 }
 
@@ -782,25 +642,15 @@ const VISITOR_NUM = getVisitorNumber();
 const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
 
 async function registerPushNotification() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Browser tidak mendukung notifikasi push.');
-        return;
-    }
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
     let permission = Notification.permission;
-    if (permission === 'default') {
-        permission = await Notification.requestPermission();
-    }
+    if (permission === 'default') permission = await Notification.requestPermission();
     if (typeof updateModalStatus === 'function') updateModalStatus();
-    if (permission !== 'granted') {
-        console.log('Izin notifikasi ditolak.');
-        return;
-    }
+    if (permission !== 'granted') return;
     try {
         const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        console.log('Service Worker terdaftar');
         const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: VAPID_PUBLIC_KEY
+            userVisibleOnly: true, applicationServerKey: VAPID_PUBLIC_KEY
         });
         const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36);
         await fetch('/api/subscribe', {
@@ -808,7 +658,6 @@ async function registerPushNotification() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ anonId: anonId, subscription: subscription })
         });
-        console.log('Subscription berhasil disimpan.');
         showToast('Notifikasi diaktifkan', 'success');
     } catch (err) {
         console.error('Gagal daftar push:', err);
@@ -857,26 +706,21 @@ function getDeviceBrand() {
 
 async function getDeviceInfo() {
     const info = {
-        brand: getDeviceBrand(),
-        os: getOS(),
-        browser: getBrowser(),
+        brand: getDeviceBrand(), os: getOS(), browser: getBrowser(),
         platform: navigator.platform || 'unknown',
         language: navigator.language || 'unknown',
         screen: (window.screen ? window.screen.width : 0) + 'x' + (window.screen ? window.screen.height : 0),
         pixelRatio: window.devicePixelRatio || 1,
         cores: navigator.hardwareConcurrency || 'unknown',
         memory: navigator.deviceMemory || 'unknown',
-        battery: null,
-        network: null
+        battery: null, network: null
     };
     try {
         if (navigator.getBattery) {
             const battery = await navigator.getBattery();
             info.battery = {
-                level: Math.round(battery.level * 100),
-                charging: battery.charging,
-                chargingTime: battery.chargingTime,
-                dischargingTime: battery.dischargingTime
+                level: Math.round(battery.level * 100), charging: battery.charging,
+                chargingTime: battery.chargingTime, dischargingTime: battery.dischargingTime
             };
         }
     } catch (e) { info.battery = null; }
@@ -892,7 +736,7 @@ async function getDeviceInfo() {
     return info;
 }
 
-async function sendEventToBackend(eventType) {
+async function sendEventToBackend(eventType, target, uid) {
     try {
         let deviceInfo = {};
         try { deviceInfo = await getDeviceInfo(); } catch (e) {}
@@ -903,6 +747,8 @@ async function sendEventToBackend(eventType) {
                 anonId: ANON_ID,
                 visitorNumber: VISITOR_NUM,
                 eventType: eventType,
+                target: target || '',
+                uid: uid || window.CURRENT_USER_ID || '',
                 timestamp: new Date().toISOString(),
                 deviceInfo: deviceInfo
             })
@@ -913,7 +759,7 @@ async function sendEventToBackend(eventType) {
 }
 
 function recordFollowPassed() { sendEventToBackend('follow_passed'); }
-function recordDeployEntered() { /* reserved */ }
+function recordDeployEntered() {}
 
 (function trackPageVisit() {
     try {
@@ -922,13 +768,11 @@ function recordDeployEntered() { /* reserved */ }
             sendEventToBackend('visit');
             localStorage.setItem(visitedKey, '1');
         }
-    } catch (e) {
-        console.warn('Gagal mencatat kunjungan:', e.message);
-    }
+    } catch (e) {}
 })();
 
 /* ============================================================
-   10) PWA INSTALL FLOW — V14
+   10) PWA INSTALL FLOW
    ============================================================ */
 (function initPWAInstallFlow() {
     'use strict';
@@ -942,10 +786,8 @@ function recordDeployEntered() { /* reserved */ }
     let popupShown = false;
     let apiCheckResult = null;
     let retryInterval = null;
-
     let dismissedThisLoad = false;
     let pendingPopup = false;
-
     let optimisticReady = false;
     let optimisticTimer = null;
 
@@ -957,21 +799,15 @@ function recordDeployEntered() { /* reserved */ }
     }
 
     function hasInstallFlag() {
-        try { return localStorage.getItem(INSTALL_KEY) === '1'; }
-        catch (e) { return false; }
+        try { return localStorage.getItem(INSTALL_KEY) === '1'; } catch (e) { return false; }
     }
 
     function hasPromptReadyFlag() {
-        try { return localStorage.getItem(PROMPT_READY_KEY) === '1'; }
-        catch (e) { return false; }
+        try { return localStorage.getItem(PROMPT_READY_KEY) === '1'; } catch (e) { return false; }
     }
 
     function setPromptReadyFlag() {
         try { localStorage.setItem(PROMPT_READY_KEY, '1'); } catch(e) {}
-    }
-
-    function clearPromptReadyFlag() {
-        try { localStorage.removeItem(PROMPT_READY_KEY); } catch(e) {}
     }
 
     function isInstalled() {
@@ -982,10 +818,7 @@ function recordDeployEntered() { /* reserved */ }
     }
 
     async function checkGetInstalledRelatedApps() {
-        if (!('getInstalledRelatedApps' in navigator)) {
-            apiCheckResult = false;
-            return false;
-        }
+        if (!('getInstalledRelatedApps' in navigator)) { apiCheckResult = false; return false; }
         try {
             const apps = await navigator.getInstalledRelatedApps();
             if (apps && apps.length > 0) {
@@ -997,10 +830,7 @@ function recordDeployEntered() { /* reserved */ }
                 try { localStorage.removeItem(INSTALL_KEY); } catch(e) {}
                 return false;
             }
-        } catch (e) {
-            apiCheckResult = null;
-            return false;
-        }
+        } catch (e) { apiCheckResult = null; return false; }
     }
 
     function isOnDownloadPage() {
@@ -1054,17 +884,11 @@ function recordDeployEntered() { /* reserved */ }
 
     function enterOptimisticMode() {
         if (deferredPrompt || optimisticReady || isInstalled()) return;
-        console.log('[PWA] Enter OPTIMISTIC mode (tab baru)');
         optimisticReady = true;
         updateDownloadPageUI();
-
         clearTimeout(optimisticTimer);
         optimisticTimer = setTimeout(() => {
-            if (!deferredPrompt) {
-                console.log('[PWA] Optimistic timeout — fallback to Menyiapkan');
-                optimisticReady = false;
-                updateDownloadPageUI();
-            }
+            if (!deferredPrompt) { optimisticReady = false; updateDownloadPageUI(); }
         }, OPTIMISTIC_TIMEOUT_MS);
     }
 
@@ -1078,10 +902,7 @@ function recordDeployEntered() { /* reserved */ }
         if (!deferredPrompt) return false;
         if (isInstalled()) return false;
         if (dismissedThisLoad) return false;
-        if (isOnDownloadPage()) {
-            pendingPopup = true;
-            return false;
-        }
+        if (isOnDownloadPage()) { pendingPopup = true; return false; }
         if (popupShown) return false;
         pendingPopup = false;
         showPopup();
@@ -1100,65 +921,49 @@ function recordDeployEntered() { /* reserved */ }
                 window.scrollBy(0, 1);
                 setTimeout(() => window.scrollBy(0, -1), 50);
                 const evt = new MouseEvent('mousemove', {
-                    bubbles: true,
-                    clientX: window.innerWidth / 2,
-                    clientY: window.innerHeight / 2
+                    bubbles: true, clientX: window.innerWidth / 2, clientY: window.innerHeight / 2
                 });
                 document.dispatchEvent(evt);
-            } catch (e) { /* silent */ }
+            } catch (e) {}
             await checkGetInstalledRelatedApps();
             updateDownloadPageUI();
         }, RETRY_INTERVAL_MS);
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('[PWA] ✅ READY — beforeinstallprompt fired');
         e.preventDefault();
         deferredPrompt = e;
         setPromptReadyFlag();
         exitOptimisticMode();
-
-        if (retryInterval) {
-            clearInterval(retryInterval);
-            retryInterval = null;
-        }
+        if (retryInterval) { clearInterval(retryInterval); retryInterval = null; }
         updateDownloadPageUI();
         setTimeout(() => { tryShowPopup(); }, 500);
     });
 
     window.addEventListener('appinstalled', () => {
-        console.log('[PWA] appinstalled → SET INSTALLED');
         try { localStorage.setItem(INSTALL_KEY, '1'); } catch(e) {}
         apiCheckResult = true;
         deferredPrompt = null;
         exitOptimisticMode();
         hidePopup();
         updateDownloadPageUI();
-        if (typeof window.showToast === 'function') {
-            window.showToast('Ekk Store berhasil diinstall! 🎉', 'success');
-        }
+        if (typeof window.showToast === 'function') window.showToast('Ekk Store berhasil diinstall! 🎉', 'success');
+        try { sendEventToBackend('install_app'); } catch(e) {}
     });
 
     async function triggerInstall() {
+        try { sendEventToBackend('click_install'); } catch(e) {}
         if (isInstalled()) {
             updateDownloadPageUI();
-            if (typeof window.showToast === 'function') {
-                window.showToast('Ekk Store sudah terinstall', 'info');
-            }
+            if (typeof window.showToast === 'function') window.showToast('Ekk Store sudah terinstall', 'info');
             return;
         }
 
         if (!deferredPrompt && optimisticReady) {
-            if (typeof window.showToast === 'function') {
-                window.showToast('Menyiapkan... tunggu sebentar.', 'info');
-            }
+            if (typeof window.showToast === 'function') window.showToast('Menyiapkan... tunggu sebentar.', 'info');
             setTimeout(() => {
-                if (deferredPrompt) {
-                    triggerInstall();
-                } else {
-                    exitOptimisticMode();
-                    updateDownloadPageUI();
-                }
+                if (deferredPrompt) triggerInstall();
+                else { exitOptimisticMode(); updateDownloadPageUI(); }
             }, 1500);
             return;
         }
@@ -1178,30 +983,20 @@ function recordDeployEntered() { /* reserved */ }
                     try { localStorage.setItem(INSTALL_KEY, '1'); } catch(e) {}
                     apiCheckResult = true;
                     updateDownloadPageUI();
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Berhasil! Cek home screen HP.', 'success');
-                    }
+                    if (typeof window.showToast === 'function') window.showToast('Berhasil! Cek home screen HP.', 'success');
                 } else if (choice === 'dismissed') {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Install dibatalkan', 'info');
-                    }
+                    if (typeof window.showToast === 'function') window.showToast('Install dibatalkan', 'info');
                     startBackgroundRetry();
                 } else {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Ikuti dialog Chrome yang muncul', 'info');
-                    }
+                    if (typeof window.showToast === 'function') window.showToast('Ikuti dialog Chrome yang muncul', 'info');
                 }
-            } catch (e) {
-                console.warn('[PWA] prompt error:', e);
-            } finally {
+            } catch (e) {} finally {
                 updateDownloadPageUI();
             }
             return;
         }
 
-        if (typeof window.showToast === 'function') {
-            window.showToast('Chrome sedang menyiapkan. Tunggu sambil scroll halaman ini.', 'info');
-        }
+        if (typeof window.showToast === 'function') window.showToast('Chrome sedang menyiapkan. Tunggu sambil scroll halaman ini.', 'info');
         if (!retryInterval) startBackgroundRetry();
     }
 
@@ -1229,14 +1024,8 @@ function recordDeployEntered() { /* reserved */ }
         await checkGetInstalledRelatedApps();
         updateDownloadPageUI();
 
-        if (!deferredPrompt && !isInstalled() && hasPromptReadyFlag()) {
-            console.log('[PWA] Prompt ready flag found → enter optimistic mode');
-            enterOptimisticMode();
-        }
-
-        if (!deferredPrompt && !isInstalled()) {
-            startBackgroundRetry();
-        }
+        if (!deferredPrompt && !isInstalled() && hasPromptReadyFlag()) enterOptimisticMode();
+        if (!deferredPrompt && !isInstalled()) startBackgroundRetry();
 
         const dlBtn = document.getElementById('dl-install-btn');
         if (dlBtn) dlBtn.addEventListener('click', triggerInstall);
@@ -1246,9 +1035,8 @@ function recordDeployEntered() { /* reserved */ }
             gotoBtn.addEventListener('click', () => {
                 dismissedThisLoad = true;
                 hidePopup();
-                if (typeof window.navigateTo === 'function') {
-                    window.navigateTo('download');
-                } else {
+                if (typeof window.navigateTo === 'function') window.navigateTo('download');
+                else {
                     const menuBtn = document.querySelector('[data-page="download"]');
                     if (menuBtn) menuBtn.click();
                 }
@@ -1257,49 +1045,31 @@ function recordDeployEntered() { /* reserved */ }
         }
 
         const laterBtn = document.getElementById('pwa-popup-later');
-        if (laterBtn) laterBtn.addEventListener('click', () => {
-            dismissedThisLoad = true;
-            hidePopup();
-        });
+        if (laterBtn) laterBtn.addEventListener('click', () => { dismissedThisLoad = true; hidePopup(); });
 
         const closeBtn = document.getElementById('pwa-popup-close');
-        if (closeBtn) closeBtn.addEventListener('click', () => {
-            dismissedThisLoad = true;
-            hidePopup();
-        });
+        if (closeBtn) closeBtn.addEventListener('click', () => { dismissedThisLoad = true; hidePopup(); });
 
         const overlay = document.getElementById('pwa-popup-overlay');
         if (overlay) overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                dismissedThisLoad = true;
-                hidePopup();
-            }
+            if (e.target === overlay) { dismissedThisLoad = true; hidePopup(); }
         });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindEvents);
-    } else {
-        bindEvents();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindEvents);
+    else bindEvents();
 
-    if (typeof window.currentPage === 'undefined') {
-        window.currentPage = 'home';
-    }
+    if (typeof window.currentPage === 'undefined') window.currentPage = 'home';
 
     window.addEventListener('load', () => {
         setTimeout(() => {
-            if (deferredPrompt && !isInstalled() && !dismissedThisLoad && !popupShown) {
-                tryShowPopup();
-            }
+            if (deferredPrompt && !isInstalled() && !dismissedThisLoad && !popupShown) tryShowPopup();
         }, 1000);
     });
-
-    console.log('[PWA] Install flow V14 (optimistic tab-2) ready');
 })();
 
 /* ============================================================
-   11) EXPOSE GLOBAL HELPERS
+   11) GLOBAL HELPERS
    ============================================================ */
 window.recordFollowPassed = recordFollowPassed;
 window.recordDeployEntered = recordDeployEntered;
@@ -1318,11 +1088,9 @@ function initApp() {
 
     console.log('[App] Init dengan UID:', CURRENT_USER_ID);
 
-    // Restore pending deploy
     try {
         const savedDeploy = localStorage.getItem('ekk_pending_deploy');
         if (savedDeploy) {
-            console.log('[App] Restore pending deploy:', savedDeploy);
             window._pendingDeploy = savedDeploy;
             setTimeout(() => {
                 if (window._pendingDeploy && typeof isJoinValid === 'function' && typeof getNotifStatus === 'function') {
@@ -1336,30 +1104,20 @@ function initApp() {
 
     setupNavigationEvents();
 
-    // Hook page-specific setup function kalau ada
     if (typeof setupPageSpecific === 'function') {
         try { setupPageSpecific(); } catch (e) { console.error('[App] setupPageSpecific error:', e); }
     }
 
-    // Start history listener (semua halaman butuh untuk badge & stats)
-    if (window._db) {
-        startHistoryListener();
-    } else {
-        setTimeout(() => {
-            if (window._db) startHistoryListener();
-        }, 1000);
-    }
+    if (window._db) startHistoryListener();
+    else setTimeout(() => { if (window._db) startHistoryListener(); }, 1000);
 
-    // Register SW
     if ('serviceWorker' in navigator) {
         if (document.readyState === 'complete') {
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(reg => console.log('[SW] Registered, scope:', reg.scope))
                 .catch(err => console.warn('[SW] Register fail:', err));
         } else {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then(reg => console.log('[SW] Registered, scope:', reg.scope))
                     .catch(err => console.warn('[SW] Register fail:', err));
             });
         }
@@ -1370,7 +1128,6 @@ function initApp() {
     }
 
     console.log('EKK STORE 4.0 — Premium Deployment Platform');
-    console.log('UID:', CURRENT_USER_ID, '| Auth:', _firebaseAuthReady ? 'Firebase' : 'Fallback');
 }
 
 /* ============================================================
@@ -1379,7 +1136,6 @@ function initApp() {
 (function bootstrap() {
     const ok = initFirebase();
     if (!ok) {
-        console.warn('[Bootstrap] Firebase gagal, pakai fallback');
         CURRENT_USER_ID = getLegacyLocalUid();
         window.CURRENT_USER_ID = CURRENT_USER_ID;
         initApp();
@@ -1389,10 +1145,8 @@ function initApp() {
     initAuth().then(() => {
         if (!CURRENT_USER_ID) CURRENT_USER_ID = getLegacyLocalUid();
         window.CURRENT_USER_ID = CURRENT_USER_ID;
-        console.log('[Bootstrap] UID exposed ke window:', window.CURRENT_USER_ID);
         initApp();
     }).catch(err => {
-        console.error('[Bootstrap] Auth error:', err);
         if (!CURRENT_USER_ID) CURRENT_USER_ID = getLegacyLocalUid();
         window.CURRENT_USER_ID = CURRENT_USER_ID;
         initApp();
@@ -1403,38 +1157,22 @@ function initApp() {
    14) DIAGNOSTIC
    ============================================================ */
 window.diagnoseEkk = async function() {
-    console.log('═══════════ EKK STORE DIAGNOSTIC ═══════════');
-    console.log('1. Firebase SDK:', typeof firebase !== 'undefined' ? '✅ OK' : '❌ MISSING');
-    console.log('2. Firebase apps:', firebase?.apps?.length || 0);
-    console.log('3. window._db:', window._db ? '✅ SET' : '❌ MISSING');
-    console.log('4. CURRENT_USER_ID:', CURRENT_USER_ID || '❌ null');
-    console.log('5. window.CURRENT_USER_ID:', window.CURRENT_USER_ID || '❌ null');
-    console.log('6. _firebaseAuthReady:', _firebaseAuthReady);
-
+    console.log('═══ EKK STORE DIAGNOSTIC ═══');
+    console.log('1. Firebase SDK:', typeof firebase !== 'undefined' ? 'OK' : 'MISSING');
+    console.log('2. window._db:', window._db ? 'SET' : 'MISSING');
+    console.log('3. CURRENT_USER_ID:', CURRENT_USER_ID || 'null');
+    console.log('4. _firebaseAuthReady:', _firebaseAuthReady);
     if (typeof firebase !== 'undefined' && firebase.auth) {
         const user = firebase.auth().currentUser;
-        console.log('7. Firebase Auth user:', user ? '✅ ' + user.uid : '❌ NULL');
-        console.log('8. isAnonymous:', user?.isAnonymous);
-    } else {
-        console.log('7-8. Firebase Auth SDK: ❌ tidak load');
+        console.log('5. Auth user:', user ? user.uid : 'NULL');
     }
-
     if (window._db) {
-        console.log('9. Test read projects...');
         try {
             const snap = await window._db.collection('projects').limit(1).get();
-            console.log('   ✅ Read OK, size:', snap.size);
+            console.log('6. Read OK, size:', snap.size);
         } catch (e) {
-            console.error('   ❌ Read FAILED:', e.code, '-', e.message);
-        }
-        console.log('10. Test read users...');
-        try {
-            const snap = await window._db.collection('users').limit(1).get();
-            console.log('    ✅ Read OK, size:', snap.size);
-        } catch (e) {
-            console.error('    ❌ Read FAILED:', e.code, '-', e.message);
+            console.error('6. Read FAILED:', e.code, '-', e.message);
         }
     }
-    console.log('═══════════ END ═══════════');
+    console.log('═══ END ═══');
 };
-console.log('%c💡 Ketik "diagnoseEkk()" di console untuk cek status sistem', 'color:#8b5cf6;font-weight:bold;font-size:12px;');
