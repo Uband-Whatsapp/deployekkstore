@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       image: image || undefined,
       tag: tag || 'ekk-store-notif',
       vibrate: vibrate || [200, 100, 200],
-      requireInteraction: requireInteraction === true,
+      requireInteraction: true,
       url: url || 'https://deploy.project.ekkstore.web.id/'
     });
 
