@@ -38,7 +38,7 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
   color: var(--text-secondary); font-family: inherit;
   font-size: 12px; font-weight: 600; cursor: pointer;
 }
-.admin-logout-btn:hover { background: var(--danger-soft); color: var(--danger); border-color: rgba(240,97,107,.3); }
+.admin-logout-btn:hover { background: var(--danger-soft); color: var(--danger); }
 #login-screen {
   position: fixed; inset: 0; z-index: 500;
   background: radial-gradient(ellipse at top, rgba(249,115,22,.08), transparent 60%), var(--bg);
@@ -59,31 +59,31 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
   box-shadow: 0 10px 30px rgba(249,115,22,.35);
 }
 .login-card h2 { font-size: 20px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 6px; color: var(--text); }
-.login-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+.login-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
 .login-input {
   width: 100%; padding: 13px 16px; border-radius: 12px;
   border: 1px solid var(--border); background: var(--bg-input);
   color: var(--text); font-family: var(--font-mono);
-  font-size: 14px; letter-spacing: .05em;
-  box-sizing: border-box; text-align: center; margin-bottom: 12px;
+  font-size: 14px; box-sizing: border-box; text-align: center; margin-bottom: 12px;
 }
 .login-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .login-btn {
   width: 100%; padding: 13px; border-radius: 12px;
-  background: var(--accent); color: #fff;
-  font-family: inherit; font-size: 14px; font-weight: 700;
-  border: none; cursor: pointer; box-shadow: var(--shadow-accent);
-  min-height: 48px;
+  background: var(--accent); color: #fff; font-family: inherit;
+  font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+  box-shadow: var(--shadow-accent); min-height: 48px;
 }
 .login-btn:hover { background: var(--accent-hover); }
 .login-error { color: var(--danger); font-size: 12px; margin-top: 10px; display: none; font-weight: 600; }
 .login-error.visible { display: block; }
-#panel { display: none; max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; }
+#panel { display: none; max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 #panel.visible { display: block; }
 .panel-header { margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
 .panel-header h1 { font-size: 22px; font-weight: 800; letter-spacing: -.03em; color: var(--text); margin-bottom: 3px; }
 .panel-header p { font-size: 13px; color: var(--text-muted); }
-.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.grid-2 { display: grid; gap: 20px; grid-template-columns: 1fr; }
+@media (min-width: 1024px) { .grid-2 { grid-template-columns: 1.2fr 1fr; align-items: start; } }
+.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .form-label {
   font-size: 11px; font-weight: 700; color: var(--text-secondary);
   text-transform: uppercase; letter-spacing: .07em;
@@ -92,14 +92,90 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
 .form-input {
   width: 100%; padding: 12px 14px; border-radius: 10px;
   border: 1px solid var(--border); background: var(--bg-input);
-  color: var(--text); font-family: var(--font-ui);
-  font-size: 14px; box-sizing: border-box;
+  color: var(--text); font-family: var(--font-ui); font-size: 14px; box-sizing: border-box;
 }
 .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-.form-input::placeholder { color: var(--text-muted); }
 .form-hint { font-size: 11px; color: var(--text-muted); }
 .counter { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+
+/* DESIGN PICKER */
+.design-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (min-width: 640px) { .design-grid { grid-template-columns: repeat(4, 1fr); } }
+.design-btn {
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  text-align: center;
+  transition: all .18s ease;
+  font-family: inherit;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.design-btn:hover { border-color: var(--border-light); background: var(--bg-hover); }
+.design-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+.design-btn .d-icon {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  background: var(--accent-soft); color: var(--accent);
+  transition: all .18s ease;
+}
+.design-btn.active .d-icon { background: var(--accent); color: #fff; }
+.design-btn .d-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--text-secondary);
+}
+.design-btn.active .d-label { color: var(--text); }
+.design-btn[data-design="minimal"] .d-icon { background: rgba(59,130,246,.15); color: #3b82f6; }
+.design-btn[data-design="minimal"].active .d-icon { background: #3b82f6; color: #fff; }
+.design-btn[data-design="classic"] .d-icon { background: var(--accent-soft); color: var(--accent); }
+.design-btn[data-design="image"] .d-icon { background: rgba(139,92,246,.15); color: #8b5cf6; }
+.design-btn[data-design="image"].active .d-icon { background: #8b5cf6; color: #fff; }
+.design-btn[data-design="urgent"] .d-icon { background: var(--danger-soft); color: var(--danger); }
+.design-btn[data-design="urgent"].active .d-icon { background: var(--danger); color: #fff; }
+
+/* UPLOAD GAMBAR */
+.upload-box {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border: 1.5px dashed var(--border);
+  border-radius: 12px; background: var(--bg-input);
+  cursor: pointer; transition: all .2s ease;
+}
+.upload-box:hover { border-color: var(--accent); background: var(--accent-soft); }
+.upload-box.dragover { border-color: var(--accent); background: var(--accent-soft); }
+.upload-preview {
+  width: 56px; height: 56px; border-radius: 10px;
+  background: var(--bg-hover); display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 20px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+.upload-info { flex: 1; min-width: 0; }
+.upload-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.upload-hint { font-size: 11px; color: var(--text-muted); line-height: 1.4; word-break: break-word; }
+.upload-remove {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--danger-soft); color: var(--danger);
+  border: 1px solid rgba(240,97,107,.3);
+  display: none; align-items: center; justify-content: center;
+  font-size: 12px; cursor: pointer; padding: 0; flex-shrink: 0;
+}
+.upload-box.has-image .upload-remove { display: flex; }
+
+.actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 22px; }
 .btn-action {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 14px 20px; border-radius: 12px;
@@ -109,8 +185,7 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
 .btn-action:disabled { opacity: .5; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: #fff; box-shadow: var(--shadow-accent); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-.btn-secondary { background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border); }
-.btn-secondary:hover:not(:disabled) { background: var(--bg-hover); color: var(--text); }
+
 .result {
   margin-top: 16px; padding: 14px; border-radius: 12px;
   font-size: 12px; font-weight: 500;
@@ -120,35 +195,146 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
 .result.success { background: var(--success-soft); border: 1px solid rgba(34,211,168,.3); color: #6ee7b7; }
 .result.error { background: var(--danger-soft); border: 1px solid rgba(240,97,107,.3); color: #fca5a5; }
 .result.loading { background: var(--info-soft); border: 1px solid rgba(59,130,246,.3); color: #93c5fd; }
-.result i { flex-shrink: 0; margin-top: 2px; font-size: 14px; }
-.sub-count-chip {
+
+.sub-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px;
   background: var(--bg-input); border: 1px solid var(--border);
   font-size: 11px; font-weight: 600; color: var(--text-muted);
   font-family: var(--font-mono);
 }
-.preview-box {
-  margin-top: 20px; padding: 16px;
-  background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: 14px;
+
+/* PREVIEW PHONE MOCK */
+.preview-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px 16px;
+  box-shadow: var(--shadow);
 }
-.preview-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-faint); margin-bottom: 10px; text-align: center; }
-.notif-mock {
-  background: #1f1f24; border-radius: 14px; padding: 12px;
-  border: 1px solid rgba(255,255,255,.06);
-  color: #fff; font-family: var(--font-ui);
+.preview-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-faint);
+  margin-bottom: 12px; text-align: center;
 }
-.notif-mock-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 11px; color: #a0a0b0; }
-.notif-mock-icon {
-  width: 20px; height: 20px; border-radius: 5px;
+.phone-notif {
+  background: #17171c;
+  border-radius: 22px;
+  padding: 14px;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.05);
+  color: #fff;
+  transition: all .25s ease;
+}
+
+/* Layout variations */
+
+/* MINIMAL - ringkas, no body */
+.phone-notif[data-design="minimal"] {
+  padding: 10px 12px;
+  min-height: auto;
+}
+.phone-notif[data-design="minimal"] .pn-body { display: none; }
+
+/* CLASSIC - default */
+.phone-notif[data-design="classic"] {}
+
+/* IMAGE - image di atas */
+.phone-notif[data-design="image"] {
+  padding: 0;
+  overflow: hidden;
+}
+.phone-notif[data-design="image"] .pn-image {
+  width: 100%;
+  height: 130px;
+  background: linear-gradient(135deg, #2a1e16, #1a1a20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #70707a;
+  font-size: 26px;
+  overflow: hidden;
+}
+.phone-notif[data-design="image"] .pn-image img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.phone-notif[data-design="image"] .pn-content { padding: 12px 14px 14px; }
+.phone-notif[data-design="image"] .pn-icon { display: none; }
+.phone-notif:not([data-design="image"]) .pn-image { display: none; }
+
+/* URGENT - border merah, icon gede */
+.phone-notif[data-design="urgent"] {
+  border-left: 3px solid var(--danger);
+  background: linear-gradient(90deg, rgba(240,97,107,.08), #17171c 40%);
+}
+.phone-notif[data-design="urgent"] .pn-icon {
+  background: var(--danger) !important;
+  color: #fff;
+}
+.phone-notif[data-design="urgent"] .pn-title {
+  color: #fca5a5;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-size: 12px;
+}
+
+.pn-content {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 0 2px;
+}
+.phone-notif[data-design="image"] .pn-content { padding: 0; }
+
+.pn-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10.5px; color: #a0a0b0;
+}
+.pn-icon {
+  width: 22px; height: 22px; border-radius: 6px;
   background: linear-gradient(135deg, var(--accent), var(--accent-press));
-  display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: #fff; flex-shrink: 0;
+  overflow: hidden;
 }
-.notif-mock-time { margin-left: auto; font-size: 10px; color: #70707a; font-family: var(--font-mono); }
-.notif-mock-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 3px; }
-.notif-mock-body { font-size: 11.5px; color: #b0b0bc; line-height: 1.4; }
-.notif-mock-url { margin-top: 6px; font-size: 10px; color: #70707a; font-family: var(--font-mono); }
+.pn-icon img { width: 100%; height: 100%; object-fit: cover; }
+.pn-app { font-weight: 600; color: #d0d0d8; }
+.pn-time { margin-left: auto; font-size: 10px; color: #70707a; font-family: var(--font-mono); }
+
+.pn-body-wrap {
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.phone-notif[data-design="image"] .pn-body-wrap { padding: 0 14px 0 14px; }
+
+.pn-thumb {
+  width: 44px; height: 44px; border-radius: 8px;
+  background: #2a2a35; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #808090; font-size: 16px; overflow: hidden;
+}
+.pn-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.pn-text { flex: 1; min-width: 0; }
+.pn-title {
+  font-size: 13px; font-weight: 700; line-height: 1.25;
+  color: #fff; margin-bottom: 3px; word-break: break-word;
+}
+.pn-body {
+  font-size: 11.5px; line-height: 1.4;
+  color: #b0b0bc; word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pn-url {
+  margin-top: 6px;
+  font-size: 9.5px; color: #70707a;
+  font-family: var(--font-mono);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 </style>
 </head>
 <body class="admin-page">
@@ -173,7 +359,7 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
     </div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
-    <span class="sub-count-chip"><i class="fa-solid fa-users"></i> <span id="sub-count">—</span> subscriber</span>
+    <span class="sub-chip"><i class="fa-solid fa-users"></i> <span id="sub-count">—</span> subscriber</span>
     <button class="admin-logout-btn" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar</button>
   </div>
 </header>
@@ -181,55 +367,94 @@ body.admin-page { background: var(--bg); min-height: 100vh; }
 <main id="panel">
   <div class="panel-header">
     <h1>Kirim Notifikasi</h1>
-    <p>Isi judul dan isi notif, lalu klik kirim.</p>
+    <p>Pilih design, isi konten, lihat preview, lalu kirim.</p>
   </div>
 
-  <div class="card">
-    <div class="form-group">
-      <label class="form-label" for="title">
-        <i class="fa-solid fa-heading"></i> Judul Notif
-      </label>
-      <input type="text" id="title" class="form-input" placeholder="contoh: Ekk Store" maxlength="60" autocomplete="off">
-      <span class="form-hint"><span class="counter" id="title-count">0</span>/60 karakter</span>
-    </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="form-group" style="margin-bottom: 10px;">
+        <label class="form-label"><i class="fa-solid fa-palette"></i> Design Notifikasi</label>
+      </div>
+      <div class="design-grid" id="design-grid">
+        <button type="button" class="design-btn" data-design="minimal">
+          <div class="d-icon"><i class="fa-solid fa-feather"></i></div>
+          <span class="d-label">Minimal</span>
+        </button>
+        <button type="button" class="design-btn active" data-design="classic">
+          <div class="d-icon"><i class="fa-solid fa-bullhorn"></i></div>
+          <span class="d-label">Classic</span>
+        </button>
+        <button type="button" class="design-btn" data-design="image">
+          <div class="d-icon"><i class="fa-solid fa-image"></i></div>
+          <span class="d-label">Gambar</span>
+        </button>
+        <button type="button" class="design-btn" data-design="urgent">
+          <div class="d-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <span class="d-label">Urgent</span>
+        </button>
+      </div>
 
-    <div class="form-group">
-      <label class="form-label" for="body">
-        <i class="fa-solid fa-align-left"></i> Isi Notif
-      </label>
-      <textarea id="body" class="form-input" placeholder="contoh: Halo semua! Cek fitur baru kami ya." maxlength="180" rows="4" style="resize:vertical;min-height:90px;"></textarea>
-      <span class="form-hint"><span class="counter" id="body-count">0</span>/180 karakter</span>
-    </div>
+      <div class="form-group">
+        <label class="form-label" for="title"><i class="fa-solid fa-heading"></i> Judul Notif</label>
+        <input type="text" id="title" class="form-input" placeholder="contoh: Ekk Store" maxlength="60" autocomplete="off">
+        <span class="form-hint"><span class="counter" id="title-count">0</span>/60 karakter</span>
+      </div>
 
-    <div class="form-group">
-      <label class="form-label" for="url">
-        <i class="fa-solid fa-link"></i> URL Tujuan
-      </label>
-      <input type="url" id="url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" autocomplete="off">
-      <span class="form-hint">Halaman yang dibuka saat notif diklik.</span>
-    </div>
+      <div class="form-group" id="body-group">
+        <label class="form-label" for="body"><i class="fa-solid fa-align-left"></i> Isi Notif</label>
+        <textarea id="body" class="form-input" placeholder="contoh: Halo semua! Cek fitur baru kami." maxlength="180" rows="3" style="resize:vertical;min-height:80px;"></textarea>
+        <span class="form-hint"><span class="counter" id="body-count">0</span>/180 karakter</span>
+      </div>
 
-    <div class="actions">
-      <button id="btn-test" class="btn-action btn-secondary"><i class="fa-solid fa-flask"></i> Test Dulu</button>
-      <button id="btn-send" class="btn-action btn-primary"><i class="fa-solid fa-paper-plane"></i> Kirim ke Semua</button>
-    </div>
+      <div class="form-group">
+        <label class="form-label" for="url"><i class="fa-solid fa-link"></i> URL Tujuan</label>
+        <input type="url" id="url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" autocomplete="off">
+      </div>
 
-    <div class="result" id="result">
-      <i id="result-icon"></i>
-      <span id="result-text"></span>
-    </div>
-
-    <div class="preview-box">
-      <div class="preview-label">Preview</div>
-      <div class="notif-mock">
-        <div class="notif-mock-head">
-          <div class="notif-mock-icon"><i class="fa-solid fa-bolt"></i></div>
-          <span style="font-weight:600;color:#d0d0d8;">Deploy Project</span>
-          <span class="notif-mock-time">baru saja</span>
+      <div class="form-group" id="image-group" style="display:none;">
+        <label class="form-label"><i class="fa-solid fa-image"></i> Gambar Notif</label>
+        <div class="upload-box" id="upload-box">
+          <div class="upload-preview" id="upload-preview"><i class="fa-solid fa-image"></i></div>
+          <div class="upload-info">
+            <div class="upload-title" id="upload-title">Tap untuk upload gambar</div>
+            <div class="upload-hint" id="upload-hint">JPG / PNG · Max 3 MB</div>
+          </div>
+          <button type="button" class="upload-remove" id="upload-remove"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="notif-mock-title" id="preview-title">Ekk Store</div>
-        <div class="notif-mock-body" id="preview-body">Isi notif akan muncul di sini.</div>
-        <div class="notif-mock-url" id="preview-url" style="display:none;"></div>
+        <input type="file" id="image-input" accept="image/*" style="display:none;">
+      </div>
+
+      <div class="actions">
+        <button id="btn-send" class="btn-action btn-primary"><i class="fa-solid fa-paper-plane"></i> Kirim ke Semua Subscriber</button>
+      </div>
+
+      <div class="result" id="result">
+        <i id="result-icon"></i>
+        <span id="result-text"></span>
+      </div>
+    </div>
+
+    <div class="preview-wrap">
+      <div class="preview-label">Preview</div>
+      <div class="phone-notif" id="phone-notif" data-design="classic">
+        <div class="pn-image" id="pn-image">
+          <i class="fa-solid fa-image"></i>
+        </div>
+        <div class="pn-content">
+          <div class="pn-head">
+            <div class="pn-icon"><i class="fa-solid fa-bolt"></i></div>
+            <span class="pn-app">Deploy Project</span>
+            <span class="pn-time">baru saja</span>
+          </div>
+          <div class="pn-body-wrap">
+            <div class="pn-thumb" id="pn-thumb"><i class="fa-solid fa-bullhorn"></i></div>
+            <div class="pn-text">
+              <div class="pn-title" id="pn-title">Ekk Store</div>
+              <div class="pn-body" id="pn-body">Isi notif akan muncul di sini.</div>
+              <div class="pn-url" id="pn-url" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
