@@ -1,17 +1,8 @@
 /* ============================================================
-   EKK STORE 4.0 — HISTORY.JS
-   Berisi: renderHistory, setupHistoryEvents, deleteHistoryItem.
-   Digunakan HANYA di /history (history/index.html)
-
-   Catatan: function renderHistory() dipanggil OTOMATIS oleh
-   startHistoryListener() di common.js setiap ada update dari
-   Firestore. Jadi setelah user buka halaman, list otomatis
-   refresh tanpa harus reload.
-   ============================================================ */
-
-/* ============================================================
    1) RENDER HISTORY LIST
    ============================================================ */
+const HISTORY_CACHE_KEY = 'ekk_history_html_cache_v1';
+
 function renderHistory() {
     const historyList = document.getElementById('history-list');
     if (!historyList) return;
@@ -26,9 +17,26 @@ function renderHistory() {
         filtered = filtered.filter(item => item.project.toLowerCase().includes(search));
     }
 
+    // Kalau data kosong & tidak sedang filter/search → pakai cache
+    if (history.length === 0 && historyFilter === 'all' && !historySearch.trim()) {
+        try {
+            const cached = localStorage.getItem(HISTORY_CACHE_KEY);
+            if (cached) {
+                historyList.innerHTML = cached;
+                // Pasang event lagi
+                historyList.querySelectorAll('[data-page]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        navigateTo(this.dataset.page);
+                    });
+                });
+                return;
+            }
+        } catch (e) {}
+    }
+
     if (filtered.length === 0) {
-        historyList.innerHTML =
-            '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Belum ada deployment</p><span class="sub">Deployment yang Anda lakukan akan muncul di sini</span><button class="btn btn-primary btn-sm" data-page="deploy" style="display:inline-flex;"><i class="fa-solid fa-rocket"></i> Mulai Deploy</button></div>';
+        const emptyHtml = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Belum ada deployment</p><span class="sub">Deployment yang Anda lakukan akan muncul di sini</span><button class="btn btn-primary btn-sm" data-page="deploy" style="display:inline-flex;"><i class="fa-solid fa-rocket"></i> Mulai Deploy</button></div>';
+        historyList.innerHTML = emptyHtml;
         historyList.querySelectorAll('[data-page]').forEach(btn => {
             btn.addEventListener('click', function() {
                 navigateTo(this.dataset.page);
@@ -37,7 +45,7 @@ function renderHistory() {
         return;
     }
 
-    historyList.innerHTML = filtered.map((item, index) => {
+    const html = filtered.map((item, index) => {
         const realIndex = history.indexOf(item);
         let statusBadge = '';
         if (item.status === 'success') {
@@ -69,8 +77,16 @@ function renderHistory() {
             '</div>' +
             '</div>';
     }).join('');
-}
 
+    historyList.innerHTML = html;
+
+    // Simpan cache (hanya kalau tidak sedang search/filter)
+    if (historyFilter === 'all' && !historySearch.trim()) {
+        try {
+            localStorage.setItem(HISTORY_CACHE_KEY, html);
+        } catch (e) {}
+    }
+}
 /* ============================================================
    2) HISTORY EVENTS (delegation, filter chips, search)
    ============================================================ */
