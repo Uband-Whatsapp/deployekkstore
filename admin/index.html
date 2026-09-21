@@ -3,2350 +3,518 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-<title>Admin Panel — Ekk Store</title>
-
+<title>Admin — Ekk Store</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0a0a0d">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet"
->
-
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
->
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/css/style.css">
-
 <style>
-
-/* ============================================================
-   EKK STORE ADMIN PANEL
-   Visual only — tidak mengubah fungsi / ID / JS
-   Branding:
-   #0a0a0d
-   #121216
-   #1a1a20
-   #f97316
-   ============================================================ */
-
-/* ============================================================
-   RESET
-   ============================================================ */
-
-html {
-    background: #0a0a0d !important;
-    min-height: 100%;
-}
-
-html,
-body {
-    margin: 0;
-    padding: 0;
-    min-height: 100%;
-}
-
-body.admin-page {
-    background: #0a0a0d !important;
-    color: #f2f2f5 !important;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-    overflow-x: hidden;
-}
-
-/* Paksa semua elemen admin menggunakan box sizing yang konsisten */
-body.admin-page *,
-body.admin-page *::before,
-body.admin-page *::after {
-    box-sizing: border-box;
-}
-
-/* ============================================================
-   GLOBAL FONT + ICON FIX
-   ============================================================ */
-
-body.admin-page h1,
-body.admin-page h2,
-body.admin-page h3,
-body.admin-page h4,
-body.admin-page h5,
-body.admin-page h6,
-body.admin-page p,
-body.admin-page span,
-body.admin-page label,
-body.admin-page button,
-body.admin-page input,
-body.admin-page textarea,
-body.admin-page div {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-/* PENTING:
-   Jangan biarkan CSS utama membuat icon menjadi hitam */
-body.admin-page i,
-body.admin-page .fa,
-body.admin-page .fas,
-body.admin-page .far,
-body.admin-page .fal,
-body.admin-page .fab,
-body.admin-page [class^="fa-"],
-body.admin-page [class*=" fa-"] {
-    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
-    font-style: normal !important;
-    font-weight: 900 !important;
-}
-
-/* ============================================================
-   BACKGROUND
-   ============================================================ */
-
+html, body { background: var(--bg); margin: 0; padding: 0; min-height: 100%; }
+body.admin-page { padding: 0; overflow-x: hidden; font-family: 'Inter', sans-serif; }
 body.admin-page::before {
-    content: "";
-    position: fixed;
-    width: 700px;
-    height: 500px;
-    left: 50%;
-    top: -280px;
-    transform: translateX(-50%);
-    background: radial-gradient(
-        ellipse,
-        rgba(249, 115, 22, 0.085),
-        transparent 70%
-    );
-    pointer-events: none;
-    z-index: 0;
+  content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse, rgba(249,115,22,.10), transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+body.admin-page * { box-sizing: border-box; }
+body.admin-page i, body.admin-page .fa, body.admin-page .fas, body.admin-page .far, body.admin-page .fab {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+  font-style: normal !important;
 }
 
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.admin-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-
-    width: 100%;
-
-    min-height: 64px;
-    padding: 10px 20px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 16px;
-
-    background: rgba(10, 10, 13, 0.94) !important;
-
-    border-bottom: 1px solid #26262e !important;
-
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-}
-
-.admin-header::after {
-    content: "";
-    position: absolute;
-
-    left: 0;
-    right: 0;
-    bottom: -1px;
-
-    height: 1px;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(249, 115, 22, 0.7),
-        transparent
-    );
-
-    opacity: .35;
-}
-
-/* ============================================================
-   BRAND
-   ============================================================ */
-
-.admin-brand {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-
-    min-width: 0;
-}
-
-.admin-brand-logo {
-    width: 40px;
-    height: 40px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 12px;
-
-    background: linear-gradient(
-        135deg,
-        #f97316,
-        #ea580c
-    ) !important;
-
-    color: #ffffff !important;
-
-    font-size: 16px;
-
-    box-shadow:
-        0 7px 20px rgba(249, 115, 22, .22),
-        inset 0 1px 0 rgba(255,255,255,.16);
-
-    position: relative;
-    overflow: hidden;
-}
-
-.admin-brand-logo i {
-    color: #ffffff !important;
-    font-size: 16px !important;
-}
-
-.admin-brand-logo::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    background: linear-gradient(
-        135deg,
-        rgba(255,255,255,.16),
-        transparent 50%
-    );
-
-    pointer-events: none;
-}
-
-.admin-brand-text {
-    display: flex;
-    flex-direction: column;
-
-    min-width: 0;
-
-    line-height: 1.15;
-}
-
-.admin-brand-title {
-    color: #f2f2f5 !important;
-
-    font-size: 15px;
-    font-weight: 800;
-
-    letter-spacing: -.03em;
-
-    white-space: nowrap;
-}
-
-.admin-brand-sub {
-    color: #78788a !important;
-
-    margin-top: 3px;
-
-    font-size: 10px;
-    font-weight: 600;
-
-    letter-spacing: .07em;
-    text-transform: uppercase;
-
-    white-space: nowrap;
-}
-
-/* ============================================================
-   HEADER ACTION
-   ============================================================ */
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    flex-shrink: 0;
-}
-
-.sub-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 7px;
-
-    min-height: 34px;
-
-    padding: 7px 11px;
-
-    border-radius: 999px;
-
-    background: rgba(34, 211, 168, .08) !important;
-
-    border: 1px solid rgba(34, 211, 168, .22) !important;
-
-    color: #22d3a8 !important;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    font-family: 'JetBrains Mono', monospace !important;
-}
-
-.sub-chip i {
-    color: #22d3a8 !important;
-    font-size: 10px !important;
-}
-
-/* Logout */
-
-.admin-logout-btn {
-    min-height: 34px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 7px;
-
-    padding: 8px 12px;
-
-    border-radius: 10px;
-
-    background: #1a1a20 !important;
-
-    border: 1px solid #26262e !important;
-
-    color: #b6b6c0 !important;
-
-    font-family: 'Inter', sans-serif !important;
-
-    font-size: 11px;
-    font-weight: 600;
-
-    cursor: pointer;
-
-    transition:
-        background .2s ease,
-        border-color .2s ease,
-        color .2s ease;
-}
-
-.admin-logout-btn i {
-    color: #b6b6c0 !important;
-    font-size: 11px !important;
-}
-
-.admin-logout-btn:hover {
-    background: #2a1216 !important;
-    border-color: rgba(240,97,107,.3) !important;
-    color: #f0616b !important;
-}
-
-.admin-logout-btn:hover i {
-    color: #f0616b !important;
-}
-
-/* ============================================================
-   LOGIN SCREEN
-   ============================================================ */
-
+/* LOGIN */
 #login-screen {
-    position: fixed;
-    inset: 0;
-
-    z-index: 9999;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding:
-        max(20px, env(safe-area-inset-top))
-        20px
-        max(20px, env(safe-area-inset-bottom));
-
-    background:
-        radial-gradient(
-            circle at 50% 0%,
-            rgba(249,115,22,.13),
-            transparent 48%
-        ),
-        #0a0a0d !important;
-
-    color: #f2f2f5 !important;
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: radial-gradient(circle at 50% 0%, rgba(249,115,22,.13), transparent 48%), #0a0a0d;
 }
-
-#login-screen.hidden {
-    display: none !important;
-}
-
+#login-screen.hidden { display: none; }
 .login-card {
-    width: min(390px, 100%);
-
-    padding: 32px 26px 26px;
-
-    background: #121216 !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 22px;
-
-    box-shadow:
-        0 30px 80px rgba(0,0,0,.65),
-        inset 0 1px 0 rgba(255,255,255,.025);
-
-    text-align: center;
-
-    color: #f2f2f5 !important;
-
-    position: relative;
-    overflow: hidden;
+  width: min(390px, 100%); padding: 32px 26px 26px;
+  background: #121216; border: 1px solid #26262e; border-radius: 22px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.65);
+  text-align: center; position: relative; overflow: hidden;
 }
-
-.login-card::before {
-    content: "";
-
-    position: absolute;
-
-    width: 220px;
-    height: 220px;
-
-    right: -100px;
-    top: -120px;
-
-    background: radial-gradient(
-        circle,
-        rgba(249,115,22,.15),
-        transparent 70%
-    );
-
-    pointer-events: none;
-}
-
 .login-icon {
-    width: 68px;
-    height: 68px;
-
-    margin: 0 auto 20px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 20px;
-
-    background: linear-gradient(
-        135deg,
-        #f97316,
-        #ea580c
-    ) !important;
-
-    color: #ffffff !important;
-
-    font-size: 27px;
-
-    box-shadow:
-        0 12px 35px rgba(249,115,22,.25),
-        inset 0 1px 0 rgba(255,255,255,.15);
+  width: 68px; height: 68px; margin: 0 auto 20px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 27px;
+  box-shadow: 0 12px 35px rgba(249,115,22,.25);
 }
-
-.login-icon i {
-    color: #ffffff !important;
-    font-size: 27px !important;
-}
-
-.login-card h2 {
-    margin: 0 0 7px;
-
-    color: #f2f2f5 !important;
-
-    font-size: 22px;
-    font-weight: 800;
-
-    letter-spacing: -.035em;
-}
-
-.login-card p {
-    margin: 0 0 22px;
-
-    color: #78788a !important;
-
-    font-size: 12.5px;
-    line-height: 1.55;
-}
-
-/* Login input */
-
+.login-card h2 { margin: 0 0 7px; color: #f2f2f5; font-size: 22px; font-weight: 800; letter-spacing: -.035em; }
+.login-card p { margin: 0 0 22px; color: #78788a; font-size: 12.5px; line-height: 1.55; }
 .login-input {
-    display: block;
-
-    width: 100%;
-    height: 50px;
-
-    margin: 0 0 12px;
-
-    padding: 12px 15px;
-
-    background: #1a1a20 !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 11px;
-
-    outline: none;
-
-    color: #f2f2f5 !important;
-
-    text-align: center;
-
-    font-family: 'JetBrains Mono', monospace !important;
-
-    font-size: 15px;
-
-    letter-spacing: .08em;
-
-    transition: .2s ease;
+  display: block; width: 100%; height: 50px; margin: 0 0 12px; padding: 12px 15px;
+  background: #1a1a20; border: 1px solid #26262e; border-radius: 11px; outline: none;
+  color: #f2f2f5; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 15px;
+  letter-spacing: .08em; transition: .2s ease;
 }
-
-.login-input::placeholder {
-    color: #52525e !important;
-}
-
-.login-input:focus {
-    border-color: #f97316 !important;
-
-    box-shadow:
-        0 0 0 3px rgba(249,115,22,.13) !important;
-}
-
-/* Login button */
-
+.login-input:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.13); }
 .login-btn {
-    width: 100%;
-    min-height: 50px;
+  width: 100%; min-height: 50px; display: flex; align-items: center; justify-content: center;
+  gap: 9px; padding: 13px 16px; border: 0; border-radius: 12px;
+  background: linear-gradient(135deg, #f97316, #ea580c); color: #fff;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 9px 25px rgba(249,115,22,.22); transition: .2s ease;
+}
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(249,115,22,.3); }
+.login-error { display: none; margin-top: 12px; color: #f0616b; font-size: 12px; font-weight: 600; }
+.login-error.visible { display: block; }
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* LAYOUT */
+#admin-app { display: none; min-height: 100vh; position: relative; z-index: 1; }
+#admin-app.visible { display: block; }
 
-    gap: 9px;
-
-    padding: 13px 16px;
-
-    border: 0;
-    border-radius: 12px;
-
-    background: linear-gradient(
-        135deg,
-        #f97316,
-        #ea580c
-    ) !important;
-
-    color: #ffffff !important;
-
-    font-family: 'Inter', sans-serif !important;
-
-    font-size: 14px;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    box-shadow:
-        0 9px 25px rgba(249,115,22,.22);
-
-    transition: .2s ease;
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+@media (max-width: 900px) {
+  .admin-layout { grid-template-columns: 1fr; }
+  #admin-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 260px; z-index: 200;
+    transform: translateX(-100%); transition: transform .3s cubic-bezier(.22,.61,.36,1);
+    box-shadow: 0 0 40px rgba(0,0,0,.5);
+  }
+  #admin-sidebar.open { transform: translateX(0); }
+  #admin-sidebar-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 199;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  }
+  #admin-sidebar-backdrop.active { display: block; }
 }
 
-.login-btn i {
-    color: #ffffff !important;
-    font-size: 14px !important;
+/* SIDEBAR */
+#admin-sidebar {
+  background: #0d0d10;
+  border-right: 1px solid #26262e;
+  padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: 11px;
+  padding: 4px 6px 18px; margin-bottom: 12px;
+  border-bottom: 1px solid #26262e;
+}
+.sidebar-brand-logo {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px;
+  box-shadow: 0 7px 20px rgba(249,115,22,.22);
+}
+.sidebar-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.sidebar-brand-title { color: #f2f2f5; font-size: 14px; font-weight: 800; letter-spacing: -.03em; }
+.sidebar-brand-sub { color: #52525e; font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-top: 3px; }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 11px; border-radius: 10px;
+  color: #b6b6c0; font-size: 13px; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+  transition: all .18s ease; position: relative;
+}
+.sidebar-link i { width: 16px; text-align: center; font-size: 13px; color: #78788a; transition: color .18s ease; }
+.sidebar-link:hover { background: #1a1a20; color: #f2f2f5; }
+.sidebar-link:hover i { color: #f2f2f5; }
+.sidebar-link.active { background: #2a1e16; color: #f97316; }
+.sidebar-link.active i { color: #f97316; }
+.sidebar-link.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; border-radius: 0 3px 3px 0; background: #f97316;
+}
+.sidebar-footer {
+  padding-top: 14px; margin-top: auto; border-top: 1px solid #26262e;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sidebar-logout {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 11px; border-radius: 10px;
+  background: transparent; border: none;
+  color: #b6b6c0; font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .18s ease; text-align: left;
+}
+.sidebar-logout i { width: 16px; text-align: center; font-size: 13px; }
+.sidebar-logout:hover { background: #2a1216; color: #f0616b; }
+
+/* MOBILE TOPBAR */
+#mobile-topbar {
+  display: none; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: #0d0d10;
+  border-bottom: 1px solid #26262e; position: sticky; top: 0; z-index: 100;
+}
+@media (max-width: 900px) { #mobile-topbar { display: flex; } }
+.mobile-menu-btn {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: #1a1a20; border: 1px solid #26262e;
+  color: #b6b6c0; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.mobile-brand { display: flex; align-items: center; gap: 10px; }
+
+/* CONTENT */
+.admin-main { padding: 26px 24px 80px; }
+@media (max-width: 900px) { .admin-main { padding: 20px 14px 80px; } }
+@media (max-width: 480px) { .admin-main { padding: 16px 12px 80px; } }
+
+.page-header {
+  margin-bottom: 24px; padding-bottom: 18px;
+  border-bottom: 1px solid #26262e; position: relative;
+  display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+}
+.page-header::after {
+  content: ''; position: absolute; left: 0; bottom: -1px;
+  width: 70px; height: 2px;
+  background: linear-gradient(90deg, #f97316, transparent); border-radius: 2px;
+}
+.page-header-icon {
+  width: 46px; height: 46px; flex-shrink: 0;
+  border-radius: 13px;
+  background: #2a1e16; border: 1px solid rgba(249,115,22,.25);
+  color: #f97316; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 7px 20px rgba(249,115,22,.09);
+}
+.page-header-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.page-header h1 {
+  margin: 0; color: #f2f2f5; font-size: 22px; font-weight: 800;
+  letter-spacing: -.035em; line-height: 1.2;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.page-header h1 .tag {
+  font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+  background: #2a1e16; border: 1px solid rgba(249,115,22,.25);
+  color: #f97316; line-height: 1;
+}
+.page-header p { margin: 0; color: #78788a; font-size: 12.5px; }
+
+/* CARDS */
+.card-x {
+  background: #121216; border: 1px solid #26262e;
+  border-radius: 16px; padding: 20px; position: relative; overflow: hidden;
+  margin-bottom: 18px;
+}
+.card-x::before {
+  content: ''; position: absolute; top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249,115,22,.45), transparent);
+}
+.card-x h3 {
+  margin: 0 0 14px; color: #f2f2f5;
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-x h3 i { color: #f97316; font-size: 13px; }
+
+/* STATS GRID */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.stat-card {
+  padding: 16px; background: #121216;
+  border: 1px solid #26262e; border-radius: 14px;
+  display: flex; align-items: center; gap: 12px;
+  position: relative; overflow: hidden;
+  transition: all .22s ease;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249,115,22,.5), transparent);
+}
+.stat-card:hover { border-color: #32323c; background: #16161b; transform: translateY(-1px); }
+.stat-icon {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 11px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.stat-icon.orange { background: #2a1e16; color: #f97316; }
+.stat-icon.green { background: #0d2a22; color: #22d3a8; }
+.stat-icon.red { background: #2a1216; color: #f0616b; }
+.stat-icon.blue { background: #101e33; color: #3b82f6; }
+.stat-icon.purple { background: #1e1a2e; color: #a78bfa; }
+.stat-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.stat-value {
+  color: #f2f2f5; font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 700; line-height: 1.1;
+}
+.stat-label {
+  color: #78788a; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
 }
 
-.login-btn:hover {
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 12px 30px rgba(249,115,22,.3);
+/* FILTER CHIPS */
+.chips-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.chip {
+  padding: 7px 14px; border-radius: 999px;
+  background: #1a1a20; border: 1px solid #26262e;
+  color: #78788a; font-family: inherit;
+  font-size: 11.5px; font-weight: 600; cursor: pointer;
+  transition: all .18s ease;
+}
+.chip:hover { color: #f2f2f5; border-color: #32323c; }
+.chip.active {
+  background: #2a1e16; border-color: #f97316; color: #f97316;
 }
 
-.login-btn:active {
-    transform: scale(.98);
+/* LIST */
+.list-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 11px;
+  background: #16161b; border: 1px solid #26262e;
+  margin-bottom: 8px; transition: all .18s ease;
 }
-
-.login-error {
-    display: none;
-
-    margin-top: 12px;
-
-    color: #f0616b !important;
-
-    font-size: 12px;
-    font-weight: 600;
+.list-row:hover { border-color: #32323c; background: #1a1a20; }
+.list-avatar {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%; background: #2a1e16;
+  color: #f97316; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
-
-.login-error.visible {
-    display: block;
+.list-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.list-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.list-name {
+  color: #f2f2f5; font-size: 13px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
-/* ============================================================
-   MAIN PANEL
-   ============================================================ */
-
-#panel {
-    display: none;
-
-    width: min(1320px, 100%);
-
-    margin: 0 auto;
-
-    padding:
-        26px 20px
-        calc(70px + env(safe-area-inset-bottom));
-
-    position: relative;
-    z-index: 1;
+.list-meta {
+  color: #78788a; font-size: 11px;
+  display: flex; gap: 10px; flex-wrap: wrap;
 }
-
-#panel.visible {
-    display: block;
+.list-meta i { font-size: 9px; color: #52525e; margin-right: 3px; }
+.list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: .02em;
 }
+.badge.success { background: #0d2a22; color: #22d3a8; border: 1px solid rgba(34,211,168,.2); }
+.badge.failed { background: #2a1216; color: #f0616b; border: 1px solid rgba(240,97,107,.2); }
+.badge.proses { background: #1e1a2e; color: #a78bfa; border: 1px solid rgba(167,139,250,.2); }
+.badge.info { background: #101e33; color: #3b82f6; border: 1px solid rgba(59,130,246,.2); }
 
-/* ============================================================
-   PANEL TITLE
-   ============================================================ */
-
-.panel-header {
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
-
-    margin-bottom: 22px;
-    padding-bottom: 18px;
-
-    border-bottom: 1px solid #26262e;
-
-    position: relative;
+.empty {
+  text-align: center; padding: 40px 20px; color: #52525e;
 }
+.empty i { font-size: 34px; opacity: .3; display: block; margin-bottom: 10px; }
+.empty p { margin: 0; font-size: 13px; font-weight: 600; }
 
-.panel-header::after {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    bottom: -1px;
-
-    width: 75px;
-    height: 2px;
-
-    background: linear-gradient(
-        90deg,
-        #f97316,
-        transparent
-    );
-
-    border-radius: 2px;
+/* DETAIL LINK */
+.detail-link {
+  color: #f97316; font-size: 10.5px; text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 240px; display: inline-block; vertical-align: middle;
 }
+.detail-link:hover { text-decoration: underline; }
 
-.panel-header-icon {
-    width: 48px;
-    height: 48px;
+/* LOADING */
+.loading-spin { color: #78788a; font-size: 12px; padding: 14px 0; text-align: center; }
+.loading-spin i { margin-right: 6px; }
 
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 13px;
-
-    background: #2a1e16 !important;
-
-    border: 1px solid rgba(249,115,22,.25) !important;
-
-    color: #f97316 !important;
-
-    font-size: 19px;
-
-    box-shadow:
-        0 7px 20px rgba(249,115,22,.09);
-}
-
-.panel-header-icon i {
-    color: #f97316 !important;
-    font-size: 19px !important;
-}
-
-.panel-header-text {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 4px;
-}
-
-.panel-header h1 {
-    margin: 0;
-
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-
-    gap: 8px;
-
-    color: #f2f2f5 !important;
-
-    font-size: 23px;
-    font-weight: 800;
-
-    letter-spacing: -.035em;
-
-    line-height: 1.2;
-}
-
-.panel-header h1 .tag {
-    padding: 4px 9px;
-
-    border-radius: 999px;
-
-    background: #2a1e16 !important;
-
-    border: 1px solid rgba(249,115,22,.25) !important;
-
-    color: #f97316 !important;
-
-    font-size: 9px;
-    font-weight: 800;
-
-    letter-spacing: .08em;
-
-    text-transform: uppercase;
-}
-
-.panel-header p {
-    margin: 0;
-
-    color: #78788a !important;
-
-    font-size: 12.5px;
-
-    line-height: 1.45;
-}
-
-/* ============================================================
-   STATS
-   ============================================================ */
-
-.stats-row {
-    display: grid;
-
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    gap: 12px;
-
-    margin-bottom: 20px;
-}
-
-.stat-box {
-    min-width: 0;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding: 15px;
-
-    background: #121216 !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 15px;
-
-    color: #f2f2f5 !important;
-
-    position: relative;
-    overflow: hidden;
-
-    transition: .2s ease;
-}
-
-.stat-box::before {
-    content: "";
-
-    position: absolute;
-
-    top: 0;
-    left: 15%;
-    right: 15%;
-
-    height: 1px;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(249,115,22,.6),
-        transparent
-    );
-}
-
-.stat-box:hover {
-    border-color: #32323c !important;
-    background: #16161b !important;
-    transform: translateY(-1px);
-}
-
-.stat-box-icon {
-    width: 40px;
-    height: 40px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 11px;
-
-    background: #2a1e16 !important;
-
-    color: #f97316 !important;
-
-    font-size: 15px;
-}
-
-.stat-box-icon i {
-    color: #f97316 !important;
-    font-size: 15px !important;
-}
-
-.stat-box-icon.green {
-    background: #0d2a22 !important;
-    color: #22d3a8 !important;
-}
-
-.stat-box-icon.green i {
-    color: #22d3a8 !important;
-}
-
-.stat-box-icon.blue {
-    background: #101e33 !important;
-    color: #3b82f6 !important;
-}
-
-.stat-box-icon.blue i {
-    color: #3b82f6 !important;
-}
-
-.stat-box-info {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
-}
-
-.stat-box-value {
-    color: #f2f2f5 !important;
-
-    font-family: 'JetBrains Mono', monospace !important;
-
-    font-size: 21px;
-    font-weight: 700;
-
-    line-height: 1.1;
-}
-
-.stat-box-label {
-    color: #78788a !important;
-
-    font-size: 9.5px;
-    font-weight: 700;
-
-    letter-spacing: .06em;
-
-    text-transform: uppercase;
-}
-
-/* ============================================================
-   GRID
-   ============================================================ */
-
-.grid-2 {
-    display: grid;
-
-    grid-template-columns: 1fr;
-
-    gap: 18px;
-
-    align-items: start;
-}
-
-@media (min-width: 1024px) {
-    .grid-2 {
-        grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
-    }
-}
-
-/* ============================================================
-   FORM CARD
-   ============================================================ */
-
-.form-card {
-    position: relative;
-    overflow: hidden;
-
-    padding: 21px;
-
-    background: #121216 !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 18px;
-
-    color: #f2f2f5 !important;
-}
-
-.form-card::before {
-    content: "";
-
-    position: absolute;
-
-    top: 0;
-    left: 12%;
-    right: 12%;
-
-    height: 1px;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(249,115,22,.55),
-        transparent
-    );
-}
-
-/* Form */
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-
-    gap: 7px;
-
-    margin-bottom: 17px;
-}
-
+/* ADMIN NOTIF FORM (dari v4, dipindah ke sini) */
+.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .form-label {
-    display: flex;
-    align-items: center;
-
-    gap: 6px;
-
-    color: #b6b6c0 !important;
-
-    font-size: 10.5px;
-    font-weight: 700;
-
-    letter-spacing: .06em;
-
-    text-transform: uppercase;
+  color: #b6b6c0; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
 }
-
-.form-label i {
-    color: #f97316 !important;
-    font-size: 10px !important;
-}
-
+.form-label i { color: #f97316; font-size: 10px; }
 .form-input {
-    width: 100%;
-
-    padding: 12px 13px;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 10px;
-
-    outline: none;
-
-    background: #1a1a20 !important;
-
-    color: #f2f2f5 !important;
-
-    font-family: 'Inter', sans-serif !important;
-
-    font-size: 14px;
-
-    line-height: 1.4;
-
-    transition: .2s ease;
+  width: 100%; padding: 12px 13px;
+  border: 1px solid #26262e; border-radius: 10px; outline: none;
+  background: #1a1a20; color: #f2f2f5;
+  font-family: inherit; font-size: 14px; transition: .2s ease;
 }
-
-textarea.form-input {
-    min-height: 85px;
-}
-
-.form-input::placeholder {
-    color: #52525e !important;
-}
-
-.form-input:focus {
-    border-color: #f97316 !important;
-
-    box-shadow:
-        0 0 0 3px rgba(249,115,22,.12) !important;
-}
-
-.form-hint {
-    color: #78788a !important;
-
-    font-size: 10.5px;
-
-    line-height: 1.4;
-}
-
+.form-input:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
+.form-input::placeholder { color: #52525e; }
+.form-hint { color: #78788a; font-size: 10.5px; }
 .counter {
-    display: inline-block;
-
-    padding: 1px 5px;
-
-    border-radius: 4px;
-
-    background: #2a1e16 !important;
-
-    color: #f97316 !important;
-
-    font-family: 'JetBrains Mono', monospace !important;
-
-    font-size: 9px;
-    font-weight: 700;
+  display: inline-block; padding: 1px 5px; border-radius: 4px;
+  background: #2a1e16; color: #f97316;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
 }
-
-/* ============================================================
-   UPLOAD
-   ============================================================ */
-
 .upload-box {
-    width: 100%;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding: 13px;
-
-    background: #1a1a20 !important;
-
-    border: 1.5px dashed #32323c !important;
-
-    border-radius: 12px;
-
-    color: #f2f2f5 !important;
-
-    cursor: pointer;
-
-    transition: .2s ease;
+  width: 100%; display: flex; align-items: center; gap: 11px;
+  padding: 13px; background: #1a1a20;
+  border: 1.5px dashed #32323c; border-radius: 12px; cursor: pointer;
+  transition: .2s ease;
 }
-
-.upload-box:hover,
-.upload-box.dragover {
-    background: #2a1e16 !important;
-
-    border-color: #f97316 !important;
-
-    box-shadow:
-        0 0 0 3px rgba(249,115,22,.08);
-}
-
+.upload-box:hover { background: #2a1e16; border-color: #f97316; }
 .upload-preview {
-    width: 55px;
-    height: 55px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 10px;
-
-    background: #202027 !important;
-
-    border: 1px solid #32323c !important;
-
-    color: #78788a !important;
-
-    font-size: 18px;
-
-    overflow: hidden;
+  width: 55px; height: 55px; flex-shrink: 0;
+  border-radius: 10px; background: #202027;
+  border: 1px solid #32323c; color: #78788a;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
-
-.upload-preview i {
-    color: #78788a !important;
-    font-size: 18px !important;
-}
-
-.upload-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.upload-info {
-    min-width: 0;
-    flex: 1;
-}
-
-.upload-title {
-    margin-bottom: 3px;
-
-    color: #f2f2f5 !important;
-
-    font-size: 12.5px;
-    font-weight: 700;
-}
-
-.upload-hint {
-    color: #78788a !important;
-
-    font-size: 10.5px;
-
-    line-height: 1.4;
-
-    word-break: break-word;
-}
-
+.upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+.upload-info { flex: 1; min-width: 0; }
+.upload-title { color: #f2f2f5; font-size: 12.5px; font-weight: 700; margin-bottom: 3px; }
+.upload-hint { color: #78788a; font-size: 10.5px; word-break: break-word; }
 .upload-remove {
-    width: 31px;
-    height: 31px;
-
-    flex-shrink: 0;
-
-    display: none;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border-radius: 8px;
-
-    background: #2a1216 !important;
-
-    border: 1px solid rgba(240,97,107,.3) !important;
-
-    color: #f0616b !important;
-
-    cursor: pointer;
+  width: 31px; height: 31px; flex-shrink: 0; padding: 0;
+  border-radius: 8px; background: #2a1216;
+  border: 1px solid rgba(240,97,107,.3); color: #f0616b;
+  display: none; align-items: center; justify-content: center;
+  font-size: 11px; cursor: pointer;
 }
-
-.upload-box.has-image .upload-remove {
-    display: flex;
-}
-
-.upload-remove i {
-    color: #f0616b !important;
-    font-size: 11px !important;
-}
-
-/* ============================================================
-   SEND BUTTON
-   ============================================================ */
+.upload-box.has-image .upload-remove { display: flex; }
 
 .send-btn {
-    width: 100%;
-    min-height: 53px;
-
-    margin-top: 21px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 9px;
-
-    padding: 14px 18px;
-
-    border: 0;
-    border-radius: 12px;
-
-    background: linear-gradient(
-        135deg,
-        #f97316,
-        #ea580c
-    ) !important;
-
-    color: #ffffff !important;
-
-    font-family: 'Inter', sans-serif !important;
-
-    font-size: 13.5px;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    box-shadow:
-        0 9px 25px rgba(249,115,22,.2);
-
-    transition: .2s ease;
-
-    position: relative;
-    overflow: hidden;
+  width: 100%; min-height: 50px; margin-top: 18px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 14px 18px; border: 0; border-radius: 12px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff; font-family: inherit;
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 9px 25px rgba(249,115,22,.2); transition: .2s ease;
 }
-
-.send-btn i {
-    color: #ffffff !important;
-    font-size: 14px !important;
-}
-
-.send-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 12px 30px rgba(249,115,22,.28);
-}
-
-.send-btn:active:not(:disabled) {
-    transform: scale(.985);
-}
-
-.send-btn:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-}
-
-/* ============================================================
-   RESULT
-   ============================================================ */
+.send-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(249,115,22,.28); }
+.send-btn:disabled { opacity: .6; cursor: not-allowed; }
 
 .result {
-    margin-top: 14px;
-
-    padding: 13px 14px;
-
-    display: none;
-
-    align-items: flex-start;
-
-    gap: 9px;
-
-    border-radius: 11px;
-
-    font-family: 'Inter', sans-serif !important;
-
-    font-size: 12px;
-
-    line-height: 1.5;
+  margin-top: 14px; padding: 13px 14px;
+  display: none; align-items: flex-start; gap: 9px;
+  border-radius: 11px; font-size: 12px; line-height: 1.5;
 }
+.result.visible { display: flex; }
+.result.success { background: #0d2a22; border: 1px solid rgba(34,211,168,.25); color: #6ee7b7; }
+.result.error { background: #2a1216; border: 1px solid rgba(240,97,107,.25); color: #fca5a5; }
+.result.loading { background: #101e33; border: 1px solid rgba(59,130,246,.25); color: #93c5fd; }
 
-.result.visible {
-    display: flex;
-}
-
-.result i {
-    flex-shrink: 0;
-
-    margin-top: 2px;
-
-    font-size: 13px !important;
-}
-
-.result.success {
-    background: #0d2a22 !important;
-    border: 1px solid rgba(34,211,168,.25) !important;
-    color: #6ee7b7 !important;
-}
-
-.result.error {
-    background: #2a1216 !important;
-    border: 1px solid rgba(240,97,107,.25) !important;
-    color: #fca5a5 !important;
-}
-
-.result.loading {
-    background: #101e33 !important;
-    border: 1px solid rgba(59,130,246,.25) !important;
-    color: #93c5fd !important;
-}
-
-/* ============================================================
-   PREVIEW
-   ============================================================ */
-
+/* PREVIEW PHONE */
 .preview-wrap {
-    position: relative;
-    overflow: hidden;
-
-    padding: 21px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #121216,
-            #0f0f13
-        ) !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 18px;
-
-    color: #f2f2f5 !important;
+  background: linear-gradient(180deg, #121216, #0f0f13);
+  border: 1px solid #26262e; border-radius: 18px;
+  padding: 21px; position: relative; overflow: hidden;
 }
-
-.preview-wrap::before {
-    content: "";
-
-    position: absolute;
-
-    width: 230px;
-    height: 230px;
-
-    right: -120px;
-    top: -110px;
-
-    background: radial-gradient(
-        circle,
-        rgba(249,115,22,.11),
-        transparent 70%
-    );
-
-    pointer-events: none;
-}
-
 .preview-label {
-    display: flex;
-    align-items: center;
-
-    gap: 8px;
-
-    margin-bottom: 15px;
-
-    color: #78788a !important;
-
-    font-size: 9.5px;
-    font-weight: 800;
-
-    letter-spacing: .12em;
-
-    text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+  color: #78788a; font-size: 9.5px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 15px;
 }
-
-.preview-label::before,
-.preview-label::after {
-    content: "";
-
-    flex: 1;
-
-    height: 1px;
-
-    background: #26262e;
+.preview-label::before, .preview-label::after {
+  content: ''; flex: 1; height: 1px; background: #26262e;
 }
-
-/* ============================================================
-   PHONE PREVIEW
-   ============================================================ */
-
 .phone-shell {
-    padding: 13px 11px 15px;
-
-    background: #0a0a0d !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 25px;
-
-    box-shadow:
-        0 15px 35px rgba(0,0,0,.4);
+  padding: 13px 11px 15px;
+  background: #0a0a0d; border: 1px solid #26262e;
+  border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,.4);
 }
-
 .phone-notch {
-    width: 58px;
-    height: 5px;
-
-    margin: 0 auto 11px;
-
-    border-radius: 999px;
-
-    background: #26262e !important;
+  width: 58px; height: 5px; margin: 0 auto 11px;
+  border-radius: 999px; background: #26262e;
 }
-
 .phone-notif {
-    min-height: 140px;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 9px;
-
-    padding: 13px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #1a1a20,
-            #121216
-        ) !important;
-
-    border: 1px solid #26262e !important;
-
-    border-radius: 18px;
-
-    color: #ffffff !important;
-
-    box-shadow:
-        0 5px 18px rgba(0,0,0,.3);
+  min-height: 130px; display: flex; flex-direction: column; gap: 9px;
+  padding: 13px; background: linear-gradient(180deg, #1a1a20, #121216);
+  border: 1px solid #26262e; border-radius: 18px;
+  box-shadow: 0 5px 18px rgba(0,0,0,.3);
 }
-
-.pn-content {
-    display: flex;
-    flex-direction: column;
-
-    gap: 8px;
-}
-
+.pn-content { display: flex; flex-direction: column; gap: 8px; }
 .pn-head {
-    display: flex;
-    align-items: center;
-
-    gap: 7px;
-
-    color: #a0a0b0 !important;
-
-    font-size: 10px;
+  display: flex; align-items: center; gap: 7px;
+  color: #a0a0b0; font-size: 10px;
 }
-
 .pn-icon {
-    width: 23px;
-    height: 23px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 6px;
-
-    background: linear-gradient(
-        135deg,
-        #f97316,
-        #ea580c
-    ) !important;
-
-    color: #ffffff !important;
-
-    font-size: 10px;
-
-    overflow: hidden;
+  width: 23px; height: 23px; flex-shrink: 0;
+  border-radius: 6px; background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff; font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
 }
-
-.pn-icon i {
-    color: #ffffff !important;
-    font-size: 10px !important;
-}
-
-.pn-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.pn-app {
-    color: #d0d0d8 !important;
-    font-weight: 600;
-}
-
-.pn-time {
-    margin-left: auto;
-
-    color: #70707a !important;
-
-    font-family: 'JetBrains Mono', monospace !important;
-
-    font-size: 9px;
-}
-
-.pn-body-wrap {
-    display: flex;
-
-    align-items: flex-start;
-
-    gap: 9px;
-}
-
+.pn-app { color: #d0d0d8; font-weight: 600; }
+.pn-time { margin-left: auto; color: #70707a; font-family: 'JetBrains Mono', monospace; font-size: 9px; }
+.pn-body-wrap { display: flex; gap: 9px; align-items: flex-start; }
 .pn-thumb {
-    width: 46px;
-    height: 46px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 9px;
-
-    background: #202027 !important;
-
-    color: #78788a !important;
-
-    font-size: 16px;
-
-    overflow: hidden;
+  width: 46px; height: 46px; flex-shrink: 0;
+  border-radius: 9px; background: #202027; color: #78788a;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
-
-.pn-thumb i {
-    color: #78788a !important;
-    font-size: 16px !important;
-}
-
-.pn-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.pn-text {
-    min-width: 0;
-    flex: 1;
-}
-
+.pn-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pn-text { min-width: 0; flex: 1; }
 .pn-title {
-    margin-bottom: 3px;
-
-    color: #ffffff !important;
-
-    font-size: 13px;
-    font-weight: 700;
-
-    line-height: 1.25;
-
-    word-break: break-word;
+  color: #fff; font-size: 13px; font-weight: 700;
+  line-height: 1.25; margin-bottom: 3px; word-break: break-word;
 }
-
 .pn-body {
-    color: #b0b0bc !important;
-
-    font-size: 11px;
-
-    line-height: 1.4;
-
-    word-break: break-word;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-
-    overflow: hidden;
+  color: #b0b0bc; font-size: 11px; line-height: 1.4; word-break: break-word;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-
 .pn-url {
-    margin-top: 6px;
-
-    color: #70707a !important;
-
-    font-family: 'JetBrains Mono', monospace !important;
-
-    font-size: 9px;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
+  margin-top: 6px; color: #70707a;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ============================================================
-   TOAST
-   ============================================================ */
-
-#toast {
-    position: fixed;
-
-    left: 50%;
-    bottom: 24px;
-
-    transform: translateX(-50%);
-
-    z-index: 10000;
-
-    font-family: 'Inter', sans-serif !important;
-}
-
-/* ============================================================
-   TABLET
-   ============================================================ */
-
-@media (max-width: 767px) {
-
-    .admin-header {
-        min-height: 62px;
-
-        padding:
-            9px
-            14px;
-    }
-
-    .admin-brand {
-        gap: 9px;
-    }
-
-    .admin-brand-logo {
-        width: 38px;
-        height: 38px;
-
-        border-radius: 11px;
-    }
-
-    .admin-brand-logo i {
-        font-size: 15px !important;
-    }
-
-    .admin-brand-title {
-        font-size: 14px;
-    }
-
-    .admin-brand-sub {
-        font-size: 9px;
-    }
-
-    .sub-chip {
-        min-height: 32px;
-        padding: 6px 9px;
-
-        font-size: 10px;
-    }
-
-    .admin-logout-btn {
-        width: 35px;
-        height: 35px;
-
-        padding: 0;
-
-        border-radius: 9px;
-    }
-
-    .admin-logout-btn span {
-        display: none;
-    }
-
-    #panel {
-        padding:
-            19px
-            14px
-            calc(70px + env(safe-area-inset-bottom));
-    }
-
-    .panel-header {
-        gap: 10px;
-        margin-bottom: 17px;
-        padding-bottom: 15px;
-    }
-
-    .panel-header-icon {
-        width: 41px;
-        height: 41px;
-
-        border-radius: 11px;
-
-        font-size: 16px;
-    }
-
-    .panel-header-icon i {
-        font-size: 16px !important;
-    }
-
-    .panel-header h1 {
-        font-size: 19px;
-    }
-
-    .panel-header h1 .tag {
-        padding: 4px 8px;
-        font-size: 8.5px;
-    }
-
-    .panel-header p {
-        font-size: 11px;
-    }
-
-    .stats-row {
-        gap: 9px;
-        margin-bottom: 14px;
-    }
-
-    .stat-box {
-        padding: 12px 11px;
-
-        border-radius: 13px;
-
-        gap: 8px;
-    }
-
-    .stat-box-icon {
-        width: 35px;
-        height: 35px;
-
-        border-radius: 9px;
-
-        font-size: 13px;
-    }
-
-    .stat-box-icon i {
-        font-size: 13px !important;
-    }
-
-    .stat-box-value {
-        font-size: 18px;
-    }
-
-    .stat-box-label {
-        font-size: 8.5px;
-    }
-
-    .grid-2 {
-        grid-template-columns: 1fr;
-
-        gap: 14px;
-    }
-
-    .form-card {
-        padding: 17px 15px;
-
-        border-radius: 16px;
-    }
-
-    .preview-wrap {
-        padding: 17px 13px 19px;
-
-        border-radius: 16px;
-    }
-
-    .send-btn {
-        min-height: 51px;
-
-        margin-top: 19px;
-
-        font-size: 13px;
-    }
-}
-
-/* ============================================================
-   HP KECIL
-   ============================================================ */
-
-@media (max-width: 380px) {
-
-    .admin-brand-sub {
-        display: none;
-    }
-
-    .header-actions {
-        gap: 5px;
-    }
-
-    .sub-chip {
-        padding: 6px 8px;
-    }
-
-    #panel {
-        padding-left: 11px;
-        padding-right: 11px;
-    }
-
-    .stats-row {
-        gap: 7px;
-    }
-
-    .stat-box {
-        padding: 11px 9px;
-    }
-
-    .stat-box-icon {
-        width: 32px;
-        height: 32px;
-    }
-
-    .stat-box-value {
-        font-size: 17px;
-    }
-
-    .stat-box-label {
-        font-size: 7.8px;
-    }
-
-    .panel-header h1 {
-        font-size: 18px;
-    }
-
-    .panel-header p {
-        font-size: 10.5px;
-    }
-
-    .form-card {
-        padding: 15px 13px;
-    }
-
-    .login-card {
-        padding: 28px 19px 22px;
-        border-radius: 19px;
-    }
-}
-
-/* ============================================================
-   VERY SMALL SCREEN
-   ============================================================ */
-
-@media (max-width: 330px) {
-
-    .admin-brand-title {
-        font-size: 13px;
-    }
-
-    .sub-chip {
-        font-size: 9px;
-    }
-
-    .panel-header-icon {
-        width: 38px;
-        height: 38px;
-    }
-
-    .panel-header h1 {
-        font-size: 17px;
-    }
-}
-
-/* ============================================================
-   REDUCE MOTION
-   ============================================================ */
-
-@media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .01ms !important;
-    }
-}
-
+#toast { position: fixed; bottom: 24px; left: 50%; z-index: 10000; }
 </style>
 </head>
-
 <body class="admin-page">
 
-<!-- ============================================================
-     LOGIN
-     ============================================================ -->
-
 <div id="login-screen">
-
-    <div class="login-card">
-
-        <div class="login-icon">
-            <i class="fa-solid fa-shield-halved"></i>
-        </div>
-
-        <h2>Admin Panel</h2>
-
-        <p>
-            Masukkan password untuk mengakses dashboard notifikasi.
-        </p>
-
-        <input
-            type="password"
-            id="admin-password"
-            class="login-input"
-            placeholder="••••••••"
-            autocomplete="off"
-        >
-
-        <button
-            id="login-btn"
-            class="login-btn"
-        >
-            <i class="fa-solid fa-right-to-bracket"></i>
-            <span>Masuk</span>
-        </button>
-
-        <div
-            id="login-error"
-            class="login-error"
-        >
-            Password salah. Coba lagi.
-        </div>
-
-    </div>
-
+  <div class="login-card">
+    <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <h2>Admin Panel</h2>
+    <p>Masukkan password untuk mengakses dashboard.</p>
+    <input type="password" id="admin-password" class="login-input" placeholder="••••••••" autocomplete="off">
+    <button id="login-btn" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+    <div id="login-error" class="login-error">Password salah. Coba lagi.</div>
+  </div>
 </div>
 
-
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
-
-<header
-    class="admin-header"
-    id="admin-header"
-    style="display:none;"
->
-
-    <div class="admin-brand">
-
-        <div class="admin-brand-logo">
-            <i class="fa-solid fa-bell"></i>
+<div id="admin-app">
+  <div class="admin-layout">
+    <div id="admin-sidebar-backdrop"></div>
+    <aside id="admin-sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-logo"><i class="fa-solid fa-bell"></i></div>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-brand-title">Ekk Store</span>
+          <span class="sidebar-brand-sub">Admin Panel</span>
         </div>
+      </div>
+      <nav class="sidebar-nav" id="admin-nav">
+        <a class="sidebar-link" data-nav="dashboard" href="/admin"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a class="sidebar-link" data-nav="notif" href="/admin/notif"><i class="fa-solid fa-paper-plane"></i> Kirim Notif</a>
+        <a class="sidebar-link" data-nav="deploy" href="/admin/deploy"><i class="fa-solid fa-rocket"></i> Deploy</a>
+        <a class="sidebar-link" data-nav="pengunjung" href="/admin/pengunjung"><i class="fa-solid fa-users"></i> Pengunjung</a>
+        <a class="sidebar-link" data-nav="apk" href="/admin/apk"><i class="fa-solid fa-mobile-screen-button"></i> APK</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="sidebar-logout" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar</button>
+      </div>
+    </aside>
 
-        <div class="admin-brand-text">
-
-            <span class="admin-brand-title">
-                Ekk Store
-            </span>
-
-            <span class="admin-brand-sub">
-                Admin Panel
-            </span>
-
+    <div>
+      <div id="mobile-topbar">
+        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        <div class="mobile-brand">
+          <div class="sidebar-brand-logo" style="width:32px;height:32px;font-size:13px;"><i class="fa-solid fa-bell"></i></div>
+          <span class="sidebar-brand-title" style="font-size:13px;">Ekk Store</span>
         </div>
-
+        <div style="width:38px;"></div>
+      </div>
+      <main class="admin-main" id="admin-content">
+        <div class="loading-spin"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
+      </main>
     </div>
-
-
-    <div class="header-actions">
-
-        <span class="sub-chip">
-            <i class="fa-solid fa-users"></i>
-            <span id="sub-count">—</span>
-        </span>
-
-        <button
-            class="admin-logout-btn"
-            id="logout-btn"
-        >
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-
-            <span>
-                Keluar
-            </span>
-        </button>
-
-    </div>
-
-</header>
-
-
-<!-- ============================================================
-     MAIN PANEL
-     ============================================================ -->
-
-<main id="panel">
-
-
-    <!-- PANEL HEADER -->
-
-    <div class="panel-header">
-
-        <div class="panel-header-icon">
-            <i class="fa-solid fa-paper-plane"></i>
-        </div>
-
-        <div class="panel-header-text">
-
-            <h1>
-                Kirim Notifikasi
-
-                <span class="tag">
-                    Broadcast
-                </span>
-            </h1>
-
-            <p>
-                Isi konten, lihat preview, lalu kirim ke semua subscriber.
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <!-- ========================================================
-         STATS
-         ======================================================== -->
-
-    <div class="stats-row">
-
-
-        <div class="stat-box">
-
-            <div class="stat-box-icon green">
-                <i class="fa-solid fa-users"></i>
-            </div>
-
-            <div class="stat-box-info">
-
-                <span
-                    class="stat-box-value"
-                    id="stat-sub-count"
-                >
-                    —
-                </span>
-
-                <span class="stat-box-label">
-                    Subscriber
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <div class="stat-box">
-
-            <div class="stat-box-icon blue">
-                <i class="fa-solid fa-clock"></i>
-            </div>
-
-            <div class="stat-box-info">
-
-                <span
-                    class="stat-box-value"
-                    id="stat-last"
-                >
-                    —
-                </span>
-
-                <span class="stat-box-label">
-                    Last Sent
-                </span>
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-
-    <!-- ========================================================
-         CONTENT GRID
-         ======================================================== -->
-
-    <div class="grid-2">
-
-
-        <!-- ====================================================
-             FORM
-             ==================================================== -->
-
-        <div class="form-card">
-
-
-            <!-- TITLE -->
-
-            <div class="form-group">
-
-                <label
-                    class="form-label"
-                    for="title"
-                >
-                    <i class="fa-solid fa-heading"></i>
-                    Judul Notifikasi
-                </label>
-
-                <input
-                    type="text"
-                    id="title"
-                    class="form-input"
-                    placeholder="contoh: Ekk Store Update"
-                    maxlength="60"
-                    autocomplete="off"
-                >
-
-                <span class="form-hint">
-                    <span
-                        class="counter"
-                        id="title-count"
-                    >0</span>
-                    / 60 karakter
-                </span>
-
-            </div>
-
-
-            <!-- BODY -->
-
-            <div class="form-group">
-
-                <label
-                    class="form-label"
-                    for="body"
-                >
-                    <i class="fa-solid fa-align-left"></i>
-                    Isi Notifikasi
-                </label>
-
-                <textarea
-                    id="body"
-                    class="form-input"
-                    placeholder="Tulis pesan singkat dan jelas di sini..."
-                    maxlength="180"
-                    rows="3"
-                    style="resize:vertical;min-height:85px;"
-                ></textarea>
-
-                <span class="form-hint">
-                    <span
-                        class="counter"
-                        id="body-count"
-                    >0</span>
-                    / 180 karakter
-                </span>
-
-            </div>
-
-
-            <!-- URL -->
-
-            <div class="form-group">
-
-                <label
-                    class="form-label"
-                    for="url"
-                >
-                    <i class="fa-solid fa-link"></i>
-                    URL Tujuan
-                </label>
-
-                <input
-                    type="url"
-                    id="url"
-                    class="form-input"
-                    placeholder="https://deploy.project.ekkstore.web.id/"
-                    autocomplete="off"
-                >
-
-                <span class="form-hint">
-                    Halaman yang dibuka saat notif diklik.
-                </span>
-
-            </div>
-
-
-            <!-- IMAGE -->
-
-            <div class="form-group">
-
-                <label class="form-label">
-                    <i class="fa-solid fa-image"></i>
-                    Gambar Notifikasi (opsional)
-                </label>
-
-                <div
-                    class="upload-box"
-                    id="upload-box"
-                >
-
-                    <div
-                        class="upload-preview"
-                        id="upload-preview"
-                    >
-                        <i class="fa-solid fa-image"></i>
-                    </div>
-
-
-                    <div class="upload-info">
-
-                        <div
-                            class="upload-title"
-                            id="upload-title"
-                        >
-                            Tap untuk upload gambar
-                        </div>
-
-                        <div
-                            class="upload-hint"
-                            id="upload-hint"
-                        >
-                            JPG / PNG · Max 3 MB
-                        </div>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        class="upload-remove"
-                        id="upload-remove"
-                        aria-label="Hapus gambar"
-                    >
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-
-                </div>
-
-
-                <input
-                    type="file"
-                    id="image-input"
-                    accept="image/*"
-                    style="display:none;"
-                >
-
-            </div>
-
-
-            <!-- SEND -->
-
-            <button
-                id="btn-send"
-                class="send-btn"
-            >
-
-                <i class="fa-solid fa-paper-plane"></i>
-
-                <span>
-                    Kirim ke Semua Subscriber
-                </span>
-
-            </button>
-
-
-            <!-- RESULT -->
-
-            <div
-                class="result"
-                id="result"
-            >
-
-                <i id="result-icon"></i>
-
-                <span id="result-text"></span>
-
-            </div>
-
-
-        </div>
-
-
-        <!-- ====================================================
-             PREVIEW
-             ==================================================== -->
-
-        <div class="preview-wrap">
-
-
-            <div class="preview-label">
-                Preview
-            </div>
-
-
-            <div class="phone-shell">
-
-                <div class="phone-notch"></div>
-
-
-                <div class="phone-notif">
-
-                    <div class="pn-content">
-
-
-                        <!-- NOTIFICATION HEADER -->
-
-                        <div class="pn-head">
-
-                            <div class="pn-icon">
-                                <i class="fa-solid fa-bolt"></i>
-                            </div>
-
-                            <span class="pn-app">
-                                Deploy Project
-                            </span>
-
-                            <span class="pn-time">
-                                baru saja
-                            </span>
-
-                        </div>
-
-
-                        <!-- NOTIFICATION BODY -->
-
-                        <div class="pn-body-wrap">
-
-
-                            <div
-                                class="pn-thumb"
-                                id="pn-thumb"
-                            >
-                                <i class="fa-solid fa-bullhorn"></i>
-                            </div>
-
-
-                            <div class="pn-text">
-
-                                <div
-                                    class="pn-title"
-                                    id="pn-title"
-                                >
-                                    Ekk Store
-                                </div>
-
-                                <div
-                                    class="pn-body"
-                                    id="pn-body"
-                                >
-                                    Isi notifikasi akan muncul di sini saat Anda mengetik.
-                                </div>
-
-                                <div
-                                    class="pn-url"
-                                    id="pn-url"
-                                    style="display:none;"
-                                ></div>
-
-                            </div>
-
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-</main>
-
-
-<!-- TOAST -->
+  </div>
+</div>
 
 <div id="toast"></div>
-
-
-<!-- ============================================================
-     JAVASCRIPT ASLI
-     JANGAN DIUBAH
-     ============================================================ -->
-
 <script src="/js/admin.js"></script>
-
 </body>
 </html>
