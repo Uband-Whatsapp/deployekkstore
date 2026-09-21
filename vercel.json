@@ -3,6 +3,10 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/notif", "destination": "/admin/index.html" },
+    { "source": "/admin/deploy", "destination": "/admin/index.html" },
+    { "source": "/admin/pengunjung", "destination": "/admin/index.html" },
+    { "source": "/admin/apk", "destination": "/admin/index.html" },
     { "source": "/deploy", "destination": "/deploy/index.html" },
     { "source": "/history", "destination": "/history/index.html" },
     { "source": "/group", "destination": "/group/index.html" },
