@@ -156,8 +156,8 @@ async function renderDashboard(content) {
   `;
 
   try {
-    const [stats, deploy] = await Promise.all([fetchStats(0), fetchDeployStats(0)]);
-    const g = deploy.global || {};
+    const [stats, deploy] = await Promise.all([fetchStats(0), fetchDeployStats(0, 'summary')]);
+const g = deploy.global || {};
 
     $('dash-stats').innerHTML = `
       <div class="stat-card">
@@ -178,20 +178,12 @@ async function renderDashboard(content) {
       </div>
     `;
 
-    const recent = [];
-    (deploy.per_user || []).forEach(u => {
-      (u.projects || []).forEach(p => {
-        recent.push({ username: u.username, has_profile: u.has_profile, ...p });
-      });
-    });
-    recent.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-    const top = recent.slice(0, 8);
-
-    if (top.length === 0) {
-      $('dash-deploy-list').innerHTML = '<div class="empty"><i class="fa-solid fa-inbox"></i><p>Belum ada deploy</p></div>';
-    } else {
-      $('dash-deploy-list').innerHTML = top.map(p => renderDeployRow(p, false)).join('');
-    }
+    const recent = deploy.recent || [];
+if (recent.length === 0) {
+  $('dash-deploy-list').innerHTML = '<div class="empty"><i class="fa-solid fa-inbox"></i><p>Belum ada deploy</p></div>';
+} else {
+  $('dash-deploy-list').innerHTML = recent.map(p => renderDeployRow(p, true)).join('');
+}
   } catch (e) {
     $('dash-stats').innerHTML = '<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><p>Gagal memuat: ' + escapeHTML(e.message) + '</p></div>';
   }
