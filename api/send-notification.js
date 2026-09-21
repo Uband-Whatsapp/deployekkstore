@@ -16,6 +16,15 @@ const VAPID_PRIVATE_KEY = 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
 webpush.setVapidDetails('mailto:ekkstore.id@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const countSnap = await db.collection('push_subscriptions').count().get();
+      return res.status(200).json({ count: countSnap.data().count });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
