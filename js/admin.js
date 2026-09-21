@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-const ADMIN_PASSWORD = 'ekkadmin2024';
+const ADMIN_PASSWORD = 'Admin1';
 const SESSION_KEY = 'ekk_admin_session_v1';
 const SESSION_DURATION = 12 * 60 * 60 * 1000;
 const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
