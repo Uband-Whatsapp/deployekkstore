@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Admin — Ekk Store</title>
+<title>Admin — Kirim Notif</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0a0a0d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,114 +66,53 @@ body.admin-page i, body.admin-page .fa, body.admin-page .fas, body.admin-page .f
 .login-error { display: none; margin-top: 12px; color: #f0616b; font-size: 12px; font-weight: 600; }
 .login-error.visible { display: block; }
 
-/* LAYOUT */
-#admin-app { display: none; min-height: 100vh; position: relative; z-index: 1; }
-#admin-app.visible { display: block; }
+#panel { display: none; max-width: 720px; margin: 0 auto; padding: 26px 20px 80px; position: relative; z-index: 1; }
+#panel.visible { display: block; }
 
-.admin-layout {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  min-height: 100vh;
-}
-@media (max-width: 900px) {
-  .admin-layout { grid-template-columns: 1fr; }
-  #admin-sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0; width: 260px; z-index: 200;
-    transform: translateX(-100%); transition: transform .3s cubic-bezier(.22,.61,.36,1);
-    box-shadow: 0 0 40px rgba(0,0,0,.5);
-  }
-  #admin-sidebar.open { transform: translateX(0); }
-  #admin-sidebar-backdrop {
-    display: none; position: fixed; inset: 0; z-index: 199;
-    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
-  }
-  #admin-sidebar-backdrop.active { display: block; }
-}
-
-/* SIDEBAR */
-#admin-sidebar {
-  background: #0d0d10;
-  border-right: 1px solid #26262e;
-  padding: 20px 14px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.sidebar-brand {
-  display: flex; align-items: center; gap: 11px;
-  padding: 4px 6px 18px; margin-bottom: 12px;
+.admin-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,10,13,.94); backdrop-filter: blur(18px);
   border-bottom: 1px solid #26262e;
+  padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; position: relative; z-index: 100;
 }
-.sidebar-brand-logo {
-  width: 38px; height: 38px; border-radius: 11px;
+.admin-brand { display: flex; align-items: center; gap: 11px; }
+.admin-brand-logo {
+  width: 40px; height: 40px; border-radius: 12px;
   background: linear-gradient(135deg, #f97316, #ea580c);
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 15px;
+  color: #fff; font-size: 16px;
   box-shadow: 0 7px 20px rgba(249,115,22,.22);
 }
-.sidebar-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-.sidebar-brand-title { color: #f2f2f5; font-size: 14px; font-weight: 800; letter-spacing: -.03em; }
-.sidebar-brand-sub { color: #52525e; font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-top: 3px; }
-
-.sidebar-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
-.sidebar-link {
-  display: flex; align-items: center; gap: 11px;
-  padding: 10px 11px; border-radius: 10px;
-  color: #b6b6c0; font-size: 13px; font-weight: 600;
-  text-decoration: none; cursor: pointer;
-  transition: all .18s ease; position: relative;
+.admin-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.admin-brand-title { color: #f2f2f5; font-size: 15px; font-weight: 800; letter-spacing: -.03em; }
+.admin-brand-sub { color: #52525e; font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-top: 3px; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.sub-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border-radius: 999px;
+  background: rgba(34,211,168,.08); border: 1px solid rgba(34,211,168,.22);
+  color: #22d3a8; font-size: 11.5px; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
 }
-.sidebar-link i { width: 16px; text-align: center; font-size: 13px; color: #78788a; transition: color .18s ease; }
-.sidebar-link:hover { background: #1a1a20; color: #f2f2f5; }
-.sidebar-link:hover i { color: #f2f2f5; }
-.sidebar-link.active { background: #2a1e16; color: #f97316; }
-.sidebar-link.active i { color: #f97316; }
-.sidebar-link.active::before {
-  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: 3px; height: 18px; border-radius: 0 3px 3px 0; background: #f97316;
-}
-.sidebar-footer {
-  padding-top: 14px; margin-top: auto; border-top: 1px solid #26262e;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.sidebar-logout {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 11px; border-radius: 10px;
-  background: transparent; border: none;
-  color: #b6b6c0; font-family: inherit; font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all .18s ease; text-align: left;
-}
-.sidebar-logout i { width: 16px; text-align: center; font-size: 13px; }
-.sidebar-logout:hover { background: #2a1216; color: #f0616b; }
-
-/* MOBILE TOPBAR */
-#mobile-topbar {
-  display: none; align-items: center; justify-content: space-between;
-  padding: 12px 14px; background: #0d0d10;
-  border-bottom: 1px solid #26262e; position: sticky; top: 0; z-index: 100;
-}
-@media (max-width: 900px) { #mobile-topbar { display: flex; } }
-.mobile-menu-btn {
-  width: 38px; height: 38px; border-radius: 10px;
+.logout-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-radius: 10px;
   background: #1a1a20; border: 1px solid #26262e;
-  color: #b6b6c0; font-size: 15px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
+  color: #b6b6c0; font-family: inherit;
+  font-size: 12px; font-weight: 600; cursor: pointer;
 }
-.mobile-brand { display: flex; align-items: center; gap: 10px; }
-
-/* CONTENT */
-.admin-main { padding: 26px 24px 80px; }
-@media (max-width: 900px) { .admin-main { padding: 20px 14px 80px; } }
-@media (max-width: 480px) { .admin-main { padding: 16px 12px 80px; } }
+.logout-btn:hover { background: #2a1216; color: #f0616b; border-color: rgba(240,97,107,.3); }
 
 .page-header {
-  margin-bottom: 24px; padding-bottom: 18px;
-  border-bottom: 1px solid #26262e; position: relative;
-  display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+  margin-bottom: 22px; display: flex; align-items: center; gap: 13px;
+  padding-bottom: 18px; border-bottom: 1px solid #26262e; position: relative;
 }
 .page-header::after {
   content: ''; position: absolute; left: 0; bottom: -1px;
-  width: 70px; height: 2px;
-  background: linear-gradient(90deg, #f97316, transparent); border-radius: 2px;
+  width: 70px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, #f97316, transparent);
 }
 .page-header-icon {
   width: 46px; height: 46px; flex-shrink: 0;
@@ -181,147 +120,20 @@ body.admin-page i, body.admin-page .fa, body.admin-page .fas, body.admin-page .f
   background: #2a1e16; border: 1px solid rgba(249,115,22,.25);
   color: #f97316; font-size: 18px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 7px 20px rgba(249,115,22,.09);
 }
-.page-header-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.page-header h1 {
-  margin: 0; color: #f2f2f5; font-size: 22px; font-weight: 800;
-  letter-spacing: -.035em; line-height: 1.2;
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-}
-.page-header h1 .tag {
-  font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 999px;
-  background: #2a1e16; border: 1px solid rgba(249,115,22,.25);
-  color: #f97316; line-height: 1;
-}
-.page-header p { margin: 0; color: #78788a; font-size: 12.5px; }
+.page-header h1 { margin: 0; color: #f2f2f5; font-size: 22px; font-weight: 800; letter-spacing: -.035em; }
+.page-header p { margin: 4px 0 0; color: #78788a; font-size: 12.5px; }
 
-/* CARDS */
 .card-x {
   background: #121216; border: 1px solid #26262e;
-  border-radius: 16px; padding: 20px; position: relative; overflow: hidden;
-  margin-bottom: 18px;
+  border-radius: 16px; padding: 20px;
+  position: relative; overflow: hidden;
 }
 .card-x::before {
   content: ''; position: absolute; top: 0; left: 12%; right: 12%; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(249,115,22,.45), transparent);
 }
-.card-x h3 {
-  margin: 0 0 14px; color: #f2f2f5;
-  font-size: 14px; font-weight: 700;
-  display: flex; align-items: center; gap: 8px;
-}
-.card-x h3 i { color: #f97316; font-size: 13px; }
 
-/* STATS GRID */
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px; margin-bottom: 20px;
-}
-.stat-card {
-  padding: 16px; background: #121216;
-  border: 1px solid #26262e; border-radius: 14px;
-  display: flex; align-items: center; gap: 12px;
-  position: relative; overflow: hidden;
-  transition: all .22s ease;
-}
-.stat-card::before {
-  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(249,115,22,.5), transparent);
-}
-.stat-card:hover { border-color: #32323c; background: #16161b; transform: translateY(-1px); }
-.stat-icon {
-  width: 42px; height: 42px; flex-shrink: 0;
-  border-radius: 11px; display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-}
-.stat-icon.orange { background: #2a1e16; color: #f97316; }
-.stat-icon.green { background: #0d2a22; color: #22d3a8; }
-.stat-icon.red { background: #2a1216; color: #f0616b; }
-.stat-icon.blue { background: #101e33; color: #3b82f6; }
-.stat-icon.purple { background: #1e1a2e; color: #a78bfa; }
-.stat-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.stat-value {
-  color: #f2f2f5; font-family: 'JetBrains Mono', monospace;
-  font-size: 22px; font-weight: 700; line-height: 1.1;
-}
-.stat-label {
-  color: #78788a; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .06em;
-}
-
-/* FILTER CHIPS */
-.chips-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.chip {
-  padding: 7px 14px; border-radius: 999px;
-  background: #1a1a20; border: 1px solid #26262e;
-  color: #78788a; font-family: inherit;
-  font-size: 11.5px; font-weight: 600; cursor: pointer;
-  transition: all .18s ease;
-}
-.chip:hover { color: #f2f2f5; border-color: #32323c; }
-.chip.active {
-  background: #2a1e16; border-color: #f97316; color: #f97316;
-}
-
-/* LIST */
-.list-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px; border-radius: 11px;
-  background: #16161b; border: 1px solid #26262e;
-  margin-bottom: 8px; transition: all .18s ease;
-}
-.list-row:hover { border-color: #32323c; background: #1a1a20; }
-.list-avatar {
-  width: 40px; height: 40px; flex-shrink: 0;
-  border-radius: 50%; background: #2a1e16;
-  color: #f97316; font-size: 15px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-}
-.list-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.list-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.list-name {
-  color: #f2f2f5; font-size: 13px; font-weight: 700;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.list-meta {
-  color: #78788a; font-size: 11px;
-  display: flex; gap: 10px; flex-wrap: wrap;
-}
-.list-meta i { font-size: 9px; color: #52525e; margin-right: 3px; }
-.list-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 9px; border-radius: 999px;
-  font-size: 10px; font-weight: 700; letter-spacing: .02em;
-}
-.badge.success { background: #0d2a22; color: #22d3a8; border: 1px solid rgba(34,211,168,.2); }
-.badge.failed { background: #2a1216; color: #f0616b; border: 1px solid rgba(240,97,107,.2); }
-.badge.proses { background: #1e1a2e; color: #a78bfa; border: 1px solid rgba(167,139,250,.2); }
-.badge.info { background: #101e33; color: #3b82f6; border: 1px solid rgba(59,130,246,.2); }
-
-.empty {
-  text-align: center; padding: 40px 20px; color: #52525e;
-}
-.empty i { font-size: 34px; opacity: .3; display: block; margin-bottom: 10px; }
-.empty p { margin: 0; font-size: 13px; font-weight: 600; }
-
-/* DETAIL LINK */
-.detail-link {
-  color: #f97316; font-size: 10.5px; text-decoration: none;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 240px; display: inline-block; vertical-align: middle;
-}
-.detail-link:hover { text-decoration: underline; }
-
-/* LOADING */
-.loading-spin { color: #78788a; font-size: 12px; padding: 14px 0; text-align: center; }
-.loading-spin i { margin-right: 6px; }
-
-/* ADMIN NOTIF FORM (dari v4, dipindah ke sini) */
 .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .form-label {
   color: #b6b6c0; font-size: 10.5px; font-weight: 700;
@@ -344,6 +156,7 @@ body.admin-page i, body.admin-page .fa, body.admin-page .fas, body.admin-page .f
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; font-weight: 700;
 }
+
 .upload-box {
   width: 100%; display: flex; align-items: center; gap: 11px;
   padding: 13px; background: #1a1a20;
@@ -393,72 +206,17 @@ body.admin-page i, body.admin-page .fa, body.admin-page .fas, body.admin-page .f
 .result.error { background: #2a1216; border: 1px solid rgba(240,97,107,.25); color: #fca5a5; }
 .result.loading { background: #101e33; border: 1px solid rgba(59,130,246,.25); color: #93c5fd; }
 
-/* PREVIEW PHONE */
-.preview-wrap {
-  background: linear-gradient(180deg, #121216, #0f0f13);
-  border: 1px solid #26262e; border-radius: 18px;
-  padding: 21px; position: relative; overflow: hidden;
-}
-.preview-label {
-  display: flex; align-items: center; gap: 8px;
-  color: #78788a; font-size: 9.5px; font-weight: 800;
-  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 15px;
-}
-.preview-label::before, .preview-label::after {
-  content: ''; flex: 1; height: 1px; background: #26262e;
-}
-.phone-shell {
-  padding: 13px 11px 15px;
-  background: #0a0a0d; border: 1px solid #26262e;
-  border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,.4);
-}
-.phone-notch {
-  width: 58px; height: 5px; margin: 0 auto 11px;
-  border-radius: 999px; background: #26262e;
-}
-.phone-notif {
-  min-height: 130px; display: flex; flex-direction: column; gap: 9px;
-  padding: 13px; background: linear-gradient(180deg, #1a1a20, #121216);
-  border: 1px solid #26262e; border-radius: 18px;
-  box-shadow: 0 5px 18px rgba(0,0,0,.3);
-}
-.pn-content { display: flex; flex-direction: column; gap: 8px; }
-.pn-head {
-  display: flex; align-items: center; gap: 7px;
-  color: #a0a0b0; font-size: 10px;
-}
-.pn-icon {
-  width: 23px; height: 23px; flex-shrink: 0;
-  border-radius: 6px; background: linear-gradient(135deg, #f97316, #ea580c);
-  color: #fff; font-size: 10px;
-  display: flex; align-items: center; justify-content: center;
-}
-.pn-app { color: #d0d0d8; font-weight: 600; }
-.pn-time { margin-left: auto; color: #70707a; font-family: 'JetBrains Mono', monospace; font-size: 9px; }
-.pn-body-wrap { display: flex; gap: 9px; align-items: flex-start; }
-.pn-thumb {
-  width: 46px; height: 46px; flex-shrink: 0;
-  border-radius: 9px; background: #202027; color: #78788a;
-  font-size: 16px; display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-}
-.pn-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.pn-text { min-width: 0; flex: 1; }
-.pn-title {
-  color: #fff; font-size: 13px; font-weight: 700;
-  line-height: 1.25; margin-bottom: 3px; word-break: break-word;
-}
-.pn-body {
-  color: #b0b0bc; font-size: 11px; line-height: 1.4; word-break: break-word;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-.pn-url {
-  margin-top: 6px; color: #70707a;
-  font-family: 'JetBrains Mono', monospace; font-size: 9px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-
 #toast { position: fixed; bottom: 24px; left: 50%; z-index: 10000; }
+
+@media (max-width: 480px) {
+  .admin-header { padding: 10px 14px; }
+  .admin-brand-title { font-size: 14px; }
+  .logout-btn span { display: none; }
+  #panel { padding: 20px 14px 60px; }
+  .page-header h1 { font-size: 19px; }
+  .page-header-icon { width: 42px; height: 42px; font-size: 16px; }
+  .card-x { padding: 16px 14px; }
+}
 </style>
 </head>
 <body class="admin-page">
@@ -467,51 +225,72 @@ body.admin-page i, body.admin-page .fa, body.admin-page .fas, body.admin-page .f
   <div class="login-card">
     <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
     <h2>Admin Panel</h2>
-    <p>Masukkan password untuk mengakses dashboard.</p>
+    <p>Masukkan password untuk mengakses panel notifikasi.</p>
     <input type="password" id="admin-password" class="login-input" placeholder="••••••••" autocomplete="off">
     <button id="login-btn" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
     <div id="login-error" class="login-error">Password salah. Coba lagi.</div>
   </div>
 </div>
 
-<div id="admin-app">
-  <div class="admin-layout">
-    <div id="admin-sidebar-backdrop"></div>
-    <aside id="admin-sidebar">
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-logo"><i class="fa-solid fa-bell"></i></div>
-        <div class="sidebar-brand-text">
-          <span class="sidebar-brand-title">Ekk Store</span>
-          <span class="sidebar-brand-sub">Admin Panel</span>
-        </div>
-      </div>
-      <nav class="sidebar-nav" id="admin-nav">
-       <a class="sidebar-link" data-nav="dashboard" href="#"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-<a class="sidebar-link" data-nav="notif" href="#notif"><i class="fa-solid fa-paper-plane"></i> Kirim Notif</a>
-<a class="sidebar-link" data-nav="deploy" href="#deploy"><i class="fa-solid fa-rocket"></i> Deploy</a>
-<a class="sidebar-link" data-nav="pengunjung" href="#pengunjung"><i class="fa-solid fa-users"></i> Pengunjung</a>
-<a class="sidebar-link" data-nav="apk" href="#apk"><i class="fa-solid fa-mobile-screen-button"></i> APK</a>
-      </nav>
-      <div class="sidebar-footer">
-        <button class="sidebar-logout" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar</button>
-      </div>
-    </aside>
-
-    <div>
-      <div id="mobile-topbar">
-        <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
-        <div class="mobile-brand">
-          <div class="sidebar-brand-logo" style="width:32px;height:32px;font-size:13px;"><i class="fa-solid fa-bell"></i></div>
-          <span class="sidebar-brand-title" style="font-size:13px;">Ekk Store</span>
-        </div>
-        <div style="width:38px;"></div>
-      </div>
-      <main class="admin-main" id="admin-content">
-        <div class="loading-spin"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
-      </main>
+<header class="admin-header" id="admin-header" style="display:none;">
+  <div class="admin-brand">
+    <div class="admin-brand-logo"><i class="fa-solid fa-bell"></i></div>
+    <div class="admin-brand-text">
+      <span class="admin-brand-title">Ekk Store</span>
+      <span class="admin-brand-sub">Admin Panel</span>
     </div>
   </div>
-</div>
+  <div class="header-actions">
+    <span class="sub-chip"><i class="fa-solid fa-users"></i> <span id="sub-count">—</span></span>
+    <button class="logout-btn" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Keluar</span></button>
+  </div>
+</header>
+
+<main id="panel">
+  <div class="page-header">
+    <div class="page-header-icon"><i class="fa-solid fa-paper-plane"></i></div>
+    <div>
+      <h1>Kirim Notifikasi</h1>
+      <p>Isi judul dan isi notif, lalu kirim ke semua subscriber.</p>
+    </div>
+  </div>
+
+  <div class="card-x">
+    <div class="form-group">
+      <label class="form-label" for="title"><i class="fa-solid fa-heading"></i> Judul Notifikasi</label>
+      <input type="text" id="title" class="form-input" placeholder="contoh: Ekk Store Update" maxlength="60">
+      <span class="form-hint"><span class="counter" id="title-c">0</span> / 60 karakter</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="body"><i class="fa-solid fa-align-left"></i> Isi Notifikasi</label>
+      <textarea id="body" class="form-input" placeholder="Tulis pesan singkat..." maxlength="180" rows="3" style="resize:vertical;min-height:85px;"></textarea>
+      <span class="form-hint"><span class="counter" id="body-c">0</span> / 180 karakter</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="url"><i class="fa-solid fa-link"></i> URL Tujuan</label>
+      <input type="url" id="url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" value="https://deploy.project.ekkstore.web.id/">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label"><i class="fa-solid fa-image"></i> Gambar (opsional)</label>
+      <div class="upload-box" id="upload-box">
+        <div class="upload-preview" id="upload-preview"><i class="fa-solid fa-image"></i></div>
+        <div class="upload-info">
+          <div class="upload-title" id="upload-title">Tap untuk upload gambar</div>
+          <div class="upload-hint" id="upload-hint">JPG / PNG · Max 3 MB</div>
+        </div>
+        <button type="button" class="upload-remove" id="upload-remove"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="file" id="image-input" accept="image/*" style="display:none;">
+    </div>
+
+    <button class="send-btn" id="btn-send"><i class="fa-solid fa-paper-plane"></i> Kirim ke Semua Subscriber</button>
+
+    <div class="result" id="result"><i id="result-icon"></i><span id="result-text"></span></div>
+  </div>
+</main>
 
 <div id="toast"></div>
 <script src="/js/admin.js"></script>
