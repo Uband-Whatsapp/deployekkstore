@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-const ADMIN_PASSWORD = 'Admin1';
+const ADMIN_PASSWORD = 'ekkadmin2024';
 const SESSION_KEY = 'ekk_admin_session_v1';
 const SESSION_DURATION = 12 * 60 * 60 * 1000;
 const CLOUDINARY_CLOUD_NAME = 'uuvl0m4s';
@@ -17,14 +17,6 @@ function $(id) { return document.getElementById(id); }
 function escapeHTML(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-  } catch (e) { return '—'; }
 }
 
 function relativeTime(iso) {
@@ -79,13 +71,12 @@ function showApp() {
   route();
 }
 
-function getPageFromPath() {
-  const p = window.location.pathname.replace(/\/$/, '');
-  if (p === '/admin' || p === '' || p === '/') return 'dashboard';
-  if (p === '/admin/notif') return 'notif';
-  if (p === '/admin/deploy') return 'deploy';
-  if (p === '/admin/pengunjung') return 'pengunjung';
-  if (p === '/admin/apk') return 'apk';
+function getPageFromHash() {
+  const h = (window.location.hash || '').replace('#', '');
+  if (h === 'notif') return 'notif';
+  if (h === 'deploy') return 'deploy';
+  if (h === 'pengunjung') return 'pengunjung';
+  if (h === 'apk') return 'apk';
   return 'dashboard';
 }
 
@@ -96,7 +87,7 @@ function setActiveNav(page) {
 }
 
 function route() {
-  currentPage = getPageFromPath();
+  currentPage = getPageFromHash();
   setActiveNav(currentPage);
   closeSidebar();
 
@@ -127,8 +118,10 @@ async function fetchStats(days) {
   return await r.json();
 }
 
-async function fetchDeployStats(days) {
-  const url = '/api/update-status?action=deploy-stats' + (days > 0 ? '&days=' + days : '');
+async function fetchDeployStats(days, mode) {
+  let url = '/api/update-status?action=deploy-stats';
+  if (days > 0) url += '&days=' + days;
+  if (mode) url += '&mode=' + mode;
   const r = await fetch(url);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return await r.json();
@@ -151,13 +144,13 @@ async function renderDashboard(content) {
     </div>
     <div class="card-x">
       <h3><i class="fa-solid fa-rocket"></i> Deploy Terbaru</h3>
-      <div id="dash-deploy-list"></div>
+      <div id="dash-deploy-list"><div class="loading-spin"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div></div>
     </div>
   `;
 
   try {
     const [stats, deploy] = await Promise.all([fetchStats(0), fetchDeployStats(0, 'summary')]);
-const g = deploy.global || {};
+    const g = deploy.global || {};
 
     $('dash-stats').innerHTML = `
       <div class="stat-card">
@@ -179,13 +172,14 @@ const g = deploy.global || {};
     `;
 
     const recent = deploy.recent || [];
-if (recent.length === 0) {
-  $('dash-deploy-list').innerHTML = '<div class="empty"><i class="fa-solid fa-inbox"></i><p>Belum ada deploy</p></div>';
-} else {
-  $('dash-deploy-list').innerHTML = recent.map(p => renderDeployRow(p, true)).join('');
-}
+    if (recent.length === 0) {
+      $('dash-deploy-list').innerHTML = '<div class="empty"><i class="fa-solid fa-inbox"></i><p>Belum ada deploy</p></div>';
+    } else {
+      $('dash-deploy-list').innerHTML = recent.map(p => renderDeployRow(p, true)).join('');
+    }
   } catch (e) {
     $('dash-stats').innerHTML = '<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><p>Gagal memuat: ' + escapeHTML(e.message) + '</p></div>';
+    $('dash-deploy-list').innerHTML = '';
   }
 }
 
@@ -241,37 +235,35 @@ function renderNotif(content) {
         <div class="stat-info"><span class="stat-value" id="nf-sub">—</span><span class="stat-label">Subscriber</span></div>
       </div>
     </div>
-    <div class="grid-2" style="display:grid;gap:18px;grid-template-columns:1fr;">
-      <div class="card-x">
-        <div class="form-group">
-          <label class="form-label" for="nf-title"><i class="fa-solid fa-heading"></i> Judul Notifikasi</label>
-          <input type="text" id="nf-title" class="form-input" placeholder="contoh: Ekk Store Update" maxlength="60">
-          <span class="form-hint"><span class="counter" id="nf-title-c">0</span> / 60</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="nf-body"><i class="fa-solid fa-align-left"></i> Isi Notifikasi</label>
-          <textarea id="nf-body" class="form-input" placeholder="Tulis pesan singkat..." maxlength="180" rows="3" style="resize:vertical;min-height:85px;"></textarea>
-          <span class="form-hint"><span class="counter" id="nf-body-c">0</span> / 180</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="nf-url"><i class="fa-solid fa-link"></i> URL Tujuan</label>
-          <input type="url" id="nf-url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" value="https://deploy.project.ekkstore.web.id/">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><i class="fa-solid fa-image"></i> Gambar (opsional)</label>
-          <div class="upload-box" id="nf-upload">
-            <div class="upload-preview" id="nf-preview"><i class="fa-solid fa-image"></i></div>
-            <div class="upload-info">
-              <div class="upload-title" id="nf-upload-title">Tap untuk upload gambar</div>
-              <div class="upload-hint" id="nf-upload-hint">JPG / PNG · Max 3 MB</div>
-            </div>
-            <button type="button" class="upload-remove" id="nf-remove"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <input type="file" id="nf-file" accept="image/*" style="display:none;">
-        </div>
-        <button class="send-btn" id="nf-send"><i class="fa-solid fa-paper-plane"></i> Kirim ke Semua Subscriber</button>
-        <div class="result" id="nf-result"><i id="nf-res-icon"></i><span id="nf-res-text"></span></div>
+    <div class="card-x">
+      <div class="form-group">
+        <label class="form-label" for="nf-title"><i class="fa-solid fa-heading"></i> Judul Notifikasi</label>
+        <input type="text" id="nf-title" class="form-input" placeholder="contoh: Ekk Store Update" maxlength="60">
+        <span class="form-hint"><span class="counter" id="nf-title-c">0</span> / 60</span>
       </div>
+      <div class="form-group">
+        <label class="form-label" for="nf-body"><i class="fa-solid fa-align-left"></i> Isi Notifikasi</label>
+        <textarea id="nf-body" class="form-input" placeholder="Tulis pesan singkat..." maxlength="180" rows="3" style="resize:vertical;min-height:85px;"></textarea>
+        <span class="form-hint"><span class="counter" id="nf-body-c">0</span> / 180</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="nf-url"><i class="fa-solid fa-link"></i> URL Tujuan</label>
+        <input type="url" id="nf-url" class="form-input" placeholder="https://deploy.project.ekkstore.web.id/" value="https://deploy.project.ekkstore.web.id/">
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-image"></i> Gambar (opsional)</label>
+        <div class="upload-box" id="nf-upload">
+          <div class="upload-preview" id="nf-preview"><i class="fa-solid fa-image"></i></div>
+          <div class="upload-info">
+            <div class="upload-title" id="nf-upload-title">Tap untuk upload gambar</div>
+            <div class="upload-hint" id="nf-upload-hint">JPG / PNG · Max 3 MB</div>
+          </div>
+          <button type="button" class="upload-remove" id="nf-remove"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <input type="file" id="nf-file" accept="image/*" style="display:none;">
+      </div>
+      <button class="send-btn" id="nf-send"><i class="fa-solid fa-paper-plane"></i> Kirim ke Semua Subscriber</button>
+      <div class="result" id="nf-result"><i id="nf-res-icon"></i><span id="nf-res-text"></span></div>
     </div>
   `;
 
@@ -291,7 +283,7 @@ async function loadSubscriberCount() {
 }
 
 function bindNotifEvents() {
-  const title = $('nf-title'), body = $('nf-body'), url = $('nf-url');
+  const title = $('nf-title'), body = $('nf-body');
   const tc = $('nf-title-c'), bc = $('nf-body-c');
 
   if (title) title.addEventListener('input', () => { tc.textContent = title.value.length; });
@@ -682,6 +674,16 @@ function init() {
   if (logoutBtn) logoutBtn.addEventListener('click', () => { clearLogin(); showLogin(); });
   if (menuBtn) menuBtn.addEventListener('click', openSidebar);
   if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+  document.querySelectorAll('.sidebar-link').forEach(a => {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      const nav = this.dataset.nav;
+      window.location.hash = nav === 'dashboard' ? '' : nav;
+    });
+  });
+
+  window.addEventListener('hashchange', route);
 
   if (isLoggedIn()) showApp();
   else {
