@@ -416,10 +416,7 @@ function navigateTo(page) {
             window.EkkChat.stopTyping();
         }
     }
-    if (page && page !== 'home') {
-        sendEventToBackend('click_menu', page);
-    }
-    const target = (page === 'home' || !page) ? '/' : '/' + page;
+ const target = (page === 'home' || !page) ? '/' : '/' + page;
     if (window.location.pathname !== target) {
         window.location.href = target;
     }
