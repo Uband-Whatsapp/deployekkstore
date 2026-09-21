@@ -15,7 +15,7 @@ function validateProjectName(name) {
 
 /* ============================================================
    2) PROJECT INPUT
-   ============================================================ */
+   =========================================================== */
 function setupProjectInput() {
     const projectInput = document.getElementById('project');
     const projectHint = document.getElementById('project-hint');
