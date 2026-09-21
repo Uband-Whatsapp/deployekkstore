@@ -2,27 +2,21 @@ import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   const serviceAccountStr = process.env.FIREBASE_VISITOR_SERVICE_ACCOUNT;
-  if (!serviceAccountStr) {
-    throw new Error('FIREBASE_VISITOR_SERVICE_ACCOUNT belum diatur');
-  }
+  if (!serviceAccountStr) throw new Error('FIREBASE_VISITOR_SERVICE_ACCOUNT belum diatur');
   const serviceAccount = JSON.parse(serviceAccountStr);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 }
 
 const db = admin.firestore();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { anonId, visitorNumber, eventType, target, uid, timestamp, deviceInfo } = req.body;
+  const { anonId, visitorNumber, eventType, timestamp, deviceInfo } = req.body;
   if (!anonId || !eventType) {
-    res.status(400).json({ error: 'Data tidak lengkap' });
-    return;
+    return res.status(400).json({ error: 'Data tidak lengkap' });
   }
 
   const today = getTodayWIB();
@@ -31,8 +25,6 @@ export default async function handler(req, res) {
     anonId,
     visitorNumber,
     eventType,
-    target: target || '',
-    uid: uid || '',
     timestamp,
     deviceInfo,
     date: today
@@ -57,18 +49,17 @@ export default async function handler(req, res) {
   const waktu = formatTimeWIB(timestamp);
   const deviceStr = formatDeviceInfo(deviceInfo);
 
-  let msg = null;
-
+  let msg;
   if (eventType === 'visit') {
     msg = `👤 PENGUNJUNG BARU\n\n🆔 ID: #${visitorNumber}\n📌 Status: Masih di Gerbang Follow\n🕐 Waktu: ${waktu}\n${deviceStr}\n${locationInfo}`;
   } else if (eventType === 'follow_passed') {
     msg = `✅ BERHASIL MELEWATI FOLLOW\n\n🆔 ID: #${visitorNumber}\n📌 Status: Berhasil\n🕐 Waktu: ${waktu}\n${deviceStr}\n${locationInfo}`;
+  } else {
+    res.status(200).json({ success: true });
+    return;
   }
 
-  if (msg) {
-    await sendTelegramMessage(msg.trim());
-  }
-
+  await sendTelegramMessage(msg.trim());
   res.status(200).json({ success: true });
 }
 
