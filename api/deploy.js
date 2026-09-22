@@ -452,20 +452,35 @@ async function performDeploy(projectName) {
     updateDeployStatus(0);
     if (output) output.textContent = 'Membaca file...';
 
-    let fileContent;
+    let fileContent = '';
+    let fileUrl = '';
+
     try {
         if (file.name.toLowerCase().endsWith('.html')) {
             fileContent = await file.text();
         } else if (file.name.toLowerCase().endsWith('.zip')) {
-            const buffer = await file.arrayBuffer();
-            const bytes = new Uint8Array(buffer);
-            let binary = '';
-            const chunkSize = 8192;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-                const chunk = bytes.subarray(i, i + chunkSize);
-                binary += String.fromCharCode.apply(null, chunk);
+            if (output) output.textContent = 'Mengunggah ZIP ke server...';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'Deploy-EkkStore');
+
+            const uploadRes = await fetch('https://api.cloudinary.com/v1_1/uuvl0m4s/auto/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!uploadRes.ok) {
+                throw new Error('Upload ke Cloudinary gagal (HTTP ' + uploadRes.status + ')');
             }
-            fileContent = btoa(binary);
+
+            const uploadData = await uploadRes.json();
+            fileUrl = uploadData.secure_url;
+
+            if (!fileUrl) {
+                throw new Error('Cloudinary tidak memberikan URL');
+            }
+
+            if (output) output.textContent = 'Upload selesai, mengirim ke server...';
         } else {
             if (output) output.textContent = 'Hanya file .html atau .zip yang didukung.';
             deployState = DEPLOY_STATE.FAILED;
@@ -482,7 +497,7 @@ async function performDeploy(projectName) {
     updateDeployStatus(1);
 
     deployState = DEPLOY_STATE.UPLOADING;
-    if (output) output.textContent = 'Mengirim file ke server...';
+    if (output) output.textContent = 'Mengirim ke server...';
 
     deployState = DEPLOY_STATE.DEPLOYING;
     updateDeployStatus(2);
@@ -496,6 +511,7 @@ async function performDeploy(projectName) {
                 project: project,
                 fileName: file.name,
                 fileContent: fileContent,
+                fileUrl: fileUrl,
                 userId: getMyUid(),
                 authUid: _firebaseAuthReady ? CURRENT_USER_ID : null
             })
