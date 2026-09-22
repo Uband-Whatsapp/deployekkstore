@@ -1,895 +1,447 @@
-/* ============================================================
-   EKK STORE — DEPLOY.JS
-   ============================================================ */
-
-function validateProjectName(name) {
-    if (!name || name.length < 3) return { valid: false, msg: 'Nama project minimal 3 karakter.' };
-    if (name.length > 52) return { valid: false, msg: 'Nama project maksimal 52 karakter.' };
-    if (!/^[a-z0-9]/.test(name)) return { valid: false, msg: 'Diawali huruf kecil atau angka.' };
-    if (!/[a-z0-9]$/.test(name)) return { valid: false, msg: 'Diakhiri huruf kecil atau angka.' };
-    if (!/^[a-z0-9.-]+$/.test(name)) return { valid: false, msg: 'Hanya huruf kecil, angka, tanda hubung (-), dan titik (.).' };
-    if (/--/.test(name)) return { valid: false, msg: 'Tidak boleh dua hubung berurutan (--).' };
-    if (/\.\./.test(name)) return { valid: false, msg: 'Tidak boleh dua titik berurutan (..).' };
-    return { valid: true };
-}
-
-function setupProjectInput() {
-    const projectInput = document.getElementById('project');
-    const projectHint = document.getElementById('project-hint');
-    const projectError = document.getElementById('project-error');
-    if (!projectInput) return;
-
-    projectInput.addEventListener('input', function () {
-        const val = this.value.trim().toLowerCase();
-        this.value = val.replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^[-.]|[-.]$/g, '');
-
-        if (this.value.length === 0) {
-            this.classList.remove('error', 'success');
-            if (projectError) projectError.classList.remove('visible');
-            if (projectHint) projectHint.style.display = 'block';
-            return;
-        }
-        const result = validateProjectName(this.value);
-        if (result.valid) {
-            this.classList.remove('error');
-            this.classList.add('success');
-            if (projectError) projectError.classList.remove('visible');
-            if (projectHint) projectHint.style.display = 'block';
-        } else {
-            this.classList.remove('success');
-            this.classList.add('error');
-            if (projectError) {
-                projectError.textContent = result.msg;
-                projectError.classList.add('visible');
-            }
-            if (projectHint) projectHint.style.display = 'none';
-        }
-    });
-}
-
-let _selectedFile = null;
-
-function setupFileUpload() {
-    const uploadDropzone = document.getElementById('upload-dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const fileInfo = document.getElementById('file-info');
-    if (!uploadDropzone || !fileInput || !fileInfo) return;
-
-    uploadDropzone.addEventListener('click', function() { fileInput.click(); });
-    uploadDropzone.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            fileInput.click();
-        }
-    });
-    uploadDropzone.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.classList.add('dragover');
-    });
-    uploadDropzone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-    });
-    uploadDropzone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const file = e.dataTransfer.files[0];
-            const lower = file.name.toLowerCase();
-            if (!lower.endsWith('.html') && !lower.endsWith('.zip')) {
-                showToast('Hanya file .html atau .zip yang didukung', 'error');
-                return;
-            }
-            fileInput.files = e.dataTransfer.files;
-            handleFileSelect(file);
-        }
-    });
-    fileInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) handleFileSelect(this.files[0]);
-    });
-}
-
-async function handleFileSelect(file) {
-    const uploadDropzone = document.getElementById('upload-dropzone');
-    const fileInfo = document.getElementById('file-info');
-    if (!uploadDropzone || !fileInfo) return;
-
-    const lower = file.name.toLowerCase();
-    if (!lower.endsWith('.html') && !lower.endsWith('.zip')) {
-        showToast('Hanya file .html atau .zip yang didukung', 'error');
-        return;
-    }
-
-    if (file.size > LARGE_FILE_THRESHOLD) {
-        const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-        const ok = await showConfirmModal(
-            'File Besar',
-            'File "' + file.name + '" berukuran ' + sizeMB + ' MB.\nProses upload mungkin memakan waktu lebih lama.\n\nLanjutkan?',
-            'Lanjutkan'
-        );
-        if (!ok) return;
-    }
-
-    _selectedFile = file;
-    const sizeKB = (file.size / 1024).toFixed(1);
-    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-
-    uploadDropzone.classList.add('has-file');
-    const iconEl = uploadDropzone.querySelector('i');
-    const pEl = uploadDropzone.querySelector('p');
-    const spanEl = uploadDropzone.querySelector('span');
-    if (iconEl) iconEl.className = 'fa-solid fa-circle-check';
-    if (pEl) pEl.textContent = file.name;
-    if (spanEl) {
-        spanEl.textContent = (file.size > 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB') +
-            ' · ' + (file.name.endsWith('.zip') ? 'ZIP' : 'HTML');
-    }
-    fileInfo.classList.add('visible');
-    fileInfo.innerHTML = '<i class="fa-solid fa-check"></i> File dipilih: ' +
-        escapeHTML(file.name) + ' (' +
-        (file.size > 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB') + ')';
-
-    showToast('File berhasil dipilih', 'success');
-}
-
-function getJoinTimestamp() { return localStorage.getItem('grup_join_timestamp'); }
-function setJoinTimestamp() { localStorage.setItem('grup_join_timestamp', Date.now().toString()); }
-function isJoinValid() {
-    const ts = getJoinTimestamp();
-    if (!ts) return false;
-    const diff = Date.now() - parseInt(ts);
-    const hours = diff / (1000 * 60 * 60);
-    return hours <= 24;
-}
-function getNotifStatus() {
-    return 'Notification' in window && Notification.permission === 'granted';
-}
-
-function updateModalStatus() {
-    const join = isJoinValid();
-    const notif = getNotifStatus();
-
-    const grupItem = document.getElementById('req-grup');
-    const grupStatus = document.getElementById('req-grup-status');
-    const grupBtn = document.getElementById('btn-join-grup');
-
-    const notifItem = document.getElementById('req-notif');
-    const notifStatus = document.getElementById('req-notif-status');
-    const notifBtn = document.getElementById('btn-aktifkan-notif');
-
-    if (join) {
-        grupItem?.classList.add('done');
-        if (grupStatus) {
-            grupStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
-            grupStatus.className = 'req-status done';
-        }
-        if (grupBtn) grupBtn.style.display = 'none';
-    } else {
-        grupItem?.classList.remove('done');
-        if (grupStatus) {
-            grupStatus.textContent = 'Belum';
-            grupStatus.className = 'req-status';
-        }
-        if (grupBtn) {
-            grupBtn.style.display = '';
-            grupBtn.style.pointerEvents = '';
-            grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
-            if (!grupBtn.hasAttribute('href')) {
-                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4');
-            }
-        }
-    }
-
-    if (notif) {
-        notifItem?.classList.add('done');
-        if (notifStatus) {
-            notifStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
-            notifStatus.className = 'req-status done';
-        }
-        if (notifBtn) notifBtn.style.display = 'none';
-    } else {
-        notifItem?.classList.remove('done');
-        if (notifStatus) {
-            notifStatus.textContent = 'Belum';
-            notifStatus.className = 'req-status';
-        }
-        if (notifBtn) {
-            notifBtn.style.display = '';
-            notifBtn.style.pointerEvents = '';
-            notifBtn.innerHTML = '<i class="fa-solid fa-bell"></i> Aktifkan';
-        }
-    }
-
-    if (join && notif && !isDeploying) {
-        if (window._autoCloseTimer) return;
-        window._autoCloseTimer = true;
-
-        setTimeout(() => {
-            if (!isJoinValid() || !getNotifStatus()) {
-                window._autoCloseTimer = false;
-                return;
-            }
-
-            if (document.hidden) {
-                const waitVisible = () => {
-                    if (!document.hidden) {
-                        document.removeEventListener('visibilitychange', waitVisible);
-                        window._autoCloseTimer = false;
-                        setTimeout(() => updateModalStatus(), 500);
-                    }
-                };
-                document.addEventListener('visibilitychange', waitVisible);
-                setTimeout(() => {
-                    document.removeEventListener('visibilitychange', waitVisible);
-                    window._autoCloseTimer = false;
-                }, 60000);
-                return;
-            }
-
-            window._autoCloseTimer = false;
-
-            const deployModal = document.getElementById('deploy-modal');
-            if (deployModal) deployModal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-
-            const lockData = localStorage.getItem('ekk_deploy_lock_v1');
-            let skipDeploy = false;
-            if (lockData) {
-                try {
-                    const parsed = JSON.parse(lockData);
-                    const age = Date.now() - (parsed.timestamp || 0);
-                    if (age < 30000) skipDeploy = true;
-                } catch(e) {}
-            }
-
-            if (!skipDeploy && window._pendingDeploy && !isDeploying) {
-                const project = window._pendingDeploy;
-                window._pendingDeploy = null;
-                try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
-                try {
-                    localStorage.setItem('ekk_deploy_lock_v1', JSON.stringify({
-                        project: project,
-                        timestamp: Date.now()
-                    }));
-                } catch(e) {}
-
-                showToast('Syarat terpenuhi, memulai deploy...', 'success');
-                const deployBtn = document.getElementById('deploy-btn');
-                isDeploying = true;
-                deployState = DEPLOY_STATE.VALIDATING;
-                if (deployBtn) {
-                    deployBtn.disabled = true;
-                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
-                }
-                performDeploy(project);
-            } else if (window._pendingDeploy) {
-                window._pendingDeploy = null;
-                try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
-            }
-        }, 800);
-    }
-}
-
-function setupRequirementEvents() {
-    const joinButton = document.getElementById('btn-join-grup');
-    if (joinButton) {
-        joinButton.addEventListener('click', function () {
-            if (isDeploying) return;
-            setJoinTimestamp();
-            const grupItem = document.getElementById('req-grup');
-            const grupStatus = document.getElementById('req-grup-status');
-            if (grupItem && grupStatus) {
-                grupItem.classList.add('done');
-                grupStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
-                grupStatus.className = 'req-status done';
-                this.style.display = 'none';
-            }
-            showToast('Kembali ke halaman ini setelah bergabung', 'info');
-        });
-    }
-
-    const notificationButton = document.getElementById('btn-aktifkan-notif');
-    if (notificationButton) {
-        notificationButton.addEventListener('click', async function () {
-            if (isDeploying) return;
-            if (!('Notification' in window)) {
-                showToast('Browser tidak mendukung notifikasi', 'error');
-                return;
-            }
-            if (Notification.permission === 'granted') {
-                updateModalStatus();
-                return;
-            }
-            if (Notification.permission === 'denied') {
-                showToast('Notifikasi diblokir. Buka pengaturan situs di browser.', 'warning');
-                return;
-            }
-
-            const originalHTML = notificationButton.innerHTML;
-            notificationButton.style.pointerEvents = 'none';
-            notificationButton.innerHTML = '<span class="gate-spinner" style="width:12px;height:12px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Meminta...';
-
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    showToast('Notifikasi berhasil diaktifkan!', 'success');
-                    try { await registerPushNotification(); } catch (e) {}
-                    updateModalStatus();
-                } else if (permission === 'denied') {
-                    showToast('Notifikasi ditolak', 'warning');
-                    notificationButton.style.pointerEvents = '';
-                    notificationButton.innerHTML = originalHTML;
-                } else {
-                    notificationButton.style.pointerEvents = '';
-                    notificationButton.innerHTML = originalHTML;
-                }
-            } catch (err) {
-                notificationButton.style.pointerEvents = '';
-                notificationButton.innerHTML = originalHTML;
-            }
-        });
-    }
-
-    document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) updateModalStatus();
-    });
-}
-
-function resetDeployStatus() {
-    const steps = ['step-upload', 'step-validate', 'step-deploying', 'step-completed'];
-    steps.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove('done', 'active', 'completed', 'failed-step');
-        const indicator = el.querySelector('.step-indicator');
-        if (indicator) indicator.textContent = '●';
-    });
-}
-
-function updateDeployStatus(step) {
-    resetDeployStatus();
-    const panel = document.getElementById('deploy-status-panel');
-    if (panel) panel.classList.remove('hidden');
-    const steps = ['step-upload', 'step-validate', 'step-deploying', 'step-completed'];
-    for (let i = 0; i < steps.length; i++) {
-        const el = document.getElementById(steps[i]);
-        if (!el) continue;
-        const indicator = el.querySelector('.step-indicator');
-        if (i < step) {
-            el.classList.add('done');
-            if (indicator) indicator.textContent = '✓';
-        } else if (i === step) {
-            el.classList.add('active');
-            if (indicator) indicator.textContent = '●';
-        } else {
-            if (indicator) indicator.textContent = '●';
-        }
-    }
-}
-
-function markDeployStepComplete(step) {
-    const el = document.getElementById(step);
-    if (!el) return;
-    el.classList.remove('active', 'failed-step', 'done');
-    el.classList.add('completed');
-    const indicator = el.querySelector('.step-indicator');
-    if (indicator) indicator.textContent = '✓';
-}
-
-function markDeployStepFailed(step) {
-    const el = document.getElementById(step);
-    if (!el) return;
-    el.classList.remove('active', 'completed', 'done');
-    el.classList.add('failed-step');
-    const indicator = el.querySelector('.step-indicator');
-    if (indicator) indicator.textContent = '✕';
-}
-
-function resetDeployButton() {
-    const deployBtn = document.getElementById('deploy-btn');
-    if (!deployBtn) return;
-
-    if (deployCompleted) {
-        deployState = DEPLOY_STATE.SUCCESS;
-        isDeploying = false;
-        return;
-    }
-
-    deployBtn.disabled = false;
-    deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
-    deployState = DEPLOY_STATE.IDLE;
-    isDeploying = false;
-}
-
-async function performDeploy(projectName) {
-    const fileInputEl = document.getElementById('fileInput');
-    const output = document.getElementById('output');
-    const deployBtn = document.getElementById('deploy-btn');
-
-    let project = projectName;
-
-    if (!project) {
-        const projectInputEl2 = document.getElementById('project');
-        if (!projectInputEl2) {
-            if (output) output.textContent = 'Input project tidak ditemukan.';
-            deployState = DEPLOY_STATE.FAILED;
-            resetDeployButton();
-            return;
-        }
-        const projectInputVal = projectInputEl2.value.trim();
-        if (!projectInputVal) {
-            if (output) output.textContent = 'Nama project belum diisi.';
-            deployState = DEPLOY_STATE.FAILED;
-            resetDeployButton();
-            return;
-        }
-        project = projectInputVal.toLowerCase().replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^[-.]|[-.]$/g, '');
-    }
-
-    if (!project || project.length < 3) {
-        if (output) output.textContent = 'Nama project minimal 3 karakter.';
-        deployState = DEPLOY_STATE.FAILED;
-        resetDeployButton();
-        return;
-    }
-
-    if (!fileInputEl) {
-        if (output) output.textContent = 'Input file tidak ditemukan.';
-        deployState = DEPLOY_STATE.FAILED;
-        resetDeployButton();
-        return;
-    }
-
-    const file = fileInputEl.files[0];
-    if (!file) {
-        if (output) output.textContent = 'File belum dipilih.';
-        deployState = DEPLOY_STATE.FAILED;
-        resetDeployButton();
-        return;
-    }
-
-    deployState = DEPLOY_STATE.VALIDATING;
-    updateDeployStatus(0);
-    if (output) output.textContent = 'Membaca file...';
-
-    let fileContent = '';
-    let fileUrl = '';
-
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
+    <title>Ekk Store — Deployment Platform</title>
+<script>
+(function() {
     try {
-        if (file.name.toLowerCase().endsWith('.html')) {
-            fileContent = await file.text();
-        } else if (file.name.toLowerCase().endsWith('.zip')) {
-            if (output) output.textContent = 'Mengunggah ZIP ke server...';
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'Deploy-EkkStore');
-
-            const uploadRes = await fetch('https://api.cloudinary.com/v1_1/uuvl0m4s/auto/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!uploadRes.ok) {
-                throw new Error('Upload ke Cloudinary gagal (HTTP ' + uploadRes.status + ')');
+        var STORAGE_KEY = 'wa_gate_passed_v12';
+        var data = localStorage.getItem(STORAGE_KEY);
+        if (data) {
+            var parsed = JSON.parse(data);
+            if (parsed.passed === true && parsed.expiresAt && Date.now() < parsed.expiresAt) {
+                document.documentElement.classList.add('gate-passed');
             }
-
-            const uploadData = await uploadRes.json();
-            fileUrl = uploadData.secure_url;
-
-            if (!fileUrl) {
-                throw new Error('Cloudinary tidak memberikan URL');
-            }
-
-            if (output) output.textContent = 'Upload selesai, mengirim ke server...';
-        } else {
-            if (output) output.textContent = 'Hanya file .html atau .zip yang didukung.';
-            deployState = DEPLOY_STATE.FAILED;
-            resetDeployButton();
-            return;
         }
-    } catch (e) {
-        if (output) output.textContent = 'Gagal membaca file: ' + e.message;
-        deployState = DEPLOY_STATE.FAILED;
-        resetDeployButton();
-        return;
-    }
+    } catch (e) {}
+})();
+</script>
+    <!-- ============================================================
+         SEO / SOCIAL META
+    ============================================================ -->
+    <meta name="description" content="Ekk Store — Platform deployment website HTML/ZIP dan komunitas developer. Deploy gratis, cepat, dan aman." />
+    <meta name="theme-color" content="#0c0c0e" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="application-name" content="Ekk Store" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ekk Store" />
 
-    updateDeployStatus(1);
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Ekk Store — Deployment Platform" />
+    <meta property="og:description" content="Deploy website HTML/ZIP gratis, cepat, dan aman. Plus komunitas developer." />
+    <meta property="og:image" content="https://files.catbox.moe/kzg0nc.png" />
+    <meta property="og:url" content="https://deploy.project.ekkstore.web.id" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ekk Store — Deployment Platform" />
+    <meta name="twitter:description" content="Deploy website HTML/ZIP gratis, cepat, dan aman." />
+    <meta name="twitter:image" content="https://files.catbox.moe/kzg0nc.png" />
 
-    deployState = DEPLOY_STATE.UPLOADING;
-    if (output) output.textContent = 'Mengirim ke server...';
+    <!-- ============================================================
+         PWA
+    ============================================================ -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="https://files.catbox.moe/kzg0nc.png" type="image/png" />
+    <link rel="apple-touch-icon" href="https://files.catbox.moe/kzg0nc.png" />
 
-    deployState = DEPLOY_STATE.DEPLOYING;
-    updateDeployStatus(2);
-    if (output) output.textContent = 'Menunggu hasil deployment...';
+    <!-- ============================================================
+         FONTS
+    ============================================================ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    try {
-        const response = await fetch('/api/deploy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                project: project,
-                fileName: file.name,
-                fileContent: fileContent,
-                fileUrl: fileUrl,
-                userId: getMyUid(),
-                authUid: _firebaseAuthReady ? CURRENT_USER_ID : null
-            })
-        });
+    <!-- ============================================================
+         ICON
+    ============================================================ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        const result = await response.json();
+    <!-- ============================================================
+         DEBUG
+    ============================================================ -->
+    <link rel="stylesheet" href="/assets/x9k2/main.css">
+    <!-- ============================================================
+         FIREBASE SDK (compat)
+    ============================================================ -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body data-page="home">
+<!-- ============================================================
+     GATE SCREEN
+============================================================ -->
+<div id="gate-screen">
+    <div class="gate-card" id="gate-card">
+        <div class="gate-steps" id="gate-steps">
+            <div class="gate-step-dot active" id="g-dot1"></div>
+            <div class="gate-step-line" id="g-line1"></div>
+            <div class="gate-step-dot" id="g-dot2"></div>
+            <div class="gate-step-line" id="g-line2"></div>
+            <div class="gate-step-dot" id="g-dot3"></div>
+        </div>
+        <div class="gate-step-labels">
+            <span class="active" id="g-label1">Follow</span>
+            <span id="g-label2">Konfirmasi</span>
+            <span id="g-label3">Selesai</span>
+        </div>
+        <div class="gate-logo">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h2>Verifikasi Follow</h2>
+        <p class="gate-sub">
+            Untuk melanjutkan, ikuti saluran WhatsApp terlebih dahulu.
+            Klik <strong>Buka Saluran WhatsApp</strong>, pilih
+            <strong>Buka di WhatsApp</strong>, lalu tekan <strong>Ikuti</strong>.
+            Kembali ke halaman ini setelah selesai.
+        </p>
+        <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" rel="noopener noreferrer" class="gate-btn" id="btn-follow-wa">
+            <i class="fa-brands fa-whatsapp"></i> Buka Saluran WhatsApp
+        </a>
+        <button class="gate-btn secondary" id="btn-confirm" disabled>
+            Saya Sudah Follow
+        </button>
+        <div class="gate-verify-msg" id="verify-msg-box">
+            <i id="verify-icon"></i>
+            <span id="verify-text"></span>
+        </div>
+        <div class="gate-footer-text">
+            <i class="fa-solid fa-lock" style="font-size:9px;"></i>
+            Verifikasi diperlukan untuk mengakses konten
+        </div>
+    </div>
+</div>
 
-        if (result.url && isValidHttpUrl(result.url)) {
-            deployState = DEPLOY_STATE.SUCCESS;
-            deployCompleted = true;
+<!-- ============================================================
+     APP SHELL
+============================================================ -->
+<div id="app-shell">
 
-            markDeployStepComplete('step-upload');
-            markDeployStepComplete('step-validate');
-            markDeployStepComplete('step-deploying');
-            markDeployStepComplete('step-completed');
+    <!-- ============ TOP HEADER ============ -->
+    <header id="top-header">
+        <div class="header-left">
+            <button id="btn-hamburger" aria-label="Buka menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
 
-            if (output) {
-                const safeUrl = escapeHTML(result.url);
-                output.innerHTML = `
-                    <div class="deploy-success">
-                        <div class="deploy-success-header">
-                            <div class="deploy-success-icon">
-                                <i class="fa-solid fa-check"></i>
-                            </div>
-                            <div class="deploy-success-info">
-                                <div class="deploy-success-title">Deploy Berhasil</div>
-                                <div class="deploy-success-subtitle">Sedang mempublikasikan ke Vercel...</div>
-                            </div>
-                        </div>
-                        <div class="deploy-url-row">
-                            <i class="fa-solid fa-link"></i>
-                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="deploy-url" id="deploy-url">${safeUrl}</a>
-                        </div>
-                        <div class="deploy-actions">
-                            <button type="button" class="deploy-action-btn deploy-open-btn" onclick="openDeployedWebsite()">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                <span>Buka Website</span>
-                            </button>
-                            <button type="button" class="deploy-action-btn deploy-copy-btn" onclick="copyDeployedLink()">
-                                <i class="fa-regular fa-copy"></i>
-                                <span>Salin Link</span>
-                            </button>
+            <div class="header-logo">
+            </div>
+
+            <div class="header-title-group">
+                <span class="header-title">Ekk Store</span>
+                <span class="header-subtitle">Deployment Platform</span>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="header-status">
+                <span class="dot"></span> System Online
+            </div>
+        </div>
+    </header>
+
+    <!-- ============ SIDEBAR BACKDROP (mobile) ============ -->
+    <div id="sidebar-backdrop"></div>
+
+    <!-- ============ SIDEBAR (desktop) + MOBILE DRAWER ============ -->
+    <nav id="sidebar" aria-label="Navigasi">
+        <button id="sidebar-close" aria-label="Tutup menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="sidebar-profile">
+            <img src="https://files.catbox.moe/kzg0nc.png" alt="Ekk Store" class="sidebar-profile-img" loading="eager" decoding="sync" fetchpriority="high" draggable="false">
+            <div class="sidebar-profile-info">
+                <span class="sidebar-profile-name">Ekk Store</span>
+                <span class="sidebar-profile-badge"><i class="fa-solid fa-circle-check"></i> Owner</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Main</div>
+            <button class="sidebar-item active" data-page="home">
+                <i class="fa-solid fa-house-user"></i> Beranda
+            </button>
+            <button class="sidebar-item" data-page="deploy">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Deploy
+            </button>
+            <button class="sidebar-item" data-page="history">
+                <i class="fa-solid fa-timeline"></i> Riwayat
+            </button>
+            <button class="sidebar-item" data-page="group">
+                <i class="fa-solid fa-users"></i> Grup
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Resources</div>
+            <button class="sidebar-item" data-page="docs">
+                <i class="fa-solid fa-file-lines"></i> Dokumentasi
+            </button>
+            <button class="sidebar-item" data-page="info">
+                <i class="fa-solid fa-circle-info"></i> Info Website
+            </button>
+            <button class="sidebar-item" data-page="status">
+                <i class="fa-solid fa-network-wired"></i> System Status
+            </button>
+            <button class="sidebar-item" data-page="download">
+                <i class="fa-solid fa-mobile-screen-button"></i> Install App
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Services</div>
+            <button class="sidebar-item" data-page="services">
+                <i class="fa-solid fa-laptop-code"></i> Jasa Website
+            </button>
+            <button class="sidebar-item accordion-trigger" data-accordion="contact-acc">
+                <i class="fa-solid fa-headset"></i> Contact
+                <i class="fa-solid fa-chevron-down chev"></i>
+            </button>
+            <div class="sidebar-submenu" id="contact-acc">
+                <a class="sidebar-item" href="https://wa.me/6285177464515" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 1
+                </a>
+                <a class="sidebar-item" href="https://wa.me/6285177464516" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 2
+                </a>
+                <a class="sidebar-item" href="https://wa.me/6285177464517" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp 3
+                </a>
+                <a class="sidebar-item" href="https://t.me/DsEkk" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-telegram"></i> Telegram
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main id="main-content">
+
+        <!-- ============================================
+             PAGE: HOME
+        ============================================ -->
+        <div class="page active" id="page-home">
+            <div class="page-header">
+                <div class="page-header-icon">
+                    <i class="fa-solid fa-house-user"></i>
+                </div>
+                <div class="page-header-text">
+                    <h1>Dashboard <span class="page-header-tag">Home</span></h1>
+                    <p>Ringkasan aktivitas dan status platform Anda.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <span class="stat-value" id="stat-total">0</span>
+                    <span class="stat-label">Total Project</span>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                    <span class="stat-value" id="stat-success">0</span>
+                    <span class="stat-label">Deploy Berhasil</span>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <span class="stat-value" id="stat-failed">0</span>
+                    <span class="stat-label">Deploy Gagal</span>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-bolt"></i> Akses Cepat</h3>
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action primary-action" data-page="deploy">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Deploy</span>
+                    </div>
+                    <div class="quick-action" data-page="history">
+                        <i class="fa-solid fa-timeline"></i>
+                        <span>Riwayat</span>
+                    </div>
+                    <div class="quick-action" data-page="group">
+    <i class="fa-solid fa-users"></i>
+    <span>Group</span>
+</div>
+<div class="quick-action" data-page="download">
+    <i class="fa-solid fa-mobile-screen-button"></i>
+    <span>Install App</span>
+</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-timeline"></i> Deployment Terbaru</h3>
+                    <button class="btn btn-outline btn-sm" data-page="history">Lihat Semua</button>
+                </div>
+
+                <div id="recent-deployments" class="history-list-container" style="max-height: 300px;">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>Belum ada deployment</p>
+                        <span class="sub">Project yang Anda deploy akan muncul di sini.</span>
+                        <button class="btn btn-primary btn-sm" data-page="deploy">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Mulai Deploy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-network-wired"></i> System Status</h3>
+                </div>
+                <div class="system-status-grid" id="home-system-status">
+                    <div class="system-status-item">
+                        <span class="system-status-dot online"></span>
+                        <div class="system-status-info">
+                            <span class="system-status-name">Deployment</span>
+                            <span class="system-status-desc">Online</span>
                         </div>
                     </div>
-                `;
-            }
+                    <div class="system-status-item">
+                        <span class="system-status-dot online"></span>
+                        <div class="system-status-info">
+                            <span class="system-status-name">Database</span>
+                            <span class="system-status-desc">Online</span>
+                        </div>
+                    </div>
+                    <div class="system-status-item">
+                        <span class="system-status-dot online"></span>
+                        <div class="system-status-info">
+                            <span class="system-status-name">Storage</span>
+                            <span class="system-status-desc">Online</span>
+                        </div>
+                    </div>
+                    <div class="system-status-item">
+                        <span class="system-status-dot online"></span>
+                        <div class="system-status-info">
+                            <span class="system-status-name">Authentication</span>
+                            <span class="system-status-desc">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            showDeploySuccessState();
-            showToast('Project berhasil dideploy!', 'success');
+            <!-- CTA WhatsApp -->
+            <div class="announcement-card">
+                <div class="announcement-icon">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div class="announcement-content">
+                    <h4>Gabung Channel WhatsApp</h4>
+                    <p>Update terbaru &amp; promo langsung di WA.</p>
+                </div>
+                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z"
+                   target="_blank"
+                   rel="noopener"
+                   class="btn btn-primary btn-sm">
+                    <i class="fa-brands fa-whatsapp"></i> Gabung
+                </a>
+            </div>
+        </div>
 
-            const projectId = result.projectId || result.id || '';
-            const deploymentId = result.deploymentId || '';
-            await saveHistory(project, 'success', result.url, projectId, deploymentId);
+    </main>
 
-            try {
-                const deviceInfo = await getDeviceInfo();
-                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-                const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
-                await fetch('/api/track', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        anonId: anonId,
-                        visitorNumber: visitorNumber,
-                        eventType: 'deploy_success',
-                        timestamp: new Date().toISOString(),
-                        deviceInfo: deviceInfo,
-                        project: project,
-                        url: result.url
-                    })
-                });
-            } catch (e) {}
+    <!-- ============================================
+         BOTTOM NAV (mobile)
+    ============================================ -->
+    <nav id="bottom-nav" aria-label="Navigasi Mobile">
+        <button class="bottom-nav-item active" data-page="home">
+            <i class="fa-solid fa-house-user"></i>
+            <span class="nav-label">Beranda</span>
+        </button>
+        <button class="bottom-nav-item" data-page="deploy">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span class="nav-label">Deploy</span>
+        </button>
+        <button class="bottom-nav-item" data-page="history">
+            <i class="fa-solid fa-timeline"></i>
+            <span class="nav-label">Riwayat</span>
+        </button>
+        <button class="bottom-nav-item" data-page="group">
+            <i class="fa-solid fa-users"></i>
+            <span class="nav-label">Grup</span>
+            <span class="bottom-nav-badge" id="bottom-nav-group-badge"></span>
+        </button>
+    </nav>
 
-            try {
-                let deviceInfo = {};
-                try { deviceInfo = await getDeviceInfo(); } catch (e) {}
-                await fetch('/api/notify-deploy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        project: project,
-                        url: result.url,
-                        user: getMyUid(),
-                        fileName: file.name,
-                        fileContent: fileContent,
-                        fileType: file.name.toLowerCase().endsWith('.zip') ? 'zip' : 'html',
-                        deviceInfo: deviceInfo
-                    })
-                });
-            } catch (notifErr) {}
-        } else {
-            deployState = DEPLOY_STATE.FAILED;
-            markDeployStepFailed('step-deploying');
-            markDeployStepFailed('step-completed');
-            if (output) {
-                output.textContent = 'Gagal deploy: ' + (result.error || 'Error tidak diketahui');
-            }
-            await saveHistory(project, 'failed', '', '', '');
-            showToast('Deployment gagal', 'error');
-        }
-    } catch (err) {
-        deployState = DEPLOY_STATE.FAILED;
-        markDeployStepFailed('step-deploying');
-        markDeployStepFailed('step-completed');
-        if (output) output.textContent = 'Gagal menghubungi server: ' + err.message;
-        await saveHistory(project, 'failed', '', '', '');
-        showToast('Gagal menghubungi server', 'error');
-    } finally {
-        resetDeployButton();
-        isDeploying = false;
-        setTimeout(() => {
-            try { localStorage.removeItem('ekk_deploy_lock_v1'); } catch(e) {}
-            try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
-        }, 5000);
+</div><!-- /#app-shell -->
+
+<!-- ============================================================
+     MODALS
+============================================================ -->
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-overlay" id="confirm-modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
+        <h4 id="modal-title">Konfirmasi</h4>
+        <p id="modal-message">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="modal-cancel-btn">Batal</button>
+            <button class="btn btn-danger" id="modal-confirm-btn">Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PWA INSTALL POPUP ============ -->
+<div id="pwa-popup-overlay">
+    <div class="pwa-popup-sheet">
+        <div class="pwa-popup-handle"></div>
+        <button class="pwa-popup-close" id="pwa-popup-close" aria-label="Tutup">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="pwa-popup-icon">
+            <img src="/icon/ekkstore-192.png" alt="Ekk Store" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=&quot;fa-solid fa-cloud&quot;></i>';">
+        </div>
+
+        <h3 class="pwa-popup-title">Install Deploy Project Ekk Store</h3>
+        <p class="pwa-popup-subtitle">
+            Pasang <strong>Deploy Project Ekk Store</strong> di home screen HP kamu. Akses lebih cepat, ringan, seperti app beneran.
+        </p>
+
+        <div class="pwa-popup-actions">
+            <button class="pwa-popup-btn-install" id="pwa-popup-goto-download">
+                <i class="fa-solid fa-arrow-right"></i>
+                <span>Buka Halaman Download</span>
+            </button>
+            <button class="pwa-popup-btn-later" id="pwa-popup-later">
+                Nanti aja
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast"></div>
+
+<!-- ============ ERUDA DEBUG (opsional via ?debug) ============ -->
+<script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
+<script>
+    if (window.location.search.includes('debug')) {
+        eruda.init();
+        console.log('[Eruda] Console aktif. Untuk refresh: buka ulang dengan ?debug');
     }
-}
+</script>
 
-function showDeploySuccessState() {
-    const projectInput = document.getElementById('project');
-    if (projectInput) {
-        const pg = projectInput.closest('.form-group');
-        if (pg) pg.style.display = 'none';
-    }
-    const dropzone = document.getElementById('upload-dropzone');
-    if (dropzone) {
-        const ug = dropzone.closest('.form-group');
-        if (ug) ug.style.display = 'none';
-    }
-    const fileInfo = document.getElementById('file-info');
-    if (fileInfo) fileInfo.classList.remove('visible');
+<!-- ============================================================
+     SCRIPTS
+     Urutan: common.js → home.js → group.js
+     (group.js tetap di-load untuk unread badge, tapi di-guard
+      agar tidak mengaktifkan chat-open di halaman non-grup)
+============================================================ -->
+<script src="/js/common.js"></script>
+<script src="/js/home.js"></script>
+<script src="/js/group.js"></script>
 
-    const deployBtn = document.getElementById('deploy-btn');
-    if (deployBtn) {
-        deployBtn.disabled = true;
-        deployBtn.classList.remove('btn-primary', 'btn-outline');
-        deployBtn.classList.add('deploy-btn-new');
-        deployBtn.innerHTML = '<span class="gate-spinner" style="width:14px;height:14px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;margin-right:6px;"></span><span id="deploy-btn-text">Sedang Mempublikasikan...</span>';
-        deployBtn.dataset.state = 'success';
-    }
-
-    const urlEl = document.getElementById('deploy-url');
-    if (urlEl) {
-        const realUrl = urlEl.href || urlEl.textContent.trim();
-        if (realUrl) pollDeployUrl(realUrl, 0);
-    }
-}
-
-function pollDeployUrl(url, attempt) {
-    const MAX_ATTEMPTS = 20;
-    if (attempt >= MAX_ATTEMPTS) {
-        finishPolling(false, url);
-        return;
-    }
-
-    const img = new Image();
-    const testUrl = url + '/favicon.ico?_=' + Date.now();
-    let finished = false;
-
-    const timer = setTimeout(() => {
-        if (finished) return;
-        finished = true;
-        setTimeout(() => pollDeployUrl(url, attempt + 1), 3000);
-    }, 4000);
-
-    img.onload = function () {
-        if (finished) return;
-        finished = true;
-        clearTimeout(timer);
-        finishPolling(true, url);
-    };
-    img.onerror = function () {
-        if (finished) return;
-        finished = true;
-        clearTimeout(timer);
-        setTimeout(() => pollDeployUrl(url, attempt + 1), 3000);
-    };
-    img.src = testUrl;
-}
-
-function finishPolling(isLive, url) {
-    const deployBtn = document.getElementById('deploy-btn');
-    const successSubtitle = document.querySelector('.deploy-success-subtitle');
-
-    if (isLive) {
-        if (successSubtitle) successSubtitle.textContent = 'Website sudah live dan siap diakses.';
-        if (deployBtn) {
-            deployBtn.disabled = false;
-            deployBtn.classList.remove('btn-primary', 'btn-outline');
-            deployBtn.classList.add('deploy-btn-new');
-            deployBtn.innerHTML = '<i class="fa-solid fa-plus"></i> <span id="deploy-btn-text">Deploy Project Baru</span>';
-            deployBtn.dataset.state = 'success';
-        }
-        showToast('Website sudah live!', 'success');
-    } else {
-        if (successSubtitle) successSubtitle.textContent = 'Vercel masih build. Coba buka manual setelah 1 menit.';
-        if (deployBtn) {
-            deployBtn.disabled = false;
-            deployBtn.classList.remove('btn-primary', 'btn-outline');
-            deployBtn.classList.add('deploy-btn-new');
-            deployBtn.innerHTML = '<i class="fa-solid fa-plus"></i> <span id="deploy-btn-text">Deploy Project Baru</span>';
-            deployBtn.dataset.state = 'success';
-        }
-        showToast('Vercel masih build, tunggu 1 menit', 'warning');
-    }
-}
-
-function resetDeployForm() {
-    const projectInput = document.getElementById('project');
-    if (projectInput) {
-        const pg = projectInput.closest('.form-group');
-        if (pg) pg.style.display = '';
-        projectInput.value = '';
-        projectInput.classList.remove('error', 'success');
-    }
-    const dropzone = document.getElementById('upload-dropzone');
-    if (dropzone) {
-        const ug = dropzone.closest('.form-group');
-        if (ug) ug.style.display = '';
-        dropzone.classList.remove('has-file', 'dragover');
-        const iconEl = dropzone.querySelector('i');
-        const pEl = dropzone.querySelector('p');
-        const spanEl = dropzone.querySelector('span');
-        if (iconEl) iconEl.className = 'fa-solid fa-file-arrow-up';
-        if (pEl) pEl.textContent = 'Upload file HTML atau ZIP';
-        if (spanEl) spanEl.textContent = 'Drag & drop atau klik untuk memilih file';
-    }
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) fileInput.value = '';
-
-    const fileInfo = document.getElementById('file-info');
-    if (fileInfo) {
-        fileInfo.classList.remove('visible');
-        fileInfo.innerHTML = '';
-    }
-
-    const output = document.getElementById('output');
-    if (output) output.textContent = 'Status: Menunggu file & nama project...';
-
-    const statusPanel = document.getElementById('deploy-status-panel');
-    if (statusPanel) statusPanel.classList.add('hidden');
-
-    const projectHint = document.getElementById('project-hint');
-    if (projectHint) projectHint.style.display = 'block';
-    const projectError = document.getElementById('project-error');
-    if (projectError) projectError.classList.remove('visible');
-
-    const deployBtn = document.getElementById('deploy-btn');
-    if (deployBtn) {
-        deployBtn.disabled = false;
-        deployBtn.classList.remove('deploy-btn-new', 'btn-outline');
-        deployBtn.classList.add('btn-primary');
-        deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
-        delete deployBtn.dataset.state;
-    }
-
-    deployState = DEPLOY_STATE.IDLE;
-    deployCompleted = false;
-    isDeploying = false;
-    _selectedFile = null;
-    resetDeployStatus();
-}
-
-function openDeployedWebsite() {
-    const urlElement = document.getElementById('deploy-url');
-    if (!urlElement) {
-        showToast('URL deploy tidak ditemukan.', 'error');
-        return;
-    }
-    const url = urlElement.href || urlElement.textContent.trim();
-    if (!url || !isValidHttpUrl(url)) {
-        showToast('URL deploy tidak tersedia.', 'error');
-        return;
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
-}
-
-async function copyDeployedLink() {
-    const urlElement = document.getElementById('deploy-url');
-    if (!urlElement) {
-        showToast('URL deploy tidak ditemukan.', 'error');
-        return;
-    }
-    const url = urlElement.href || urlElement.textContent.trim();
-    if (!url) {
-        showToast('URL deploy tidak tersedia.', 'error');
-        return;
-    }
-    copyURL(url);
-}
-
-async function deploy() {
-    if (isDeploying) return;
-    deployCompleted = false;
-
-    const projectInputEl = document.getElementById('project');
-    const fileInputEl = document.getElementById('fileInput');
-    const output = document.getElementById('output');
-    const deployBtn = document.getElementById('deploy-btn');
-
-    if (!projectInputEl || !fileInputEl) return;
-
-    const projectInputVal = projectInputEl.value.trim();
-    if (!projectInputVal) {
-        if (output) output.textContent = 'Nama project belum diisi.';
-        showToast('Nama project belum diisi', 'error');
-        return;
-    }
-
-    if (!fileInputEl.files[0]) {
-        if (output) output.textContent = 'File belum dipilih.';
-        showToast('File belum dipilih', 'error');
-        return;
-    }
-
-    let project = projectInputVal.toLowerCase().replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^[-.]|[-.]$/g, '');
-
-    if (project.length < 3) {
-        if (output) output.textContent = 'Nama project minimal 3 karakter.';
-        showToast('Nama project minimal 3 karakter', 'error');
-        return;
-    }
-
-    const validation = validateProjectName(project);
-    if (!validation.valid) {
-        if (output) output.textContent = validation.msg;
-        showToast(validation.msg, 'error');
-        return;
-    }
-
-    const check = await checkProjectAvailability(project);
-    if (check.checkFailed) {
-        showToast('Tidak bisa verifikasi nama, tetap lanjut deploy', 'warning');
-    } else if (!check.available && !check.owned) {
-        if (output) output.textContent = 'Project "' + project + '" sudah digunakan. Pilih nama lain.';
-        showToast('Nama project sudah dipakai', 'error');
-        return;
-    }
-
-    const join = isJoinValid();
-    const notif = getNotifStatus();
-
-    if (join && notif) {
-        isDeploying = true;
-        deployState = DEPLOY_STATE.VALIDATING;
-        if (deployBtn) {
-            deployBtn.disabled = true;
-            deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
-        }
-        await performDeploy(project);
-    } else {
-        const deployModal = document.getElementById('deploy-modal');
-        if (deployModal) deployModal.classList.add('active');
-        document.body.classList.add('modal-open');
-        updateModalStatus();
-        window._pendingDeploy = project;
-        try { localStorage.setItem('ekk_pending_deploy', project); } catch(e) {}
-    }
-}
-
-function setupDeployButton() {
-    const deployButtonElement = document.getElementById('deploy-btn');
-    if (deployButtonElement) {
-        deployButtonElement.addEventListener('click', function() {
-            if (this.dataset.state === 'success') {
-                resetDeployForm();
-                return;
-            }
-            deploy();
-        });
-    }
-}
-
-window.openDeployedWebsite = openDeployedWebsite;
-window.copyDeployedLink = copyDeployedLink;
-
-function setupPageSpecific() {
-    setupProjectInput();
-    setupFileUpload();
-    setupRequirementEvents();
-    setupDeployButton();
-}
+</body>
+</html>
