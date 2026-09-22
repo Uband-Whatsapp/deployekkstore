@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
-    <title>Ekk Store — Deployment Platform</title>
+    <title>Deploy Project — Ekk Store</title>
 <script>
 (function() {
     try {
@@ -18,10 +18,7 @@
     } catch (e) {}
 })();
 </script>
-    <!-- ============================================================
-         SEO / SOCIAL META
-    ============================================================ -->
-    <meta name="description" content="Ekk Store — Platform deployment website HTML/ZIP dan komunitas developer. Deploy gratis, cepat, dan aman." />
+    <meta name="description" content="Deploy website HTML/ZIP Anda di Ekk Store — gratis, cepat, dan aman." />
     <meta name="theme-color" content="#0c0c0e" />
     <meta name="color-scheme" content="dark" />
     <meta name="application-name" content="Ekk Store" />
@@ -30,49 +27,32 @@
     <meta name="apple-mobile-web-app-title" content="Ekk Store" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Ekk Store — Deployment Platform" />
-    <meta property="og:description" content="Deploy website HTML/ZIP gratis, cepat, dan aman. Plus komunitas developer." />
+    <meta property="og:title" content="Deploy Project — Ekk Store" />
+    <meta property="og:description" content="Deploy website HTML/ZIP gratis, cepat, dan aman." />
     <meta property="og:image" content="https://files.catbox.moe/kzg0nc.png" />
-    <meta property="og:url" content="https://deploy.project.ekkstore.web.id" />
+    <meta property="og:url" content="https://deploy.project.ekkstore.web.id/deploy" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Ekk Store — Deployment Platform" />
+    <meta name="twitter:title" content="Deploy Project — Ekk Store" />
     <meta name="twitter:description" content="Deploy website HTML/ZIP gratis, cepat, dan aman." />
     <meta name="twitter:image" content="https://files.catbox.moe/kzg0nc.png" />
 
-    <!-- ============================================================
-         PWA
-    ============================================================ -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="https://files.catbox.moe/kzg0nc.png" type="image/png" />
     <link rel="apple-touch-icon" href="https://files.catbox.moe/kzg0nc.png" />
 
-    <!-- ============================================================
-         FONTS
-    ============================================================ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- ============================================================
-         ICON
-    ============================================================ -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-    <!-- ============================================================
-         DEBUG
-    ============================================================ -->
-    <link rel="stylesheet" href="/assets/x9k2/main.css">
-    <!-- ============================================================
-         FIREBASE SDK (compat)
-    ============================================================ -->
+    <link rel="stylesheet" href="/css/style.css" />
+
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
-<body data-page="home">
-<!-- ============================================================
-     GATE SCREEN
-============================================================ -->
+<body data-page="deploy">
 <div id="gate-screen">
     <div class="gate-card" id="gate-card">
         <div class="gate-steps" id="gate-steps">
@@ -114,12 +94,8 @@
     </div>
 </div>
 
-<!-- ============================================================
-     APP SHELL
-============================================================ -->
 <div id="app-shell">
 
-    <!-- ============ TOP HEADER ============ -->
     <header id="top-header">
         <div class="header-left">
             <button id="btn-hamburger" aria-label="Buka menu">
@@ -142,10 +118,8 @@
         </div>
     </header>
 
-    <!-- ============ SIDEBAR BACKDROP (mobile) ============ -->
     <div id="sidebar-backdrop"></div>
 
-    <!-- ============ SIDEBAR (desktop) + MOBILE DRAWER ============ -->
     <nav id="sidebar" aria-label="Navigasi">
         <button id="sidebar-close" aria-label="Tutup menu">
             <i class="fa-solid fa-xmark"></i>
@@ -161,10 +135,10 @@
 
         <div class="sidebar-section">
             <div class="sidebar-section-title">Main</div>
-            <button class="sidebar-item active" data-page="home">
+            <button class="sidebar-item" data-page="home">
                 <i class="fa-solid fa-house-user"></i> Beranda
             </button>
-            <button class="sidebar-item" data-page="deploy">
+            <button class="sidebar-item active" data-page="deploy">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Deploy
             </button>
             <button class="sidebar-item" data-page="history">
@@ -210,155 +184,108 @@
                 <a class="sidebar-item" href="https://wa.me/6285177464517" target="_blank" rel="noopener">
                     <i class="fa-brands fa-whatsapp"></i> WhatsApp 3
                 </a>
-                <a class="sidebar-item" href="https://t.me/DsEkk" target="_blank" rel="noopener">
+                <a class="sidebar-item" href="https://t.me/XzzEkk" target="_blank" rel="noopener">
                     <i class="fa-brands fa-telegram"></i> Telegram
                 </a>
             </div>
         </div>
     </nav>
 
-    <!-- ============ MAIN CONTENT ============ -->
     <main id="main-content">
 
-        <!-- ============================================
-             PAGE: HOME
-        ============================================ -->
-        <div class="page active" id="page-home">
+        <div class="page active" id="page-deploy">
             <div class="page-header">
                 <div class="page-header-icon">
-                    <i class="fa-solid fa-house-user"></i>
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
                 </div>
                 <div class="page-header-text">
-                    <h1>Dashboard <span class="page-header-tag">Home</span></h1>
-                    <p>Ringkasan aktivitas dan status platform Anda.</p>
+                    <h1>Deploy Project <span class="page-header-tag">Upload</span></h1>
+                    <p>Deploy website Anda dengan cepat.</p>
                 </div>
             </div>
 
-            <div class="stats-grid" id="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
-                    <span class="stat-value" id="stat-total">0</span>
-                    <span class="stat-label">Total Project</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-                    <span class="stat-value" id="stat-success">0</span>
-                    <span class="stat-label">Deploy Berhasil</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
-                    <span class="stat-value" id="stat-failed">0</span>
-                    <span class="stat-label">Deploy Gagal</span>
-                </div>
-            </div>
-
-            <div class="card" style="margin-bottom: var(--space-6);">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-bolt"></i> Akses Cepat</h3>
-                </div>
-                <div class="quick-actions">
-                    <div class="quick-action primary-action" data-page="deploy">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>Deploy</span>
-                    </div>
-                    <div class="quick-action" data-page="history">
-                        <i class="fa-solid fa-timeline"></i>
-                        <span>Riwayat</span>
-                    </div>
-                    <div class="quick-action" data-page="group">
-    <i class="fa-solid fa-users"></i>
-    <span>Group</span>
-</div>
-<div class="quick-action" data-page="download">
-    <i class="fa-solid fa-mobile-screen-button"></i>
-    <span>Install App</span>
-</div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-bottom: var(--space-6);">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-timeline"></i> Deployment Terbaru</h3>
-                    <button class="btn btn-outline btn-sm" data-page="history">Lihat Semua</button>
+            <div class="card">
+                <div class="form-group">
+                    <label class="form-label" for="project">Nama Project</label>
+                    <input
+                        type="text"
+                        id="project"
+                        class="form-input"
+                        placeholder="contoh: website-ekkstore"
+                        autocomplete="off"
+                        autocapitalize="none"
+                        spellcheck="false"
+                    >
+                    <span class="form-hint" id="project-hint">
+                        Gunakan huruf kecil, angka, dan tanda hubung (-)
+                    </span>
+                    <span class="form-error" id="project-error"></span>
                 </div>
 
-                <div id="recent-deployments" class="history-list-container" style="max-height: 300px;">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-inbox"></i>
-                        <p>Belum ada deployment</p>
-                        <span class="sub">Project yang Anda deploy akan muncul di sini.</span>
-                        <button class="btn btn-primary btn-sm" data-page="deploy">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Mulai Deploy
-                        </button>
+                <div class="form-group">
+                    <label class="form-label">Upload File</label>
+                    <div
+                        class="upload-dropzone"
+                        id="upload-dropzone"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Upload file HTML atau ZIP"
+                    >
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <p>Upload file HTML atau ZIP</p>
+                        <span>Drag &amp; drop atau klik untuk memilih file</span>
                     </div>
+                    <input
+                        type="file"
+                        id="fileInput"
+                        accept=".html,.zip"
+                        style="display:none;"
+                    >
+                    <div class="file-info" id="file-info"></div>
                 </div>
-            </div>
 
-            <div class="card" style="margin-bottom: var(--space-6);">
-                <div class="card-header">
-                    <h3><i class="fa-solid fa-network-wired"></i> System Status</h3>
+                <div id="output">
+                    Status: Menunggu file &amp; nama project...
                 </div>
-                <div class="system-status-grid" id="home-system-status">
-                    <div class="system-status-item">
-                        <span class="system-status-dot online"></span>
-                        <div class="system-status-info">
-                            <span class="system-status-name">Deployment</span>
-                            <span class="system-status-desc">Online</span>
-                        </div>
-                    </div>
-                    <div class="system-status-item">
-                        <span class="system-status-dot online"></span>
-                        <div class="system-status-info">
-                            <span class="system-status-name">Database</span>
-                            <span class="system-status-desc">Online</span>
-                        </div>
-                    </div>
-                    <div class="system-status-item">
-                        <span class="system-status-dot online"></span>
-                        <div class="system-status-info">
-                            <span class="system-status-name">Storage</span>
-                            <span class="system-status-desc">Online</span>
-                        </div>
-                    </div>
-                    <div class="system-status-item">
-                        <span class="system-status-dot online"></span>
-                        <div class="system-status-info">
-                            <span class="system-status-name">Authentication</span>
-                            <span class="system-status-desc">Online</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- CTA WhatsApp -->
-            <div class="announcement-card">
-                <div class="announcement-icon">
-                    <i class="fa-brands fa-whatsapp"></i>
+                <button
+                    class="btn btn-primary btn-lg"
+                    id="deploy-btn"
+                    style="width: 100%; margin-top: var(--space-2);"
+                >
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span id="deploy-btn-text">Deploy Sekarang</span>
+                </button>
+
+                <div class="deploy-status-panel hidden" id="deploy-status-panel">
+                    <div class="status-step" id="step-upload">
+                        <span class="step-indicator">●</span>
+                        <span>Upload file</span>
+                    </div>
+                    <div class="status-step" id="step-validate">
+                        <span class="step-indicator">●</span>
+                        <span>Project validation</span>
+                    </div>
+                    <div class="status-step" id="step-deploying">
+                        <span class="step-indicator">●</span>
+                        <span>Deploying</span>
+                    </div>
+                    <div class="status-step" id="step-completed">
+                        <span class="step-indicator">●</span>
+                        <span>Completed</span>
+                    </div>
                 </div>
-                <div class="announcement-content">
-                    <h4>Gabung Channel WhatsApp</h4>
-                    <p>Update terbaru &amp; promo langsung di WA.</p>
-                </div>
-                <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z"
-                   target="_blank"
-                   rel="noopener"
-                   class="btn btn-primary btn-sm">
-                    <i class="fa-brands fa-whatsapp"></i> Gabung
-                </a>
             </div>
         </div>
 
     </main>
 
-    <!-- ============================================
-         BOTTOM NAV (mobile)
-    ============================================ -->
     <nav id="bottom-nav" aria-label="Navigasi Mobile">
-        <button class="bottom-nav-item active" data-page="home">
+        <button class="bottom-nav-item" data-page="home">
             <i class="fa-solid fa-house-user"></i>
             <span class="nav-label">Beranda</span>
         </button>
-        <button class="bottom-nav-item" data-page="deploy">
+        <button class="bottom-nav-item active" data-page="deploy">
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span class="nav-label">Deploy</span>
         </button>
@@ -373,13 +300,8 @@
         </button>
     </nav>
 
-</div><!-- /#app-shell -->
+</div>
 
-<!-- ============================================================
-     MODALS
-============================================================ -->
-
-<!-- ============ CONFIRM MODAL ============ -->
 <div class="modal-overlay" id="confirm-modal-overlay">
     <div class="modal-box">
         <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
@@ -392,7 +314,78 @@
     </div>
 </div>
 
-<!-- ============ PWA INSTALL POPUP ============ -->
+<div class="modal-overlay" id="deploy-modal">
+    <div class="modal-box">
+        <div class="modal-icon">
+            <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <h4>Syarat Deploy</h4>
+        <p class="modal-description" style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:20px;">
+            Selesaikan persyaratan berikut untuk melanjutkan proses deployment.
+        </p>
+
+        <div class="requirement-item" id="req-grup">
+            <div class="req-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="req-content">
+                <div class="req-info">
+                    <div class="req-label">Bergabung ke Grup WhatsApp</div>
+                    <div class="req-desc">
+                        Bergabung ke grup untuk mendapatkan informasi dan dukungan.
+                    </div>
+                </div>
+                <div class="req-action">
+                    <a
+                        href="https://chat.whatsapp.com/FaPXveEoQEnFwjgqLu8Zyw?s=cl&p=a&mlu=4"
+                        target="_blank"
+                        rel="noopener"
+                        id="btn-join-grup"
+                        class="req-btn"
+                    >
+                        <i class="fa-brands fa-whatsapp"></i>
+                        Gabung
+                    </a>
+                    <span class="req-status" id="req-grup-status">Belum</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="requirement-item" id="req-notif">
+            <div class="req-icon">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="req-content">
+                <div class="req-info">
+                    <div class="req-label">Aktifkan Notifikasi Browser</div>
+                    <div class="req-desc">
+                        Izinkan notifikasi browser agar mendapatkan pembaruan Website.
+                    </div>
+                </div>
+                <div class="req-action">
+                    <button id="btn-aktifkan-notif" class="req-btn blue">
+                        <i class="fa-solid fa-bell"></i>
+                        Aktifkan
+                    </button>
+                    <span class="req-status" id="req-notif-status">Belum</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="retry-popup">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i></div>
+        <h4>Masih Belum Mengikuti?</h4>
+        <p>Tekan tombol <strong>Ikuti</strong> di saluran WhatsApp, lalu kembali ke halaman ini.</p>
+        <div class="modal-actions">
+            <a href="https://whatsapp.com/channel/0029VbBK3OSJ93wO8aqGS51z" target="_blank" class="btn btn-primary">Buka Saluran</a>
+            <button class="btn btn-outline" onclick="document.getElementById('retry-popup').classList.remove('active')">Tutup</button>
+        </div>
+    </div>
+</div>
+
 <div id="pwa-popup-overlay">
     <div class="pwa-popup-sheet">
         <div class="pwa-popup-handle"></div>
@@ -421,10 +414,8 @@
     </div>
 </div>
 
-<!-- ============ TOAST ============ -->
 <div id="toast"></div>
 
-<!-- ============ ERUDA DEBUG (opsional via ?debug) ============ -->
 <script src="https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js"></script>
 <script>
     if (window.location.search.includes('debug')) {
@@ -433,15 +424,8 @@
     }
 </script>
 
-<!-- ============================================================
-     SCRIPTS
-     Urutan: common.js → home.js → group.js
-     (group.js tetap di-load untuk unread badge, tapi di-guard
-      agar tidak mengaktifkan chat-open di halaman non-grup)
-============================================================ -->
 <script src="/js/common.js"></script>
-<script src="/js/home.js"></script>
-<script src="/js/group.js"></script>
+<script src="/js/deploy.js"></script>
 
 </body>
 </html>
