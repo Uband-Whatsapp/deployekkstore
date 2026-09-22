@@ -1,3 +1,4 @@
+
 import JSZip from 'jszip';
 
 export default async function handler(req, res) {
@@ -7,32 +8,38 @@ export default async function handler(req, res) {
 
   const { project, fileContent, fileUrl, fileName, userId } = req.body;
 
-  if (!project || (!fileContent && !fileUrl)) {
+  if (!project || !fileName) {
     return res.status(400).json({ error: 'Project dan file harus diisi' });
   }
 
   const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
-
   if (!VERCEL_TOKEN) {
     return res.status(500).json({ error: 'Konfigurasi server tidak lengkap' });
   }
 
   let files = [];
+  let base64Zip = '';
 
   try {
     if (fileName.endsWith('.html')) {
+      if (!fileContent) {
+        return res.status(400).json({ error: 'Konten HTML kosong' });
+      }
       files = [{ file: 'index.html', data: fileContent, encoding: 'utf-8' }];
     } else if (fileName.endsWith('.zip')) {
-      if (!fileUrl) {
-        return res.status(400).json({ error: 'URL ZIP tidak diterima' });
+      if (fileUrl) {
+        const zipRes = await fetch(fileUrl);
+        if (!zipRes.ok) {
+          return res.status(400).json({ error: 'Gagal download ZIP dari Cloudinary' });
+        }
+        const arrayBuffer = await zipRes.arrayBuffer();
+        base64Zip = Buffer.from(arrayBuffer).toString('base64');
+      } else if (fileContent) {
+        base64Zip = fileContent;
+      } else {
+        return res.status(400).json({ error: 'URL ZIP atau fileContent harus ada' });
       }
-      const zipRes = await fetch(fileUrl);
-      if (!zipRes.ok) {
-        return res.status(400).json({ error: 'Gagal download ZIP dari Cloudinary' });
-      }
-      const arrayBuffer = await zipRes.arrayBuffer();
-      const base64Content = Buffer.from(arrayBuffer).toString('base64');
-      files = await extractZipToFiles(base64Content);
+      files = await extractZipToFiles(base64Zip);
     } else {
       return res.status(400).json({ error: 'File harus .html atau .zip' });
     }
