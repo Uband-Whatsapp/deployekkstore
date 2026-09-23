@@ -198,7 +198,7 @@ function updateModalStatus() {
             grupBtn.style.pointerEvents = '';
             grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
             if (!grupBtn.hasAttribute('href')) {
-                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/HwnicJ4WcxLDfiL6Wx7Lk4?s=cl&p=a&mlu=4&ilr=4');
+                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/DbMDYJcBrYoJMutbMoH24q');
             }
         }
     }
