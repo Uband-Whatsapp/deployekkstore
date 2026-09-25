@@ -1,4 +1,3 @@
-
 /* ============================================================
    1) PROJECT NAME VALIDATION
    ============================================================ */
@@ -15,7 +14,7 @@ function validateProjectName(name) {
 
 /* ============================================================
    2) PROJECT INPUT
-   =========================================================== */
+   ============================================================ */
 function setupProjectInput() {
     const projectInput = document.getElementById('project');
     const projectHint = document.getElementById('project-hint');
@@ -24,7 +23,6 @@ function setupProjectInput() {
 
     projectInput.addEventListener('input', function () {
         const val = this.value.trim().toLowerCase();
-        // ✅ FIX #5B: izinkan titik (.) juga, konsisten dengan validator
         this.value = val.replace(/[^a-z0-9.-]/g, '-').replace(/-+/g, '-').replace(/^[-.]|[-.]$/g, '');
 
         if (this.value.length === 0) {
@@ -52,7 +50,7 @@ function setupProjectInput() {
 }
 
 /* ============================================================
-   3) FILE UPLOAD (dropzone + large file warning)
+   3) FILE UPLOAD
    ============================================================ */
 let _selectedFile = null;
 
@@ -60,12 +58,9 @@ function setupFileUpload() {
     const uploadDropzone = document.getElementById('upload-dropzone');
     const fileInput = document.getElementById('fileInput');
     const fileInfo = document.getElementById('file-info');
-
     if (!uploadDropzone || !fileInput || !fileInfo) return;
 
-    uploadDropzone.addEventListener('click', function() {
-        fileInput.click();
-    });
+    uploadDropzone.addEventListener('click', function() { fileInput.click(); });
     uploadDropzone.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -85,7 +80,6 @@ function setupFileUpload() {
         this.classList.remove('dragover');
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const file = e.dataTransfer.files[0];
-            // Validate type
             const lower = file.name.toLowerCase();
             if (!lower.endsWith('.html') && !lower.endsWith('.zip')) {
                 showToast('Hanya file .html atau .zip yang didukung', 'error');
@@ -95,11 +89,8 @@ function setupFileUpload() {
             handleFileSelect(file);
         }
     });
-
     fileInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            handleFileSelect(this.files[0]);
-        }
+        if (this.files && this.files[0]) handleFileSelect(this.files[0]);
     });
 }
 
@@ -108,14 +99,12 @@ async function handleFileSelect(file) {
     const fileInfo = document.getElementById('file-info');
     if (!uploadDropzone || !fileInfo) return;
 
-    // Validate extension
     const lower = file.name.toLowerCase();
     if (!lower.endsWith('.html') && !lower.endsWith('.zip')) {
         showToast('Hanya file .html atau .zip yang didukung', 'error');
         return;
     }
 
-    // Large file warning
     if (file.size > LARGE_FILE_THRESHOLD) {
         const sizeMB = (file.size / 1024 / 1024).toFixed(1);
         const ok = await showConfirmModal(
@@ -149,14 +138,10 @@ async function handleFileSelect(file) {
 }
 
 /* ============================================================
-   4) DEPLOY REQUIREMENTS (Join grup + Notifikasi)
+   4) DEPLOY REQUIREMENTS
    ============================================================ */
-function getJoinTimestamp() {
-    return localStorage.getItem('grup_join_timestamp');
-}
-function setJoinTimestamp() {
-    localStorage.setItem('grup_join_timestamp', Date.now().toString());
-}
+function getJoinTimestamp() { return localStorage.getItem('grup_join_timestamp'); }
+function setJoinTimestamp() { localStorage.setItem('grup_join_timestamp', Date.now().toString()); }
 function isJoinValid() {
     const ts = getJoinTimestamp();
     if (!ts) return false;
@@ -172,13 +157,13 @@ function updateModalStatus() {
     const join = isJoinValid();
     const notif = getNotifStatus();
 
-    const grupItem   = document.getElementById('req-grup');
+    const grupItem = document.getElementById('req-grup');
     const grupStatus = document.getElementById('req-grup-status');
-    const grupBtn    = document.getElementById('btn-join-grup');
+    const grupBtn = document.getElementById('btn-join-grup');
 
-    const notifItem   = document.getElementById('req-notif');
+    const notifItem = document.getElementById('req-notif');
     const notifStatus = document.getElementById('req-notif-status');
-    const notifBtn    = document.getElementById('btn-aktifkan-notif');
+    const notifBtn = document.getElementById('btn-aktifkan-notif');
 
     if (join) {
         grupItem?.classList.add('done');
@@ -223,82 +208,74 @@ function updateModalStatus() {
         }
     }
 
-    // Auto-close + auto-deploy saat 2 syarat OK
     if (join && notif && !isDeploying) {
-    if (window._autoCloseTimer) return;
-    window._autoCloseTimer = true;
+        if (window._autoCloseTimer) return;
+        window._autoCloseTimer = true;
 
-    setTimeout(() => {
-        if (!isJoinValid() || !getNotifStatus()) {
-            window._autoCloseTimer = false;
-            return;
-        }
-
-        // Kalau halaman hidden (user pindah ke PWA), tunggu balik
-        if (document.hidden) {
-            console.log('[Deploy] Halaman hidden — tunggu user balik');
-            const waitVisible = () => {
-                if (!document.hidden) {
-                    document.removeEventListener('visibilitychange', waitVisible);
-                    console.log('[Deploy] User balik — lanjut');
-                    window._autoCloseTimer = false;
-                    setTimeout(() => updateModalStatus(), 500);
-                }
-            };
-            document.addEventListener('visibilitychange', waitVisible);
-            setTimeout(() => {
-                document.removeEventListener('visibilitychange', waitVisible);
+        setTimeout(() => {
+            if (!isJoinValid() || !getNotifStatus()) {
                 window._autoCloseTimer = false;
-            }, 60000);
-            return;
-        }
-
-        window._autoCloseTimer = false;
-
-        const deployModal = document.getElementById('deploy-modal');
-        if (deployModal) deployModal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-
-        // Cek lock — biar gak deploy 2x di context beda
-        const lockData = localStorage.getItem('ekk_deploy_lock_v1');
-        let skipDeploy = false;
-        if (lockData) {
-            try {
-                const parsed = JSON.parse(lockData);
-                const age = Date.now() - (parsed.timestamp || 0);
-                if (age < 30000) {
-                    console.log('[Deploy] Lock ada, skip');
-                    skipDeploy = true;
-                }
-            } catch(e) {}
-        }
-
-        if (!skipDeploy && window._pendingDeploy && !isDeploying) {
-            const project = window._pendingDeploy;
-            window._pendingDeploy = null;
-            try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
-            try {
-                localStorage.setItem('ekk_deploy_lock_v1', JSON.stringify({
-                    project: project,
-                    timestamp: Date.now()
-                }));
-            } catch(e) {}
-
-            showToast('Syarat terpenuhi, memulai deploy...', 'success');
-            const deployBtn = document.getElementById('deploy-btn');
-            isDeploying = true;
-            deployState = DEPLOY_STATE.VALIDATING;
-            if (deployBtn) {
-                deployBtn.disabled = true;
-                deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+                return;
             }
-            performDeploy(project);
-        } else if (window._pendingDeploy) {
-            window._pendingDeploy = null;
-            try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
-        }
-    }, 800);
-}
+
+            if (document.hidden) {
+                const waitVisible = () => {
+                    if (!document.hidden) {
+                        document.removeEventListener('visibilitychange', waitVisible);
+                        window._autoCloseTimer = false;
+                        setTimeout(() => updateModalStatus(), 500);
+                    }
+                };
+                document.addEventListener('visibilitychange', waitVisible);
+                setTimeout(() => {
+                    document.removeEventListener('visibilitychange', waitVisible);
+                    window._autoCloseTimer = false;
+                }, 60000);
+                return;
+            }
+
+            window._autoCloseTimer = false;
+
+            const deployModal = document.getElementById('deploy-modal');
+            if (deployModal) deployModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+
+            const lockData = localStorage.getItem('ekk_deploy_lock_v1');
+            let skipDeploy = false;
+            if (lockData) {
+                try {
+                    const parsed = JSON.parse(lockData);
+                    const age = Date.now() - (parsed.timestamp || 0);
+                    if (age < 30000) skipDeploy = true;
+                } catch(e) {}
+            }
+
+            if (!skipDeploy && window._pendingDeploy && !isDeploying) {
+                const project = window._pendingDeploy;
+                window._pendingDeploy = null;
+                try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
+                try {
+                    localStorage.setItem('ekk_deploy_lock_v1', JSON.stringify({
+                        project: project,
+                        timestamp: Date.now()
+                    }));
+                } catch(e) {}
+
+                showToast('Syarat terpenuhi, memulai deploy...', 'success');
+                const deployBtn = document.getElementById('deploy-btn');
+                isDeploying = true;
+                deployState = DEPLOY_STATE.VALIDATING;
+                if (deployBtn) {
+                    deployBtn.disabled = true;
+                    deployBtn.innerHTML = '<span class="gate-spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;"></span> <span id="deploy-btn-text">Sedang Deploy...</span>';
+                }
+                performDeploy(project);
+            } else if (window._pendingDeploy) {
+                window._pendingDeploy = null;
+                try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
+            }
+        }, 800);
+    }
 }
 
 function setupRequirementEvents() {
@@ -344,7 +321,7 @@ function setupRequirementEvents() {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     showToast('Notifikasi berhasil diaktifkan!', 'success');
-                    try { await registerPushNotification(); } catch (e) { console.warn('Register push:', e); }
+                    try { await registerPushNotification(); } catch (e) {}
                     updateModalStatus();
                 } else if (permission === 'denied') {
                     showToast('Notifikasi ditolak', 'warning');
@@ -355,14 +332,12 @@ function setupRequirementEvents() {
                     notificationButton.innerHTML = originalHTML;
                 }
             } catch (err) {
-                console.warn('Notification request error:', err);
                 notificationButton.style.pointerEvents = '';
                 notificationButton.innerHTML = originalHTML;
             }
         });
     }
 
-    // Re-check saat tab kembali aktif
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) updateModalStatus();
     });
@@ -425,7 +400,6 @@ function resetDeployButton() {
     const deployBtn = document.getElementById('deploy-btn');
     if (!deployBtn) return;
 
-    // Kalau deploy sukses → jangan reset, biar tombol tetap "Deploy Project Baru"
     if (deployCompleted) {
         deployState = DEPLOY_STATE.SUCCESS;
         isDeploying = false;
@@ -492,20 +466,30 @@ async function performDeploy(projectName) {
     updateDeployStatus(0);
     if (output) output.textContent = 'Membaca file...';
 
-    let fileContent;
+    let fileContent = '';
+    let fileUrl = '';
+
     try {
         if (file.name.toLowerCase().endsWith('.html')) {
             fileContent = await file.text();
         } else if (file.name.toLowerCase().endsWith('.zip')) {
-            const buffer = await file.arrayBuffer();
-            const bytes = new Uint8Array(buffer);
-            let binary = '';
-            const chunkSize = 8192;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-                const chunk = bytes.subarray(i, i + chunkSize);
-                binary += String.fromCharCode.apply(null, chunk);
+            if (output) output.textContent = 'Mengunggah ZIP ke Cloudinary...';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'Deploy-EkkStore');
+            const uploadRes = await fetch('https://api.cloudinary.com/v1_1/uuvl0m4s/auto/upload', {
+                method: 'POST',
+                body: formData
+            });
+            if (!uploadRes.ok) {
+                throw new Error('Upload ke Cloudinary gagal (HTTP ' + uploadRes.status + ')');
             }
-            fileContent = btoa(binary);
+            const uploadData = await uploadRes.json();
+            fileUrl = uploadData.secure_url;
+            if (!fileUrl) {
+                throw new Error('Cloudinary tidak memberikan URL');
+            }
+            if (output) output.textContent = 'Upload selesai, mengirim ke server...';
         } else {
             if (output) output.textContent = 'Hanya file .html atau .zip yang didukung.';
             deployState = DEPLOY_STATE.FAILED;
@@ -522,7 +506,7 @@ async function performDeploy(projectName) {
     updateDeployStatus(1);
 
     deployState = DEPLOY_STATE.UPLOADING;
-    if (output) output.textContent = 'Mengirim file ke server...';
+    if (output) output.textContent = 'Mengirim ke server...';
 
     deployState = DEPLOY_STATE.DEPLOYING;
     updateDeployStatus(2);
@@ -536,6 +520,7 @@ async function performDeploy(projectName) {
                 project: project,
                 fileName: file.name,
                 fileContent: fileContent,
+                fileUrl: fileUrl,
                 userId: getMyUid(),
                 authUid: _firebaseAuthReady ? CURRENT_USER_ID : null
             })
@@ -544,98 +529,89 @@ async function performDeploy(projectName) {
         const result = await response.json();
 
         if (result.url && isValidHttpUrl(result.url)) {
-    deployState = DEPLOY_STATE.SUCCESS;
-    deployCompleted = true;
+            deployState = DEPLOY_STATE.SUCCESS;
+            deployCompleted = true;
 
-    markDeployStepComplete('step-upload');
-    markDeployStepComplete('step-validate');
-    markDeployStepComplete('step-deploying');
-    markDeployStepComplete('step-completed');
+            markDeployStepComplete('step-upload');
+            markDeployStepComplete('step-validate');
+            markDeployStepComplete('step-deploying');
+            markDeployStepComplete('step-completed');
 
-    if (output) {
-        const safeUrl = escapeHTML(result.url);
-        output.innerHTML = `
-            <div class="deploy-success">
-                <div class="deploy-success-header">
-                    <div class="deploy-success-icon">
-                        <i class="fa-solid fa-check"></i>
+            if (output) {
+                const safeUrl = escapeHTML(result.url);
+                output.innerHTML = `
+                    <div class="deploy-success">
+                        <div class="deploy-success-header">
+                            <div class="deploy-success-icon">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="deploy-success-info">
+                                <div class="deploy-success-title">Deploy Berhasil</div>
+                                <div class="deploy-success-subtitle">Project berhasil dipublikasikan.</div>
+                            </div>
+                        </div>
+                        <div class="deploy-url-row">
+                            <i class="fa-solid fa-link"></i>
+                            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="deploy-url" id="deploy-url">${safeUrl}</a>
+                        </div>
+                        <div class="deploy-actions">
+                            <button type="button" class="deploy-action-btn deploy-open-btn" onclick="openDeployedWebsite()">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                <span>Buka Website</span>
+                            </button>
+                            <button type="button" class="deploy-action-btn deploy-copy-btn" onclick="copyDeployedLink()">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>Salin Link</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="deploy-success-info">
-                        <div class="deploy-success-title">Deploy Berhasil</div>
-                        <div class="deploy-success-subtitle">Project berhasil dipublikasikan.</div>
-                    </div>
-                </div>
-                <div class="deploy-url-row">
-                    <i class="fa-solid fa-link"></i>
-                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="deploy-url" id="deploy-url">${safeUrl}</a>
-                </div>
-                <div class="deploy-actions">
-                    <button type="button" class="deploy-action-btn deploy-open-btn" onclick="openDeployedWebsite()">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                        <span>Buka Website</span>
-                    </button>
-                    <button type="button" class="deploy-action-btn deploy-copy-btn" onclick="copyDeployedLink()">
-                        <i class="fa-regular fa-copy"></i>
-                        <span>Salin Link</span>
-                    </button>
-                </div>
-            </div>
-        `;
-    }
+                `;
+            }
 
-    /* ⚡ UI update SEGERA — jangan tunggu track & notify selesai */
-    showDeploySuccessState();
-    showToast('Project berhasil dideploy!', 'success');
+            showDeploySuccessState();
+            showToast('Project berhasil dideploy!', 'success');
 
-    const projectId = result.projectId || result.id || '';
-    const deploymentId = result.deploymentId || '';
-    await saveHistory(project, 'success', result.url, projectId, deploymentId);
+            const projectId = result.projectId || result.id || '';
+            const deploymentId = result.deploymentId || '';
+            await saveHistory(project, 'success', result.url, projectId, deploymentId);
 
-    try {
-        const deviceInfo = await getDeviceInfo();
-        const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-        const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
-        await fetch('/api/track', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                anonId: anonId,
-                visitorNumber: visitorNumber,
-                eventType: 'deploy_success',
-                timestamp: new Date().toISOString(),
-                deviceInfo: deviceInfo,
-                project: project,
-                url: result.url
-            })
-        });
-    } catch (e) {
-        console.warn('Gagal kirim track deploy:', e.message);
-    }
+            try {
+                const deviceInfo = await getDeviceInfo();
+                const anonId = localStorage.getItem('ekk_anon_id') || 'anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+                const visitorNumber = localStorage.getItem('ekk_visitor_num') || Math.floor(10000 + Math.random() * 89999).toString();
+                await fetch('/api/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        anonId: anonId,
+                        visitorNumber: visitorNumber,
+                        eventType: 'deploy_success',
+                        timestamp: new Date().toISOString(),
+                        deviceInfo: deviceInfo,
+                        project: project,
+                        url: result.url
+                    })
+                });
+            } catch (e) {}
 
-    try {
-        let deviceInfo = {};
-        try { deviceInfo = await getDeviceInfo(); } catch (e) {}
-        await fetch('/api/notify-deploy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                project: project,
-                url: result.url,
-                user: getMyUid(),
-                fileName: file.name,
-                fileContent: fileContent,
-                fileType: file.name.toLowerCase().endsWith('.zip') ? 'zip' : 'html',
-                deviceInfo: deviceInfo
-            })
-        });
-    } catch (notifErr) {
-        console.warn('Notif deploy gagal:', notifErr.message);
-    }
-
-    /* ⚠️ PENTING: TIDAK ada resetDeployButton() di sini.
-       Sudah digantikan showDeploySuccessState() di atas.
-       resetDeployButton() hanya jalan di finally. */
-} else {
+            try {
+                let deviceInfo = {};
+                try { deviceInfo = await getDeviceInfo(); } catch (e) {}
+                await fetch('/api/notify-deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project: project,
+                        url: result.url,
+                        user: getMyUid(),
+                        fileName: file.name,
+                        fileContent: fileContent,
+                        fileType: file.name.toLowerCase().endsWith('.zip') ? 'zip' : 'html',
+                        deviceInfo: deviceInfo
+                    })
+                });
+            } catch (notifErr) {}
+        } else {
             deployState = DEPLOY_STATE.FAILED;
             markDeployStepFailed('step-deploying');
             markDeployStepFailed('step-completed');
@@ -652,14 +628,14 @@ async function performDeploy(projectName) {
         if (output) output.textContent = 'Gagal menghubungi server: ' + err.message;
         await saveHistory(project, 'failed', '', '', '');
         showToast('Gagal menghubungi server', 'error');
- } finally {
-    resetDeployButton();
-    isDeploying = false;
-    setTimeout(() => {
-        try { localStorage.removeItem('ekk_deploy_lock_v1'); } catch(e) {}
-        try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
-    }, 5000);
-}
+    } finally {
+        resetDeployButton();
+        isDeploying = false;
+        setTimeout(() => {
+            try { localStorage.removeItem('ekk_deploy_lock_v1'); } catch(e) {}
+            try { localStorage.removeItem('ekk_pending_deploy'); } catch(e) {}
+        }, 5000);
+    }
 }
 
 function openDeployedWebsite() {
@@ -735,10 +711,8 @@ async function deploy() {
         return;
     }
 
-    // Cek ketersediaan nama
     const check = await checkProjectAvailability(project);
     if (check.checkFailed) {
-        console.warn('[Deploy] Cek nama gagal (tetap lanjut):', check.error);
         showToast('Tidak bisa verifikasi nama, tetap lanjut deploy', 'warning');
     } else if (!check.available && !check.owned) {
         if (output) output.textContent = 'Project "' + project + '" sudah digunakan. Pilih nama lain.';
@@ -780,7 +754,6 @@ function setupDeployButton() {
     }
 }
 
-/* Tampilkan mode sukses — sembunyikan form + ubah tombol */
 function showDeploySuccessState() {
     const projectInput = document.getElementById('project');
     if (projectInput) {
@@ -804,9 +777,8 @@ function showDeploySuccessState() {
         deployBtn.dataset.state = 'success';
     }
 }
-/* Reset form untuk deploy project baru */
+
 function resetDeployForm() {
-    // Tampilkan form kembali
     const projectInput = document.getElementById('project');
     if (projectInput) {
         const pg = projectInput.closest('.form-group');
@@ -846,14 +818,14 @@ function resetDeployForm() {
     const projectError = document.getElementById('project-error');
     if (projectError) projectError.classList.remove('visible');
 
-   const deployBtn = document.getElementById('deploy-btn');
-if (deployBtn) {
-    deployBtn.disabled = false;
-    deployBtn.classList.remove('deploy-btn-new', 'btn-outline');
-    deployBtn.classList.add('btn-primary');
-    deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
-    delete deployBtn.dataset.state;
-}
+    const deployBtn = document.getElementById('deploy-btn');
+    if (deployBtn) {
+        deployBtn.disabled = false;
+        deployBtn.classList.remove('deploy-btn-new', 'btn-outline');
+        deployBtn.classList.add('btn-primary');
+        deployBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span id="deploy-btn-text">Deploy Sekarang</span>';
+        delete deployBtn.dataset.state;
+    }
 
     deployState = DEPLOY_STATE.IDLE;
     deployCompleted = false;
@@ -863,14 +835,13 @@ if (deployBtn) {
 }
 
 /* ============================================================
-   8) EXPOSE GLOBAL (dipanggil dari HTML onclick)
+   8) EXPOSE GLOBAL
    ============================================================ */
 window.openDeployedWebsite = openDeployedWebsite;
 window.copyDeployedLink = copyDeployedLink;
 
 /* ============================================================
    9) PAGE-SPECIFIC INIT
-   Dipanggil otomatis oleh common.js's initApp()
    ============================================================ */
 function setupPageSpecific() {
     setupProjectInput();
