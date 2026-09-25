@@ -932,6 +932,8 @@ async function initUnreadListener() {
 ============================================================ */
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
+const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
 function renderReactionsIntoBubble(bubble, data, docId, isMine) {
     const reactions = data.reactions || {};
     const grouped = {};
@@ -939,7 +941,8 @@ function renderReactionsIntoBubble(bubble, data, docId, isMine) {
 
     Object.keys(reactions).forEach(uid => {
         const em = reactions[uid];
-        if (!em) return;
+        if (!em || typeof em !== 'string') return;
+        if (!ALLOWED_REACTIONS.includes(em)) return;
         if (!grouped[em]) grouped[em] = { count: 0, mine: false };
         grouped[em].count++;
         if (uid === myUid) grouped[em].mine = true;
@@ -955,7 +958,17 @@ function renderReactionsIntoBubble(bubble, data, docId, isMine) {
         const chip = document.createElement('button');
         chip.type = 'button';
         chip.className = 'reaction-chip' + (grouped[em].mine ? ' mine' : '');
-        chip.innerHTML = '<span>' + em + '</span><span class="count">' + grouped[em].count + '</span>';
+
+        const spanEm = document.createElement('span');
+        spanEm.textContent = em;
+
+        const spanCount = document.createElement('span');
+        spanCount.className = 'count';
+        spanCount.textContent = grouped[em].count;
+
+        chip.appendChild(spanEm);
+        chip.appendChild(spanCount);
+
         chip.addEventListener('click', function(e) {
             e.stopPropagation();
             toggleReaction(docId, em);
@@ -971,6 +984,12 @@ async function toggleReaction(docId, emoji) {
         showToast('Buat profil dulu', 'warning');
         return;
     }
+
+    if (!ALLOWED_REACTIONS.includes(emoji)) {
+        showToast('Emoji tidak valid', 'error');
+        return;
+    }
+
     const db = getDb();
     if (!db) return;
 
@@ -984,9 +1003,9 @@ async function toggleReaction(docId, emoji) {
         const myUid = currentUser.uid;
 
         if (reactions[myUid] === emoji) {
-            delete reactions[myUid];   // toggle off
+            delete reactions[myUid];
         } else {
-            reactions[myUid] = emoji;  // set / ganti
+            reactions[myUid] = emoji;
         }
 
         await docRef.update({ reactions });
