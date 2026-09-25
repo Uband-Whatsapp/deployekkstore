@@ -2852,7 +2852,7 @@ async function handleDeleteMember(uid, username) {
         'Hapus Member + Pesan?',
         'User "' + username + '" akan dihapus dari grup.\n\n' +
         'SEMUA pesan mereka juga akan dihapus dari chat.\n' +
-        'Ini tidak bisa dibatalkan.\n\n' +
+        'Tidak bisa dibatalkan.\n\n' +
         'Lanjutkan?',
         'Hapus Semua'
     );
@@ -2867,41 +2867,60 @@ async function handleDeleteMember(uid, username) {
     showToast('Menghapus member dan pesannya...', 'info');
 
     try {
+        let totalDeleted = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            const snap = await db.collection('messages')
+                .where('senderId', '==', uid)
+                .limit(400)
+                .get();
+
+            if (snap.empty) {
+                hasMore = false;
+                break;
+            }
+
+            const batch = db.batch();
+            snap.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            totalDeleted += snap.size;
+
+            if (snap.size < 400) hasMore = false;
+        }
+
+        let hasMoreLegacy = true;
+        while (hasMoreLegacy) {
+            const snap = await db.collection('messages')
+                .where('uid', '==', uid)
+                .limit(400)
+                .get();
+
+            if (snap.empty) {
+                hasMoreLegacy = false;
+                break;
+            }
+
+            const batch = db.batch();
+            snap.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            totalDeleted += snap.size;
+
+            if (snap.size < 400) hasMoreLegacy = false;
+        }
+
         await db.collection('users').doc(uid).delete();
 
         try {
             await db.collection('typing').doc(uid).delete();
         } catch (e) {}
 
-        const deleteFromField = async (fieldName) => {
-            let totalDeleted = 0;
-            while (true) {
-                const snap = await db.collection('messages')
-                    .where(fieldName, '==', uid)
-                    .limit(500)
-                    .get();
-                if (snap.empty) break;
-
-                const batch = db.batch();
-                snap.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                totalDeleted += snap.size;
-
-                if (snap.size < 500) break;
-            }
-            return totalDeleted;
-        };
-
-        let deletedCount = 0;
-        deletedCount += await deleteFromField('senderId');
-        deletedCount += await deleteFromField('uid');
-
         if (uid === currentUser?.uid) {
             handleSelfLogout();
             return;
         }
 
-        showToast('Member "' + username + '" + ' + deletedCount + ' pesan dihapus', 'success');
+        showToast('Member "' + username + '" + ' + totalDeleted + ' pesan dihapus', 'success');
 
     } catch (err) {
         console.error('[DeleteMember] Error:', err);
