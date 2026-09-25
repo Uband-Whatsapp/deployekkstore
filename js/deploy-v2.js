@@ -473,23 +473,22 @@ async function performDeploy(projectName) {
         if (file.name.toLowerCase().endsWith('.html')) {
             fileContent = await file.text();
         } else if (file.name.toLowerCase().endsWith('.zip')) {
-            if (output) output.textContent = 'Mengunggah ZIP ke Cloudinary...';
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'Deploy-EkkStore');
-            const uploadRes = await fetch('https://api.cloudinary.com/v1_1/uuvl0m4s/auto/upload', {
-                method: 'POST',
-                body: formData
-            });
-            if (!uploadRes.ok) {
-                throw new Error('Upload ke Cloudinary gagal (HTTP ' + uploadRes.status + ')');
-            }
-            const uploadData = await uploadRes.json();
-            fileUrl = uploadData.secure_url;
-            if (!fileUrl) {
-                throw new Error('Cloudinary tidak memberikan URL');
-            }
-            if (output) output.textContent = 'Upload selesai, mengirim ke server...';
+    if (output) output.textContent = 'Mengunggah ZIP...';
+    const formData = new FormData();
+    formData.append('reqtype', 'fileupload');
+    formData.append('fileToUpload', file);
+    const uploadRes = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: formData
+    });
+    if (!uploadRes.ok) {
+        throw new Error('Upload gagal (HTTP ' + uploadRes.status + ')');
+    }
+    fileUrl = (await uploadRes.text()).trim();
+    if (!fileUrl || !fileUrl.startsWith('https://')) {
+        throw new Error('Upload gagal: ' + fileUrl.slice(0, 100));
+    }
+    if (output) output.textContent = 'Upload selesai, mengirim ke server...';
         } else {
             if (output) output.textContent = 'Hanya file .html atau .zip yang didukung.';
             deployState = DEPLOY_STATE.FAILED;
