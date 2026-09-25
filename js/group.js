@@ -2838,26 +2838,23 @@ function renderUserRow(u, isMe) {
    HAPUS MEMBER — hanya owner
 ============================================================ */
 async function handleDeleteMember(uid, username) {
-    // Cek permission owner
     if (!isOwnerUser(currentUser?.username)) {
         showToast('Hanya Ekk Store yang bisa hapus member', 'warning');
         return;
     }
 
-    // Cek jangan hapus diri sendiri
     if (uid === currentUser?.uid) {
         showToast('Tidak bisa hapus diri sendiri', 'warning');
         return;
     }
 
-    // Konfirmasi
     const ok = await showConfirmModal(
-        'Hapus Member?',
+        'Hapus Member + Pesan?',
         'User "' + username + '" akan dihapus dari grup.\n\n' +
-        'Mereka harus buat profil baru untuk gabung lagi.\n' +
-        'Pesan lama mereka tetap tersimpan.\n\n' +
+        'SEMUA pesan mereka juga akan dihapus dari chat.\n' +
+        'Ini tidak bisa dibatalkan.\n\n' +
         'Lanjutkan?',
-        'Hapus'
+        'Hapus Semua'
     );
     if (!ok) return;
 
@@ -2867,25 +2864,45 @@ async function handleDeleteMember(uid, username) {
         return;
     }
 
+    showToast('Menghapus member dan pesannya...', 'info');
+
     try {
-        // 1. Hapus user doc dari Firestore
         await db.collection('users').doc(uid).delete();
 
-        // 2. Hapus typing doc kalau ada
         try {
             await db.collection('typing').doc(uid).delete();
-        } catch (e) { /* silent */ }
+        } catch (e) {}
 
-        // 3. Kalau yang dihapus adalah currentUser (harusnya gak mungkin,
-        //    tapi kalau ada edge case) — logout
+        const deleteFromField = async (fieldName) => {
+            let totalDeleted = 0;
+            while (true) {
+                const snap = await db.collection('messages')
+                    .where(fieldName, '==', uid)
+                    .limit(500)
+                    .get();
+                if (snap.empty) break;
+
+                const batch = db.batch();
+                snap.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                totalDeleted += snap.size;
+
+                if (snap.size < 500) break;
+            }
+            return totalDeleted;
+        };
+
+        let deletedCount = 0;
+        deletedCount += await deleteFromField('senderId');
+        deletedCount += await deleteFromField('uid');
+
         if (uid === currentUser?.uid) {
             handleSelfLogout();
             return;
         }
 
-        showToast('Member "' + username + '" dihapus', 'success');
+        showToast('Member "' + username + '" + ' + deletedCount + ' pesan dihapus', 'success');
 
-        // Panel member akan auto-update via subscribeUsers listener
     } catch (err) {
         console.error('[DeleteMember] Error:', err);
         showToast('Gagal hapus member: ' + err.message, 'error');
