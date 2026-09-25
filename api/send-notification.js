@@ -26,8 +26,20 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
+if (req.body && req.body.action === 'login') {
+  const pwd = req.body.password || '';
+  const expected = process.env.ADMIN_PASSWORD || '';
+  if (!expected) {
+    return res.status(500).json({ error: 'ADMIN_PASSWORD belum diset di Vercel' });
   }
+  if (pwd === expected) {
+    return res.status(200).json({ success: true });
+  }
+  return res.status(401).json({ error: 'Password salah' });
+}
 
   const { title, body, icon, url } = req.body;
   if (!title || !body) {
