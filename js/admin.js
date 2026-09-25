@@ -5,8 +5,6 @@
    EKK STORE — ADMIN NOTIFICATION
    ============================================================ */
 
-const ADMIN_PASSWORD = 'admin1';
-
 const SESSION_KEY = 'ekk_admin_session_v1';
 
 const SESSION_DURATION =
@@ -175,6 +173,28 @@ function showPanel() {
   updatePreview();
 
   updateCounters();
+}
+
+
+/* ============================================================
+   CEK PASSWORD DI SERVER
+   ============================================================ */
+
+async function checkPasswordOnServer(password) {
+
+  const r = await fetch('/api/send-notification', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'login',
+      password: password
+    })
+  });
+
+  let d = {};
+  try { d = await r.json(); } catch (e) {}
+
+  return r.ok && d.success === true;
 }
 
 
@@ -862,12 +882,6 @@ async function sendNotif() {
     );
 
 
-    /*
-     * Setelah berhasil dikirim,
-     * draft dihapus supaya notif lama
-     * tidak muncul lagi saat login berikutnya.
-     */
-
     clearDraft();
 
 
@@ -1140,34 +1154,74 @@ function init() {
   }
 
 
-  /* LOGIN */
+  /* LOGIN — CEK DI SERVER */
 
   loginBtn.addEventListener(
     'click',
-    () => {
+    async () => {
 
-      if (
-        (loginInput.value || '').trim() ===
-        ADMIN_PASSWORD
-      ) {
+      const pwd =
+        (loginInput.value || '').trim();
 
-        setLoggedIn();
-
-        $('login-error')
-          ?.classList
-          .remove('visible');
-
-        showPanel();
-
-      } else {
+      if (!pwd) {
 
         $('login-error')
           ?.classList
           .add('visible');
 
-        loginInput.value = '';
+        return;
+      }
 
-        loginInput.focus();
+      loginBtn.disabled = true;
+
+      loginBtn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa...';
+
+      try {
+
+        const ok =
+          await checkPasswordOnServer(pwd);
+
+        if (ok) {
+
+          setLoggedIn();
+
+          $('login-error')
+            ?.classList
+            .remove('visible');
+
+          loginInput.value = '';
+
+          showPanel();
+
+        } else {
+
+          $('login-error')
+            ?.classList
+            .add('visible');
+
+          loginInput.value = '';
+
+          loginInput.focus();
+        }
+
+      } catch (e) {
+
+        $('login-error')
+          ?.classList
+          .add('visible');
+
+        toast(
+          'Gagal menghubungi server',
+          'error'
+        );
+
+      } finally {
+
+        loginBtn.disabled = false;
+
+        loginBtn.innerHTML =
+          '<i class="fa-solid fa-right-to-bracket"></i> Masuk';
       }
 
     }
