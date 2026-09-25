@@ -5,7 +5,7 @@
    EKK STORE — ADMIN NOTIFICATION
    ============================================================ */
 
-const SESSION_KEY = 'ekk_admin_session_v1';
+const SESSION_KEY = 'ekk_admin_session_v2';
 
 const SESSION_DURATION =
   12 * 60 * 60 * 1000;
