@@ -1038,15 +1038,17 @@ function showReactionBar(anchorEl, docId) {
     }, 50);
 }
     function getDeletedMessageHTML(type) {
-        const svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
-        let label;
-        if (type === 'for-me-mine' || type === 'for-all-mine') {
-            label = 'Anda menghapus pesan ini';
-        } else {
-            label = 'Pesan ini telah dihapus';
-        }
-        return '<span class="deleted-msg-text">' + svg + '<span>' + label + '</span></span>';
+    const svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>';
+    let label;
+    if (type === 'admin') {
+        label = 'Pesan ini dihapus oleh admin';
+    } else if (type === 'for-me-mine' || type === 'for-all-mine') {
+        label = 'Anda menghapus pesan ini';
+    } else {
+        label = 'Pesan ini telah dihapus';
     }
+    return '<span class="deleted-msg-text">' + svg + '<span>' + label + '</span></span>';
+}
 
     function buildAudioPlayer(data) {
         const player = document.createElement('div');
@@ -1137,21 +1139,26 @@ function buildMessageElement(doc) {
     const isSystem = data.type === 'join' || data.type === 'leave' || senderId === 'system';
 
     const isDeletedForMe = Array.isArray(data.deletedFor) && data.deletedFor.includes(getMyUid());
-    const isDeletedForAll = data.isDeletedForAll === true;
+const isDeletedForAll = data.isDeletedForAll === true;
+const isDeletedByAdmin = data.isDeletedByAdmin === true;
 
-    let displayText = data.text || '';
-    let isDeletedMessage = false;
-    let deletedMessageType = null;
+let displayText = data.text || '';
+let isDeletedMessage = false;
+let deletedMessageType = null;
 
-    if (isDeletedForAll) {
-        deletedMessageType = isMine ? 'for-all-mine' : 'for-all-other';
-        displayText = '';
-        isDeletedMessage = true;
-    } else if (isDeletedForMe) {
-        deletedMessageType = isMine ? 'for-me-mine' : 'for-me-other';
-        displayText = '';
-        isDeletedMessage = true;
-    }
+if (isDeletedByAdmin) {
+    deletedMessageType = 'admin';
+    displayText = '';
+    isDeletedMessage = true;
+} else if (isDeletedForAll) {
+    deletedMessageType = isMine ? 'for-all-mine' : 'for-all-other';
+    displayText = '';
+    isDeletedMessage = true;
+} else if (isDeletedForMe) {
+    deletedMessageType = isMine ? 'for-me-mine' : 'for-me-other';
+    displayText = '';
+    isDeletedMessage = true;
+}
 
     const div = document.createElement('div');
 div.className = 'message-item';
@@ -2183,6 +2190,14 @@ if (isOwnerUser(currentUser?.username)) {
         }
     });
     menu.appendChild(pinBtn);
+
+    const isAlreadyAdminDeleted = false;
+    const deleteAdminBtn = createMenuItem('Hapus untuk semua (admin)', 'fa-solid fa-shield-halved', 'var(--danger)');
+    deleteAdminBtn.addEventListener('click', function() {
+        menu.remove();
+        deleteMessageAsAdmin(docId);
+    });
+    menu.appendChild(deleteAdminBtn);
 }
         if (isMine && canEdit) {
             const editBtn = createMenuItem('Edit pesan', 'fa-solid fa-pen', 'var(--text)');
@@ -2423,6 +2438,36 @@ if (isOwnerUser(currentUser?.username)) {
             showToast('Gagal menghapus pesan', 'error');
         }
     }
+async function deleteMessageAsAdmin(docId) {
+    if (!isOwnerUser(currentUser?.username)) {
+        showToast('Hanya Ekk Store yang bisa hapus sebagai admin', 'warning');
+        return;
+    }
+
+    const ok = await showConfirmModal(
+        'Hapus Sebagai Admin?',
+        'Pesan akan dihapus untuk semua orang.\n\n' +
+        'Semua user akan lihat: "Pesan ini dihapus oleh admin".\n\n' +
+        'Lanjutkan?',
+        'Hapus'
+    );
+    if (!ok) return;
+
+    const db = getDb();
+    if (!db) return;
+
+    try {
+        await db.collection('messages').doc(docId).update({
+            isDeletedByAdmin: true,
+            deletedByAdminBy: currentUser.username,
+            deletedByAdminAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('Pesan dihapus oleh admin', 'success');
+    } catch (err) {
+        console.error('[DeleteAdmin] Error:', err);
+        showToast('Gagal: ' + err.message, 'error');
+    }
+}
 
     async function deleteMessageForAll(docId) {
         const db = getDb();
@@ -4734,8 +4779,9 @@ setTimeout(() => {
     }
 
     window.EkkChat = {
-    initChat,
-    checkUser,
+initChat,
+checkUser,
+deleteMessageAsAdmin,
     openMemberPanel,
     closeMemberPanel,
     openChatSearch,
