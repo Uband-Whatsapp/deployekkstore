@@ -1,5 +1,5 @@
 
-const SW_VERSION = 'ekk-store-v5.0.7';
+const SW_VERSION = 'ekk-store-v5.0.8';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 
