@@ -11,7 +11,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 const VAPID_PUBLIC_KEY = 'BPXIBP6nsxkkYmrHpkkBQsZDwVnnyAYKbGupNOTls_HcOQVC39iI0eLHJtx4qGv5AJHmDYNnxz5PeE6fYZ3BINk';
-const VAPID_PRIVATE_KEY = 'uxUkgwgAFK32C6l5gXxeYdTvOSTcgg3rSfP2TCiuoMo';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 
 webpush.setVapidDetails('mailto:ekkstore.id@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
