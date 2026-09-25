@@ -475,18 +475,18 @@ async function performDeploy(projectName) {
         } else if (file.name.toLowerCase().endsWith('.zip')) {
     if (output) output.textContent = 'Mengunggah ZIP...';
     const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
-    formData.append('fileToUpload', file);
-    const uploadRes = await fetch('https://catbox.moe/user/api.php', {
+    formData.append('file', file);
+    const uploadRes = await fetch('https://file.io', {
         method: 'POST',
         body: formData
     });
     if (!uploadRes.ok) {
         throw new Error('Upload gagal (HTTP ' + uploadRes.status + ')');
     }
-    fileUrl = (await uploadRes.text()).trim();
-    if (!fileUrl || !fileUrl.startsWith('https://')) {
-        throw new Error('Upload gagal: ' + fileUrl.slice(0, 100));
+    const uploadData = await uploadRes.json();
+    fileUrl = uploadData.link;
+    if (!fileUrl) {
+        throw new Error('Upload gagal: ' + (uploadData.message || 'No URL'));
     }
     if (output) output.textContent = 'Upload selesai, mengirim ke server...';
         } else {
