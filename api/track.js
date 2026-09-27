@@ -9,14 +9,32 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+const ALLOWED_EVENTS = [
+  'visit',
+  'follow_passed',
+  'deploy_success',
+  'click_install',
+  'install_app',
+  'click_menu'
+];
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { anonId, visitorNumber, eventType, timestamp, deviceInfo } = req.body;
+
   if (!anonId || !eventType) {
     return res.status(400).json({ error: 'Data tidak lengkap' });
+  }
+
+  if (typeof anonId !== 'string' || anonId.length > 100) {
+    return res.status(400).json({ error: 'anonId tidak valid' });
+  }
+
+  if (!ALLOWED_EVENTS.includes(eventType)) {
+    return res.status(400).json({ error: 'Event type tidak valid' });
   }
 
   const today = getTodayWIB();
