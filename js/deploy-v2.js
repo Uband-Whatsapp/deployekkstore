@@ -473,22 +473,22 @@ async function performDeploy(projectName) {
         if (file.name.toLowerCase().endsWith('.html')) {
             fileContent = await file.text();
         } else if (file.name.toLowerCase().endsWith('.zip')) {
-    if (output) output.textContent = 'Mengunggah ZIP...';
-    const formData = new FormData();
-    formData.append('file', file);
-    const uploadRes = await fetch('https://file.io', {
-        method: 'POST',
-        body: formData
-    });
-    if (!uploadRes.ok) {
-        throw new Error('Upload gagal (HTTP ' + uploadRes.status + ')');
-    }
-    const uploadData = await uploadRes.json();
-    fileUrl = uploadData.link;
-    if (!fileUrl) {
-        throw new Error('Upload gagal: ' + (uploadData.message || 'No URL'));
-    }
-    if (output) output.textContent = 'Upload selesai, mengirim ke server...';
+            if (output) output.textContent = 'Mengunggah ZIP...';
+            const formData = new FormData();
+            formData.append('file', file);
+            const uploadRes = await fetch('https://file.io', {
+                method: 'POST',
+                body: formData
+            });
+            if (!uploadRes.ok) {
+                throw new Error('Upload gagal (HTTP ' + uploadRes.status + ')');
+            }
+            const uploadData = await uploadRes.json();
+            fileUrl = uploadData.link;
+            if (!fileUrl) {
+                throw new Error('Upload gagal: ' + (uploadData.message || 'No URL'));
+            }
+            if (output) output.textContent = 'Upload selesai, mengirim ke server...';
         } else {
             if (output) output.textContent = 'Hanya file .html atau .zip yang didukung.';
             deployState = DEPLOY_STATE.FAILED;
@@ -521,7 +521,7 @@ async function performDeploy(projectName) {
                 fileContent: fileContent,
                 fileUrl: fileUrl,
                 userId: getMyUid(),
-                authUid: _firebaseAuthReady ? CURRENT_USER_ID : null
+                authUid: CURRENT_USER_ID
             })
         });
 
