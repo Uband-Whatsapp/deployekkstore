@@ -1,16 +1,22 @@
-// api/delete-project.js
 export default async function handler(req, res) {
-  // Hanya izinkan POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { projectId, ownerId } = req.body;
+  const { projectId, ownerId, authUid } = req.body;
+
   if (!projectId || !ownerId) {
     return res.status(400).json({ error: 'projectId dan ownerId wajib diisi' });
   }
 
-  // Ambil token Vercel dari environment (aman)
+  if (!authUid || typeof authUid !== 'string' || authUid.length < 20) {
+    return res.status(401).json({ error: 'Autentikasi diperlukan' });
+  }
+
+  if (authUid !== ownerId) {
+    return res.status(403).json({ error: 'Tidak boleh hapus project orang lain' });
+  }
+
   const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
   if (!VERCEL_TOKEN) {
     console.error('VERCEL_TOKEN tidak ditemukan di environment');
@@ -18,7 +24,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Hapus project dari Vercel
     const vercelRes = await fetch(`https://api.vercel.com/v9/projects/${projectId}`, {
       method: 'DELETE',
       headers: {
@@ -35,11 +40,6 @@ export default async function handler(req, res) {
         detail: errorData,
       });
     }
-
-    // (Opsional) Hapus data pemilik dari Firestore
-    // Kita asumsikan ada fungsi di lib/firestore.js atau langsung akses admin
-    // Karena tidak ada firebase-admin di sini, kita serahkan ke frontend
-    // Tapi di frontend sudah ada removeProjectOwner, jadi kita hanya perlu beri sinyal sukses
 
     return res.status(200).json({
       success: true,
