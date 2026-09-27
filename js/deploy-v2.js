@@ -105,6 +105,12 @@ async function handleFileSelect(file) {
         return;
     }
 
+    if (lower.endsWith('.zip') && file.size > 10 * 1024 * 1024) {
+        const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+        showToast('ZIP terlalu besar (' + sizeMB + ' MB). Maksimal 10 MB.', 'error');
+        return;
+    }
+
     if (file.size > LARGE_FILE_THRESHOLD) {
         const sizeMB = (file.size / 1024 / 1024).toFixed(1);
         const ok = await showConfirmModal(
@@ -473,20 +479,25 @@ async function performDeploy(projectName) {
         if (file.name.toLowerCase().endsWith('.html')) {
             fileContent = await file.text();
         } else if (file.name.toLowerCase().endsWith('.zip')) {
-            if (output) output.textContent = 'Mengunggah ZIP...';
+            if (file.size > 10 * 1024 * 1024) {
+                throw new Error('ZIP maksimal 10 MB. Kompres dulu atau pakai HTML tunggal.');
+            }
+            if (output) output.textContent = 'Mengunggah ZIP ke Cloudinary...';
             const formData = new FormData();
             formData.append('file', file);
-            const uploadRes = await fetch('https://file.io', {
+            formData.append('upload_preset', 'Deploy-EkkStore');
+            const uploadRes = await fetch('https://api.cloudinary.com/v1_1/uuvl0m4s/auto/upload', {
                 method: 'POST',
                 body: formData
             });
             if (!uploadRes.ok) {
-                throw new Error('Upload gagal (HTTP ' + uploadRes.status + ')');
+                const errData = await uploadRes.json().catch(() => ({}));
+                throw new Error(errData.error?.message || 'Upload ke Cloudinary gagal (HTTP ' + uploadRes.status + ')');
             }
             const uploadData = await uploadRes.json();
-            fileUrl = uploadData.link;
+            fileUrl = uploadData.secure_url;
             if (!fileUrl) {
-                throw new Error('Upload gagal: ' + (uploadData.message || 'No URL'));
+                throw new Error('Cloudinary tidak memberikan URL');
             }
             if (output) output.textContent = 'Upload selesai, mengirim ke server...';
         } else {
