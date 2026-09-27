@@ -1,4 +1,3 @@
-
 import JSZip from 'jszip';
 
 export default async function handler(req, res) {
@@ -6,7 +5,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method tidak diizinkan' });
   }
 
-  const { project, fileContent, fileUrl, fileName, userId } = req.body;
+  const { project, fileContent, fileUrl, fileName, userId, authUid } = req.body;
+
+  if (!authUid || typeof authUid !== 'string' || authUid.length < 20) {
+    return res.status(401).json({ error: 'Autentikasi diperlukan' });
+  }
 
   if (!project || !fileName) {
     return res.status(400).json({ error: 'Project dan file harus diisi' });
