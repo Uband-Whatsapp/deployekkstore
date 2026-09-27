@@ -543,11 +543,12 @@ try {
         }
 
         const payload = {
-            uid: currentUser.uid,
-            username: usernameToSend,
-            avatar: avatarToSend,
-            text: text || ''
-        };
+    uid: currentUser.uid,
+    authUid: currentUser.uid,
+    username: usernameToSend,
+    avatar: avatarToSend,
+    text: text || ''
+};
         if (replyTo) payload.replyTo = replyTo;
         if (media) {
             payload.mediaUrl = media.mediaUrl;
