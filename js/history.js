@@ -143,10 +143,14 @@ async function deleteHistoryItem(index) {
     if (item.projectId) {
         try {
             const response = await fetch('/api/delete-project', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectId: item.projectId, ownerId: uid })
-            });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        projectId: item.projectId,
+        ownerId: uid,
+        authUid: CURRENT_USER_ID || uid
+    })
+});
             const result = await response.json();
             if (!response.ok) {
                 showToast('Gagal hapus Vercel: ' + (result.error || 'Error'), 'warning');
