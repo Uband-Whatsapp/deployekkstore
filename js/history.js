@@ -1,13 +1,5 @@
 /* ============================================================
    EKK STORE 4.0 — HISTORY.JS
-   Berisi: renderHistory, setupHistoryEvents, deleteHistoryItem
-   Digunakan HANYA di /history (history/index.html)
-
-   Catatan:
-   - Tampil FLAT (bukan dipisah section)
-   - Limit 20 per status (20 success + 20 failed + 20 proses)
-   - Header "N Deploy Terakhir"
-   - Contoh: 15 success + 10 failed → tampil 25, header "25 Deploy Terakhir"
    ============================================================ */
 
 /* ============================================================
@@ -29,9 +21,11 @@ function renderHistory() {
 
     const isFiltering = historyFilter !== 'all' || historySearch.trim();
 
-    /* ---- Mode FILTER / SEARCH → tampil flat biasa ---- */
+    /* ---- Mode FILTER / SEARCH → tetap limit 20 ---- */
     if (isFiltering) {
-        if (filtered.length === 0) {
+        const limited = filtered.slice(0, 20);
+
+        if (limited.length === 0) {
             historyList.innerHTML =
                 '<div class="empty-state">' +
                     '<i class="fa-solid fa-inbox"></i>' +
@@ -40,11 +34,20 @@ function renderHistory() {
                 '</div>';
             return;
         }
-        historyList.innerHTML = filtered.map(item => renderHistoryRow(item, history)).join('');
+
+        let html =
+            '<div style="padding:10px 14px;margin-bottom:12px;background:var(--bg-input);border-radius:10px;border:1px solid var(--border);text-align:center;">' +
+                '<span style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.04em;">' +
+                    limited.length + ' Deploy Terakhir' +
+                '</span>' +
+            '</div>';
+
+        html += limited.map(item => renderHistoryRow(item, history)).join('');
+        historyList.innerHTML = html;
         return;
     }
 
-    /* ---- Mode DEFAULT → limit 20 per status, tampil flat ---- */
+    /* ---- Mode DEFAULT → limit 20 per status ---- */
     const successItems = filtered.filter(i => i.status === 'success').slice(0, 20);
     const failedItems  = filtered.filter(i => i.status === 'failed').slice(0, 20);
     const prosesItems  = filtered.filter(i => i.status === 'proses').slice(0, 20);
@@ -70,7 +73,6 @@ function renderHistory() {
         return;
     }
 
-    /* ---- Header info total ---- */
     let html =
         '<div style="padding:10px 14px;margin-bottom:12px;background:var(--bg-input);border-radius:10px;border:1px solid var(--border);text-align:center;">' +
             '<span style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.04em;">' +
@@ -78,9 +80,7 @@ function renderHistory() {
             '</span>' +
         '</div>';
 
-    /* ---- Flat list ---- */
     html += combined.map(item => renderHistoryRow(item, history)).join('');
-
     historyList.innerHTML = html;
 }
 
@@ -122,7 +122,7 @@ function renderHistoryRow(item, history) {
 }
 
 /* ============================================================
-   3) HISTORY EVENTS (delegation, filter chips, search)
+   3) HISTORY EVENTS
    ============================================================ */
 function setupHistoryEvents() {
     const historyList = document.getElementById('history-list');
@@ -216,7 +216,6 @@ window.deleteHistoryItem = deleteHistoryItem;
 
 /* ============================================================
    6) PAGE-SPECIFIC INIT
-   Dipanggil otomatis oleh common.js's initApp()
    ============================================================ */
 function setupPageSpecific() {
     setupHistoryEvents();
