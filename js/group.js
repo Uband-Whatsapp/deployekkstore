@@ -367,42 +367,44 @@ async function createProfile(uid, username, avatar) {
 
     const lowerUsername = username.toLowerCase().trim();
 
-    // Cek dulu apakah username udah ada
-    try {
-        const existing = await db.collection('usernames').doc(lowerUsername).get();
-        if (existing.exists) {
-            console.warn('[createProfile] Username udah dipakai:', lowerUsername);
-            return false;
-        }
-    } catch (e) {
-        console.warn('[createProfile] Cek username gagal:', e.message);
+    // Validasi sederhana (biar gak spam Firestore)
+    if (lowerUsername.length < 3 || lowerUsername.length > 20) {
+        console.warn('[createProfile] Username panjang tidak valid');
+        return false;
+    }
+    if (!/^[a-z0-9_.]+$/.test(lowerUsername)) {
+        console.warn('[createProfile] Username karakter tidak valid');
+        return false;
     }
 
+    let usernamesCreated = false;
+    let usersCreated = false;
+
     try {
-        const isOwnerFlag = (lowerUsername === 'ekkstore' || lowerUsername === 'ekk store');
-
-        // Buat usernames DULU
-        await db.collection('usernames').doc(lowerUsername).set({
-            uid: uid,
-            username: username,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // Baru buat users
+        // STEP 1: users DULU (rules cek usernames belum ada + isOwner false + uid cocok)
         await db.collection('users').doc(uid).set({
-            uid: uid,
+            uid: uid,                              // ← WAJIB
             username: username,
             usernameLower: lowerUsername,
             avatar: avatar || '',
             avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             avatarUpdatedAtMs: Date.now(),
             isOnline: true,
-            isOwner: isOwnerFlag,
+            isOwner: false,                        // ← hardcode false (JANGAN dari username)
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         });
+        usersCreated = true;
 
-        // Kirim system message
+        // STEP 2: usernames (rules cek uid == auth.uid)
+        await db.collection('usernames').doc(lowerUsername).set({
+            uid: uid,
+            username: username,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        usernamesCreated = true;
+
+        // STEP 3: system join message (opsional, gak fatal kalau gagal)
         try {
             await db.collection('messages').add({
                 type: 'join',
@@ -413,15 +415,21 @@ async function createProfile(uid, username, avatar) {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         } catch (msgErr) {
-            console.warn('[createProfile] System message gagal (gak fatal):', msgErr.message);
+            console.warn('[createProfile] Join message gagal (gak fatal):', msgErr.code);
         }
 
         return true;
     } catch (e) {
         console.error('[createProfile] Error:', e.code, e.message);
-        // Rollback
-        try { await db.collection('usernames').doc(lowerUsername).delete(); } catch (err) {}
-        try { await db.collection('users').doc(uid).delete(); } catch (err) {}
+
+        // Rollback hanya yang sudah dibuat
+        if (usernamesCreated) {
+            try { await db.collection('usernames').doc(lowerUsername).delete(); } catch (err) {}
+        }
+        if (usersCreated) {
+            try { await db.collection('users').doc(uid).delete(); } catch (err) {}
+        }
+
         return false;
     }
 }
