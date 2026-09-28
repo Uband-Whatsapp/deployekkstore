@@ -361,20 +361,34 @@ function rebuildDateSeparators(listEl) {
             return false;
         }
     }
-
 async function createProfile(uid, username, avatar) {
     const db = getDb();
     if (!db) return false;
+
+    const lowerUsername = username.toLowerCase().trim();
+
+    // Cek dulu apakah username udah ada
     try {
-        const lowerUsername = username.toLowerCase().trim();
+        const existing = await db.collection('usernames').doc(lowerUsername).get();
+        if (existing.exists) {
+            console.warn('[createProfile] Username udah dipakai:', lowerUsername);
+            return false;
+        }
+    } catch (e) {
+        console.warn('[createProfile] Cek username gagal:', e.message);
+    }
+
+    try {
         const isOwnerFlag = (lowerUsername === 'ekkstore' || lowerUsername === 'ekk store');
 
+        // Buat usernames DULU
         await db.collection('usernames').doc(lowerUsername).set({
             uid: uid,
             username: username,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // Baru buat users
         await db.collection('users').doc(uid).set({
             uid: uid,
             username: username,
@@ -388,24 +402,30 @@ async function createProfile(uid, username, avatar) {
             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        await db.collection('messages').add({
-            type: 'join',
-            senderId: uid,
-            username: username,
-            avatar: avatar || '',
-            text: '',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        // Kirim system message
+        try {
+            await db.collection('messages').add({
+                type: 'join',
+                senderId: uid,
+                username: username,
+                avatar: avatar || '',
+                text: '',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (msgErr) {
+            console.warn('[createProfile] System message gagal (gak fatal):', msgErr.message);
+        }
 
         return true;
     } catch (e) {
-        console.error('[createProfile] Error:', e);
-        try {
-            await db.collection('usernames').doc(username.toLowerCase().trim()).delete();
-        } catch (err) {}
+        console.error('[createProfile] Error:', e.code, e.message);
+        // Rollback
+        try { await db.collection('usernames').doc(lowerUsername).delete(); } catch (err) {}
+        try { await db.collection('users').doc(uid).delete(); } catch (err) {}
         return false;
     }
 }
+
     async function updateOnlineStatus(isOnline) {
         if (!currentUser) return;
         try {
