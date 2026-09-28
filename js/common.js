@@ -534,7 +534,6 @@ async function saveHistory(project, status, url, projectId, deploymentId) {
         return false;
     }
 }
-
 function startHistoryListener() {
     const db = window._db;
     if (!db) return;
@@ -543,6 +542,8 @@ function startHistoryListener() {
 
     _historyUnsubscribe = db.collection('projects')
         .where('ownerUid', '==', uid)
+        .orderBy('createdAt', 'desc')
+        .limit(40)
         .onSnapshot(snap => {
             _historyCache = snap.docs.map(doc => {
                 const d = doc.data();
@@ -555,12 +556,13 @@ function startHistoryListener() {
                     time: ts.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
                     _ts: ts.getTime()
                 };
-            }).sort((a, b) => b._ts - a._ts).slice(0, 50);
+            }).sort((a, b) => b._ts - a._ts);
 
             if (typeof renderHistory === 'function') renderHistory();
             if (typeof updateDashboardStats === 'function') updateDashboardStats();
         }, err => { console.error('[History] Listener error:', err); });
 }
+
 
 function getHistory() { return _historyCache; }
 
