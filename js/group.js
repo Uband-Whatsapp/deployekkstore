@@ -2234,8 +2234,7 @@ if (isOwnerUser(currentUser?.username)) {
     });
     menu.appendChild(pinBtn);
 
-    const isAlreadyAdminDeleted = false;
-    const deleteAdminBtn = createMenuItem('Hapus untuk semua (admin)', 'fa-solid fa-shield-halved', 'var(--danger)');
+    const deleteAdminBtn = createMenuItem('Hapus sebagai admin', 'fa-solid fa-shield-halved', 'var(--danger)');
     deleteAdminBtn.addEventListener('click', function() {
         menu.remove();
         deleteMessageAsAdmin(docId);
