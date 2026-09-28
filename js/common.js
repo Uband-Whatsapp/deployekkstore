@@ -506,31 +506,57 @@ function setupNavigationEvents() {
    ============================================================ */
 async function saveHistory(project, status, url, projectId, deploymentId) {
     const db = window._db;
-    if (!db) return false;
+    if (!db) {
+        console.warn('[saveHistory] DB belum siap');
+        return false;
+    }
     const uid = getMyUid();
     const projectName = (project || '').toLowerCase().trim();
 
+    if (!uid) {
+        console.warn('[saveHistory] UID kosong');
+        return false;
+    }
+
+    console.log('[saveHistory] Start:', { projectName, status, uid });
+
     try {
+        // Baca semua project user (tanpa composite query)
         const snap = await db.collection('projects')
             .where('ownerUid', '==', uid)
-            .where('projectName', '==', projectName)
-            .limit(1).get();
+            .get();
+
+        // Cari manual di JS (gak butuh index)
+        let existingDoc = null;
+        snap.forEach(doc => {
+            const d = doc.data();
+            if ((d.projectName || '').toLowerCase().trim() === projectName) {
+                existingDoc = doc;
+            }
+        });
 
         const payload = {
-            projectName: projectName, ownerUid: uid, url: url || '', status: status,
-            projectId: projectId || '', deploymentId: deploymentId || '',
+            projectName: projectName,
+            ownerUid: uid,
+            url: url || '',
+            status: status,
+            projectId: projectId || '',
+            deploymentId: deploymentId || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        if (!snap.empty) {
-            await snap.docs[0].ref.update(payload);
+        if (existingDoc) {
+            await existingDoc.ref.update(payload);
+            console.log('[saveHistory] Updated:', projectName);
         } else {
             payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await db.collection('projects').add(payload);
+            console.log('[saveHistory] Created:', projectName);
         }
+
         return true;
     } catch (e) {
-        console.error('[saveHistory] Error:', e);
+        console.error('[saveHistory] Error:', e.code, e.message, e);
         return false;
     }
 }
