@@ -106,11 +106,11 @@ async function handleFileSelect(file) {
         return;
     }
 
-    if (lower.endsWith('.zip') && file.size > 10 * 1024 * 1024) {
-        const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-        showToast('ZIP terlalu besar (' + sizeMB + ' MB). Maksimal 10 MB.', 'error');
-        return;
-    }
+    if (lower.endsWith('.zip') && file.size > 6 * 1024 * 1024) {
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    showToast('ZIP terlalu besar (' + sizeMB + ' MB). Maksimal 6 MB.', 'error');
+    return;
+}
 
     if (file.size > LARGE_FILE_THRESHOLD) {
         const sizeMB = (file.size / 1024 / 1024).toFixed(1);
@@ -480,9 +480,9 @@ async function performDeploy(projectName) {
         if (file.name.toLowerCase().endsWith('.html')) {
             fileContent = await file.text();
         } else if (file.name.toLowerCase().endsWith('.zip')) {
-            if (file.size > 10 * 1024 * 1024) {
-                throw new Error('ZIP maksimal 10 MB. Kompres dulu atau pakai HTML tunggal.');
-            }
+    if (file.size > 6 * 1024 * 1024) {
+        throw new Error('ZIP maksimal 6 MB. Kompres dulu atau pakai HTML tunggal.');
+    }
             if (output) output.textContent = 'Mengunggah ZIP ke Cloudinary...';
             const formData = new FormData();
             formData.append('file', file);
