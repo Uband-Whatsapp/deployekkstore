@@ -2020,9 +2020,9 @@ async function unpinMessage(docId) {
     console.log('[Chat] Realtime listener attach dari:', cursor.toISOString());
 
     let query = db.collection('messages')
-        .orderBy('timestamp', 'asc')
-        .startAt(cursor);
-
+    .orderBy('timestamp', 'asc')
+    .startAt(cursor)
+    .limit(100);
     messagesUnsubscribe = query.onSnapshot(snapshot => {
         // Safety: double-guard skipOlderThan
         handleSnapshotChanges(snapshot, { skipOlderThan: oldestLoadedTs });
