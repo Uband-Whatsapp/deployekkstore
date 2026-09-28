@@ -588,6 +588,9 @@ function startHistoryListener() {
             if (typeof updateDashboardStats === 'function') updateDashboardStats();
         }, err => { console.error('[History] Listener error:', err); });
 }
+function getHistory() {
+    return _historyCache;
+}
 async function checkProjectAvailability(projectName) {
     const db = window._db;
     if (!db) {
