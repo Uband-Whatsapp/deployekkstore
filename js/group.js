@@ -710,7 +710,7 @@ try {
         if (!db) return;
         if (typingUnsubscribe) try { typingUnsubscribe(); } catch(e) {}
 
-        typingUnsubscribe = db.collection('typing').onSnapshot(snap => {
+        typingUnsubscribe = db.collection('typing').limit(10).onSnapshot(snap => {
             const now = Date.now();
             const names = [];
             snap.forEach(doc => {
