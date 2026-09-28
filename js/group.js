@@ -363,43 +363,50 @@ function rebuildDateSeparators(listEl) {
     }
 
     async function createProfile(uid, username, avatar) {
-const db = getDb();
-if (!db) return false;
-try {
-    const lowerUsername = username.toLowerCase().trim();
-    const isOwnerFlag = (lowerUsername === 'ekkstore' || lowerUsername === 'ekk store');
+async function createProfile(uid, username, avatar) {
+    const db = getDb();
+    if (!db) return false;
+    try {
+        const lowerUsername = username.toLowerCase().trim();
+        const isOwnerFlag = (lowerUsername === 'ekkstore' || lowerUsername === 'ekk store');
 
-    // 1. Buat user doc
-    await db.collection('users').doc(uid).set({
-        uid: uid,
-        username: username,
-        usernameLower: lowerUsername,
-        avatar: avatar || '',
-        avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        avatarUpdatedAtMs: Date.now(),
-        isOnline: true,
-        isOwner: isOwnerFlag,   // ⬅️ TAMBAH INI
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-    });
+        await db.collection('usernames').doc(lowerUsername).set({
+            uid: uid,
+            username: username,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-        // 2. Kirim SYSTEM MESSAGE "bergabung" ke collection messages
+        await db.collection('users').doc(uid).set({
+            uid: uid,
+            username: username,
+            usernameLower: lowerUsername,
+            avatar: avatar || '',
+            avatarUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            avatarUpdatedAtMs: Date.now(),
+            isOnline: true,
+            isOwner: isOwnerFlag,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
         await db.collection('messages').add({
-            type: 'join',              // penanda system message
-            senderId: uid,             // biar bisa ngecek "punya gue atau bukan"
+            type: 'join',
+            senderId: uid,
             username: username,
             avatar: avatar || '',
-            text: '',                  // text di-kosongin, render via type
+            text: '',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         return true;
     } catch (e) {
         console.error('[createProfile] Error:', e);
+        try {
+            await db.collection('usernames').doc(username.toLowerCase().trim()).delete();
+        } catch (err) {}
         return false;
     }
 }
-
     async function updateOnlineStatus(isOnline) {
         if (!currentUser) return;
         try {
@@ -412,59 +419,56 @@ try {
     }
 
     async function updateUsername(uid, newUsername) {
-        const db = getDb();
-        if (!db) return { success: false, error: 'DB tidak tersedia' };
-        try {
-            const userDoc = await db.collection('users').doc(uid).get();
-            if (!userDoc.exists) return { success: false, error: 'User tidak ditemukan' };
+    const db = getDb();
+    if (!db) return { success: false, error: 'DB tidak tersedia' };
+    const newLower = newUsername.toLowerCase().trim();
 
-            const snapshot = await db.collection('users')
-                .where('usernameLower', '==', newUsername.toLowerCase())
-                .limit(1)
-                .get();
+    try {
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (!userDoc.exists) return { success: false, error: 'User tidak ditemukan' };
 
-            if (!snapshot.empty) {
-                const doc = snapshot.docs[0];
-                if (doc.id !== uid) {
-                    return { success: false, error: 'Username sudah dipakai, silakan gunakan username lain' };
-                }
-            }
+        const oldLower = userDoc.data().usernameLower || '';
 
-            // Update pesan lama (batched)
-            let messagesSnapshot = await db.collection('messages')
-                .where('senderId', '==', uid)
-                .get();
-            if (messagesSnapshot.empty) {
-                messagesSnapshot = await db.collection('messages')
-                    .where('uid', '==', uid)
-                    .get();
-            }
-
-            if (!messagesSnapshot.empty) {
-                const docs = messagesSnapshot.docs;
-                const CHUNK_SIZE = 400;
-                for (let i = 0; i < docs.length; i += CHUNK_SIZE) {
-                    const chunk = docs.slice(i, i + CHUNK_SIZE);
-                    const batch = db.batch();
-                    chunk.forEach((doc) => {
-                        batch.update(doc.ref, { username: newUsername });
-                    });
-                    await batch.commit();
-                }
-            }
-
-            await db.collection('users').doc(uid).update({
-                username: newUsername,
-                usernameLower: newUsername.toLowerCase(),
-                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            return { success: true };
-        } catch (error) {
-            console.error('[updateUsername] Error:', error);
-            return { success: false, error: error.message };
+        const existing = await db.collection('usernames').doc(newLower).get();
+        if (existing.exists && existing.data().uid !== uid) {
+            return { success: false, error: 'Username sudah dipakai' };
         }
+
+        if (oldLower && oldLower !== newLower) {
+            try { await db.collection('usernames').doc(oldLower).delete(); } catch (e) {}
+        }
+
+        await db.collection('usernames').doc(newLower).set({
+            uid: uid,
+            username: newUsername,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        let ms = await db.collection('messages').where('senderId', '==', uid).get();
+        if (ms.empty) ms = await db.collection('messages').where('uid', '==', uid).get();
+
+        if (!ms.empty) {
+            const docs = ms.docs;
+            for (let i = 0; i < docs.length; i += 400) {
+                const chunk = docs.slice(i, i + 400);
+                const batch = db.batch();
+                chunk.forEach((doc) => batch.update(doc.ref, { username: newUsername }));
+                await batch.commit();
+            }
+        }
+
+        await db.collection('users').doc(uid).update({
+            username: newUsername,
+            usernameLower: newLower,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error('[updateUsername] Error:', error);
+        return { success: false, error: error.message };
     }
+}
 
     async function updateAvatar(uid, newAvatarUrlIn) {
         const db = getDb();
