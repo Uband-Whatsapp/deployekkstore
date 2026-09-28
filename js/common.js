@@ -568,12 +568,12 @@ function startHistoryListener() {
 
     _historyUnsubscribe = db.collection('projects')
         .where('ownerUid', '==', uid)
-        .orderBy('createdAt', 'desc')
-        .limit(40)
         .onSnapshot(snap => {
             _historyCache = snap.docs.map(doc => {
                 const d = doc.data();
-                const ts = d.createdAt?.toDate?.() || new Date();
+                const ts = d.createdAt?.toDate?.()
+                    || d.updatedAt?.toDate?.()
+                    || new Date(0);
                 return {
                     id: doc.id, project: d.projectName || '', status: d.status || 'unknown',
                     url: d.url || '', projectId: d.projectId || '', deploymentId: d.deploymentId || '',
@@ -588,26 +588,6 @@ function startHistoryListener() {
             if (typeof updateDashboardStats === 'function') updateDashboardStats();
         }, err => { console.error('[History] Listener error:', err); });
 }
-
-
-function getHistory() { return _historyCache; }
-
-async function checkProjectAvailability(projectName) {
-    const db = window._db;
-    if (!db) return { available: true, owned: false, checkFailed: true, error: 'DB not ready' };
-    const uid = getMyUid();
-    const name = (projectName || '').toLowerCase().trim();
-
-    try {
-        const snap = await db.collection('projects').where('projectName', '==', name).limit(1).get();
-        if (snap.empty) return { available: true, owned: false };
-        const data = snap.docs[0].data();
-        return { available: false, owned: data.ownerUid === uid, existing: data };
-    } catch (e) {
-        return { available: true, owned: false, checkFailed: true, error: e.code + ': ' + e.message };
-    }
-}
-
 function copyURL(url) {
     if (!url) return;
     if (navigator.clipboard && navigator.clipboard.writeText) {
