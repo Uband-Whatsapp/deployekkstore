@@ -362,7 +362,6 @@ function rebuildDateSeparators(listEl) {
         }
     }
 
-    async function createProfile(uid, username, avatar) {
 async function createProfile(uid, username, avatar) {
     const db = getDb();
     if (!db) return false;
