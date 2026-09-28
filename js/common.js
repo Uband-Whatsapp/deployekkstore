@@ -588,6 +588,38 @@ function startHistoryListener() {
             if (typeof updateDashboardStats === 'function') updateDashboardStats();
         }, err => { console.error('[History] Listener error:', err); });
 }
+async function checkProjectAvailability(projectName) {
+    const db = window._db;
+    if (!db) {
+        return { available: true, owned: false, checkFailed: true, error: 'DB not ready' };
+    }
+    const uid = getMyUid();
+    const name = (projectName || '').toLowerCase().trim();
+
+    try {
+        const snap = await db.collection('projects')
+            .where('projectName', '==', name)
+            .limit(1)
+            .get();
+
+        if (snap.empty) return { available: true, owned: false };
+
+        const data = snap.docs[0].data();
+        return {
+            available: false,
+            owned: data.ownerUid === uid,
+            existing: data
+        };
+    } catch (e) {
+        console.error('[checkProjectAvailability] Gagal query:', e.code, e.message);
+        return {
+            available: true,
+            owned: false,
+            checkFailed: true,
+            error: e.code + ': ' + e.message
+        };
+    }
+}
 function copyURL(url) {
     if (!url) return;
     if (navigator.clipboard && navigator.clipboard.writeText) {
