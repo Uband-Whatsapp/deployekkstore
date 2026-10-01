@@ -4220,14 +4220,16 @@ if (success) {
     initChat();
 
     // ═══ Auto-redirect balik ke /deploy kalau ada pending deploy ═══
-    const pendingDeploy = localStorage.getItem('ekk_pending_deploy');
-    if (pendingDeploy) {
-        showToast('Mengalihkan kembali ke halaman deploy...', 'info');
-        setTimeout(() => {
-            window.location.href = '/deploy';
-        }, 1200);
-        return;   // ← hentikan sisa eksekusi (biar gak ganggu redirect)
-    }
+    // ═══ Auto-redirect balik ke /deploy kalau ada pending deploy ═══
+const pendingDeploy = localStorage.getItem('ekk_pending_deploy');
+if (pendingDeploy) {
+    try { sessionStorage.removeItem('ekk_has_profile_v1'); } catch(e) {}   // ← TAMBAH INI
+    showToast('Mengalihkan kembali ke halaman deploy...', 'info');
+    setTimeout(() => {
+        window.location.href = '/deploy';
+    }, 1200);
+    return;
+}
 } else {
                     if (errorEl) {
                         errorEl.textContent = 'Gagal membuat profil, coba lagi';
