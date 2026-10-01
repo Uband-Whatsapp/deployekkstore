@@ -622,16 +622,39 @@ async function performDeploy(projectName) {
                     })
                 });
             } catch (notifErr) {}
-        } else {
-            deployState = DEPLOY_STATE.FAILED;
-            markDeployStepFailed('step-deploying');
-            markDeployStepFailed('step-completed');
-            if (output) {
-                output.textContent = 'Gagal deploy: ' + (result.error || 'Error tidak diketahui');
-            }
-            await saveHistory(project, 'failed', '', '', '');
-            showToast('Deployment gagal', 'error');
-        }
+} else if (response.status === 429) {
+    // ═══ KASUS RATE LIMIT ═══
+    deployState = DEPLOY_STATE.FAILED;
+    markDeployStepFailed('step-deploying');
+    markDeployStepFailed('step-completed');
+
+    const limitMsg = result.error || 'Limit deploy tercapai. Maksimal 5 deploy per jam.';
+    if (output) {
+        output.innerHTML = `
+            <div style="display:flex;gap:12px;padding:16px;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:12px;align-items:flex-start;">
+                <i class="fa-solid fa-clock" style="color:#f97316;font-size:20px;margin-top:2px;"></i>
+                <div style="flex:1;">
+                    <div style="font-weight:600;color:#f97316;margin-bottom:4px;">Limit Deploy Tercapai</div>
+                    <div style="font-size:13px;color:#a1a1aa;line-height:1.5;">${escapeHTML(limitMsg)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    showToast(limitMsg, 'warning');
+
+    // TIDAK saveHistory — biar history user gak kotor karena limit
+} else {
+    // Error biasa (400/500/dll)
+    deployState = DEPLOY_STATE.FAILED;
+    markDeployStepFailed('step-deploying');
+    markDeployStepFailed('step-completed');
+    if (output) {
+        output.textContent = 'Gagal deploy: ' + (result.error || 'Error tidak diketahui');
+    }
+    await saveHistory(project, 'failed', '', '', '');
+    showToast('Deployment gagal', 'error');
+}
     } catch (err) {
         deployState = DEPLOY_STATE.FAILED;
         markDeployStepFailed('step-deploying');
