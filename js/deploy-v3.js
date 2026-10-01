@@ -159,10 +159,56 @@ function isJoinValid() {
 function getNotifStatus() {
     return 'Notification' in window && Notification.permission === 'granted';
 }
+/* ─── Cek user punya profil ─── */
+function getProfileCheckCache() {
+    try {
+        const raw = sessionStorage.getItem('ekk_has_profile_v1');
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (Date.now() - data.ts > 5 * 60 * 1000) return null;
+        return data.has;
+    } catch (e) { return null; }
+}
 
-function updateModalStatus() {
+function setProfileCheckCache(has) {
+    try {
+        sessionStorage.setItem('ekk_has_profile_v1', JSON.stringify({
+            has: has,
+            ts: Date.now()
+        }));
+    } catch (e) {}
+}
+
+function clearProfileCheckCache() {
+    try { sessionStorage.removeItem('ekk_has_profile_v1'); } catch (e) {}
+}
+
+async function hasProfile() {
+    const cached = getProfileCheckCache();
+    if (cached !== null) return cached;
+
+    const uid = (typeof CURRENT_USER_ID !== 'undefined' && CURRENT_USER_ID)
+        ? CURRENT_USER_ID
+        : (firebase.auth().currentUser?.uid || '');
+
+    if (!uid) return false;
+
+    try {
+        const db = (typeof getDb === 'function') ? getDb() : firebase.firestore();
+        if (!db) return false;
+        const doc = await db.collection('users').doc(uid).get();
+        const has = doc.exists;
+        setProfileCheckCache(has);
+        return has;
+    } catch (e) {
+        console.warn('[hasProfile] cek gagal:', e.message);
+        return false;
+    }
+}
+async function updateModalStatus() {
     const join = isJoinValid();
     const notif = getNotifStatus();
+    const profil = await hasProfile();
 
     const grupItem = document.getElementById('req-grup');
     const grupStatus = document.getElementById('req-grup-status');
@@ -172,6 +218,11 @@ function updateModalStatus() {
     const notifStatus = document.getElementById('req-notif-status');
     const notifBtn = document.getElementById('btn-aktifkan-notif');
 
+    const profilItem = document.getElementById('req-profil');
+    const profilStatus = document.getElementById('req-profil-status');
+    const profilBtn = document.getElementById('btn-buat-profil');
+
+    // ─── GRUP ───
     if (join) {
         grupItem?.classList.add('done');
         if (grupStatus) {
@@ -185,16 +236,10 @@ function updateModalStatus() {
             grupStatus.textContent = 'Belum';
             grupStatus.className = 'req-status';
         }
-        if (grupBtn) {
-            grupBtn.style.display = '';
-            grupBtn.style.pointerEvents = '';
-            grupBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Gabung';
-            if (!grupBtn.hasAttribute('href')) {
-                grupBtn.setAttribute('href', 'https://chat.whatsapp.com/DbMDYJcBrYoJMutbMoH24q');
-            }
-        }
+        if (grupBtn) grupBtn.style.display = '';
     }
 
+    // ─── NOTIF ───
     if (notif) {
         notifItem?.classList.add('done');
         if (notifStatus) {
@@ -208,19 +253,37 @@ function updateModalStatus() {
             notifStatus.textContent = 'Belum';
             notifStatus.className = 'req-status';
         }
-        if (notifBtn) {
-            notifBtn.style.display = '';
-            notifBtn.style.pointerEvents = '';
-            notifBtn.innerHTML = '<i class="fa-solid fa-bell"></i> Aktifkan';
-        }
+        if (notifBtn) notifBtn.style.display = '';
     }
 
-    if (join && notif && !isDeploying) {
+    // ─── PROFIL ───
+    if (profil) {
+        profilItem?.classList.add('done');
+        if (profilStatus) {
+            profilStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
+            profilStatus.className = 'req-status done';
+        }
+        if (profilBtn) profilBtn.style.display = 'none';
+    } else {
+        profilItem?.classList.remove('done');
+        if (profilStatus) {
+            profilStatus.textContent = 'Belum';
+            profilStatus.className = 'req-status';
+        }
+        if (profilBtn) profilBtn.style.display = '';
+    }
+
+    // ─── AUTO-CLOSE (3 syarat) ───
+    if (join && notif && profil && !isDeploying) {
         if (window._autoCloseTimer) return;
         window._autoCloseTimer = true;
 
-        setTimeout(() => {
-            if (!isJoinValid() || !getNotifStatus()) {
+        setTimeout(async () => {
+            const joinNow = isJoinValid();
+            const notifNow = getNotifStatus();
+            const profilNow = await hasProfile();
+
+            if (!joinNow || !notifNow || !profilNow) {
                 window._autoCloseTimer = false;
                 return;
             }
@@ -287,21 +350,59 @@ function updateModalStatus() {
 
 function setupRequirementEvents() {
     const joinButton = document.getElementById('btn-join-grup');
-    if (joinButton) {
-        joinButton.addEventListener('click', function () {
-            if (isDeploying) return;
+if (joinButton) {
+    joinButton.addEventListener('click', function () {
+        if (isDeploying) return;
+        if (this.dataset.waiting === '1') return;   // cegah klik dobel
+
+        // ═══ 1. Kunci tombol + tampil spinner ═══
+        this.dataset.waiting = '1';
+        const originalHTML = this.innerHTML;
+        const originalPointer = this.style.pointerEvents;
+        this.style.pointerEvents = 'none';
+        this.innerHTML = '<span class="gate-spinner" style="width:12px;height:12px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Menunggu...';
+
+        // Simpan link asli, lalu nonaktifkan link sementara
+        const originalHref = this.getAttribute('href');
+        this.removeAttribute('href');
+
+        // Buka grup di tab baru SETELAH user klik (biar tetap bisa gabung)
+        if (originalHref) {
+            window.open(originalHref, '_blank', 'noopener,noreferrer');
+        }
+
+        showToast('Gabung grup dulu, tunggu sebentar...', 'info');
+
+        // ═══ 2. Setelah 2 detik, tandai berhasil ═══
+        setTimeout(() => {
             setJoinTimestamp();
+
             const grupItem = document.getElementById('req-grup');
             const grupStatus = document.getElementById('req-grup-status');
             if (grupItem && grupStatus) {
                 grupItem.classList.add('done');
                 grupStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
                 grupStatus.className = 'req-status done';
-                this.style.display = 'none';
             }
-            showToast('Kembali ke halaman ini setelah bergabung', 'info');
-        });
-    }
+
+            // Sembunyikan tombol
+            this.style.display = 'none';
+            this.dataset.waiting = '0';
+
+            // Kembalikan href & pointer (buat jaga-jaga kalau perlu di-reset)
+            if (originalHref) this.setAttribute('href', originalHref);
+            this.style.pointerEvents = originalPointer || '';
+            this.innerHTML = originalHTML;
+
+            showToast('Kembali ke halaman ini setelah bergabung', 'success');
+
+            // Update modal status (biar auto-close cek ulang)
+            if (typeof updateModalStatus === 'function') {
+                updateModalStatus();
+            }
+        }, 2000);   // ← 2000 ms = 2 detik
+    });
+}
 
     const notificationButton = document.getElementById('btn-aktifkan-notif');
     if (notificationButton) {
@@ -344,6 +445,15 @@ function setupRequirementEvents() {
             }
         });
     }
+const profilButton = document.getElementById('btn-buat-profil');
+if (profilButton) {
+    profilButton.addEventListener('click', function () {
+        if (isDeploying) return;
+        if (window._pendingDeploy) {
+            try { localStorage.setItem('ekk_pending_deploy', window._pendingDeploy); } catch(e) {}
+        }
+    });
+}
 
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) updateModalStatus();
@@ -644,7 +754,31 @@ async function performDeploy(projectName) {
     showToast(limitMsg, 'warning');
 
     // TIDAK saveHistory — biar history user gak kotor karena limit
+    // TIDAK saveHistory — biar history user gak kotor karena limit
+} else if (response.status === 401) {
+    // ═══ PROFIL DIPERLUKAN ═══
+    deployState = DEPLOY_STATE.FAILED;
+    markDeployStepFailed('step-deploying');
+    markDeployStepFailed('step-completed');
+    clearProfileCheckCache();
+
+    if (output) {
+        output.innerHTML = `
+            <div style="display:flex;gap:12px;padding:16px;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:12px;align-items:flex-start;">
+                <i class="fa-solid fa-user-plus" style="color:#f97316;font-size:20px;margin-top:2px;"></i>
+                <div style="flex:1;">
+                    <div style="font-weight:600;color:#f97316;margin-bottom:4px;">Profil Diperlukan</div>
+                    <div style="font-size:13px;color:#a1a1aa;line-height:1.5;">
+                        Buat profil di halaman Grup dulu sebelum bisa deploy.<br>
+                        <a href="/group" style="color:#f97316;font-weight:600;">→ Buat Profil Sekarang</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    showToast('Buat profil di halaman Grup dulu', 'warning');
 } else {
+    // Error biasa (400/500/dll)
     // Error biasa (400/500/dll)
     deployState = DEPLOY_STATE.FAILED;
     markDeployStepFailed('step-deploying');
@@ -755,9 +889,10 @@ async function deploy() {
     }
 
     const join = isJoinValid();
-    const notif = getNotifStatus();
+const notif = getNotifStatus();
+const profil = await hasProfile();
 
-    if (join && notif) {
+if (join && notif && profil) {
         isDeploying = true;
         deployState = DEPLOY_STATE.VALIDATING;
         if (deployBtn) {
