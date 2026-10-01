@@ -157,7 +157,14 @@ function isJoinValid() {
     return hours <= 24;
 }
 function getNotifStatus() {
-    return 'Notification' in window && Notification.permission === 'granted';
+    // Browser gak support Notification API (Mi Browser, UC, in-app, dll)
+    // → anggap "OK" biar user tetap bisa deploy
+    if (!('Notification' in window)) return true;
+    return Notification.permission === 'granted';
+}
+
+function isNotifSupported() {
+    return 'Notification' in window;
 }
 /* ─── Cek user punya profil ─── */
 function getProfileCheckCache() {
@@ -240,21 +247,32 @@ async function updateModalStatus() {
     }
 
     // ─── NOTIF ───
-    if (notif) {
-        notifItem?.classList.add('done');
-        if (notifStatus) {
-            notifStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
-            notifStatus.className = 'req-status done';
-        }
-        if (notifBtn) notifBtn.style.display = 'none';
-    } else {
-        notifItem?.classList.remove('done');
-        if (notifStatus) {
-            notifStatus.textContent = 'Belum';
-            notifStatus.className = 'req-status';
-        }
-        if (notifBtn) notifBtn.style.display = '';
+    // ─── NOTIF ───
+if (!isNotifSupported()) {
+    // Browser gak support notif → skip otomatis
+    notifItem?.classList.add('done');
+    if (notifStatus) {
+        notifStatus.textContent = 'Tidak didukung browser';
+        notifStatus.className = 'req-status';
     }
+    if (notifBtn) notifBtn.style.display = 'none';
+} else if (notif) {
+    // Browser support + user sudah aktifkan → ✅
+    notifItem?.classList.add('done');
+    if (notifStatus) {
+        notifStatus.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil';
+        notifStatus.className = 'req-status done';
+    }
+    if (notifBtn) notifBtn.style.display = 'none';
+} else {
+    // Browser support + user belum aktifkan → wajib aktifkan
+    notifItem?.classList.remove('done');
+    if (notifStatus) {
+        notifStatus.textContent = 'Belum';
+        notifStatus.className = 'req-status';
+    }
+    if (notifBtn) notifBtn.style.display = '';
+}
 
     // ─── PROFIL ───
     if (profil) {
@@ -408,9 +426,9 @@ if (joinButton) {
         notificationButton.addEventListener('click', async function () {
             if (isDeploying) return;
             if (!('Notification' in window)) {
-                showToast('Browser tidak mendukung notifikasi', 'error');
-                return;
-            }
+    showToast('Browser ini tidak mendukung notifikasi', 'warning');
+    return;
+}
             if (Notification.permission === 'granted') {
                 updateModalStatus();
                 return;
