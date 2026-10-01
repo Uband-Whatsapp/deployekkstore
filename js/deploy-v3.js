@@ -353,29 +353,28 @@ function setupRequirementEvents() {
 if (joinButton) {
     joinButton.addEventListener('click', function () {
         if (isDeploying) return;
-        if (this.dataset.waiting === '1') return;   // cegah klik dobel
+        if (this.dataset.waiting === '1') return;
 
-        // ═══ 1. Kunci tombol + tampil spinner ═══
         this.dataset.waiting = '1';
         const originalHTML = this.innerHTML;
         const originalPointer = this.style.pointerEvents;
         this.style.pointerEvents = 'none';
         this.innerHTML = '<span class="gate-spinner" style="width:12px;height:12px;border-color:rgba(255,255,255,0.3);border-top-color:#fff;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Menunggu...';
 
-        // Simpan link asli, lalu nonaktifkan link sementara
         const originalHref = this.getAttribute('href');
         this.removeAttribute('href');
 
-        // Buka grup di tab baru SETELAH user klik (biar tetap bisa gabung)
+        setJoinTimestamp();   // ← TAMBAH BARIS INI DI SINI
+
         if (originalHref) {
             window.open(originalHref, '_blank', 'noopener,noreferrer');
         }
 
         showToast('Gabung grup dulu, tunggu sebentar...', 'info');
 
-        // ═══ 2. Setelah 2 detik, tandai berhasil ═══
         setTimeout(() => {
-            setJoinTimestamp();
+            // HAPUS baris "setJoinTimestamp();" dari SINI (dipindah ke atas)
+            
 
             const grupItem = document.getElementById('req-grup');
             const grupStatus = document.getElementById('req-grup-status');
@@ -450,7 +449,10 @@ if (profilButton) {
     profilButton.addEventListener('click', function () {
         if (isDeploying) return;
         if (window._pendingDeploy) {
-            try { localStorage.setItem('ekk_pending_deploy', window._pendingDeploy); } catch(e) {}
+            try {
+                localStorage.setItem('ekk_pending_deploy', window._pendingDeploy);
+                localStorage.setItem('ekk_pending_deploy_ts', Date.now().toString());
+            } catch(e) {}
         }
     });
 }
@@ -1012,9 +1014,38 @@ window.copyDeployedLink = copyDeployedLink;
 /* ============================================================
    9) PAGE-SPECIFIC INIT
    ============================================================ */
+function restorePendingDeploy() {
+    try {
+        const pending = localStorage.getItem('ekk_pending_deploy');
+        if (!pending) return;
+
+        const ts = localStorage.getItem('ekk_pending_deploy_ts');
+        if (ts && Date.now() - parseInt(ts) > 10 * 60 * 1000) {
+            localStorage.removeItem('ekk_pending_deploy');
+            localStorage.removeItem('ekk_pending_deploy_ts');
+            return;
+        }
+
+        const projectInput = document.getElementById('project');
+        if (projectInput && !projectInput.value) {
+            projectInput.value = pending;
+        }
+
+        const deployModal = document.getElementById('deploy-modal');
+        if (deployModal) deployModal.classList.add('active');
+        document.body.classList.add('modal-open');
+
+        window._pendingDeploy = pending;
+        updateModalStatus();
+    } catch (e) {
+        console.warn('[restorePendingDeploy]', e);
+    }
+}
+
 function setupPageSpecific() {
     setupProjectInput();
     setupFileUpload();
     setupRequirementEvents();
     setupDeployButton();
+    restorePendingDeploy();
 }
