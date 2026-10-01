@@ -4213,12 +4213,22 @@ async function handleDeleteMember(uid, username) {
                 const uid = getMyUid();
                 const avatarUrl = uploadedAvatarUrl || '';
                 const success = await createProfile(uid, username, avatarUrl);
-                if (success) {
-                    currentUser = { uid, username, avatar: avatarUrl };
-                    setStoredUser(currentUser);
-                    showToast('Selamat datang di grup! 🎉', 'success');
-                    initChat();
-                } else {
+if (success) {
+    currentUser = { uid, username, avatar: avatarUrl };
+    setStoredUser(currentUser);
+    showToast('Selamat datang di grup! 🎉', 'success');
+    initChat();
+
+    // ═══ Auto-redirect balik ke /deploy kalau ada pending deploy ═══
+    const pendingDeploy = localStorage.getItem('ekk_pending_deploy');
+    if (pendingDeploy) {
+        showToast('Mengalihkan kembali ke halaman deploy...', 'info');
+        setTimeout(() => {
+            window.location.href = '/deploy';
+        }, 1200);
+        return;   // ← hentikan sisa eksekusi (biar gak ganggu redirect)
+    }
+} else {
                     if (errorEl) {
                         errorEl.textContent = 'Gagal membuat profil, coba lagi';
                         errorEl.classList.add('visible');
