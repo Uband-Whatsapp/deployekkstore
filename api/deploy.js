@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import admin from 'firebase-admin';
 
-// Init Firebase Admin (sekali aja)
+// Init Firebase Admin (sekali)
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
   admin.initializeApp({
@@ -11,10 +11,64 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// Rate limit sederhana (in-memory, reset tiap function cold start)
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 jam
-const RATE_LIMIT_MAX = 5; // max 5 deploy per jam per UID
+const RATE_LIMIT_MAX = 5;              // max 5 deploy
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // per 1 jam
+const MAX_HTML_SIZE = 5 * 1024 * 1024; // 5 MB
+
+// ─── Rate limit via Firestore (persist) ───
+async function checkAndUpdateRateLimit(uid) {
+  const ref = db.collection('deploy_rate_limit').doc(uid);
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+
+  let result = { allowed: false, remaining: 0, retryAfterMin: 0 };
+
+  await db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    let timestamps = doc.exists ? (doc.data().timestamps || []) : [];
+
+    // Buang timestamp yang sudah lewat 1 jam
+    timestamps = timestamps.filter(t => t > cutoff);
+
+    if (timestamps.length >= RATE_LIMIT_MAX) {
+      // Cari kapan yang paling tua kadaluarsa
+      const oldest = Math.min(...timestamps);
+      const retryAfterMs = (oldest + RATE_LIMIT_WINDOW_MS) - now;
+      result = {
+        allowed: false,
+        remaining: 0,
+        retryAfterMin: Math.ceil(retryAfterMs / 60000)
+      };
+      return;
+    }
+
+    timestamps.push(now);
+    tx.set(ref, { timestamps, updatedAt: now }, { merge: true });
+    result = {
+      allowed: true,
+      remaining: RATE_LIMIT_MAX - timestamps.length,
+      retryAfterMin: 0
+    };
+  });
+
+  return result;
+}
+
+// ─── Cek ownership project ───
+async function checkProjectOwnership(projectName, authUid) {
+  const snap = await db.collection('projects')
+    .where('projectName', '==', projectName)
+    .limit(1)
+    .get();
+
+  if (snap.empty) return { ok: true, reason: 'new' };
+
+  const existing = snap.docs[0].data();
+  if (existing.ownerUid === authUid) {
+    return { ok: true, reason: 'own' };
+  }
+  return { ok: false, reason: 'taken', owner: existing.username || 'user lain' };
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -23,46 +77,32 @@ export default async function handler(req, res) {
 
   const { project, fileContent, fileUrl, fileName, userId, authUid } = req.body;
 
-  // ═══ 1. Verifikasi authUid ke Firebase ═══
+  // ═══ 1. Verifikasi user terdaftar ═══
   if (!authUid || typeof authUid !== 'string' || authUid.length < 20) {
     return res.status(401).json({ error: 'Autentikasi diperlukan' });
   }
 
-  let decodedToken;
+  let userDoc;
   try {
-    // Kalau client kirim ID token, verify ke Firebase
-    // Tapi karena client kirim UID (bukan token), kita cek manual ke Firestore
-    const userDoc = await db.collection('users').doc(authUid).get();
+    userDoc = await db.collection('users').doc(authUid).get();
     if (!userDoc.exists) {
       return res.status(401).json({ error: 'User tidak terdaftar' });
     }
-    decodedToken = { uid: authUid };
   } catch (e) {
-    return res.status(401).json({ error: 'Verifikasi gagal: ' + e.message });
+    return res.status(401).json({ error: 'Verifikasi gagal' });
   }
 
-  // ═══ 2. Rate limit per UID ═══
-  const now = Date.now();
-  const userKey = authUid;
-  const userHistory = (rateLimitMap.get(userKey) || []).filter(t => now - t < RATE_LIMIT_WINDOW_MS);
-  if (userHistory.length >= RATE_LIMIT_MAX) {
-    return res.status(429).json({ error: `Rate limit: max ${RATE_LIMIT_MAX} deploy per jam` });
-  }
-  userHistory.push(now);
-  rateLimitMap.set(userKey, userHistory);
-
-  // ═══ 3. Validasi nama project ═══
+  // ═══ 2. Validasi nama project ═══
   if (!project || typeof project !== 'string') {
-    return res.status(400).json({ error: 'Project name wajib' });
+    return res.status(400).json({ error: 'Nama project wajib diisi' });
   }
   const projectClean = project.toLowerCase().trim();
   if (!/^[a-z0-9][a-z0-9-]{2,48}[a-z0-9]$/.test(projectClean)) {
     return res.status(400).json({
-      error: 'Nama project harus 4-50 karakter, huruf kecil/angka/dash saja'
+      error: 'Nama project harus 4-50 karakter, huruf kecil/angka/dash'
     });
   }
-  // Blokir nama mencurigakan
-  const blockedPrefixes = ['linn', 'admin', 'vercel', 'ekkstore-official'];
+  const blockedPrefixes = ['linn', 'admin', 'vercel', 'api', 'www'];
   if (blockedPrefixes.some(p => projectClean.startsWith(p))) {
     return res.status(400).json({ error: 'Nama project tidak diizinkan' });
   }
@@ -76,7 +116,36 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Konfigurasi server tidak lengkap' });
   }
 
-  // ═══ 4. Sisa logic (sama seperti sebelumnya) ═══
+  // ═══ 3. Cek ownership project (cegah timpa) ═══
+  try {
+    const ownership = await checkProjectOwnership(projectClean, authUid);
+    if (!ownership.ok) {
+      return res.status(403).json({
+        error: `Nama project "${projectClean}" sudah dipakai user lain. Pilih nama lain.`
+      });
+    }
+  } catch (e) {
+    console.error('[ownership check]', e);
+    // Kalau cek gagal, lanjut (jangan block user karena error DB)
+  }
+
+  // ═══ 4. Rate limit (persist) ═══
+  try {
+    const rate = await checkAndUpdateRateLimit(authUid);
+    if (!rate.allowed) {
+      return res.status(429).json({
+        error: `Limit deploy tercapai. Maksimal ${RATE_LIMIT_MAX} deploy per jam. Coba lagi dalam ~${rate.retryAfterMin} menit.`,
+        retryAfterMin: rate.retryAfterMin,
+        limit: RATE_LIMIT_MAX
+      });
+    }
+  } catch (e) {
+    console.error('[rate limit]', e);
+    // Kalau sistem rate limit error, tetap tolak biar aman
+    return res.status(500).json({ error: 'Gagal cek limit, coba lagi nanti' });
+  }
+
+  // ═══ 5. Proses file ═══
   let files = [];
   let base64Zip = '';
 
@@ -85,8 +154,8 @@ export default async function handler(req, res) {
       if (!fileContent) {
         return res.status(400).json({ error: 'Konten HTML kosong' });
       }
-      if (fileContent.length > 5 * 1024 * 1024) { // max 5 MB
-        return res.status(400).json({ error: 'File HTML terlalu besar (max 5MB)' });
+      if (fileContent.length > MAX_HTML_SIZE) {
+        return res.status(400).json({ error: 'File HTML terlalu besar (max 5 MB)' });
       }
       files = [{ file: 'index.html', data: fileContent, encoding: 'utf-8' }];
     } else if (fileName.endsWith('.zip')) {
@@ -120,6 +189,7 @@ export default async function handler(req, res) {
     });
   }
 
+  // ═══ 6. Deploy ke Vercel ═══
   try {
     const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
       method: 'POST',
