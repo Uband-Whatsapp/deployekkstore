@@ -1019,6 +1019,9 @@ function restorePendingDeploy() {
         const pending = localStorage.getItem('ekk_pending_deploy');
         if (!pending) return;
 
+        // ═══ Clear cache profil (biar cek ulang) ═══
+        try { sessionStorage.removeItem('ekk_has_profile_v1'); } catch(e) {}
+
         const ts = localStorage.getItem('ekk_pending_deploy_ts');
         if (ts && Date.now() - parseInt(ts) > 10 * 60 * 1000) {
             localStorage.removeItem('ekk_pending_deploy');
